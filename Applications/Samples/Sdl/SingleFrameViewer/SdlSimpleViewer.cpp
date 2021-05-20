@@ -68,9 +68,12 @@ static const char* const VALUE_SEGMENT = "segment";
 
 namespace OrthancStone
 {
-  class AnnotationsOverlay : public boost::noncopyable
+  class AnnotationsLayer : public IObservable
   {
   public:
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationAddedMessage, AnnotationsLayer);
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationRemovedMessage, AnnotationsLayer);
+
     enum Tool
     {
       Tool_Edit,
@@ -188,11 +191,11 @@ namespace OrthancStone
     private:
       typedef std::list<GeometricPrimitive*>  GeometricPrimitives;
       
-      AnnotationsOverlay&  that_;
+      AnnotationsLayer&    that_;
       GeometricPrimitives  primitives_;
       
     public:
-      Annotation(AnnotationsOverlay& that) :
+      Annotation(AnnotationsLayer& that) :
         that_(that)
       {
         that.AddAnnotation(this);
@@ -636,13 +639,13 @@ namespace OrthancStone
     class Text : public GeometricPrimitive
     {
     private:
-      AnnotationsOverlay&              that_;
+      AnnotationsLayer&                that_;
       bool                             first_;
       size_t                           subLayer_;
       std::unique_ptr<TextSceneLayer>  content_;
 
     public:
-      Text(AnnotationsOverlay& that,
+      Text(AnnotationsLayer& that,
            Annotation& parentAnnotation) :
         GeometricPrimitive(parentAnnotation, 2),
         that_(that),
@@ -798,7 +801,7 @@ namespace OrthancStone
       }
 
     public:
-      SegmentAnnotation(AnnotationsOverlay& that,
+      SegmentAnnotation(AnnotationsLayer& that,
                         bool showLabel,
                         const ScenePoint2D& p1,
                         const ScenePoint2D& p2) :
@@ -849,7 +852,7 @@ namespace OrthancStone
         target[KEY_Y2] = handle2_.GetCenter().GetY();
       }
 
-      static void Unserialize(AnnotationsOverlay& target,
+      static void Unserialize(AnnotationsLayer& target,
                               const Json::Value& source)
       {
         if (source.isMember(KEY_X1) &&
@@ -915,7 +918,7 @@ namespace OrthancStone
       }
 
     public:
-      AngleAnnotation(AnnotationsOverlay& that,
+      AngleAnnotation(AnnotationsLayer& that,
                       const ScenePoint2D& start,
                       const ScenePoint2D& middle,
                       const ScenePoint2D& end) :
@@ -987,7 +990,7 @@ namespace OrthancStone
         target[KEY_Y3] = endHandle_.GetCenter().GetY();
       }
 
-      static void Unserialize(AnnotationsOverlay& target,
+      static void Unserialize(AnnotationsLayer& target,
                               const Json::Value& source)
       {
         if (source.isMember(KEY_X1) &&
@@ -1064,7 +1067,7 @@ namespace OrthancStone
       }
 
     public:
-      CircleAnnotation(AnnotationsOverlay& that,
+      CircleAnnotation(AnnotationsLayer& that,
                        const ScenePoint2D& p1,
                        const ScenePoint2D& p2) :
         Annotation(that),
@@ -1111,7 +1114,7 @@ namespace OrthancStone
         target[KEY_Y2] = handle2_.GetCenter().GetY();
       }
 
-      static void Unserialize(AnnotationsOverlay& target,
+      static void Unserialize(AnnotationsLayer& target,
                               const Json::Value& source)
       {
         if (source.isMember(KEY_X1) &&
@@ -1138,13 +1141,13 @@ namespace OrthancStone
     class CreateSegmentOrCircleTracker : public IFlexiblePointerTracker
     {
     private:
-      AnnotationsOverlay&  that_;
-      Annotation*          annotation_;
-      AffineTransform2D    canvasToScene_;
-      Handle*              handle2_;
+      AnnotationsLayer&  that_;
+      Annotation*        annotation_;
+      AffineTransform2D  canvasToScene_;
+      Handle*            handle2_;
       
     public:
-      CreateSegmentOrCircleTracker(AnnotationsOverlay& that,
+      CreateSegmentOrCircleTracker(AnnotationsLayer& that,
                                    bool isCircle,
                                    const ScenePoint2D& sceneClick,
                                    const AffineTransform2D& canvasToScene) :
@@ -1181,6 +1184,8 @@ namespace OrthancStone
       virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE
       {
         annotation_ = NULL;  // IsAlive() becomes false
+
+        that_.BroadcastMessage(AnnotationAddedMessage(that_));
       }
 
       virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE
@@ -1206,13 +1211,13 @@ namespace OrthancStone
     class CreateAngleTracker : public IFlexiblePointerTracker
     {
     private:
-      AnnotationsOverlay&  that_;
-      SegmentAnnotation*   segment_;
-      AngleAnnotation*     angle_;
-      AffineTransform2D    canvasToScene_;
+      AnnotationsLayer&   that_;
+      SegmentAnnotation*  segment_;
+      AngleAnnotation*    angle_;
+      AffineTransform2D   canvasToScene_;
       
     public:
-      CreateAngleTracker(AnnotationsOverlay& that,
+      CreateAngleTracker(AnnotationsLayer& that,
                          const ScenePoint2D& sceneClick,
                          const AffineTransform2D& canvasToScene) :
         that_(that),
@@ -1254,6 +1259,8 @@ namespace OrthancStone
         else
         {
           angle_ = NULL;  // IsAlive() becomes false
+
+          that_.BroadcastMessage(AnnotationAddedMessage(that_));
         }
       }
 
@@ -1361,7 +1368,7 @@ namespace OrthancStone
     }
     
   public:
-    AnnotationsOverlay(size_t macroLayerIndex) :
+    AnnotationsLayer(size_t macroLayerIndex) :
       activeTool_(Tool_Edit),
       macroLayerIndex_(macroLayerIndex),
       polylineSubLayer_(0)  // dummy initialization
@@ -1371,7 +1378,7 @@ namespace OrthancStone
       annotations_.insert(new CircleAnnotation(*this, ScenePoint2D(50, 200), ScenePoint2D(100, 250)));
     }
     
-    ~AnnotationsOverlay()
+    ~AnnotationsLayer()
     {
       Clear();
     }
@@ -1517,6 +1524,7 @@ namespace OrthancStone
           if (activeTool_ == Tool_Erase)
           {
             DeleteAnnotation(&bestHit->GetParentAnnotation());
+            BroadcastMessage(AnnotationRemovedMessage(*this));
             return new EraseTracker;
           }
           else
@@ -1751,15 +1759,15 @@ int main(int argc, char* argv[])
         bool angleMeasureFirst = true;
         angleMeasureTool->Disable();
 
-        OrthancStone::AnnotationsOverlay overlay(10);
-        overlay.SetActiveTool(OrthancStone::AnnotationsOverlay::Tool_Angle);
+        OrthancStone::AnnotationsLayer annotations(10);
+        annotations.SetActiveTool(OrthancStone::AnnotationsLayer::Tool_Angle);
 
         {
           Json::Value v;
-          overlay.Serialize(v);
+          annotations.Serialize(v);
           std::cout << v.toStyledString() << std::endl;
-          overlay.Clear();
-          overlay.Unserialize(v);
+          annotations.Clear();
+          annotations.Unserialize(v);
         }
 
         boost::shared_ptr<SdlSimpleViewerApplication> application(
@@ -1926,7 +1934,7 @@ int main(int argc, char* argv[])
 
                       if (p.GetMouseButton() == OrthancStone::MouseButton_Left)
                       {
-                        t.reset(overlay.CreateTracker(p.GetMainPosition(), lock->GetController().GetScene()));
+                        t.reset(annotations.CreateTracker(p.GetMainPosition(), lock->GetController().GetScene()));
                       }
                       
                       if (t.get() == NULL)
@@ -1967,14 +1975,14 @@ int main(int argc, char* argv[])
                       if (lock->GetController().HandleMouseMove(p))
                       {
                         lock->Invalidate();
-                        if (overlay.ClearHover())
+                        if (annotations.ClearHover())
                         {
                           paint = true;
                         }                          
                       }
                       else
                       {
-                        if (overlay.SetMouseHover(p.GetMainPosition(), lock->GetController().GetScene()))
+                        if (annotations.SetMouseHover(p.GetMainPosition(), lock->GetController().GetScene()))
                         {
                           paint = true;
                         }
@@ -1997,7 +2005,7 @@ int main(int argc, char* argv[])
             {
               {
                 std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
-                overlay.Render(lock->GetController().GetScene());
+                annotations.Render(lock->GetController().GetScene());
               }
               
               viewport->Paint();

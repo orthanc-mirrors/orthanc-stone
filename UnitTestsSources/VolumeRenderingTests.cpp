@@ -22,6 +22,8 @@
 #include "../OrthancStone/Sources/Scene2D/CairoCompositor.h"
 #include "../OrthancStone/Sources/Scene2D/ColorTextureSceneLayer.h"
 #include "../OrthancStone/Sources/Scene2D/CopyStyleConfigurator.h"
+#include "../OrthancStone/Sources/Scene2D/MacroSceneLayer.h"
+#include "../OrthancStone/Sources/Scene2D/PolylineSceneLayer.h"
 #include "../OrthancStone/Sources/Toolbox/SubvoxelReader.h"
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageMPRSlicer.h"
 #include "../OrthancStone/Sources/Volumes/DicomVolumeImageReslicer.h"
@@ -1011,4 +1013,55 @@ TEST(VolumeRendering, MPR)
                    layer->GetTexture().GetHeight() == 0));
     }
   }
+}
+
+
+TEST(VolumeRendering, MacroLayer)
+{
+  OrthancStone::MacroSceneLayer layer;
+  ASSERT_THROW(layer.AddLayer(NULL), Orthanc::OrthancException);
+
+  ASSERT_EQ(0u, layer.AddLayer(new OrthancStone::PolylineSceneLayer));
+  ASSERT_EQ(1u, layer.AddLayer(new OrthancStone::PolylineSceneLayer));
+  ASSERT_EQ(2u, layer.AddLayer(new OrthancStone::PolylineSceneLayer));
+  ASSERT_EQ(3u, layer.GetSize());
+  ASSERT_TRUE(layer.HasLayer(0));
+  ASSERT_TRUE(layer.HasLayer(1));
+  ASSERT_TRUE(layer.HasLayer(2));
+
+  layer.DeleteLayer(1);
+  ASSERT_EQ(3u, layer.GetSize());
+  ASSERT_TRUE(layer.HasLayer(0));
+  ASSERT_FALSE(layer.HasLayer(1));
+  ASSERT_TRUE(layer.HasLayer(2));
+
+  ASSERT_THROW(layer.UpdateLayer(1, NULL), Orthanc::OrthancException);
+  layer.UpdateLayer(1, new OrthancStone::PolylineSceneLayer);
+  ASSERT_TRUE(layer.HasLayer(1));
+
+  ASSERT_EQ(3u, layer.AddLayer(new OrthancStone::PolylineSceneLayer));
+  ASSERT_EQ(4u, layer.GetSize());
+
+  layer.DeleteLayer(1);
+  layer.DeleteLayer(2);
+  ASSERT_EQ(1u, layer.AddLayer(new OrthancStone::PolylineSceneLayer));
+
+  std::unique_ptr<OrthancStone::MacroSceneLayer> clone(dynamic_cast<OrthancStone::MacroSceneLayer*>(layer.Clone()));
+  
+  layer.UpdateLayer(2, new OrthancStone::PolylineSceneLayer);
+  ASSERT_EQ(4u, layer.AddLayer(new OrthancStone::PolylineSceneLayer));
+  ASSERT_EQ(5u, layer.GetSize());
+  ASSERT_TRUE(layer.HasLayer(0));
+  ASSERT_TRUE(layer.HasLayer(1));
+  ASSERT_TRUE(layer.HasLayer(2));
+  ASSERT_TRUE(layer.HasLayer(3));
+  ASSERT_TRUE(layer.HasLayer(4));
+
+  ASSERT_EQ(2u, clone->AddLayer(new OrthancStone::PolylineSceneLayer));
+  ASSERT_EQ(4u, clone->GetSize());
+  ASSERT_TRUE(clone->HasLayer(0));
+  ASSERT_TRUE(clone->HasLayer(1));
+  ASSERT_TRUE(clone->HasLayer(2));
+  ASSERT_TRUE(clone->HasLayer(3));
+  ASSERT_THROW(clone->HasLayer(4), Orthanc::OrthancException);
 }

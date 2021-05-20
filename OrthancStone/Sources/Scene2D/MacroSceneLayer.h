@@ -27,6 +27,7 @@
 #include <Compatibility.h>  // For ORTHANC_OVERRIDE
 
 #include <deque>
+#include <set>
 
 namespace OrthancStone
 {
@@ -41,6 +42,9 @@ namespace OrthancStone
     // to randomly access the layers
     std::deque<ISceneLayer*>  layers_;
     uint64_t                  revision_;
+    std::set<size_t>          recycledLayers_;
+
+    void CheckInvariant() const;
 
   protected:
     void BumpRevision()

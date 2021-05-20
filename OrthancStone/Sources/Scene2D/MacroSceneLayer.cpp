@@ -24,10 +24,38 @@
 
 #include <OrthancException.h>
 
+#include <cassert>
+
 namespace OrthancStone
 {
+  void MacroSceneLayer::CheckInvariant() const
+  {
+#if !defined(NDEBUG)
+    // Only run the sanity check in debug mode
+    size_t countRecycled = 0;
+
+    for (size_t i = 0; i < layers_.size(); i++)
+    {
+      if (layers_[i] == NULL)
+      {
+        assert(recycledLayers_.find(i) != recycledLayers_.end());
+        countRecycled++;
+      }
+      else
+      {
+        assert(recycledLayers_.find(i) == recycledLayers_.end());
+      }
+    }
+
+    assert(countRecycled == recycledLayers_.size());
+#endif
+  }
+  
+
   void MacroSceneLayer::Clear()
   {
+    CheckInvariant();
+    
     for (size_t i = 0; i < layers_.size(); i++)
     {
       if (layers_[i] != NULL)
@@ -37,22 +65,37 @@ namespace OrthancStone
     }
 
     layers_.clear();
+    recycledLayers_.clear();
+    
     BumpRevision();
   }
 
   
   size_t MacroSceneLayer::AddLayer(ISceneLayer* layer)
   {
+    CheckInvariant();
+    
     if (layer == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
     else
     {
-      // TODO - Use recycling list from DeleteLayer()
+      size_t index;
+
+      if (recycledLayers_.empty())
+      {
+        index = layers_.size();
+        layers_.push_back(layer);
+      }
+      else
+      {
+        index = *recycledLayers_.begin();
+        assert(layers_[index] == NULL);
+        layers_[index] = layer;
+        recycledLayers_.erase(index);
+      }
       
-      size_t index = layers_.size();
-      layers_.push_back(layer);
       BumpRevision();
       return index;
     }
@@ -62,6 +105,8 @@ namespace OrthancStone
   void MacroSceneLayer::UpdateLayer(size_t index,
                                     ISceneLayer* layer)
   {
+    CheckInvariant();
+    
     if (layer == NULL)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
@@ -72,8 +117,14 @@ namespace OrthancStone
     }
     else
     {
-      if (layers_[index] != NULL)
+      if (layers_[index] == NULL)
       {
+        assert(recycledLayers_.find(index) != recycledLayers_.end());
+        recycledLayers_.erase(index);
+      }
+      else
+      {
+        assert(recycledLayers_.find(index) == recycledLayers_.end());
         delete layers_[index];
       }
 
@@ -85,6 +136,8 @@ namespace OrthancStone
 
   bool MacroSceneLayer::HasLayer(size_t index) const
   {
+    CheckInvariant();
+    
     if (index >= layers_.size())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
@@ -98,6 +151,8 @@ namespace OrthancStone
 
   void MacroSceneLayer::DeleteLayer(size_t index)
   {
+    CheckInvariant();
+    
     if (index >= layers_.size())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
@@ -108,16 +163,19 @@ namespace OrthancStone
     }
     else
     {
-      // TODO - Add to a recycling list
-      
       delete layers_[index];
       layers_[index] = NULL;
+
+      assert(recycledLayers_.find(index) == recycledLayers_.end());
+      recycledLayers_.insert(index);
     }
   }
 
 
   const ISceneLayer& MacroSceneLayer::GetLayer(size_t index) const
   {
+    CheckInvariant();
+    
     if (index >= layers_.size())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
@@ -135,6 +193,8 @@ namespace OrthancStone
 
   ISceneLayer* MacroSceneLayer::Clone() const
   {
+    CheckInvariant();
+    
     std::unique_ptr<MacroSceneLayer> copy(new MacroSceneLayer);
 
     for (size_t i = 0; i < layers_.size(); i++)
@@ -149,7 +209,7 @@ namespace OrthancStone
       }
     }
 
-    // TODO - Copy recycling list
+    copy->recycledLayers_ = recycledLayers_;
 
     return copy.release();
   }
@@ -157,6 +217,8 @@ namespace OrthancStone
 
   void MacroSceneLayer::GetBoundingBox(Extent2D& target) const
   {
+    CheckInvariant();
+    
     target.Clear();
 
     for (size_t i = 0; i < layers_.size(); i++)

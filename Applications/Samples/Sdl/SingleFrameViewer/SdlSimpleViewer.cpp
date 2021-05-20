@@ -19,6 +19,11 @@
  **/
 
 
+
+#define SAMPLE_USE_OPENGL             1
+#define SAMPLE_USE_ANNOTATIONS_LAYER  1
+
+
 #include "SdlSimpleViewerApplication.h"
 #include "../SdlHelpers.h"
 #include "../../Common/SampleHelpers.h"
@@ -70,13 +75,21 @@ static void ProcessOptions(int argc, char* argv[])
   std::cout << desc << std::endl;
 
   std::cout << std::endl << "Keyboard shorcuts:" << std::endl
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
+            << "  a\tCreate angle annotations" << std::endl
+            << "  c\tCreate circle annotations" << std::endl
+            << "  d\tDelete mode for annotations" << std::endl
+            << "  e\tEdit mode, don't create annotation (default)" << std::endl
+            << "  l\tCreate line annotations" << std::endl
+#else
             << "  a\tEnable/disable the angle annotation tool" << std::endl
-            << "  f\tToggle fullscreen display" << std::endl
             << "  l\tEnable/disable the line annotation tool" << std::endl
-            << "  q\tExit" << std::endl
             << "  r\tRedo the last edit to the annotation tools" << std::endl
-            << "  s\tFit the viewpoint to the image" << std::endl
             << "  u\tUndo the last edit to the annotation tools" << std::endl
+#endif
+            << "  f\tToggle fullscreen display" << std::endl
+            << "  q\tExit" << std::endl
+            << "  s\tFit the viewpoint to the image" << std::endl
             << std::endl << "Mouse buttons:" << std::endl
             << "  left  \tChange windowing, or edit annotation" << std::endl
             << "  center\tMove the viewpoint, or edit annotation" << std::endl
@@ -144,8 +157,7 @@ int main(int argc, char* argv[])
     //Orthanc::Logging::EnableTraceLevel(true);
 
     {
-
-#if 0
+#if SAMPLE_USE_OPENGL == 1
       boost::shared_ptr<OrthancStone::SdlViewport> viewport =
         OrthancStone::SdlOpenGLViewport::Create("Stone of Orthanc", 800, 600);
 #else
@@ -153,7 +165,9 @@ int main(int argc, char* argv[])
         OrthancStone::SdlCairoViewport::Create("Stone of Orthanc", 800, 600);
 #endif
 
+#if SAMPLE_USE_ANNOTATIONS_LAYER != 1
       boost::shared_ptr<OrthancStone::UndoStack> undoStack(new OrthancStone::UndoStack);
+#endif
 
       OrthancStone::GenericLoadersContext context(1, 4, 1);
 
@@ -170,9 +184,16 @@ int main(int argc, char* argv[])
           
           std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
           lock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
-          //lock->GetController().SetUndoStack(undoStack);
+
+#if SAMPLE_USE_ANNOTATIONS_LAYER != 1
+          lock->GetController().SetUndoStack(undoStack);
+#endif
         }
 
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
+        OrthancStone::AnnotationsSceneLayer annotations(10);
+        annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
+#else
         ActiveTool activeTool = ActiveTool_None;
 
         boost::shared_ptr<OrthancStone::LineMeasureTool> lineMeasureTool(OrthancStone::LineMeasureTool::Create(viewport));
@@ -182,17 +203,7 @@ int main(int argc, char* argv[])
         boost::shared_ptr<OrthancStone::AngleMeasureTool> angleMeasureTool(OrthancStone::AngleMeasureTool::Create(viewport));
         bool angleMeasureFirst = true;
         angleMeasureTool->Disable();
-
-        OrthancStone::AnnotationsSceneLayer annotations(10);
-        annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Angle);
-
-        {
-          Json::Value v;
-          annotations.Serialize(v);
-          std::cout << v.toStyledString() << std::endl;
-          annotations.Clear();
-          annotations.Unserialize(v);
-        }
+#endif
 
         boost::shared_ptr<SdlSimpleViewerApplication> application(
           SdlSimpleViewerApplication::Create(context, viewport));
@@ -254,6 +265,7 @@ int main(int argc, char* argv[])
                     stop = true;
                     break;
 
+#if SAMPLE_USE_ANNOTATIONS_LAYER != 1
                   case SDLK_u:
                   {
                     std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
@@ -263,7 +275,9 @@ int main(int argc, char* argv[])
                     }
                     break;
                   }
+#endif
 
+#if SAMPLE_USE_ANNOTATIONS_LAYER != 1
                   case SDLK_r:
                   {
                     std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
@@ -273,8 +287,30 @@ int main(int argc, char* argv[])
                     }
                     break;
                   }
+#endif
+
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
+                  case SDLK_c:
+                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Circle);
+                    break;
+#endif
+
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
+                  case SDLK_e:
+                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
+                    break;
+#endif
+
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
+                  case SDLK_d:
+                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Erase);
+                    break;
+#endif
 
                   case SDLK_l:
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
+                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Segment);
+#else
                     if (activeTool == ActiveTool_Line)
                     {
                       lineMeasureTool->Disable();
@@ -299,9 +335,13 @@ int main(int argc, char* argv[])
                       angleMeasureTool->Disable();
                       activeTool = ActiveTool_Line;
                     }
+#endif
                     break;
 
                   case SDLK_a:
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
+                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Angle);
+#else
                     if (activeTool == ActiveTool_Angle)
                     {
                       angleMeasureTool->Disable();
@@ -333,6 +373,7 @@ int main(int argc, char* argv[])
                       angleMeasureTool->Enable();
                       activeTool = ActiveTool_Angle;
                     }
+#endif
                     break;
 
                   default:
@@ -355,12 +396,13 @@ int main(int argc, char* argv[])
                     case SDL_MOUSEBUTTONDOWN:
                     {
                       boost::shared_ptr<OrthancStone::IFlexiblePointerTracker> t;
-
+                      
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
                       if (p.GetMouseButton() == OrthancStone::MouseButton_Left)
                       {
                         t.reset(annotations.CreateTracker(p.GetMainPosition(), lock->GetController().GetScene()));
                       }
-                      
+#else
                       if (t.get() == NULL)
                       {
                         switch (activeTool)
@@ -380,6 +422,7 @@ int main(int argc, char* argv[])
                             throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
                         }
                       }
+#endif
                       
                       if (t.get() != NULL)
                       {
@@ -396,6 +439,7 @@ int main(int argc, char* argv[])
                     }
 
                     case SDL_MOUSEMOTION:
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
                       if (lock->GetController().HandleMouseMove(p))
                       {
                         lock->Invalidate();
@@ -411,6 +455,13 @@ int main(int argc, char* argv[])
                           paint = true;
                         }
                       }
+#else
+                      if (lock->GetController().HandleMouseMove(p))
+                      {
+                        lock->Invalidate();
+                        paint = true;
+                      }
+#endif
                       break;
 
                     case SDL_MOUSEBUTTONUP:
@@ -427,10 +478,12 @@ int main(int argc, char* argv[])
 
             if (paint)
             {
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
               {
                 std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
                 annotations.Render(lock->GetController().GetScene());
               }
+#endif
               
               viewport->Paint();
             }

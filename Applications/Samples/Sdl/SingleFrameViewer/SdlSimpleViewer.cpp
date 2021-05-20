@@ -56,6 +56,17 @@ namespace OrthancStone
 {
   class AnnotationsOverlay : public boost::noncopyable
   {
+  public:
+    enum Tool
+    {
+      Tool_Edit,
+      Tool_None,
+      Tool_Segment,
+      Tool_Angle,
+      Tool_Circle,
+      Tool_Erase
+    };
+    
   private:
     class Measure;
     
@@ -69,12 +80,6 @@ namespace OrthancStone
       bool      isHover_;
       int       depth_;
 
-    protected:
-      Measure& GetParentMeasure() const
-      {
-        return parentMeasure_;
-      }
-      
     public:
       Primitive(Measure& parentMeasure,
                 int depth) :
@@ -91,6 +96,11 @@ namespace OrthancStone
       {
       }
 
+      Measure& GetParentMeasure() const
+      {
+        return parentMeasure_;
+      }
+      
       int GetDepth() const
       {
         return depth_;
@@ -731,6 +741,7 @@ namespace OrthancStone
     class SegmentMeasure : public Measure
     {
     private:
+      bool      showLabel_;
       Handle&   handle1_;
       Handle&   handle2_;
       Segment&  segment_;
@@ -738,40 +749,45 @@ namespace OrthancStone
 
       void UpdateLabel()
       {
-        TextSceneLayer content;
+        if (showLabel_)
+        {
+          TextSceneLayer content;
 
-        double x1 = handle1_.GetCenter().GetX();
-        double y1 = handle1_.GetCenter().GetY();
-        double x2 = handle2_.GetCenter().GetX();
-        double y2 = handle2_.GetCenter().GetY();
+          double x1 = handle1_.GetCenter().GetX();
+          double y1 = handle1_.GetCenter().GetY();
+          double x2 = handle2_.GetCenter().GetX();
+          double y2 = handle2_.GetCenter().GetY();
         
-        // Put the label to the right of the right-most handle
-        if (x1 < x2)
-        {
-          content.SetPosition(x2, y2);
+          // Put the label to the right of the right-most handle
+          if (x1 < x2)
+          {
+            content.SetPosition(x2, y2);
+          }
+          else
+          {
+            content.SetPosition(x1, y1);
+          }
+
+          content.SetAnchor(BitmapAnchor_CenterLeft);
+          content.SetBorder(10);
+
+          double dx = x1 - x2;
+          double dy = y1 - y2;
+          char buf[32];
+          sprintf(buf, "%0.2f cm", sqrt(dx * dx + dy * dy) / 10.0);
+          content.SetText(buf);
+
+          label_.SetContent(content);
         }
-        else
-        {
-          content.SetPosition(x1, y1);
-        }
-
-        content.SetAnchor(BitmapAnchor_CenterLeft);
-        content.SetBorder(10);
-
-        double dx = x1 - x2;
-        double dy = y1 - y2;
-        char buf[32];
-        sprintf(buf, "%0.2f cm", sqrt(dx * dx + dy * dy) / 10.0);
-        content.SetText(buf);
-
-        label_.SetContent(content);
       }
 
     public:
       SegmentMeasure(AnnotationsOverlay& that,
+                     bool showLabel,
                      const ScenePoint2D& p1,
                      const ScenePoint2D& p2) :
         Measure(that),
+        showLabel_(showLabel),
         handle1_(AddTypedPrimitive<Handle>(new Handle(*this, p1))),
         handle2_(AddTypedPrimitive<Handle>(new Handle(*this, p2))),
         segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
@@ -779,6 +795,11 @@ namespace OrthancStone
       {
         label_.SetColor(Color(255, 0, 0));
         UpdateLabel();
+      }
+
+      Handle& GetHandle1() const
+      {
+        return handle1_;
       }
 
       Handle& GetHandle2() const
@@ -861,6 +882,11 @@ namespace OrthancStone
       {
         label_.SetColor(Color(255, 0, 0));
         UpdateLabel();
+      }
+
+      Handle& GetEndHandle() const
+      {
+        return endHandle_;
       }
 
       virtual void SignalMove(Primitive& primitive) ORTHANC_OVERRIDE
@@ -1015,7 +1041,7 @@ namespace OrthancStone
         }
         else
         {
-          measure_ = new SegmentMeasure(that, sceneClick, sceneClick);
+          measure_ = new SegmentMeasure(that, true /* show label */, sceneClick, sceneClick);
           handle2_ = &dynamic_cast<SegmentMeasure*>(measure_)->GetHandle2();
         }
         
@@ -1058,10 +1084,124 @@ namespace OrthancStone
     };
 
 
+    class CreateAngleTracker : public IFlexiblePointerTracker
+    {
+    private:
+      AnnotationsOverlay&  that_;
+      SegmentMeasure*      segment_;
+      AngleMeasure*        angle_;
+      AffineTransform2D    canvasToScene_;
+      
+    public:
+      CreateAngleTracker(AnnotationsOverlay& that,
+                         const ScenePoint2D& sceneClick,
+                         const AffineTransform2D& canvasToScene) :
+        that_(that),
+        segment_(NULL),
+        angle_(NULL),
+        canvasToScene_(canvasToScene)
+      {
+        segment_ = new SegmentMeasure(that, false /* no length label */, sceneClick, sceneClick);
+      }
+
+      virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+        if (segment_ != NULL)
+        {
+          segment_->GetHandle2().SetCenter(event.GetMainPosition().Apply(canvasToScene_));
+          segment_->SignalMove(segment_->GetHandle2());
+        }
+
+        if (angle_ != NULL)
+        {
+          angle_->GetEndHandle().SetCenter(event.GetMainPosition().Apply(canvasToScene_));
+          angle_->SignalMove(angle_->GetEndHandle());
+        }
+      }
+      
+      virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+        if (segment_ != NULL)
+        {
+          // End of first step: The first segment is available, now create the angle
+
+          angle_ = new AngleMeasure(that_, segment_->GetHandle1().GetCenter(),
+                                    segment_->GetHandle2().GetCenter(),
+                                    segment_->GetHandle2().GetCenter());
+          
+          that_.DeleteMeasure(segment_);
+          segment_ = NULL;
+        }
+        else
+        {
+          angle_ = NULL;  // IsAlive() becomes false
+        }
+      }
+
+      virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+      }
+
+      virtual bool IsAlive() const ORTHANC_OVERRIDE
+      {
+        return (segment_ != NULL ||
+                angle_ != NULL);
+      }
+
+      virtual void Cancel() ORTHANC_OVERRIDE
+      {
+        if (segment_ != NULL)
+        {
+          that_.DeleteMeasure(segment_);
+          segment_ = NULL;
+        }
+
+        if (angle_ != NULL)
+        {
+          that_.DeleteMeasure(angle_);
+          angle_ = NULL;
+        }
+      }
+    };
+
+
+    // Dummy tracker that is only used for deletion, in order to warn
+    // the caller that the mouse action was taken into consideration
+    class EraseTracker : public IFlexiblePointerTracker
+    {
+    public:
+      EraseTracker()
+      {
+      }
+
+      virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+      }
+      
+      virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+      }
+
+      virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE
+      {
+      }
+
+      virtual bool IsAlive() const ORTHANC_OVERRIDE
+      {
+        return false;
+      }
+
+      virtual void Cancel() ORTHANC_OVERRIDE
+      {
+      }
+    };
+
+
     typedef std::set<Primitive*>  Primitives;
     typedef std::set<Measure*>    Measures;
     typedef std::set<size_t>      SubLayers;
 
+    Tool        activeTool_;
     size_t      macroLayerIndex_;
     size_t      polylineSubLayer_;
     Primitives  primitives_;
@@ -1103,10 +1243,11 @@ namespace OrthancStone
     
   public:
     AnnotationsOverlay(size_t macroLayerIndex) :
+      activeTool_(Tool_Edit),
       macroLayerIndex_(macroLayerIndex),
       polylineSubLayer_(0)  // dummy initialization
     {
-      measures_.insert(new SegmentMeasure(*this, ScenePoint2D(0, 0), ScenePoint2D(100, 100)));
+      measures_.insert(new SegmentMeasure(*this, true /* show label */, ScenePoint2D(0, 0), ScenePoint2D(100, 100)));
       measures_.insert(new AngleMeasure(*this, ScenePoint2D(100, 50), ScenePoint2D(150, 40), ScenePoint2D(200, 50)));
       measures_.insert(new CircleMeasure(*this, ScenePoint2D(50, 200), ScenePoint2D(100, 250)));
     }
@@ -1120,6 +1261,16 @@ namespace OrthancStone
       }
 
       measures_.clear();
+    }
+
+    void SetActiveTool(Tool tool)
+    {
+      activeTool_ = tool;
+    }
+
+    Tool GetActiveTool() const
+    {
+      return activeTool_;
     }
 
     void Render(Scene2D& scene)
@@ -1183,54 +1334,90 @@ namespace OrthancStone
     bool SetMouseHover(const ScenePoint2D& p /* expressed in canvas coordinates */,
                        const Scene2D& scene)
     {
-      bool needsRefresh = false;
-      
-      const ScenePoint2D s = p.Apply(scene.GetCanvasToSceneTransform());
-      
-      for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+      if (activeTool_ == Tool_None)
       {
-        assert(*it != NULL);
-        bool hover = (*it)->IsHit(s, scene);
-
-        if ((*it)->IsHover() != hover)
-        {
-          needsRefresh = true;
-        }
-        
-        (*it)->SetHover(hover);
+        return ClearHover();
       }
+      else
+      {
+        bool needsRefresh = false;
+      
+        const ScenePoint2D s = p.Apply(scene.GetCanvasToSceneTransform());
+      
+        for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+        {
+          assert(*it != NULL);
+          bool hover = (*it)->IsHit(s, scene);
 
-      return needsRefresh;
+          if ((*it)->IsHover() != hover)
+          {
+            needsRefresh = true;
+          }
+        
+          (*it)->SetHover(hover);
+        }
+
+        return needsRefresh;
+      }
     }
+
 
     IFlexiblePointerTracker* CreateTracker(const ScenePoint2D& p /* expressed in canvas coordinates */,
                                            const Scene2D& scene)
     {
-      const ScenePoint2D s = p.Apply(scene.GetCanvasToSceneTransform());
-
-      int bestDepth;
-      std::unique_ptr<IFlexiblePointerTracker> tracker;
-      
-      for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+      if (activeTool_ == Tool_None)
       {
-        assert(*it != NULL);
-        if ((*it)->IsHit(s, scene))
+        return NULL;
+      }
+      else
+      {
+        const ScenePoint2D s = p.Apply(scene.GetCanvasToSceneTransform());
+
+        Primitive* bestHit = NULL;
+      
+        for (Primitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
         {
-          if (tracker.get() == NULL ||
-              bestDepth > (*it)->GetDepth())
+          assert(*it != NULL);
+          if ((*it)->IsHit(s, scene))
           {
-            tracker.reset(new EditPrimitiveTracker(**it, s, scene.GetCanvasToSceneTransform()));
-            bestDepth = (*it)->GetDepth();
+            if (bestHit == NULL ||
+                bestHit->GetDepth() > (*it)->GetDepth())
+            {
+              bestHit = *it;
+            }
+          }
+        }
+
+        if (bestHit != NULL)
+        {
+          if (activeTool_ == Tool_Erase)
+          {
+            DeleteMeasure(&bestHit->GetParentMeasure());
+            return new EraseTracker;
+          }
+          else
+          {
+            return new EditPrimitiveTracker(*bestHit, s, scene.GetCanvasToSceneTransform());
+          }
+        }
+        else
+        {
+          switch (activeTool_)
+          {
+            case Tool_Segment:
+              return new CreateSegmentOrCircleTracker(*this, false /* segment */, s, scene.GetCanvasToSceneTransform());
+
+            case Tool_Circle:
+              return new CreateSegmentOrCircleTracker(*this, true /* circle */, s, scene.GetCanvasToSceneTransform());
+
+            case Tool_Angle:
+              return new CreateAngleTracker(*this, s, scene.GetCanvasToSceneTransform());
+
+            default:
+              return NULL;
           }
         }
       }
-
-      if (tracker.get() == NULL)
-      {
-        tracker.reset(new CreateSegmentOrCircleTracker(*this, true /* circle */, s, scene.GetCanvasToSceneTransform()));
-      }
-
-      return tracker.release();
     }
   };
 }
@@ -1379,6 +1566,7 @@ int main(int argc, char* argv[])
         angleMeasureTool->Disable();
 
         OrthancStone::AnnotationsOverlay overlay(10);
+        overlay.SetActiveTool(OrthancStone::AnnotationsOverlay::Tool_Angle);
 
         boost::shared_ptr<SdlSimpleViewerApplication> application(
           SdlSimpleViewerApplication::Create(context, viewport));

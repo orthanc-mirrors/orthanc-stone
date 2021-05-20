@@ -70,6 +70,7 @@
 #include <Messages/ObserverBase.h>
 #include <Oracle/ParseDicomFromWadoCommand.h>
 #include <Oracle/ParseDicomSuccessMessage.h>
+#include <Scene2D/AnnotationsSceneLayer.h>
 #include <Scene2D/ArrowSceneLayer.h>
 #include <Scene2D/ColorTextureSceneLayer.h>
 #include <Scene2D/FloatTextureSceneLayer.h>
@@ -133,7 +134,12 @@ enum STONE_WEB_VIEWER_EXPORT WebViewerAction
     WebViewerAction_Zoom,
     WebViewerAction_Pan,
     WebViewerAction_Rotate,
-    WebViewerAction_Crosshair
+    WebViewerAction_Crosshair,
+    
+    WebViewerAction_CreateAngle,
+    WebViewerAction_CreateCircle,
+    WebViewerAction_CreateSegment,
+    WebViewerAction_DeleteMeasure
     };
   
 
@@ -155,6 +161,10 @@ static OrthancStone::MouseAction ConvertWebViewerAction(int action)
       return OrthancStone::MouseAction_Rotate;
       
     case WebViewerAction_Crosshair:
+    case WebViewerAction_CreateAngle:
+    case WebViewerAction_CreateCircle:
+    case WebViewerAction_CreateSegment:
+    case WebViewerAction_DeleteMeasure:
       return OrthancStone::MouseAction_None;
 
     default:
@@ -1195,7 +1205,8 @@ public:
 private:
   static const int LAYER_TEXTURE = 0;
   static const int LAYER_REFERENCE_LINES = 1;
-  static const int LAYER_ANNOTATIONS = 2;
+  static const int LAYER_ANNOTATIONS_OSIRIX = 2;
+  static const int LAYER_ANNOTATIONS_STONE = 3;
 
   
   class ICommand : public Orthanc::IDynamicObject
@@ -1568,6 +1579,7 @@ private:
   size_t       focusFrameNumber_;
   
   boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  annotations_;
+  boost::shared_ptr<OrthancStone::AnnotationsSceneLayer>            annotationsStone_;
 
   void ScheduleNextPrefetch()
   {
@@ -1741,7 +1753,7 @@ private:
       layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
     }
 
-    std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsLayer;
+    std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsOsiriX;
 
     if (annotations_)
     {
@@ -1750,8 +1762,8 @@ private:
       if (plane.IsValid() &&
           !a.empty())
       {
-        annotationsLayer.reset(new OrthancStone::MacroSceneLayer);
-        // annotationsLayer->Reserve(a.size());
+        annotationsOsiriX.reset(new OrthancStone::MacroSceneLayer);
+        // annotationsOsiriX->Reserve(a.size());
 
         OrthancStone::OsiriXLayerFactory factory;
         factory.SetColor(0, 255, 0);
@@ -1759,35 +1771,39 @@ private:
         for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
         {
           const OrthancStone::OsiriX::Annotation& annotation = annotations_->GetAnnotation(*it);
-          annotationsLayer->AddLayer(factory.Create(annotation, plane));
+          annotationsOsiriX->AddLayer(factory.Create(annotation, plane));
         }
       }
     }
 
-    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-
-    OrthancStone::Scene2D& scene = lock->GetController().GetScene();
-
-    scene.SetLayer(LAYER_TEXTURE, layer.release());
-
-    if (annotationsLayer.get() != NULL)
     {
-      scene.SetLayer(LAYER_ANNOTATIONS, annotationsLayer.release());
-    }
-    else
-    {
-      scene.DeleteLayer(LAYER_ANNOTATIONS);
-    }
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
 
-    if (fitNextContent_)
-    {
-      lock->RefreshCanvasSize();
-      lock->GetCompositor().FitContent(scene);
-      fitNextContent_ = false;
-    }
+      OrthancStone::Scene2D& scene = lock->GetController().GetScene();
+
+      scene.SetLayer(LAYER_TEXTURE, layer.release());
+
+      if (annotationsOsiriX.get() != NULL)
+      {
+        scene.SetLayer(LAYER_ANNOTATIONS_OSIRIX, annotationsOsiriX.release());
+      }
+      else
+      {
+        scene.DeleteLayer(LAYER_ANNOTATIONS_OSIRIX);
+      }
+
+      if (fitNextContent_)
+      {
+        lock->RefreshCanvasSize();
+        lock->GetCompositor().FitContent(scene);
+        fitNextContent_ = false;
+      }
+
+      annotationsStone_->Render(scene);
         
-    //lock->GetCompositor().Refresh(scene);
-    lock->Invalidate();
+      //lock->GetCompositor().Refresh(scene);
+      lock->Invalidate();
+    }
   }
 
 
@@ -2010,12 +2026,24 @@ private:
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
       std::string ttf;
       Orthanc::EmbeddedResources::GetFileResource(ttf, Orthanc::EmbeddedResources::UBUNTU_FONT);
-      lock->GetCompositor().SetFont(0, ttf, 24 /* font size */, Orthanc::Encoding_Latin1);
+      lock->GetCompositor().SetFont(0, ttf, 16 /* font size */, Orthanc::Encoding_Latin1);
     }
     
     emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, OnWheel);
 
     SetWindowingPreset();
+
+    {
+      annotationsStone_.reset(new OrthancStone::AnnotationsSceneLayer(LAYER_ANNOTATIONS_STONE));
+      annotationsStone_->AddSegmentAnnotation(OrthancStone::ScenePoint2D(0, 0),
+                                              OrthancStone::ScenePoint2D(100, 100));
+      annotationsStone_->AddAngleAnnotation(OrthancStone::ScenePoint2D(100, 50),
+                                            OrthancStone::ScenePoint2D(150, 40),
+                                            OrthancStone::ScenePoint2D(200, 50));
+      annotationsStone_->AddCircleAnnotation(OrthancStone::ScenePoint2D(50, 200),
+                                             OrthancStone::ScenePoint2D(100, 250));
+      annotationsStone_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
+    }
   }
 
 
@@ -2095,6 +2123,36 @@ private:
     dynamic_cast<const ICommand&>(message.GetOrigin().GetPayload()).Handle(message);
   }
 
+
+  void RefreshAnnotations()
+  {
+    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+    annotationsStone_->Render(lock->GetController().GetScene());
+    lock->Invalidate();
+  }
+  
+  void Handle(const OrthancStone::ViewportController::SceneTransformChanged& message)
+  {
+    RefreshAnnotations();
+  }
+
+  void Handle(const OrthancStone::AnnotationsSceneLayer::AnnotationChangedMessage& message)
+  {
+    RefreshAnnotations();
+  }
+
+  void Handle(const OrthancStone::AnnotationsSceneLayer::AnnotationAddedMessage& message)
+  {
+    RefreshAnnotations();
+    LOG(WARNING) << "annotation added";
+  }
+
+  void Handle(const OrthancStone::AnnotationsSceneLayer::AnnotationRemovedMessage& message)
+  {
+    RefreshAnnotations();
+    LOG(WARNING) << "annotation removed";
+  }
+
 public:
   virtual ~ViewerViewport()
   {
@@ -2125,11 +2183,21 @@ public:
 
       viewport->Register<OrthancStone::ParseDicomSuccessMessage>(
         lock->GetOracleObservable(), &ViewerViewport::Handle);
+
+      viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationChangedMessage>(
+        *viewport->annotationsStone_, &ViewerViewport::Handle);
+
+      viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationAddedMessage>(
+        *viewport->annotationsStone_, &ViewerViewport::Handle);
+
+      viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationRemovedMessage>(
+        *viewport->annotationsStone_, &ViewerViewport::Handle);
     }
 
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->viewport_->Lock());
       viewport->Register<OrthancStone::ViewportController::GrayscaleWindowingChanged>(lock->GetController(), &ViewerViewport::Handle);
+      viewport->Register<OrthancStone::ViewportController::SceneTransformChanged>(lock->GetController(), &ViewerViewport::Handle);
     }
 
     return viewport;    
@@ -2223,6 +2291,8 @@ public:
       lock->GetCompositor().FitContent(lock->GetController().GetScene());
     }
 
+    annotationsStone_->Render(lock->GetController().GetScene());
+    
     lock->Invalidate();
   }
 
@@ -2559,6 +2629,18 @@ public:
       }
       else
       {
+        {
+          std::unique_ptr<OrthancStone::IViewport::ILock> lock2(lock1->Lock());
+
+          std::unique_ptr<OrthancStone::IFlexiblePointerTracker> t;
+          t.reset(viewer_.annotationsStone_->CreateTracker(event.GetMainPosition(), lock2->GetController().GetScene()));
+
+          if (t.get() != NULL)
+          {
+            return t.release();        
+          }
+        }
+
         return DefaultViewportInteractor::CreateTracker(
           viewport, event, viewportWidth, viewportHeight);
       }

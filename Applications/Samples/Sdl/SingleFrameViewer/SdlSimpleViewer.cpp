@@ -314,7 +314,7 @@ int main(int argc, char* argv[])
 
 #if SAMPLE_USE_ANNOTATIONS_LAYER == 1
                   case SDLK_d:
-                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Erase);
+                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Remove);
                     break;
 #endif
 

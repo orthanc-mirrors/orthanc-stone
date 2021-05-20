@@ -233,7 +233,7 @@ namespace OrthancStone
     }
 
     virtual bool IsHit(const ScenePoint2D& p,
-                       const Scene2D& scene) const
+                       const Scene2D& scene) const ORTHANC_OVERRIDE
     {
       const double zoom = scene.GetSceneToCanvasTransform().ComputeZoom();
 
@@ -332,7 +332,7 @@ namespace OrthancStone
     }
 
     virtual bool IsHit(const ScenePoint2D& p,
-                       const Scene2D& scene) const
+                       const Scene2D& scene) const ORTHANC_OVERRIDE
     {
       const double zoom = scene.GetSceneToCanvasTransform().ComputeZoom();
       return (ScenePoint2D::SquaredDistancePtSegment(p1_ + delta_, p2_ + delta_, p) * zoom * zoom <=
@@ -415,7 +415,7 @@ namespace OrthancStone
     }
 
     virtual bool IsHit(const ScenePoint2D& p,
-                       const Scene2D& scene) const
+                       const Scene2D& scene) const ORTHANC_OVERRIDE
     {
       return false;
     }
@@ -544,7 +544,7 @@ namespace OrthancStone
     }
 
     virtual bool IsHit(const ScenePoint2D& p,
-                       const Scene2D& scene) const
+                       const Scene2D& scene) const ORTHANC_OVERRIDE
     {
       return false;
     }
@@ -631,7 +631,7 @@ namespace OrthancStone
     }        
 
     virtual bool IsHit(const ScenePoint2D& p,
-                       const Scene2D& scene) const
+                       const Scene2D& scene) const ORTHANC_OVERRIDE
     {
       return false;
     }
@@ -677,15 +677,18 @@ namespace OrthancStone
   class AnnotationsSceneLayer::EditPrimitiveTracker : public IFlexiblePointerTracker
   {
   private:
-    GeometricPrimitive&  primitive_;
-    ScenePoint2D         sceneClick_;
-    AffineTransform2D    canvasToScene_;
-    bool                 alive_;
+    AnnotationsSceneLayer&  that_;
+    GeometricPrimitive&     primitive_;
+    ScenePoint2D            sceneClick_;
+    AffineTransform2D       canvasToScene_;
+    bool                    alive_;
       
   public:
-    EditPrimitiveTracker(GeometricPrimitive& primitive,
+    EditPrimitiveTracker(AnnotationsSceneLayer& that,
+                         GeometricPrimitive& primitive,
                          const ScenePoint2D& sceneClick,
                          const AffineTransform2D& canvasToScene) :
+      that_(that),
       primitive_(primitive),
       sceneClick_(sceneClick),
       canvasToScene_(canvasToScene),
@@ -696,12 +699,14 @@ namespace OrthancStone
     virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
     {
       primitive_.MovePreview(event.GetMainPosition().Apply(canvasToScene_) - sceneClick_);
+      that_.BroadcastMessage(AnnotationChangedMessage(that_));
     }
       
     virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE
     {
       primitive_.MoveDone(event.GetMainPosition().Apply(canvasToScene_) - sceneClick_);
       alive_ = false;
+      that_.BroadcastMessage(AnnotationChangedMessage(that_));
     }
 
     virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE
@@ -1141,6 +1146,8 @@ namespace OrthancStone
         assert(handle2_ != NULL);
         handle2_->SetCenter(event.GetMainPosition().Apply(canvasToScene_));
         annotation_->SignalMove(*handle2_);
+
+        that_.BroadcastMessage(AnnotationChangedMessage(that_));
       }
     }
       
@@ -1197,12 +1204,14 @@ namespace OrthancStone
       {
         segment_->GetHandle2().SetCenter(event.GetMainPosition().Apply(canvasToScene_));
         segment_->SignalMove(segment_->GetHandle2());
+        that_.BroadcastMessage(AnnotationChangedMessage(that_));
       }
 
       if (angle_ != NULL)
       {
         angle_->GetEndHandle().SetCenter(event.GetMainPosition().Apply(canvasToScene_));
         angle_->SignalMove(angle_->GetEndHandle());
+        that_.BroadcastMessage(AnnotationChangedMessage(that_));
       }
     }
       
@@ -1218,6 +1227,8 @@ namespace OrthancStone
           
         that_.DeleteAnnotation(segment_);
         segment_ = NULL;
+
+        that_.BroadcastMessage(AnnotationChangedMessage(that_));
       }
       else
       {
@@ -1256,10 +1267,10 @@ namespace OrthancStone
 
   // Dummy tracker that is only used for deletion, in order to warn
   // the caller that the mouse action was taken into consideration
-  class AnnotationsSceneLayer::EraseTracker : public IFlexiblePointerTracker
+  class AnnotationsSceneLayer::RemoveTracker : public IFlexiblePointerTracker
   {
   public:
-    EraseTracker()
+    RemoveTracker()
     {
     }
 
@@ -1484,15 +1495,15 @@ namespace OrthancStone
 
       if (bestHit != NULL)
       {
-        if (activeTool_ == Tool_Erase)
+        if (activeTool_ == Tool_Remove)
         {
           DeleteAnnotation(&bestHit->GetParentAnnotation());
           BroadcastMessage(AnnotationRemovedMessage(*this));
-          return new EraseTracker;
+          return new RemoveTracker;
         }
         else
         {
-          return new EditPrimitiveTracker(*bestHit, s, scene.GetCanvasToSceneTransform());
+          return new EditPrimitiveTracker(*this, *bestHit, s, scene.GetCanvasToSceneTransform());
         }
       }
       else

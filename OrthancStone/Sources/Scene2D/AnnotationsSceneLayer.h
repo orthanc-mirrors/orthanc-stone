@@ -31,6 +31,7 @@ namespace OrthancStone
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationAddedMessage, AnnotationsSceneLayer);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationRemovedMessage, AnnotationsSceneLayer);
+    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationChangedMessage, AnnotationsSceneLayer);
 
     enum Tool
     {
@@ -39,7 +40,7 @@ namespace OrthancStone
       Tool_Segment,
       Tool_Angle,
       Tool_Circle,
-      Tool_Erase
+      Tool_Remove
     };
     
   private:
@@ -58,7 +59,7 @@ namespace OrthancStone
     class EditPrimitiveTracker;
     class CreateSegmentOrCircleTracker;
     class CreateAngleTracker;
-    class EraseTracker;
+    class RemoveTracker;
 
     typedef std::set<GeometricPrimitive*>  GeometricPrimitives;
     typedef std::set<Annotation*>          Annotations;

@@ -32,6 +32,7 @@ var PATIENT_NAME = '0010,0010';
 var SERIES_NUMBER = '0020,0011';
 var SERIES_DESCRIPTION = '0008,103e';
 var MODALITY = '0008,0060';
+var PATIENT_BIRTH_DATE = '0010,0030';
 
 // Registry of the PDF series for which the instance metadata is still waiting
 var pendingSeriesPdf_ = {};

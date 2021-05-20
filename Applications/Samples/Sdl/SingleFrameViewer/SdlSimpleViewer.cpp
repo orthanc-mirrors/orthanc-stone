@@ -652,7 +652,7 @@ namespace OrthancStone
 
       virtual ~Text()
       {
-        if (content_.get() != NULL)
+        if (!first_)
         {
           that_.TagSubLayerToRemove(subLayer_);
         }
@@ -848,6 +848,28 @@ namespace OrthancStone
         target[KEY_X2] = handle2_.GetCenter().GetX();
         target[KEY_Y2] = handle2_.GetCenter().GetY();
       }
+
+      static void Unserialize(AnnotationsOverlay& target,
+                              const Json::Value& source)
+      {
+        if (source.isMember(KEY_X1) &&
+            source.isMember(KEY_Y1) &&
+            source.isMember(KEY_X2) &&
+            source.isMember(KEY_Y2) &&
+            source[KEY_X1].isNumeric() &&
+            source[KEY_Y1].isNumeric() &&
+            source[KEY_X2].isNumeric() &&
+            source[KEY_Y2].isNumeric())
+        {
+          new SegmentAnnotation(target, true,
+                                ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
+                                ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()));
+        }
+        else
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize an segment annotation");
+        }
+      }
     };
 
     
@@ -964,6 +986,33 @@ namespace OrthancStone
         target[KEY_X3] = endHandle_.GetCenter().GetX();
         target[KEY_Y3] = endHandle_.GetCenter().GetY();
       }
+
+      static void Unserialize(AnnotationsOverlay& target,
+                              const Json::Value& source)
+      {
+        if (source.isMember(KEY_X1) &&
+            source.isMember(KEY_Y1) &&
+            source.isMember(KEY_X2) &&
+            source.isMember(KEY_Y2) &&
+            source.isMember(KEY_X3) &&
+            source.isMember(KEY_Y3) &&
+            source[KEY_X1].isNumeric() &&
+            source[KEY_Y1].isNumeric() &&
+            source[KEY_X2].isNumeric() &&
+            source[KEY_Y2].isNumeric() &&
+            source[KEY_X3].isNumeric() &&
+            source[KEY_Y3].isNumeric())
+        {
+          new AngleAnnotation(target,
+                              ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
+                              ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()),
+                              ScenePoint2D(source[KEY_X3].asDouble(), source[KEY_Y3].asDouble()));
+        }
+        else
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize an angle annotation");
+        }
+      }
     };
 
     
@@ -1060,6 +1109,28 @@ namespace OrthancStone
         target[KEY_Y1] = handle1_.GetCenter().GetY();
         target[KEY_X2] = handle2_.GetCenter().GetX();
         target[KEY_Y2] = handle2_.GetCenter().GetY();
+      }
+
+      static void Unserialize(AnnotationsOverlay& target,
+                              const Json::Value& source)
+      {
+        if (source.isMember(KEY_X1) &&
+            source.isMember(KEY_Y1) &&
+            source.isMember(KEY_X2) &&
+            source.isMember(KEY_Y2) &&
+            source[KEY_X1].isNumeric() &&
+            source[KEY_Y1].isNumeric() &&
+            source[KEY_X2].isNumeric() &&
+            source[KEY_Y2].isNumeric())
+        {
+          new CircleAnnotation(target,
+                               ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
+                               ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()));
+        }
+        else
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize an circle annotation");
+        }
       }
     };
 
@@ -1490,6 +1561,50 @@ namespace OrthancStone
       target = Json::objectValue;
       target[KEY_ANNOTATIONS] = annotations;
     }
+
+
+    void Unserialize(const Json::Value& serialized)
+    {
+      Clear();
+      
+      if (serialized.type() != Json::objectValue ||
+          !serialized.isMember(KEY_ANNOTATIONS) ||
+          serialized[KEY_ANNOTATIONS].type() != Json::arrayValue)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize a set of annotations");
+      }
+
+      const Json::Value& annotations = serialized[KEY_ANNOTATIONS];
+
+      for (Json::Value::ArrayIndex i = 0; i < annotations.size(); i++)
+      {
+        if (annotations[i].type() != Json::objectValue ||
+            !annotations[i].isMember(KEY_TYPE) ||
+            annotations[i][KEY_TYPE].type() != Json::stringValue)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+        }
+
+        const std::string& type = annotations[i][KEY_TYPE].asString();
+
+        if (type == VALUE_ANGLE)
+        {
+          AngleAnnotation::Unserialize(*this, annotations[i]);
+        }
+        else if (type == VALUE_CIRCLE)
+        {
+          CircleAnnotation::Unserialize(*this, annotations[i]);
+        }
+        else if (type == VALUE_SEGMENT)
+        {
+          SegmentAnnotation::Unserialize(*this, annotations[i]);
+        }
+        else
+        {
+          LOG(ERROR) << "Cannot unserialize unknown type of annotation: " << type;
+        }
+      }
+    }
   };
 }
 #endif
@@ -1643,6 +1758,8 @@ int main(int argc, char* argv[])
           Json::Value v;
           overlay.Serialize(v);
           std::cout << v.toStyledString() << std::endl;
+          overlay.Clear();
+          overlay.Unserialize(v);
         }
 
         boost::shared_ptr<SdlSimpleViewerApplication> application(

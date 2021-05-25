@@ -95,5 +95,13 @@ namespace OrthancStone
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) ORTHANC_OVERRIDE;
+
+    virtual bool HasMouseHover() const ORTHANC_OVERRIDE
+    {
+      return false;
+    }
+
+    virtual void HandleMouseHover(IViewport& viewport,
+                                  const PointerEvent& event) ORTHANC_OVERRIDE;
   };
 }

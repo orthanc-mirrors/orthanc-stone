@@ -174,8 +174,8 @@ namespace OrthancStone
       ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
 
       that->controller_->HandleMousePress(*that->interactor_, pointer,
-                                         that->compositor_->GetCanvasWidth(),
-                                         that->compositor_->GetCanvasHeight());        
+                                          that->compositor_->GetCanvasWidth(),
+                                          that->compositor_->GetCanvasHeight());        
       that->Invalidate();
     }
 
@@ -188,14 +188,25 @@ namespace OrthancStone
   {
     WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
 
-    if (that->compositor_.get() != NULL &&
-        that->controller_->HasActiveTracker())
+    if (that->compositor_.get() != NULL)
     {
-      PointerEvent pointer;
-      ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
-      if (that->controller_->HandleMouseMove(pointer))
+      if (that->controller_->HasActiveTracker())
       {
-        that->Invalidate();
+        PointerEvent pointer;
+        ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
+      
+        if (that->controller_->HandleMouseMove(pointer))
+        {
+          that->Invalidate();
+        }
+      }
+      else if (that->interactor_.get() != NULL &&
+               that->interactor_->HasMouseHover())
+      {
+        // New in Stone Web viewer 2.0
+        PointerEvent pointer;
+        ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);      
+        that->interactor_->HandleMouseHover(*that, pointer);
       }
     }
 

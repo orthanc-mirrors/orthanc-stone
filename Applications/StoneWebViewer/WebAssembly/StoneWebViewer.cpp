@@ -1190,6 +1190,7 @@ public:
                                     DisplayedFrameQuality quality,
                                     unsigned int instanceNumber) = 0;
 
+    // "click" is a 3D vector in world coordinates
     virtual void SignalCrosshair(const ViewerViewport& viewport,
                                  const OrthancStone::Vector& click) = 0;
 
@@ -1577,8 +1578,13 @@ private:
   bool         hasFocusOnInstance_;
   std::string  focusSopInstanceUid_;
   size_t       focusFrameNumber_;
-  
+
+  // The coordinates of OsiriX annotations are expressed in 3D world coordinates
   boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  annotations_;
+
+  // The coordinates of Stone annotations are expressed in 2D
+  // coordinates of the current texture, with (0,0) corresponding to
+  // the center of the top-left pixel
   boost::shared_ptr<OrthancStone::AnnotationsSceneLayer>            annotationsStone_;
 
   void ScheduleNextPrefetch()
@@ -2645,6 +2651,23 @@ public:
           viewport, event, viewportWidth, viewportHeight);
       }
     }
+
+    virtual bool HasMouseHover() const ORTHANC_OVERRIDE
+    {
+      return true;
+    }
+
+    virtual void HandleMouseHover(OrthancStone::IViewport& viewport,
+                                  const OrthancStone::PointerEvent& event) ORTHANC_OVERRIDE
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport.Lock());
+
+      if (viewer_.annotationsStone_->SetMouseHover(event.GetMainPosition(), lock->GetController().GetScene()))
+      {
+        viewer_.annotationsStone_->Render(lock->GetController().GetScene());
+        lock->Invalidate();
+      }
+    }
   };
   
 
@@ -2875,6 +2898,11 @@ public:
   virtual void SignalCrosshair(const ViewerViewport& viewport,
                                const OrthancStone::Vector& click) ORTHANC_OVERRIDE
   {
+    if (click.size() != 3u)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    
     for (Viewports::const_iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
     {
       // TODO - One could check the "Frame Of Reference UID" here

@@ -89,4 +89,12 @@ namespace OrthancStone
 
     return CreateTrackerInternal(viewport, action, event, viewportWidth, viewportHeight);
   }
+
+
+  void DefaultViewportInteractor::HandleMouseHover(IViewport& viewport,
+                                                   const PointerEvent& event)
+  {
+    // "HasMouseOver()" returns "false"
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+  }
 }

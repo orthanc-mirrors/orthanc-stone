@@ -37,5 +37,10 @@ namespace OrthancStone
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) = 0;
+
+    virtual bool HasMouseHover() const = 0;
+
+    virtual void HandleMouseHover(IViewport& viewport,
+                                  const PointerEvent& event) = 0;
   };
 }

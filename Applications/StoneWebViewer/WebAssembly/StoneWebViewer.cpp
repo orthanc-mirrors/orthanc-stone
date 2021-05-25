@@ -1251,7 +1251,7 @@ public:
             size_t frame,
             const OrthancStone::AnnotationsSceneLayer& layer)
   {
-    std::unique_ptr<Json::Value> serialized;
+    std::unique_ptr<Json::Value> serialized(new Json::Value);
     layer.Serialize(*serialized);
 
     const Index index(sopInstanceUid, frame);

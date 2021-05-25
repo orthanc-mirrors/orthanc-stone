@@ -1172,11 +1172,127 @@ static bool GetReferenceLineCoordinates(double& x1,
 
 
 
+class StoneAnnotationsRegistry : public boost::noncopyable
+{
+private:
+  class Index
+  {
+  private:
+    std::string  sopInstanceUid_;
+    size_t       frame_;
+
+  public:
+    Index(const std::string& sopInstanceUid,
+          size_t frame) :
+      sopInstanceUid_(sopInstanceUid),
+      frame_(frame)
+    {
+    }
+
+    const std::string& GetSopInstanceUid() const
+    {
+      return sopInstanceUid_;
+    }
+
+    size_t GetFrame() const
+    {
+      return frame_;
+    }
+
+    bool operator< (const Index& other) const
+    {
+      if (sopInstanceUid_ < other.sopInstanceUid_)
+      {
+        return true;
+      }
+      else if (sopInstanceUid_ > other.sopInstanceUid_)
+      {
+        return false;
+      }
+      else
+      {
+        return frame_ < other.frame_;
+      }
+    }
+  };
+  
+  typedef std::map<Index, Json::Value*>  Content;
+
+  Content  content_;
+
+  void Clear()
+  {
+    for (Content::iterator it = content_.begin(); it != content_.end(); ++it)
+    {
+      assert(it->second != NULL);
+      delete it->second;
+    }
+
+    content_.clear();
+  }
+
+  StoneAnnotationsRegistry()
+  {
+  }
+
+public:
+  ~StoneAnnotationsRegistry()
+  {
+    Clear();
+  }
+
+  static StoneAnnotationsRegistry& GetInstance()
+  {
+    static StoneAnnotationsRegistry singleton;
+    return singleton;
+  }
+  
+  void Save(const std::string& sopInstanceUid,
+            size_t frame,
+            const OrthancStone::AnnotationsSceneLayer& layer)
+  {
+    std::unique_ptr<Json::Value> serialized;
+    layer.Serialize(*serialized);
+
+    const Index index(sopInstanceUid, frame);
+    
+    Content::iterator found = content_.find(index);
+    if (found == content_.end())
+    {
+      content_[index] = serialized.release();
+    }
+    else
+    {
+      assert(found->second != NULL);
+      delete found->second;
+      found->second = serialized.release();
+    }
+  }
+
+  void Load(OrthancStone::AnnotationsSceneLayer& layer,
+            const std::string& sopInstanceUid,
+            size_t frame) const
+  {
+    const Index index(sopInstanceUid, frame);
+    
+    Content::const_iterator found = content_.find(index);
+    if (found == content_.end())
+    {
+      layer.Clear();
+    }
+    else
+    {
+      assert(found->second != NULL);
+      layer.Unserialize(*found->second);
+    }
+  }
+};
+
+
+
 class ViewerViewport : public OrthancStone::ObserverBase<ViewerViewport>
 {
 public:
-  typedef std::map<std::string, boost::shared_ptr<Json::Value> >  StoneAnnotationsRegistry;
-
   class IObserver : public boost::noncopyable
   {
   public:
@@ -1203,6 +1319,10 @@ public:
     virtual void SignalWindowingUpdated(const ViewerViewport& viewport,
                                         double windowingCenter,
                                         double windowingWidth) = 0;
+
+    virtual void SignalStoneAnnotationsChanged(const ViewerViewport& viewport,
+                                               const std::string& sopInstanceUid,
+                                               size_t frame) = 0;
   };
 
 private:
@@ -1588,7 +1708,6 @@ private:
   // coordinates of the current texture, with (0,0) corresponding to
   // the center of the top-left pixel
   boost::shared_ptr<OrthancStone::AnnotationsSceneLayer>  stoneAnnotations_;
-  boost::shared_ptr<StoneAnnotationsRegistry>             stoneAnnotationsRegistry_;
 
 
   void ScheduleNextPrefetch()
@@ -1684,6 +1803,7 @@ private:
   
   void RenderCurrentScene(const Orthanc::ImageAccessor& frame,
                           const OrthancStone::DicomInstanceParameters& instance,
+                          size_t frameIndex,
                           const OrthancStone::CoordinateSystem3D& plane)
   {
     /**
@@ -1786,22 +1906,7 @@ private:
       }
     }
 
-    if (stoneAnnotationsRegistry_.get() == NULL)
-    {
-      stoneAnnotations_->Clear();
-    }
-    else
-    {
-      StoneAnnotationsRegistry::const_iterator found = stoneAnnotationsRegistry_->find(instance.GetSopInstanceUid());
-      if (found == stoneAnnotationsRegistry_->end())
-      {
-        stoneAnnotations_->Clear();
-      }
-      else
-      {
-        stoneAnnotations_->Unserialize(*found->second);
-      }
-    }
+    StoneAnnotationsRegistry::GetInstance().Load(*stoneAnnotations_, instance.GetSopInstanceUid(), frameIndex);
 
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
@@ -1819,14 +1924,15 @@ private:
         scene.DeleteLayer(LAYER_ANNOTATIONS_OSIRIX);
       }
 
+      stoneAnnotations_->Render(scene);  // Necessary for "FitContent()" to work
+
       if (fitNextContent_)
       {
         lock->RefreshCanvasSize();
         lock->GetCompositor().FitContent(scene);
+        stoneAnnotations_->Render(scene);
         fitNextContent_ = false;
       }
-
-      stoneAnnotations_->Render(scene);
         
       //lock->GetCompositor().Refresh(scene);
       lock->Invalidate();
@@ -1859,13 +1965,13 @@ private:
               accessor.GetQuality() == QUALITY_FULL)
           {
             // A high-res image was downloaded in between: Use this cached image instead of the low-res
-            RenderCurrentScene(accessor.GetImage(), instance, plane);
+            RenderCurrentScene(accessor.GetImage(), instance, frameNumber, plane);
             SetupPrefetchAfterRendering(frame, DisplayedFrameQuality_High);
           }
           else
           {
             // This frame is only available in low-res: Download the full DICOM
-            RenderCurrentScene(frame, instance, plane);
+            RenderCurrentScene(frame, instance, frameNumber, plane);
             SetupPrefetchAfterRendering(frame, quality);
 
             /**
@@ -1883,7 +1989,7 @@ private:
         {
           assert(quality == DisplayedFrameQuality_High);
           SetupPrefetchAfterRendering(frame, quality);
-          RenderCurrentScene(frame, instance, plane);
+          RenderCurrentScene(frame, instance, frameNumber, plane);
         }
       }
     }
@@ -2031,8 +2137,7 @@ private:
     synchronizationOffset_(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0)),
     synchronizationEnabled_(false),
     centralPhysicalWidth_(1),
-    centralPhysicalHeight_(1),
-    stoneAnnotationsRegistry_(NULL)
+    centralPhysicalHeight_(1)
   {
     if (!framesCache_)
     {
@@ -2157,10 +2262,14 @@ private:
       {
         const size_t cursorIndex = cursor_->GetCurrentIndex();
         const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
+        const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
-        boost::shared_ptr<Json::Value> v(new Json::Value);
-        stoneAnnotations_->Serialize(*v);
-        (*stoneAnnotationsRegistry_) [instance.GetSopInstanceUid()] = v;
+        StoneAnnotationsRegistry::GetInstance().Save(instance.GetSopInstanceUid(), frameNumber, *stoneAnnotations_);
+
+        if (observer_.get() != NULL)
+        {
+          observer_->SignalStoneAnnotationsChanged(*this, instance.GetSopInstanceUid(), frameNumber);
+        }
       }
     }
   }
@@ -2354,7 +2463,7 @@ public:
       FramesCache::Accessor accessor(*framesCache_, instance.GetSopInstanceUid(), frameNumber);
       if (accessor.IsValid())
       {
-        RenderCurrentScene(accessor.GetImage(), instance, frames_->GetFrameGeometry(cursorIndex));
+        RenderCurrentScene(accessor.GetImage(), instance, frameNumber, frames_->GetFrameGeometry(cursorIndex));
 
         DisplayedFrameQuality quality;
         
@@ -2804,9 +2913,28 @@ public:
   }
 
 
-  void SetStoneAnnotationsRegistry(boost::shared_ptr<ViewerViewport::StoneAnnotationsRegistry>& registry)
+  void SignalStoneAnnotationsChanged(const std::string& sopInstanceUid,
+                                     size_t frame)
   {
-    stoneAnnotationsRegistry_ = registry;
+    if (cursor_.get() != NULL &&
+        frames_.get() != NULL)
+    {
+      const size_t cursorIndex = cursor_->GetCurrentIndex();
+      const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
+      const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+
+      if (instance.GetSopInstanceUid() == sopInstanceUid &&
+          frameNumber == frame)
+      {
+        StoneAnnotationsRegistry::GetInstance().Load(*stoneAnnotations_, instance.GetSopInstanceUid(), frame);
+
+        {
+          std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+          stoneAnnotations_->Render(lock->GetController().GetScene());
+          lock->Invalidate();
+        }
+      }
+    }    
   }
 };
 
@@ -2819,7 +2947,6 @@ typedef std::map<std::string, boost::shared_ptr<ViewerViewport> >  Viewports;
 static Viewports allViewports_;
 static bool showReferenceLines_ = true;
 static boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  osiriXAnnotations_;
-static boost::shared_ptr<ViewerViewport::StoneAnnotationsRegistry> stoneAnnotationsRegistry_;
 
 
 static void UpdateReferenceLines()
@@ -3024,6 +3151,21 @@ public:
 
     UpdateReferenceLines();
   }
+
+  virtual void SignalStoneAnnotationsChanged(const ViewerViewport& viewport,
+                                             const std::string& sopInstanceUid,
+                                             size_t frame) ORTHANC_OVERRIDE
+  {
+    for (Viewports::const_iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+    {
+      assert(it->second.get() != NULL);
+
+      if (it->second.get() != &viewport)
+      {
+        it->second->SignalStoneAnnotationsChanged(sopInstanceUid, frame);
+      }
+    }
+  }
 };
 
 
@@ -3083,7 +3225,6 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
     viewport->SetOsiriXAnnotations(osiriXAnnotations_);
-    viewport->SetStoneAnnotationsRegistry(stoneAnnotationsRegistry_);
     allViewports_[canvas] = viewport;
     return viewport;
   }
@@ -3108,7 +3249,6 @@ extern "C"
     
     framesCache_.reset(new FramesCache);
     osiriXAnnotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
-    stoneAnnotationsRegistry_.reset(new ViewerViewport::StoneAnnotationsRegistry);
 
     {
       // TODO - TEST
@@ -3121,9 +3261,7 @@ extern "C"
       l.AddCircleAnnotation(OrthancStone::ScenePoint2D(50, 200),
                                              OrthancStone::ScenePoint2D(100, 250));
       l.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
-      boost::shared_ptr<Json::Value> s(new Json::Value);
-      l.Serialize(*s);
-      (*stoneAnnotationsRegistry_) ["1.2.840.113543.6.6.4.7.64234348190163144631511103849051737563212"] = s;
+      StoneAnnotationsRegistry::GetInstance().Save("1.2.840.113543.6.6.4.7.64234348190163144631511103849051737563212", 0, l);
     }
 
     

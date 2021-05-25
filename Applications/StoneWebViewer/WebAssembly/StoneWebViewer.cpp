@@ -130,7 +130,9 @@ enum STONE_WEB_VIEWER_EXPORT DisplayedFrameQuality
 
 enum STONE_WEB_VIEWER_EXPORT WebViewerAction
 {
-  WebViewerAction_Windowing,
+  WebViewerAction_None,
+    
+    WebViewerAction_Windowing,
     WebViewerAction_Zoom,
     WebViewerAction_Pan,
     WebViewerAction_Rotate,
@@ -139,7 +141,7 @@ enum STONE_WEB_VIEWER_EXPORT WebViewerAction
     WebViewerAction_CreateAngle,
     WebViewerAction_CreateCircle,
     WebViewerAction_CreateSegment,
-    WebViewerAction_DeleteMeasure
+    WebViewerAction_RemoveMeasure
     };
   
 
@@ -160,11 +162,12 @@ static OrthancStone::MouseAction ConvertWebViewerAction(int action)
     case WebViewerAction_Rotate:
       return OrthancStone::MouseAction_Rotate;
       
+    case WebViewerAction_None:
     case WebViewerAction_Crosshair:
     case WebViewerAction_CreateAngle:
     case WebViewerAction_CreateCircle:
     case WebViewerAction_CreateSegment:
-    case WebViewerAction_DeleteMeasure:
+    case WebViewerAction_RemoveMeasure:
       return OrthancStone::MouseAction_None;
 
     default:
@@ -1323,6 +1326,10 @@ public:
     virtual void SignalStoneAnnotationsChanged(const ViewerViewport& viewport,
                                                const std::string& sopInstanceUid,
                                                size_t frame) = 0;
+
+    virtual void SignalStoneAnnotationAdded(const ViewerViewport& viewport) = 0;
+
+    virtual void SignalStoneAnnotationRemoved(const ViewerViewport& viewport) = 0;
   };
 
 private:
@@ -2287,11 +2294,21 @@ private:
   void Handle(const OrthancStone::AnnotationsSceneLayer::AnnotationAddedMessage& message)
   {
     RefreshAnnotations(true /* save */);
+
+    if (observer_.get() != NULL)
+    {
+      observer_->SignalStoneAnnotationAdded(*this);
+    }
   }
 
   void Handle(const OrthancStone::AnnotationsSceneLayer::AnnotationRemovedMessage& message)
   {
     RefreshAnnotations(true /* save */);
+
+    if (observer_.get() != NULL)
+    {
+      observer_->SignalStoneAnnotationRemoved(*this);
+    }
   }
 
 public:
@@ -2771,15 +2788,42 @@ public:
       }
       else
       {
+        // Only the left mouse button can be used to edit/create/remove annotations
+        if (event.GetMouseButton() == OrthancStone::MouseButton_Left)
         {
-          std::unique_ptr<OrthancStone::IViewport::ILock> lock2(lock1->Lock());
-
-          std::unique_ptr<OrthancStone::IFlexiblePointerTracker> t;
-          t.reset(viewer_.stoneAnnotations_->CreateTracker(event.GetMainPosition(), lock2->GetController().GetScene()));
-
-          if (t.get() != NULL)
+          switch (leftAction_)
           {
-            return t.release();        
+            case WebViewerAction_CreateAngle:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Angle);
+              break;
+              
+            case WebViewerAction_CreateCircle:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Circle);
+              break;
+              
+            case WebViewerAction_CreateSegment:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Segment);
+              break;
+
+            case WebViewerAction_RemoveMeasure:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Remove);
+              break;
+
+            default:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
+              break;
+          }
+
+          {
+            std::unique_ptr<OrthancStone::IViewport::ILock> lock2(lock1->Lock());
+
+            std::unique_ptr<OrthancStone::IFlexiblePointerTracker> t;
+            t.reset(viewer_.stoneAnnotations_->CreateTracker(event.GetMainPosition(), lock2->GetController().GetScene()));
+
+            if (t.get() != NULL)
+            {
+              return t.release();
+            }
           }
         }
 
@@ -3165,6 +3209,28 @@ public:
         it->second->SignalStoneAnnotationsChanged(sopInstanceUid, frame);
       }
     }
+  }
+  
+  virtual void SignalStoneAnnotationAdded(const ViewerViewport& viewport) ORTHANC_OVERRIDE
+  {
+    EM_ASM({
+        const customEvent = document.createEvent("CustomEvent");
+        customEvent.initCustomEvent("StoneAnnotationAdded", false, false,
+                                    { "canvasId" : UTF8ToString($0) });
+        window.dispatchEvent(customEvent);
+      },
+      viewport.GetCanvasId().c_str());
+  }
+
+  virtual void SignalStoneAnnotationRemoved(const ViewerViewport& viewport) ORTHANC_OVERRIDE
+  {
+    EM_ASM({
+        const customEvent = document.createEvent("CustomEvent");
+        customEvent.initCustomEvent("StoneAnnotationRemoved", false, false,
+                                    { "canvasId" : UTF8ToString($0) });
+        window.dispatchEvent(customEvent);
+      },
+      viewport.GetCanvasId().c_str());
   }
 };
 
@@ -3697,6 +3763,27 @@ extern "C"
     EXTERN_CATCH_EXCEPTIONS;
   }
 
+
+  EMSCRIPTEN_KEEPALIVE
+  int GetLeftMouseButtonAction()
+  {
+    return static_cast<int>(leftButtonAction_);
+  }
+  
+
+  EMSCRIPTEN_KEEPALIVE
+  int GetMiddleMouseButtonAction()
+  {
+    return static_cast<int>(middleButtonAction_);
+  }
+  
+
+  EMSCRIPTEN_KEEPALIVE
+  int GetRightMouseButtonAction()
+  {
+    return static_cast<int>(rightButtonAction_);
+  }
+  
 
   EMSCRIPTEN_KEEPALIVE
   void FitForPrint()

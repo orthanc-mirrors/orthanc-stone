@@ -391,6 +391,8 @@ var app = new Vue({
       globalConfiguration: {},
       creatingArchive: false,
       archiveJob: '',
+      annotationsCurrentAction: stone.WebViewerAction.NONE,  // dummy value
+      annotationsBackupAction: stone.WebViewerAction.NONE,  // dummy value
 
       modalWarning: false,
       modalNotDiagnostic: false,
@@ -652,6 +654,8 @@ var app = new Vue({
           sopInstanceUid: info.sopInstanceUid
         };
       }
+
+      this.ResetAnnotationsAction();
     },
     
     ClickSeries: function(seriesIndex) {
@@ -749,6 +753,7 @@ var app = new Vue({
       }
 
       this.FitContent();
+      this.ResetAnnotationsAction();
     },
 
     UpdateSeriesThumbnail: function(seriesInstanceUid) {
@@ -860,8 +865,36 @@ var app = new Vue({
 
     SetMouseButtonActions: function(left, middle, right) {
       this.mouseActionsVisible = false;
+      this.annotationsBackupAction = stone.WebViewerAction.NONE;
       stone.SetMouseButtonActions(left, middle, right);
     },
+
+    SetAnnotationsAction: function(action) {
+      if (this.annotationsCurrentAction == action) {
+        this.ResetAnnotationsAction();
+      } else {
+        this.annotationsCurrentAction = action;
+
+        if (this.annotationsBackupAction == stone.WebViewerAction.NONE) {
+          this.annotationsBackupAction = stone.GetLeftMouseButtonAction();
+        }
+
+        stone.SetMouseButtonActions(action,
+                                    stone.GetMiddleMouseButtonAction(),
+                                    stone.GetRightMouseButtonAction());
+      }
+    },
+
+    ResetAnnotationsAction: function() {
+      if (this.annotationsBackupAction != stone.WebViewerAction.NONE) {
+        stone.SetMouseButtonActions(this.annotationsBackupAction,
+                                    stone.GetMiddleMouseButtonAction(),
+                                    stone.GetRightMouseButtonAction());
+      }
+
+      this.annotationsBackupAction = stone.WebViewerAction.NONE;
+      this.annotationsCurrentAction = stone.WebViewerAction.NONE;
+    },    
 
     LoadOsiriXAnnotations: function(xml, clearPrevious)
     {
@@ -1037,6 +1070,14 @@ var app = new Vue({
       var seriesInstanceUid = args.detail.seriesInstanceUid;
       that.UpdateIsSeriesComplete(studyInstanceUid, seriesInstanceUid);
     });
+
+    window.addEventListener('StoneAnnotationAdded', function() {
+      that.ResetAnnotationsAction();
+    });
+
+    window.addEventListener('StoneAnnotationRemoved', function() {
+      that.ResetAnnotationsAction();
+    });
   }
 });
 
@@ -1141,7 +1182,6 @@ window.addEventListener('ResourcesLoaded', function() {
 window.addEventListener('StoneException', function() {
   console.error('Exception catched in Stone');
 });
-
 
 
 

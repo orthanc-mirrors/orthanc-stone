@@ -3316,21 +3316,6 @@ extern "C"
     framesCache_.reset(new FramesCache);
     osiriXAnnotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
 
-    {
-      // TODO - TEST
-      OrthancStone::AnnotationsSceneLayer l(0);
-      l.AddSegmentAnnotation(OrthancStone::ScenePoint2D(0, 0),
-                                              OrthancStone::ScenePoint2D(100, 100));
-      l.AddAngleAnnotation(OrthancStone::ScenePoint2D(100, 50),
-                                            OrthancStone::ScenePoint2D(150, 40),
-                                            OrthancStone::ScenePoint2D(200, 50));
-      l.AddCircleAnnotation(OrthancStone::ScenePoint2D(50, 200),
-                                             OrthancStone::ScenePoint2D(100, 250));
-      l.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
-      StoneAnnotationsRegistry::GetInstance().Save("1.2.840.113543.6.6.4.7.64234348190163144631511103849051737563212", 0, l);
-    }
-
-    
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");
   }
 

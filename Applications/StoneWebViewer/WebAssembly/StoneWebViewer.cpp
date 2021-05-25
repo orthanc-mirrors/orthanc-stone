@@ -1175,6 +1175,8 @@ static bool GetReferenceLineCoordinates(double& x1,
 class ViewerViewport : public OrthancStone::ObserverBase<ViewerViewport>
 {
 public:
+  typedef std::map<std::string, boost::shared_ptr<Json::Value> >  StoneAnnotationsRegistry;
+
   class IObserver : public boost::noncopyable
   {
   public:
@@ -1580,12 +1582,14 @@ private:
   size_t       focusFrameNumber_;
 
   // The coordinates of OsiriX annotations are expressed in 3D world coordinates
-  boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  annotations_;
+  boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  osiriXAnnotations_;
 
   // The coordinates of Stone annotations are expressed in 2D
   // coordinates of the current texture, with (0,0) corresponding to
   // the center of the top-left pixel
-  boost::shared_ptr<OrthancStone::AnnotationsSceneLayer>            annotationsStone_;
+  boost::shared_ptr<OrthancStone::AnnotationsSceneLayer>  stoneAnnotations_;
+  boost::shared_ptr<StoneAnnotationsRegistry>             stoneAnnotationsRegistry_;
+
 
   void ScheduleNextPrefetch()
   {
@@ -1761,10 +1765,10 @@ private:
 
     std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsOsiriX;
 
-    if (annotations_)
+    if (osiriXAnnotations_)
     {
       std::set<size_t> a;
-      annotations_->LookupSopInstanceUid(a, instance.GetSopInstanceUid());
+      osiriXAnnotations_->LookupSopInstanceUid(a, instance.GetSopInstanceUid());
       if (plane.IsValid() &&
           !a.empty())
       {
@@ -1776,9 +1780,26 @@ private:
           
         for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
         {
-          const OrthancStone::OsiriX::Annotation& annotation = annotations_->GetAnnotation(*it);
+          const OrthancStone::OsiriX::Annotation& annotation = osiriXAnnotations_->GetAnnotation(*it);
           annotationsOsiriX->AddLayer(factory.Create(annotation, plane));
         }
+      }
+    }
+
+    if (stoneAnnotationsRegistry_.get() == NULL)
+    {
+      stoneAnnotations_->Clear();
+    }
+    else
+    {
+      StoneAnnotationsRegistry::const_iterator found = stoneAnnotationsRegistry_->find(instance.GetSopInstanceUid());
+      if (found == stoneAnnotationsRegistry_->end())
+      {
+        stoneAnnotations_->Clear();
+      }
+      else
+      {
+        stoneAnnotations_->Unserialize(*found->second);
       }
     }
 
@@ -1805,7 +1826,7 @@ private:
         fitNextContent_ = false;
       }
 
-      annotationsStone_->Render(scene);
+      stoneAnnotations_->Render(scene);
         
       //lock->GetCompositor().Refresh(scene);
       lock->Invalidate();
@@ -2010,7 +2031,8 @@ private:
     synchronizationOffset_(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0)),
     synchronizationEnabled_(false),
     centralPhysicalWidth_(1),
-    centralPhysicalHeight_(1)
+    centralPhysicalHeight_(1),
+    stoneAnnotationsRegistry_(NULL)
   {
     if (!framesCache_)
     {
@@ -2039,17 +2061,7 @@ private:
 
     SetWindowingPreset();
 
-    {
-      annotationsStone_.reset(new OrthancStone::AnnotationsSceneLayer(LAYER_ANNOTATIONS_STONE));
-      annotationsStone_->AddSegmentAnnotation(OrthancStone::ScenePoint2D(0, 0),
-                                              OrthancStone::ScenePoint2D(100, 100));
-      annotationsStone_->AddAngleAnnotation(OrthancStone::ScenePoint2D(100, 50),
-                                            OrthancStone::ScenePoint2D(150, 40),
-                                            OrthancStone::ScenePoint2D(200, 50));
-      annotationsStone_->AddCircleAnnotation(OrthancStone::ScenePoint2D(50, 200),
-                                             OrthancStone::ScenePoint2D(100, 250));
-      annotationsStone_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
-    }
+    stoneAnnotations_.reset(new OrthancStone::AnnotationsSceneLayer(LAYER_ANNOTATIONS_STONE));
   }
 
 
@@ -2130,33 +2142,47 @@ private:
   }
 
 
-  void RefreshAnnotations()
+  void RefreshAnnotations(bool save)
   {
-    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-    annotationsStone_->Render(lock->GetController().GetScene());
-    lock->Invalidate();
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+      stoneAnnotations_->Render(lock->GetController().GetScene());
+      lock->Invalidate();
+    }
+
+    if (save)
+    {
+      if (cursor_.get() != NULL &&
+          frames_.get() != NULL)
+      {
+        const size_t cursorIndex = cursor_->GetCurrentIndex();
+        const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
+
+        boost::shared_ptr<Json::Value> v(new Json::Value);
+        stoneAnnotations_->Serialize(*v);
+        (*stoneAnnotationsRegistry_) [instance.GetSopInstanceUid()] = v;
+      }
+    }
   }
   
   void Handle(const OrthancStone::ViewportController::SceneTransformChanged& message)
   {
-    RefreshAnnotations();
+    RefreshAnnotations(false /* don't save */);
   }
 
   void Handle(const OrthancStone::AnnotationsSceneLayer::AnnotationChangedMessage& message)
   {
-    RefreshAnnotations();
+    RefreshAnnotations(true /* save */);
   }
 
   void Handle(const OrthancStone::AnnotationsSceneLayer::AnnotationAddedMessage& message)
   {
-    RefreshAnnotations();
-    LOG(WARNING) << "annotation added";
+    RefreshAnnotations(true /* save */);
   }
 
   void Handle(const OrthancStone::AnnotationsSceneLayer::AnnotationRemovedMessage& message)
   {
-    RefreshAnnotations();
-    LOG(WARNING) << "annotation removed";
+    RefreshAnnotations(true /* save */);
   }
 
 public:
@@ -2191,13 +2217,13 @@ public:
         lock->GetOracleObservable(), &ViewerViewport::Handle);
 
       viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationChangedMessage>(
-        *viewport->annotationsStone_, &ViewerViewport::Handle);
+        *viewport->stoneAnnotations_, &ViewerViewport::Handle);
 
       viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationAddedMessage>(
-        *viewport->annotationsStone_, &ViewerViewport::Handle);
+        *viewport->stoneAnnotations_, &ViewerViewport::Handle);
 
       viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationRemovedMessage>(
-        *viewport->annotationsStone_, &ViewerViewport::Handle);
+        *viewport->stoneAnnotations_, &ViewerViewport::Handle);
     }
 
     {
@@ -2297,7 +2323,8 @@ public:
       lock->GetCompositor().FitContent(lock->GetController().GetScene());
     }
 
-    annotationsStone_->Render(lock->GetController().GetScene());
+    stoneAnnotations_->ClearHover();
+    stoneAnnotations_->Render(lock->GetController().GetScene());
     
     lock->Invalidate();
   }
@@ -2639,7 +2666,7 @@ public:
           std::unique_ptr<OrthancStone::IViewport::ILock> lock2(lock1->Lock());
 
           std::unique_ptr<OrthancStone::IFlexiblePointerTracker> t;
-          t.reset(viewer_.annotationsStone_->CreateTracker(event.GetMainPosition(), lock2->GetController().GetScene()));
+          t.reset(viewer_.stoneAnnotations_->CreateTracker(event.GetMainPosition(), lock2->GetController().GetScene()));
 
           if (t.get() != NULL)
           {
@@ -2662,9 +2689,9 @@ public:
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport.Lock());
 
-      if (viewer_.annotationsStone_->SetMouseHover(event.GetMainPosition(), lock->GetController().GetScene()))
+      if (viewer_.stoneAnnotations_->SetMouseHover(event.GetMainPosition(), lock->GetController().GetScene()))
       {
-        viewer_.annotationsStone_->Render(lock->GetController().GetScene());
+        viewer_.stoneAnnotations_->Render(lock->GetController().GetScene());
         lock->Invalidate();
       }
     }
@@ -2684,9 +2711,9 @@ public:
     viewport_->FitForPrint();
   }
 
-  void SetAnnotations(boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations> annotations)
+  void SetOsiriXAnnotations(boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations> annotations)
   {
-    annotations_ = annotations;
+    osiriXAnnotations_ = annotations;
   }
 
   void ScheduleFrameFocus(const std::string& sopInstanceUid,
@@ -2775,6 +2802,12 @@ public:
     OrthancStone::LinearAlgebra::AssignVector(synchronizationOffset_, 0, 0, 0);
     synchronizationEnabled_ = enabled;
   }
+
+
+  void SetStoneAnnotationsRegistry(boost::shared_ptr<ViewerViewport::StoneAnnotationsRegistry>& registry)
+  {
+    stoneAnnotationsRegistry_ = registry;
+  }
 };
 
 
@@ -2782,9 +2815,11 @@ public:
 
 
 typedef std::map<std::string, boost::shared_ptr<ViewerViewport> >  Viewports;
+
 static Viewports allViewports_;
 static bool showReferenceLines_ = true;
-static boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  annotations_;
+static boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  osiriXAnnotations_;
+static boost::shared_ptr<ViewerViewport::StoneAnnotationsRegistry> stoneAnnotationsRegistry_;
 
 
 static void UpdateReferenceLines()
@@ -3047,7 +3082,8 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
       ViewerViewport::Create(*context_, source_, canvas, framesCache_, softwareRendering_));
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
-    viewport->SetAnnotations(annotations_);
+    viewport->SetOsiriXAnnotations(osiriXAnnotations_);
+    viewport->SetStoneAnnotationsRegistry(stoneAnnotationsRegistry_);
     allViewports_[canvas] = viewport;
     return viewport;
   }
@@ -3071,7 +3107,25 @@ extern "C"
     context_->SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
     
     framesCache_.reset(new FramesCache);
-    annotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
+    osiriXAnnotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
+    stoneAnnotationsRegistry_.reset(new ViewerViewport::StoneAnnotationsRegistry);
+
+    {
+      // TODO - TEST
+      OrthancStone::AnnotationsSceneLayer l(0);
+      l.AddSegmentAnnotation(OrthancStone::ScenePoint2D(0, 0),
+                                              OrthancStone::ScenePoint2D(100, 100));
+      l.AddAngleAnnotation(OrthancStone::ScenePoint2D(100, 50),
+                                            OrthancStone::ScenePoint2D(150, 40),
+                                            OrthancStone::ScenePoint2D(200, 50));
+      l.AddCircleAnnotation(OrthancStone::ScenePoint2D(50, 200),
+                                             OrthancStone::ScenePoint2D(100, 250));
+      l.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
+      boost::shared_ptr<Json::Value> s(new Json::Value);
+      l.Serialize(*s);
+      (*stoneAnnotationsRegistry_) ["1.2.840.113543.6.6.4.7.64234348190163144631511103849051737563212"] = s;
+    }
+
     
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");
   }
@@ -3531,10 +3585,10 @@ extern "C"
     {
       if (clearPreviousAnnotations)
       {
-        annotations_->Clear();
+        osiriXAnnotations_->Clear();
       }
       
-      annotations_->LoadXml(xml);
+      osiriXAnnotations_->LoadXml(xml);
       
       // Force redraw, as the annotations might have changed
       for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
@@ -3543,16 +3597,16 @@ extern "C"
         it->second->Redraw();
       }
 
-      if (annotations_->GetSize() == 0)
+      if (osiriXAnnotations_->GetSize() == 0)
       {
         stringBuffer_.clear();
       }
       else
       {
-        stringBuffer_ = annotations_->GetAnnotation(0).GetSeriesInstanceUid();
+        stringBuffer_ = osiriXAnnotations_->GetAnnotation(0).GetSeriesInstanceUid();
       }
 
-      LOG(WARNING) << "Loaded " << annotations_->GetSize() << " annotations from OsiriX";
+      LOG(WARNING) << "Loaded " << osiriXAnnotations_->GetSize() << " annotations from OsiriX";
       return 1;
     }
     EXTERN_CATCH_EXCEPTIONS;
@@ -3565,9 +3619,9 @@ extern "C"
   {
     try
     {
-      if (annotations_->GetSize() != 0)
+      if (osiriXAnnotations_->GetSize() != 0)
       {
-        const OrthancStone::OsiriX::Annotation& annotation = annotations_->GetAnnotation(0);
+        const OrthancStone::OsiriX::Annotation& annotation = osiriXAnnotations_->GetAnnotation(0);
         
         boost::shared_ptr<ViewerViewport> viewport = GetViewport(canvas);
         viewport->ScheduleFrameFocus(annotation.GetSopInstanceUid(), 0 /* focus on first frame */);

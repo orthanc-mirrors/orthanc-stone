@@ -1351,6 +1351,8 @@ namespace OrthancStone
     }
 
     annotations_.clear();
+
+    ClearHover();
   }
 
 

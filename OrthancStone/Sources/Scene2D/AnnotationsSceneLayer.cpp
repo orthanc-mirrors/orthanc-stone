@@ -158,7 +158,7 @@ namespace OrthancStone
     GeometricPrimitives     primitives_;
       
   public:
-    Annotation(AnnotationsSceneLayer& that) :
+    explicit Annotation(AnnotationsSceneLayer& that) :
       that_(that)
     {
       that.AddAnnotation(this);
@@ -612,7 +612,8 @@ namespace OrthancStone
          Annotation& parentAnnotation) :
       GeometricPrimitive(parentAnnotation, 2),
       that_(that),
-      first_(true)
+      first_(true),
+      subLayer_(0)  // dummy initialization
     {
     }
 

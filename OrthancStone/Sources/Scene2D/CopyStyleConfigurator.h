@@ -29,20 +29,22 @@ namespace OrthancStone
   class CopyStyleConfigurator : public ILayerStyleConfigurator
   {
   public:
-    virtual uint64_t GetRevision() const
+    virtual uint64_t GetRevision() const ORTHANC_OVERRIDE
     {
       return 0; // No parameter for this type of configurator
     }
     
-    virtual TextureBaseSceneLayer* CreateTextureFromImage(const Orthanc::ImageAccessor& image) const;
+    virtual TextureBaseSceneLayer* CreateTextureFromImage(
+      const Orthanc::ImageAccessor& image) const ORTHANC_OVERRIDE;
 
-    virtual TextureBaseSceneLayer* CreateTextureFromDicom(const Orthanc::ImageAccessor& frame,
-                                                          const DicomInstanceParameters& parameters) const
+    virtual TextureBaseSceneLayer* CreateTextureFromDicom(
+      const Orthanc::ImageAccessor& frame,
+      const DicomInstanceParameters& parameters) const ORTHANC_OVERRIDE
     {
       return CreateTextureFromImage(frame);
     }
 
-    virtual void ApplyStyle(ISceneLayer& layer) const
+    virtual void ApplyStyle(ISceneLayer& layer) const ORTHANC_OVERRIDE
     {
     }
   };

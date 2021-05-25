@@ -81,7 +81,7 @@ namespace OrthancStone
     void TagSubLayerToRemove(size_t subLayerIndex);
     
   public:
-    AnnotationsSceneLayer(size_t macroLayerIndex);
+    explicit AnnotationsSceneLayer(size_t macroLayerIndex);
     
     ~AnnotationsSceneLayer()
     {

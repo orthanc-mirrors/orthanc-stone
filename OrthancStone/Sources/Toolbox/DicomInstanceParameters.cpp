@@ -147,9 +147,11 @@ namespace OrthancStone
         if (frameOffsets_.size() >= 2)
         {
           double sliceThickness = frameOffsets_[1] - frameOffsets_[0];
-          bool sameSized = true;
+          
           if (sliceThickness > 0)
           {
+            bool sameSized = true;
+            
             for (size_t i = 2; i < frameOffsets_.size(); ++i)
             {
               double currentThickness = frameOffsets_[i] - frameOffsets_[i-1];
@@ -160,6 +162,7 @@ namespace OrthancStone
                 break;
               }
             }
+            
             if (sameSized)
             {
               sliceThickness_ = sliceThickness;

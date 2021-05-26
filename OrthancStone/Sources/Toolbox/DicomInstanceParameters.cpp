@@ -706,4 +706,76 @@ namespace OrthancStone
       return true;
     }
   }
+
+  
+  void DicomInstanceParameters::SetPixelSpacing(double pixelSpacingX,
+                                                double pixelSpacingY)
+  {
+    data_.hasPixelSpacing_ = true;
+    data_.pixelSpacingX_ = pixelSpacingX;
+    data_.pixelSpacingY_ = pixelSpacingY;
+  }
+
+
+  static const Json::Value* LookupDicomWebSingleValue(const Json::Value& dicomweb,
+                                                      const std::string& tag,
+                                                      const std::string& vr)
+  {
+    static const char* const VALUE = "Value";
+    static const char* const VR = "vr";
+
+    if (dicomweb.type() == Json::objectValue &&
+        dicomweb.isMember(tag) &&
+        dicomweb[tag].type() == Json::objectValue &&
+        dicomweb[tag].isMember(VALUE) &&
+        dicomweb[tag].isMember(VR) &&
+        dicomweb[tag][VR].type() == Json::stringValue &&
+        dicomweb[tag][VR].asString() == vr &&
+        dicomweb[tag][VALUE].type() == Json::arrayValue &&
+        dicomweb[tag][VALUE].size() == 1u)
+    {
+      return &dicomweb[tag][VALUE][0];
+    }
+    else
+    {
+      return NULL;
+    }
+  }
+
+
+  void DicomInstanceParameters::EnrichUsingDicomWeb(const Json::Value& dicomweb)
+  {
+    /**
+     * Use DICOM tag "SequenceOfUltrasoundRegions" (0018,6011) in
+     * order to derive the pixel spacing on ultrasound (US) images
+     **/
+    
+    if (!data_.hasPixelSpacing_)
+    {
+      const Json::Value* region = LookupDicomWebSingleValue(dicomweb, "00186011", "SQ");
+      if (region != NULL)
+      {
+        const Json::Value* physicalUnitsXDirection = LookupDicomWebSingleValue(*region, "00186024", "US");
+        const Json::Value* physicalUnitsYDirection = LookupDicomWebSingleValue(*region, "00186026", "US");
+        const Json::Value* physicalDeltaX = LookupDicomWebSingleValue(*region, "0018602C", "FD");
+        const Json::Value* physicalDeltaY = LookupDicomWebSingleValue(*region, "0018602E", "FD");
+        
+        if (physicalUnitsXDirection != NULL &&
+            physicalUnitsYDirection != NULL &&
+            physicalDeltaX != NULL &&
+            physicalDeltaY != NULL &&
+            physicalUnitsXDirection->type() == Json::intValue &&
+            physicalUnitsYDirection->type() == Json::intValue &&
+            physicalUnitsXDirection->asInt() == 0x0003 &&  // Centimeters
+            physicalUnitsYDirection->asInt() == 0x0003 &&  // Centimeters
+            physicalDeltaX->isNumeric() &&
+            physicalDeltaY->isNumeric())
+        {
+          // Scene coordinates are expressed in millimeters => multiplication by 10
+          SetPixelSpacing(10.0 * physicalDeltaX->asDouble(),
+                          10.0 * physicalDeltaY->asDouble());
+        }
+      }
+    }
+  }
 }

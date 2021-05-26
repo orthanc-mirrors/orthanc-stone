@@ -1399,6 +1399,30 @@ private:
       
       {
         OrthancStone::DicomInstanceParameters params(dicom);
+        
+        params.EnrichUsingDicomWeb(message.GetResources()->GetSourceJson(0));
+        GetViewport().centralPixelSpacingX_ = params.GetPixelSpacingX();
+        GetViewport().centralPixelSpacingY_ = params.GetPixelSpacingY();
+
+        if (params.HasPixelSpacing())
+        {
+          GetViewport().stoneAnnotations_->SetUnits(OrthancStone::Units_Millimeters);
+        }
+        else
+        {
+          GetViewport().stoneAnnotations_->SetUnits(OrthancStone::Units_Pixels);
+        }
+
+        if (params.GetPixelSpacingX() != 0 &&
+            params.GetPixelSpacingY() != 0 &&
+            params.GetWidth() != 0 &&
+            params.GetHeight())
+        {
+          GetViewport().centralPhysicalWidth_ = (params.GetPixelSpacingX() *
+                                                 static_cast<double>(params.GetWidth()));
+          GetViewport().centralPhysicalHeight_ = (params.GetPixelSpacingY() *
+                                                  static_cast<double>(params.GetHeight()));
+        }
 
         GetViewport().windowingPresetCenters_.resize(params.GetWindowingPresetsCount());
         GetViewport().windowingPresetWidths_.resize(params.GetWindowingPresetsCount());
@@ -1703,6 +1727,8 @@ private:
   bool                                         synchronizationEnabled_;
   double                                       centralPhysicalWidth_;   // LSD-479
   double                                       centralPhysicalHeight_;
+  double                                       centralPixelSpacingX_;
+  double                                       centralPixelSpacingY_;
 
   bool         hasFocusOnInstance_;
   std::string  focusSopInstanceUid_;
@@ -1856,7 +1882,17 @@ private:
     layer->SetFlipY(flipY_);
 
     double pixelSpacingX, pixelSpacingY;
-    OrthancStone::GeometryToolbox::GetPixelSpacing(pixelSpacingX, pixelSpacingY, instance.GetTags());
+
+    if (instance.HasPixelSpacing())
+    {
+      pixelSpacingX = instance.GetPixelSpacingX();
+      pixelSpacingY = instance.GetPixelSpacingY();
+    }
+    else
+    {
+      pixelSpacingX = centralPixelSpacingX_;
+      pixelSpacingY = centralPixelSpacingY_;
+    }
 
     if (FIX_LSD_479)
     {
@@ -2144,7 +2180,9 @@ private:
     synchronizationOffset_(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0)),
     synchronizationEnabled_(false),
     centralPhysicalWidth_(1),
-    centralPhysicalHeight_(1)
+    centralPhysicalHeight_(1),
+    centralPixelSpacingX_(1),
+    centralPixelSpacingY_(1)
   {
     if (!framesCache_)
     {
@@ -2419,17 +2457,6 @@ public:
         loader_->ScheduleGetDicomWeb(
           boost::make_shared<OrthancStone::LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID),
           0, source_, uri, new LoadSeriesDetailsFromInstance(GetSharedObserver()));
-      }
-
-      if (centralInstance.GetPixelSpacingX() != 0 &&
-          centralInstance.GetPixelSpacingY() != 0 &&
-          centralInstance.GetWidth() != 0 &&
-          centralInstance.GetHeight())
-      {
-        centralPhysicalWidth_ = (centralInstance.GetPixelSpacingX() *
-                                 static_cast<double>(centralInstance.GetWidth()));
-        centralPhysicalHeight_ = (centralInstance.GetPixelSpacingY() *
-                                  static_cast<double>(centralInstance.GetHeight()));
       }
     }
 

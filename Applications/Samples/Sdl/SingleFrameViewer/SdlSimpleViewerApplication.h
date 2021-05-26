@@ -156,9 +156,11 @@ private:
        * "PixelSpacing" in the "SequenceOfUltrasoundRegions"
        * (0018,6011) sequence, cf. tags "PhysicalDeltaX" (0018,602c)
        * and "PhysicalDeltaY" (0018,602e) => This would require
-       * storing the full JSON into the "LoadedDicomResources" class
-       * or to use DCMTK
+       * parsing "message.GetResources()->GetSourceJson(0)"
+       * => cf. "DicomInstanceParameters::EnrichUsingDicomWeb()"
        **/
+
+      // std::cout << message.GetResources()->GetSourceJson(0).toStyledString();
       
       LOG(INFO) << "Using millimeters units, as the DICOM instance contains the PixelSpacing tag";
       units_ = OrthancStone::Units_Millimeters;

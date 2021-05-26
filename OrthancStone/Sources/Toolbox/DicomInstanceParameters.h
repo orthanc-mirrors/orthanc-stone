@@ -235,5 +235,10 @@ namespace OrthancStone
     {
       return data_.hasPixelSpacing_;
     }
+
+    void SetPixelSpacing(double pixelSpacingX,
+                         double pixelSpacingY);
+
+    void EnrichUsingDicomWeb(const Json::Value& dicomweb);
   };
 }

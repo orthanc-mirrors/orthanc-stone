@@ -29,7 +29,58 @@
 
 namespace OrthancStone
 {
-  void LoadedDicomResources::Flatten()
+  LoadedDicomResources::Resource::Resource(const Orthanc::DicomMap& dicom) :
+    dicom_(dicom.Clone())
+  {
+    if (dicom_.get() == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+  }
+
+
+  LoadedDicomResources::Resource* LoadedDicomResources::Resource::Clone() const
+  {
+    assert(dicom_.get() != NULL);
+    return new Resource(*dicom_);
+  }
+
+
+  const Json::Value& LoadedDicomResources::Resource::GetSourceJson() const
+  {
+    if (sourceJson_.get() == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      return *sourceJson_;
+    }
+  }
+
+
+  void LoadedDicomResources::Resource::SetSourceJson(const Json::Value& json)
+  {
+    sourceJson_.reset(new Json::Value(json));
+  }
+
+
+  void LoadedDicomResources::AddResourceInternal(Resource* resource)
+  {
+    std::unique_ptr<Resource> protection(resource);
+    
+    std::string id;
+    
+    if (protection->GetDicom().LookupStringValue(id, indexedTag_, false /* no binary value */) &&
+        resources_.find(id) == resources_.end() /* Don't index twice the same resource */)
+    {
+      resources_[id] = protection.release();
+      flattened_.clear();   // Invalidate the flattened version 
+    }
+  }
+
+
+  const LoadedDicomResources::Resource& LoadedDicomResources::GetResourceInternal(size_t index)
   {
     // Lazy generation of a "std::vector" from the "std::map"
     if (flattened_.empty())
@@ -48,6 +99,16 @@ namespace OrthancStone
       // No need to flatten
       assert(flattened_.size() == resources_.size());
     }
+
+    if (index >= flattened_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      assert(flattened_[index] != NULL);
+      return *flattened_[index];
+    }
   }
 
 
@@ -56,7 +117,10 @@ namespace OrthancStone
     assert(dicomweb.type() == Json::objectValue);
     Orthanc::DicomMap dicom;
     dicom.FromDicomWeb(dicomweb);
-    AddResource(dicom);
+
+    std::unique_ptr<Resource> resource(new Resource(dicom));
+    resource->SetSourceJson(dicomweb);
+    AddResourceInternal(resource.release());
   }
 
   
@@ -68,7 +132,7 @@ namespace OrthancStone
          it != other.resources_.end(); ++it)
     {
       assert(it->second != NULL);
-      AddResource(*it->second);
+      AddResourceInternal(it->second->Clone());
     }
   }
 
@@ -85,22 +149,6 @@ namespace OrthancStone
   }
 
 
-  Orthanc::DicomMap& LoadedDicomResources::GetResource(size_t index)
-  {
-    Flatten();
-
-    if (index >= flattened_.size())
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-    else
-    {
-      assert(flattened_[index] != NULL);
-      return *flattened_[index];
-    }
-  }
-
-
   void LoadedDicomResources::MergeResource(Orthanc::DicomMap& target,
                                            const std::string& id) const
   {
@@ -113,7 +161,7 @@ namespace OrthancStone
     else
     {
       assert(it->second != NULL);
-      target.Merge(*it->second);
+      target.Merge(it->second->GetDicom());
     }
   }
   
@@ -131,21 +179,14 @@ namespace OrthancStone
     else
     {
       assert(found->second != NULL);
-      return found->second->LookupStringValue(target, tag, false);
+      return found->second->GetDicom().LookupStringValue(target, tag, false);
     }  
   }
 
   
   void LoadedDicomResources::AddResource(const Orthanc::DicomMap& dicom)
   {
-    std::string id;
-    
-    if (dicom.LookupStringValue(id, indexedTag_, false /* no binary value */) &&
-        resources_.find(id) == resources_.end() /* Don't index twice the same resource */)
-    {
-      resources_[id] = dicom.Clone();
-      flattened_.clear();   // Invalidate the flattened version 
-    }
+    AddResourceInternal(new Resource(dicom));
   }
 
 
@@ -153,7 +194,10 @@ namespace OrthancStone
   {
     Orthanc::DicomMap dicom;
     dicom.FromDicomAsJson(tags);
-    AddResource(dicom);
+
+    std::unique_ptr<Resource> resource(new Resource(dicom));
+    resource->SetSourceJson(tags);
+    AddResourceInternal(resource.release());
   }
 
 
@@ -196,7 +240,7 @@ namespace OrthancStone
       assert(it->second != NULL);
       
       std::string value;
-      if (it->second->LookupStringValue(value, tag, false))
+      if (it->second->GetDicom().LookupStringValue(value, tag, false))
       {
         Counter::iterator found = counter.find(value);
         if (found == counter.end())

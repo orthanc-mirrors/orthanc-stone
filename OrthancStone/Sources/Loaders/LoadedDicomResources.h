@@ -34,13 +34,41 @@ namespace OrthancStone
   class LoadedDicomResources : public boost::noncopyable
   {
   private:
-    typedef std::map<std::string, Orthanc::DicomMap*>  Resources;
+    class Resource : public boost::noncopyable
+    {
+    private:
+      std::unique_ptr<Orthanc::DicomMap>  dicom_;
+      std::unique_ptr<Json::Value>        sourceJson_;
 
-    Orthanc::DicomTag                indexedTag_;
-    Resources                        resources_;
-    std::vector<Orthanc::DicomMap*>  flattened_;
+    public:
+      Resource(const Orthanc::DicomMap& dicom);
 
-    void Flatten();
+      Resource* Clone() const;
+
+      const Orthanc::DicomMap& GetDicom() const
+      {
+        return *dicom_;
+      }
+
+      bool HasSourceJson() const
+      {
+        return sourceJson_.get() != NULL;
+      }
+
+      const Json::Value& GetSourceJson() const;
+
+      void SetSourceJson(const Json::Value& json);
+    };
+    
+    typedef std::map<std::string, Resource*>  Resources;
+
+    Orthanc::DicomTag       indexedTag_;
+    Resources               resources_;
+    std::vector<Resource*>  flattened_;
+
+    void AddResourceInternal(Resource* resource);
+
+    const Resource& GetResourceInternal(size_t index);
 
     void AddFromDicomWebInternal(const Json::Value& dicomweb);
 
@@ -71,7 +99,10 @@ namespace OrthancStone
       return resources_.size();
     }
 
-    Orthanc::DicomMap& GetResource(size_t index);
+    const Orthanc::DicomMap& GetResource(size_t index)
+    {
+      return GetResourceInternal(index).GetDicom();
+    }
 
     bool HasResource(const std::string& id) const
     {
@@ -93,5 +124,15 @@ namespace OrthancStone
 
     bool LookupTagValueConsensus(std::string& target,
                                  const Orthanc::DicomTag& tag) const;
+
+    bool HasSourceJson(size_t index)
+    {
+      return GetResourceInternal(index).HasSourceJson();
+    }
+
+    const Json::Value& GetSourceJson(size_t index)
+    {
+      return GetResourceInternal(index).GetSourceJson();
+    }
   };
 }

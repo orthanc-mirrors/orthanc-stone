@@ -406,6 +406,7 @@ namespace OrthancStone
   private:
     ScenePoint2D  p1_;
     ScenePoint2D  p2_;
+    ScenePoint2D  delta_;
       
   public:
     Circle(Annotation& parentAnnotation,
@@ -413,7 +414,8 @@ namespace OrthancStone
            const ScenePoint2D& p2) :
       GeometricPrimitive(parentAnnotation, 2),
       p1_(p1),
-      p2_(p2)
+      p2_(p2),
+      delta_(0, 0)
     {
     }
 
@@ -423,22 +425,31 @@ namespace OrthancStone
       SetModified(true);
       p1_ = p1;
       p2_ = p2;
+      delta_ = ScenePoint2D(0, 0);
     }
 
     ScenePoint2D GetPosition1() const
     {
-      return p1_;
+      return p1_ + delta_;
     }
 
     ScenePoint2D GetPosition2() const
     {
-      return p2_;
+      return p2_ + delta_;
     }
 
     virtual bool IsHit(const ScenePoint2D& p,
                        const Scene2D& scene) const ORTHANC_OVERRIDE
     {
-      return false;
+      const double zoom = scene.GetSceneToCanvasTransform().ComputeZoom();
+
+      ScenePoint2D middle((p1_.GetX() + p2_.GetX()) / 2.0,
+                          (p1_.GetY() + p2_.GetY()) / 2.0);
+        
+      const double radius = ScenePoint2D::DistancePtPt(middle, p1_);
+      const double distance = ScenePoint2D::DistancePtPt(middle, p - delta_);
+
+      return std::abs(radius - distance) * zoom <= HANDLE_SIZE / 2.0;
     }
 
     virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
@@ -459,8 +470,8 @@ namespace OrthancStone
       double theta = 0;
       for (unsigned int i = 0; i < NUM_SEGMENTS; i++)
       {
-        chain.push_back(ScenePoint2D(middle.GetX() + radius * cos(theta),
-                                     middle.GetY() + radius * sin(theta)));
+        chain.push_back(ScenePoint2D(delta_.GetX() + middle.GetX() + radius * cos(theta),
+                                     delta_.GetY() + middle.GetY() + radius * sin(theta)));
         theta += increment;
       }
         
@@ -481,12 +492,18 @@ namespace OrthancStone
 
     virtual void MovePreview(const ScenePoint2D& delta) ORTHANC_OVERRIDE
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);  // No hit is possible
+      SetModified(true);
+      delta_ = delta;
+      GetParentAnnotation().SignalMove(*this);
     }
 
     virtual void MoveDone(const ScenePoint2D& delta) ORTHANC_OVERRIDE
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);  // No hit is possible
+      SetModified(true);
+      p1_ = p1_ + delta;
+      p2_ = p2_ + delta;
+      delta_ = ScenePoint2D(0, 0);
+      GetParentAnnotation().SignalMove(*this);
     }
   };
 
@@ -1123,6 +1140,12 @@ namespace OrthancStone
         handle1_.SetCenter(segment_.GetPosition1());
         handle2_.SetCenter(segment_.GetPosition2());
         circle_.SetPosition(segment_.GetPosition1(), segment_.GetPosition2());
+      }
+      else if (&primitive == &circle_)
+      {
+        handle1_.SetCenter(circle_.GetPosition1());
+        handle2_.SetCenter(circle_.GetPosition2());
+        segment_.SetPosition(circle_.GetPosition1(), circle_.GetPosition2());
       }
         
       UpdateLabel();

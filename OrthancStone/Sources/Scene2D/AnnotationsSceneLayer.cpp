@@ -47,6 +47,16 @@ static const char* const VALUE_ANGLE = "angle";
 static const char* const VALUE_CIRCLE = "circle";
 static const char* const VALUE_SEGMENT = "segment";
 
+#if 0
+static OrthancStone::Color COLOR_PRIMITIVES(192, 192, 192);
+static OrthancStone::Color COLOR_HOVER(0, 255, 0);
+static OrthancStone::Color COLOR_TEXT(255, 0, 0);
+#else
+static OrthancStone::Color COLOR_PRIMITIVES(0x40, 0x82, 0xad);
+static OrthancStone::Color COLOR_HOVER(0x40, 0xad, 0x79);
+static OrthancStone::Color COLOR_TEXT(0x4e, 0xde, 0x99);
+#endif
+
 
 namespace OrthancStone
 {
@@ -65,8 +75,8 @@ namespace OrthancStone
                        int depth) :
       modified_(true),
       parentAnnotation_(parentAnnotation),
-      color_(192, 192, 192),
-      hoverColor_(0, 255, 0),
+      color_(COLOR_PRIMITIVES),
+      hoverColor_(COLOR_HOVER),
       isHover_(false),
       depth_(depth)
     {
@@ -781,7 +791,7 @@ namespace OrthancStone
       segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
-      label_.SetColor(Color(255, 0, 0));
+      label_.SetColor(COLOR_TEXT);
       UpdateLabel();
     }
 
@@ -900,7 +910,7 @@ namespace OrthancStone
       arc_(AddTypedPrimitive<Arc>(new Arc(*this, start, middle, end))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
-      label_.SetColor(Color(255, 0, 0));
+      label_.SetColor(COLOR_TEXT);
       UpdateLabel();
     }
 
@@ -1046,7 +1056,7 @@ namespace OrthancStone
       circle_(AddTypedPrimitive<Circle>(new Circle(*this, p1, p2))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
-      label_.SetColor(Color(255, 0, 0));
+      label_.SetColor(COLOR_TEXT);
       UpdateLabel();
     }
 

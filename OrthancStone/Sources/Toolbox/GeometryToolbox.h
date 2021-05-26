@@ -70,7 +70,7 @@ namespace OrthancStone
                              const double& xmax,
                              const double& ymax);
 
-    void GetPixelSpacing(double& spacingX, 
+    bool GetPixelSpacing(double& spacingX, 
                          double& spacingY,
                          const Orthanc::DicomMap& dicom);
 

@@ -157,6 +157,12 @@ namespace OrthancStone
     MouseAction_None
   };
 
+  enum Units
+  {
+    Units_Millimeters,
+    Units_Pixels
+  };
+    
   SopClassUid StringToSopClassUid(const std::string& source);
 
   void ComputeWindowing(float& targetCenter,

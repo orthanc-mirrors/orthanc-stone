@@ -123,7 +123,7 @@ namespace OrthancStone
       sliceThicknessPresent = false;
     }
 
-    GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dicom);
+    hasPixelSpacing_ = GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dicom);
 
     std::string position, orientation;
     if (dicom.LookupStringValue(position, Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, false) &&

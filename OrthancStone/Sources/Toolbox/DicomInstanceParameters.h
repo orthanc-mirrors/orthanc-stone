@@ -62,6 +62,7 @@ namespace OrthancStone
       std::string         doseUnits_;
       double              doseGridScaling_;
       std::string         frameOfReferenceUid_;
+      bool                hasPixelSpacing_;
 
       explicit Data(const Orthanc::DicomMap& dicom);
     };
@@ -228,6 +229,11 @@ namespace OrthancStone
     const std::string& GetFrameOfReferenceUid() const
     {
       return data_.frameOfReferenceUid_;
+    }
+
+    bool HasPixelSpacing() const
+    {
+      return data_.hasPixelSpacing_;
     }
   };
 }

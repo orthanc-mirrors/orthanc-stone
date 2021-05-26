@@ -42,7 +42,7 @@ namespace OrthancStone
       Tool_Circle,
       Tool_Remove
     };
-    
+
   private:
     class GeometricPrimitive;    
     class Handle;    
@@ -71,6 +71,7 @@ namespace OrthancStone
     GeometricPrimitives  primitives_;
     Annotations          annotations_;
     SubLayers            subLayersToRemove_;
+    Units                units_;
 
     void AddAnnotation(Annotation* annotation);
     
@@ -98,6 +99,13 @@ namespace OrthancStone
     Tool GetActiveTool() const
     {
       return activeTool_;
+    }
+
+    void SetUnits(Units units);
+
+    Units GetUnits() const
+    {
+      return units_;
     }
 
     void AddSegmentAnnotation(const ScenePoint2D& p1,

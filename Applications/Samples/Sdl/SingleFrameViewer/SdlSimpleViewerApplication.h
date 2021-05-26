@@ -101,16 +101,23 @@ public:
     lock->Invalidate();
   }
 
+  OrthancStone::Units GetUnits() const
+  {
+    return units_;
+  }
+
 private:
   ILoadersContext& context_;
   boost::shared_ptr<IViewport>             viewport_;
   boost::shared_ptr<DicomResourcesLoader>  dicomLoader_;
   boost::shared_ptr<SeriesFramesLoader>    framesLoader_;
+  OrthancStone::Units                      units_;
 
   SdlSimpleViewerApplication(ILoadersContext& context,
                              boost::shared_ptr<IViewport> viewport) :
     context_(context),
-    viewport_(viewport)
+    viewport_(viewport),
+    units_(OrthancStone::Units_Pixels)
   {
   }
 
@@ -141,6 +148,26 @@ private:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
 
+    OrthancStone::DicomInstanceParameters parameters(message.GetResources()->GetResource(0));
+    if (parameters.HasPixelSpacing())
+    {
+      /**
+       * TODO - Ultrasound (US) images store an equivalent to
+       * "PixelSpacing" in the "SequenceOfUltrasoundRegions"
+       * (0018,6011) sequence, cf. tags "PhysicalDeltaX" (0018,602c)
+       * and "PhysicalDeltaY" (0018,602e) => This would require
+       * storing the full JSON into the "LoadedDicomResources" class
+       * or to use DCMTK
+       **/
+      
+      LOG(INFO) << "Using millimeters units, as the DICOM instance contains the PixelSpacing tag";
+      units_ = OrthancStone::Units_Millimeters;
+    }
+    else
+    {
+      LOG(INFO) << "Using pixels units, as the DICOM instance does *not* contain the PixelSpacing tag";
+    }
+    
     //message.GetResources()->GetResource(0).Print(stdout);
 
     {

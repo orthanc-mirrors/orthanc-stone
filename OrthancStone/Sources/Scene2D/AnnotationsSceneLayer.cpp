@@ -42,10 +42,13 @@ static const char* const KEY_X2 = "x2";
 static const char* const KEY_Y2 = "y2";
 static const char* const KEY_X3 = "x3";
 static const char* const KEY_Y3 = "y3";
+static const char* const KEY_UNITS = "units";
 
 static const char* const VALUE_ANGLE = "angle";
 static const char* const VALUE_CIRCLE = "circle";
 static const char* const VALUE_SEGMENT = "segment";
+static const char* const VALUE_MILLIMETERS = "millimeters";
+static const char* const VALUE_PIXELS = "pixels";
 
 #if 0
 static OrthancStone::Color COLOR_PRIMITIVES(192, 192, 192);
@@ -166,10 +169,13 @@ namespace OrthancStone
       
     AnnotationsSceneLayer&  that_;
     GeometricPrimitives     primitives_;
+    Units                   units_;
       
   public:
-    explicit Annotation(AnnotationsSceneLayer& that) :
-      that_(that)
+    explicit Annotation(AnnotationsSceneLayer& that,
+                        Units units) :
+      that_(that),
+      units_(units)
     {
       that.AddAnnotation(this);
     }
@@ -180,6 +186,11 @@ namespace OrthancStone
       {
         that_.DeletePrimitive(*it);
       }
+    }
+
+    Units GetUnits() const
+    {
+      return units_;
     }
 
     GeometricPrimitive* AddPrimitive(GeometricPrimitive* primitive)
@@ -772,7 +783,21 @@ namespace OrthancStone
         double dx = x1 - x2;
         double dy = y1 - y2;
         char buf[32];
-        sprintf(buf, "%0.2f cm", sqrt(dx * dx + dy * dy) / 10.0);
+
+        switch (GetUnits())
+        {
+          case Units_Millimeters:
+            sprintf(buf, "%0.2f cm", sqrt(dx * dx + dy * dy) / 10.0);
+            break;
+
+          case Units_Pixels:
+            sprintf(buf, "%0.1f px", sqrt(dx * dx + dy * dy));
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        }
+            
         content.SetText(buf);
 
         label_.SetContent(content);
@@ -781,10 +806,11 @@ namespace OrthancStone
 
   public:
     SegmentAnnotation(AnnotationsSceneLayer& that,
+                      Units units,
                       bool showLabel,
                       const ScenePoint2D& p1,
                       const ScenePoint2D& p2) :
-      Annotation(that),
+      Annotation(that, units),
       showLabel_(showLabel),
       handle1_(AddTypedPrimitive<Handle>(new Handle(*this, p1))),
       handle2_(AddTypedPrimitive<Handle>(new Handle(*this, p2))),
@@ -832,6 +858,7 @@ namespace OrthancStone
     }
 
     static void Unserialize(AnnotationsSceneLayer& target,
+                            Units units,
                             const Json::Value& source)
     {
       if (source.isMember(KEY_X1) &&
@@ -843,7 +870,7 @@ namespace OrthancStone
           source[KEY_X2].isNumeric() &&
           source[KEY_Y2].isNumeric())
       {
-        new SegmentAnnotation(target, true,
+        new SegmentAnnotation(target, units, true,
                               ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
                               ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()));
       }
@@ -898,10 +925,11 @@ namespace OrthancStone
 
   public:
     AngleAnnotation(AnnotationsSceneLayer& that,
+                    Units units,
                     const ScenePoint2D& start,
                     const ScenePoint2D& middle,
                     const ScenePoint2D& end) :
-      Annotation(that),
+      Annotation(that, units),
       startHandle_(AddTypedPrimitive<Handle>(new Handle(*this, start))),
       middleHandle_(AddTypedPrimitive<Handle>(new Handle(*this, middle))),
       endHandle_(AddTypedPrimitive<Handle>(new Handle(*this, end))),
@@ -970,6 +998,7 @@ namespace OrthancStone
     }
 
     static void Unserialize(AnnotationsSceneLayer& target,
+                            Units units,
                             const Json::Value& source)
     {
       if (source.isMember(KEY_X1) &&
@@ -985,7 +1014,7 @@ namespace OrthancStone
           source[KEY_X3].isNumeric() &&
           source[KEY_Y3].isNumeric())
       {
-        new AngleAnnotation(target,
+        new AngleAnnotation(target, units,
                             ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
                             ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()),
                             ScenePoint2D(source[KEY_X3].asDouble(), source[KEY_Y3].asDouble()));
@@ -1036,10 +1065,25 @@ namespace OrthancStone
       double area = PI * diameter * diameter / 4.0;
         
       char buf[32];
-      sprintf(buf, "%0.2f cm\n%0.2f cm%c%c",
-              diameter / 10.0,
-              area / 100.0,
-              0xc2, 0xb2 /* two bytes corresponding to two power in UTF-8 */);
+
+      switch (GetUnits())
+      {
+        case Units_Millimeters:
+          sprintf(buf, "%0.2f cm\n%0.2f cm%c%c",
+                  diameter / 10.0,
+                  area / 100.0,
+                  0xc2, 0xb2 /* two bytes corresponding to two power in UTF-8 */);
+          break;
+
+        case Units_Pixels:
+          // Don't report area (pixel-times-pixel is a strange unit)
+          sprintf(buf, "%0.1f px", diameter);
+          break;
+          
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+
       content.SetText(buf);
 
       label_.SetContent(content);
@@ -1047,9 +1091,10 @@ namespace OrthancStone
 
   public:
     CircleAnnotation(AnnotationsSceneLayer& that,
+                     Units units,
                      const ScenePoint2D& p1,
                      const ScenePoint2D& p2) :
-      Annotation(that),
+      Annotation(that, units),
       handle1_(AddTypedPrimitive<Handle>(new Handle(*this, p1))),
       handle2_(AddTypedPrimitive<Handle>(new Handle(*this, p2))),
       segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
@@ -1094,6 +1139,7 @@ namespace OrthancStone
     }
 
     static void Unserialize(AnnotationsSceneLayer& target,
+                            Units units,
                             const Json::Value& source)
     {
       if (source.isMember(KEY_X1) &&
@@ -1105,7 +1151,7 @@ namespace OrthancStone
           source[KEY_X2].isNumeric() &&
           source[KEY_Y2].isNumeric())
       {
-        new CircleAnnotation(target,
+        new CircleAnnotation(target, units,
                              ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
                              ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()));
       }
@@ -1127,6 +1173,7 @@ namespace OrthancStone
       
   public:
     CreateSegmentOrCircleTracker(AnnotationsSceneLayer& that,
+                                 Units units,
                                  bool isCircle,
                                  const ScenePoint2D& sceneClick,
                                  const AffineTransform2D& canvasToScene) :
@@ -1137,12 +1184,12 @@ namespace OrthancStone
     {
       if (isCircle)
       {
-        annotation_ = new CircleAnnotation(that, sceneClick, sceneClick);
+        annotation_ = new CircleAnnotation(that, units, sceneClick, sceneClick);
         handle2_ = &dynamic_cast<CircleAnnotation*>(annotation_)->GetHandle2();
       }
       else
       {
-        annotation_ = new SegmentAnnotation(that, true /* show label */, sceneClick, sceneClick);
+        annotation_ = new SegmentAnnotation(that, units, true /* show label */, sceneClick, sceneClick);
         handle2_ = &dynamic_cast<SegmentAnnotation*>(annotation_)->GetHandle2();
       }
         
@@ -1199,6 +1246,7 @@ namespace OrthancStone
       
   public:
     CreateAngleTracker(AnnotationsSceneLayer& that,
+                       Units units,
                        const ScenePoint2D& sceneClick,
                        const AffineTransform2D& canvasToScene) :
       that_(that),
@@ -1206,7 +1254,7 @@ namespace OrthancStone
       angle_(NULL),
       canvasToScene_(canvasToScene)
     {
-      segment_ = new SegmentAnnotation(that, false /* no length label */, sceneClick, sceneClick);
+      segment_ = new SegmentAnnotation(that, units, false /* no length label */, sceneClick, sceneClick);
     }
 
     virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
@@ -1232,7 +1280,7 @@ namespace OrthancStone
       {
         // End of first step: The first segment is available, now create the angle
 
-        angle_ = new AngleAnnotation(that_, segment_->GetHandle1().GetCenter(),
+        angle_ = new AngleAnnotation(that_, segment_->GetUnits(), segment_->GetHandle1().GetCenter(),
                                      segment_->GetHandle2().GetCenter(),
                                      segment_->GetHandle2().GetCenter());
           
@@ -1348,7 +1396,8 @@ namespace OrthancStone
   AnnotationsSceneLayer::AnnotationsSceneLayer(size_t macroLayerIndex) :
     activeTool_(Tool_Edit),
     macroLayerIndex_(macroLayerIndex),
-    polylineSubLayer_(0)  // dummy initialization
+    polylineSubLayer_(0),  // dummy initialization
+    units_(Units_Pixels)
   {
   }
     
@@ -1366,18 +1415,28 @@ namespace OrthancStone
     ClearHover();
   }
 
+  
+  void AnnotationsSceneLayer::SetUnits(Units units)
+  {
+    if (units_ != units)
+    {
+      Clear();
+      units_ = units;
+    }
+  }
+
 
   void AnnotationsSceneLayer::AddSegmentAnnotation(const ScenePoint2D& p1,
                                                    const ScenePoint2D& p2)
   {
-    annotations_.insert(new SegmentAnnotation(*this, true /* show label */, p1, p2));
+    annotations_.insert(new SegmentAnnotation(*this, units_, true /* show label */, p1, p2));
   }
   
 
   void AnnotationsSceneLayer::AddCircleAnnotation(const ScenePoint2D& p1,
                                                   const ScenePoint2D& p2)
   {
-    annotations_.insert(new CircleAnnotation(*this, p1, p2));
+    annotations_.insert(new CircleAnnotation(*this, units_, p1, p2));
   }
   
 
@@ -1385,7 +1444,7 @@ namespace OrthancStone
                                                  const ScenePoint2D& p2,
                                                  const ScenePoint2D& p3)
   {
-    annotations_.insert(new AngleAnnotation(*this, p1, p2, p3));
+    annotations_.insert(new AngleAnnotation(*this, units_, p1, p2, p3));
   }
   
 
@@ -1524,13 +1583,13 @@ namespace OrthancStone
         switch (activeTool_)
         {
           case Tool_Segment:
-            return new CreateSegmentOrCircleTracker(*this, false /* segment */, s, scene.GetCanvasToSceneTransform());
+            return new CreateSegmentOrCircleTracker(*this, units_, false /* segment */, s, scene.GetCanvasToSceneTransform());
 
           case Tool_Circle:
-            return new CreateSegmentOrCircleTracker(*this, true /* circle */, s, scene.GetCanvasToSceneTransform());
+            return new CreateSegmentOrCircleTracker(*this, units_, true /* circle */, s, scene.GetCanvasToSceneTransform());
 
           case Tool_Angle:
-            return new CreateAngleTracker(*this, s, scene.GetCanvasToSceneTransform());
+            return new CreateAngleTracker(*this, units_, s, scene.GetCanvasToSceneTransform());
 
           default:
             return NULL;
@@ -1555,6 +1614,20 @@ namespace OrthancStone
 
     target = Json::objectValue;
     target[KEY_ANNOTATIONS] = annotations;
+
+    switch (units_)
+    {
+      case Units_Millimeters:
+        target[KEY_UNITS] = VALUE_MILLIMETERS;
+        break;
+
+      case Units_Pixels:
+        target[KEY_UNITS] = VALUE_PIXELS;
+        break;
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
   }
 
 
@@ -1564,9 +1637,26 @@ namespace OrthancStone
       
     if (serialized.type() != Json::objectValue ||
         !serialized.isMember(KEY_ANNOTATIONS) ||
-        serialized[KEY_ANNOTATIONS].type() != Json::arrayValue)
+        !serialized.isMember(KEY_UNITS) ||
+        serialized[KEY_ANNOTATIONS].type() != Json::arrayValue ||
+        serialized[KEY_UNITS].type() != Json::stringValue)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize a set of annotations");
+    }
+
+    const std::string& u = serialized[KEY_UNITS].asString();
+
+    if (u == VALUE_MILLIMETERS)
+    {
+      units_ = Units_Millimeters;
+    }
+    else if (u == VALUE_PIXELS)
+    {
+      units_ = Units_Pixels;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Unknown units: " + u);
     }
 
     const Json::Value& annotations = serialized[KEY_ANNOTATIONS];
@@ -1584,15 +1674,15 @@ namespace OrthancStone
 
       if (type == VALUE_ANGLE)
       {
-        AngleAnnotation::Unserialize(*this, annotations[i]);
+        AngleAnnotation::Unserialize(*this, units_, annotations[i]);
       }
       else if (type == VALUE_CIRCLE)
       {
-        CircleAnnotation::Unserialize(*this, annotations[i]);
+        CircleAnnotation::Unserialize(*this, units_, annotations[i]);
       }
       else if (type == VALUE_SEGMENT)
       {
-        SegmentAnnotation::Unserialize(*this, annotations[i]);
+        SegmentAnnotation::Unserialize(*this, units_, annotations[i]);
       }
       else
       {

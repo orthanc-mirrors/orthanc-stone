@@ -304,7 +304,7 @@ namespace OrthancStone
     }
 
 
-    void GetPixelSpacing(double& spacingX, 
+    bool GetPixelSpacing(double& spacingX, 
                          double& spacingY,
                          const Orthanc::DicomMap& dicom)
     {
@@ -324,6 +324,7 @@ namespace OrthancStone
           // WARNING: X/Y are swapped (Y comes first)
           spacingX = v[1];
           spacingY = v[0];
+          return true;
         }
       }
       else
@@ -332,6 +333,7 @@ namespace OrthancStone
         // default value in such a case
         spacingX = 1;
         spacingY = 1;
+        return false;
       }
     }
 

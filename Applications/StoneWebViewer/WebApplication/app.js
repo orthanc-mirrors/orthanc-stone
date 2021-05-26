@@ -37,6 +37,15 @@ var PATIENT_BIRTH_DATE = '0010,0030';
 // Registry of the PDF series for which the instance metadata is still waiting
 var pendingSeriesPdf_ = {};
 
+var MOUSE_TOOL_COMBINED = 1;
+var MOUSE_TOOL_ZOOM = 2;
+var MOUSE_TOOL_PAN = 3;
+var MOUSE_TOOL_CROSSHAIR = 4;
+var MOUSE_TOOL_CREATE_SEGMENT = 5;
+var MOUSE_TOOL_CREATE_ANGLE = 6;
+var MOUSE_TOOL_CREATE_CIRCLE = 7;
+var MOUSE_TOOL_REMOVE_MEASURE = 8;
+
 
 function getParameterFromUrl(key) {
   var url = window.location.search.substring(1);
@@ -391,8 +400,7 @@ var app = new Vue({
       globalConfiguration: {},
       creatingArchive: false,
       archiveJob: '',
-      annotationsCurrentAction: stone.WebViewerAction.NONE,  // dummy value
-      annotationsBackupAction: stone.WebViewerAction.NONE,  // dummy value
+      mouseTool: 0,
 
       modalWarning: false,
       modalNotDiagnostic: false,
@@ -654,8 +662,6 @@ var app = new Vue({
           sopInstanceUid: info.sopInstanceUid
         };
       }
-
-      this.ResetAnnotationsAction();
     },
     
     ClickSeries: function(seriesIndex) {
@@ -753,7 +759,6 @@ var app = new Vue({
       }
 
       this.FitContent();
-      this.ResetAnnotationsAction();
     },
 
     UpdateSeriesThumbnail: function(seriesInstanceUid) {
@@ -863,38 +868,18 @@ var app = new Vue({
       $('[data-toggle="tooltip"]').tooltip('hide');
     },
 
-    SetMouseButtonActions: function(left, middle, right) {
+    SetMouseButtonActions: function(tool, left, middle, right) {
       this.mouseActionsVisible = false;
-      this.annotationsBackupAction = stone.WebViewerAction.NONE;
+      this.mouseTool = tool;
       stone.SetMouseButtonActions(left, middle, right);
     },
 
-    SetAnnotationsAction: function(action) {
-      if (this.annotationsCurrentAction == action) {
-        this.ResetAnnotationsAction();
-      } else {
-        this.annotationsCurrentAction = action;
-
-        if (this.annotationsBackupAction == stone.WebViewerAction.NONE) {
-          this.annotationsBackupAction = stone.GetLeftMouseButtonAction();
-        }
-
-        stone.SetMouseButtonActions(action,
-                                    stone.GetMiddleMouseButtonAction(),
-                                    stone.GetRightMouseButtonAction());
-      }
+    SetLeftMouseButtonAction: function(tool, left) {
+      this.mouseActionsVisible = false;
+      this.mouseTool = tool;
+      stone.SetMouseButtonActions(left, stone.GetMiddleMouseButtonAction(),
+                                  stone.GetRightMouseButtonAction());
     },
-
-    ResetAnnotationsAction: function() {
-      if (this.annotationsBackupAction != stone.WebViewerAction.NONE) {
-        stone.SetMouseButtonActions(this.annotationsBackupAction,
-                                    stone.GetMiddleMouseButtonAction(),
-                                    stone.GetRightMouseButtonAction());
-      }
-
-      this.annotationsBackupAction = stone.WebViewerAction.NONE;
-      this.annotationsCurrentAction = stone.WebViewerAction.NONE;
-    },    
 
     LoadOsiriXAnnotations: function(xml, clearPrevious)
     {
@@ -969,8 +954,8 @@ var app = new Vue({
         middle = ConvertMouseAction(behaviour['MiddleMouseButton'], middle);
         right = ConvertMouseAction(behaviour['RightMouseButton'], right);
       }
-      
-      this.SetMouseButtonActions(left, middle, right);
+
+      this.SetMouseButtonActions(MOUSE_TOOL_COMBINED, left, middle, right);
     },
 
     CheckIsDownloadComplete: function()
@@ -1072,11 +1057,11 @@ var app = new Vue({
     });
 
     window.addEventListener('StoneAnnotationAdded', function() {
-      that.ResetAnnotationsAction();
+      // Ignore
     });
 
     window.addEventListener('StoneAnnotationRemoved', function() {
-      that.ResetAnnotationsAction();
+      // Ignore
     });
   }
 });

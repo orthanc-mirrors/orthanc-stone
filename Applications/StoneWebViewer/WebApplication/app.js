@@ -401,6 +401,7 @@ var app = new Vue({
       creatingArchive: false,
       archiveJob: '',
       mouseTool: 0,
+      stoneWebViewerVersion: 'Unknown',
 
       modalWarning: false,
       modalNotDiagnostic: false,
@@ -1087,6 +1088,9 @@ window.addEventListener('StoneInitialized', function() {
   
   console.warn('Stone properly initialized');
 
+  stone.LoadStoneWebViewerVersion();
+  app.stoneWebViewerVersion = stone.GetStringBuffer();
+  
   app.SetCombinedToolActions();
   
   var selectedStudies = getParameterFromUrl('selectedStudies');

@@ -3482,6 +3482,17 @@ extern "C"
   
 
   EMSCRIPTEN_KEEPALIVE
+  void LoadStoneWebViewerVersion()
+  {
+    try
+    {
+      stringBuffer_.assign(STONE_WEB_VIEWER_VERSION);
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
+  
+
+  EMSCRIPTEN_KEEPALIVE
   void LoadStudyTags(int i)
   {
     try

@@ -41,7 +41,7 @@ namespace OrthancStone
       std::unique_ptr<Json::Value>        sourceJson_;
 
     public:
-      Resource(const Orthanc::DicomMap& dicom);
+      explicit Resource(const Orthanc::DicomMap& dicom);
 
       Resource* Clone() const;
 

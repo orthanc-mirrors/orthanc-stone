@@ -21,12 +21,22 @@
 
 set -ex
 
-IMAGE=jodogne/wasm-builder:1.39.17-upstream
+# NB: Sources of the "jodogne/wasm-builder" Docker image:
+# https://github.com/jodogne/OrthancDocker/tree/master/wasm-builder
+IMAGE=jodogne/wasm-builder:2.0.23
 #IMAGE=wasm-builder
 
 if [ "$1" != "Debug" -a "$1" != "Release" ]; then
     echo "Please provide build type: Debug or Release"
     exit -1
+fi
+
+if [ "$2" == "" ]; then
+    echo "No branch provided, trying to identify the current branch"
+    STONE_BRANCH=`hg identify -b`
+    echo "Detected branch of the Stone Web viewer: ${STONE_BRANCH}"
+else
+    STONE_BRANCH=$2    
 fi
 
 if [ -t 1 ]; then
@@ -40,6 +50,7 @@ mkdir -p ${ROOT_DIR}/wasm-binaries
 
 docker run -t ${DOCKER_FLAGS} --rm \
     --user $(id -u):$(id -g) \
+    -e STONE_BRANCH=${STONE_BRANCH} \
     -v ${ROOT_DIR}:/source:ro \
     -v ${ROOT_DIR}/wasm-binaries:/target:rw ${IMAGE} \
     bash /source/Applications/StoneWebViewer/WebAssembly/docker-internal.sh $1

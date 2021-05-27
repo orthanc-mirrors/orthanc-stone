@@ -10,9 +10,11 @@ Version 2.0 (2021-05-27)
 * New argument "token" to set HTTP header "Authorization: Bearer <token>"
   for each request to the DICOMweb server
 * Fix issue #197 (Support for passing credentials with all HTTP requests)
+* Emscripten version: 2.0.23
 
 
 Version 1.0 (2020-12-02)
 ========================
 
 * Initial release
+* Emscripten version: 1.39.17-upstream

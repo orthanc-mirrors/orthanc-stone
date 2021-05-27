@@ -53,6 +53,8 @@ Wishlist
 * Fully implement "Basic Image Review" profile from IHE:
   https://wiki.ihe.net/index.php/Basic_Image_Review
 
+* Use "ImagerPixelSpacing" (0018,1164) tag if "PixelSpacing" is missing
+
 
 
 ==================================

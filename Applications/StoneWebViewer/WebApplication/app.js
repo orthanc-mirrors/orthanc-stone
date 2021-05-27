@@ -401,7 +401,8 @@ var app = new Vue({
       creatingArchive: false,
       archiveJob: '',
       mouseTool: 0,
-      stoneWebViewerVersion: 'Unknown',
+      stoneWebViewerVersion: '...',
+      emscriptenVersion: '...',
 
       modalWarning: false,
       modalNotDiagnostic: false,
@@ -1088,8 +1089,8 @@ window.addEventListener('StoneInitialized', function() {
   
   console.warn('Stone properly initialized');
 
-  stone.LoadStoneWebViewerVersion();
-  app.stoneWebViewerVersion = stone.GetStringBuffer();
+  app.stoneWebViewerVersion = stone.GetStoneWebViewerVersion();
+  app.emscriptenVersion = stone.GetEmscriptenVersion();
   
   app.SetCombinedToolActions();
   

@@ -3482,13 +3482,22 @@ extern "C"
   
 
   EMSCRIPTEN_KEEPALIVE
-  void LoadStoneWebViewerVersion()
+  const char* GetStoneWebViewerVersion()
   {
-    try
-    {
-      stringBuffer_.assign(STONE_WEB_VIEWER_VERSION);
-    }
-    EXTERN_CATCH_EXCEPTIONS;
+    return STONE_WEB_VIEWER_VERSION;
+  }
+  
+
+  EMSCRIPTEN_KEEPALIVE
+  const char* GetEmscriptenVersion()
+  {
+    // WARNING - "static" is important, otherwise the string would be
+    // freed when returning to JavaScript
+    static const std::string EMSCRIPTEN_VERSION = (
+      boost::lexical_cast<std::string>(__EMSCRIPTEN_major__) + "." +
+      boost::lexical_cast<std::string>(__EMSCRIPTEN_minor__) + "." +
+      boost::lexical_cast<std::string>(__EMSCRIPTEN_tiny__));
+    return EMSCRIPTEN_VERSION.c_str();
   }
   
 

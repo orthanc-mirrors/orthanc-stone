@@ -1,6 +1,10 @@
 Pending changes in the mainline
 ===============================
 
+
+Version 2.0 (2021-05-27)
+========================
+
 * New tools for annotations: segment length, circle, angle and eraser
 * Patient birth date is now displayed in the overlays
 * New argument "token" to set HTTP header "Authorization: Bearer <token>"

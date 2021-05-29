@@ -3,18 +3,14 @@
 == Stone Web viewer ==
 ======================
 
------------------
-Code refactorings
------------------
-
-* Replace "ParsedDicomCache" by "Orthanc::ParsedDicomCache" (new in
-  Orthanc framework 1.9.0)
-
-
 ------------
 Improvements
 ------------
 
+* Save/load annotations as attachments of their parent series
+  (including detection of collisions thanks to revisions).
+  https://book.orthanc-server.com/faq/features.html#metadata-attachments
+  
 * Internationalization (i18n). Some possible libraries:
   https://phrase.com/blog/posts/the-best-javascript-i18n-libraries/
 
@@ -26,6 +22,14 @@ Improvements
   crosshair invalid.
 
 * Handle mobile gestures.
+
+
+-----------------
+Code refactorings
+-----------------
+
+* Replace "ParsedDicomCache" by "Orthanc::ParsedDicomCache" (new in
+  Orthanc framework 1.9.0)
 
 
 --------

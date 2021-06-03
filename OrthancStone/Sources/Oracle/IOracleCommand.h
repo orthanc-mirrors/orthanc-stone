@@ -47,6 +47,8 @@ namespace OrthancStone
 
     virtual Type GetType() const = 0;
 
+    virtual std::string GetCallerName() const = 0;
+
     // This only clones the command, *not* its possibly associated payload
     virtual IOracleCommand* Clone() const = 0;
   };

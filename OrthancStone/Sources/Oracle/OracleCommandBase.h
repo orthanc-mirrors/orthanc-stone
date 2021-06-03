@@ -35,6 +35,7 @@ namespace OrthancStone
   {
   private:
     std::unique_ptr<Orthanc::IDynamicObject>  payload_;
+    std::string callerName_;
 
   public:
     void AcquirePayload(Orthanc::IDynamicObject* payload);
@@ -45,6 +46,9 @@ namespace OrthancStone
     }
 
     virtual Orthanc::IDynamicObject& GetPayload() const;
+
+    void SetCallerName(const std::string callerName) { callerName_ = callerName; }
+    virtual std::string GetCallerName() const { return callerName_; }
 
     Orthanc::IDynamicObject* ReleasePayload();
   };

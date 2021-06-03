@@ -156,6 +156,7 @@ namespace OrthancStone
 
       {
         std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+        command->SetCallerName("DicomStructureSetLoader::RestInstanceLookupHandler::LookupInstance");
         command->SetHttpHeader("Accept-Encoding", "gzip");
         std::string uri = "/instances/" + instanceId + "/tags";
         command->SetUri(uri);
@@ -173,6 +174,7 @@ namespace OrthancStone
          ++it)
     {
       std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      command->SetCallerName("DicomStructureSetLoader::RestInstanceLookupHandler");
       command->SetUri("/tools/lookup");
       command->SetMethod(Orthanc::HttpMethod_Post);
       command->SetBody(*it);
@@ -479,6 +481,7 @@ namespace OrthancStone
 
     {
       std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      command->SetCallerName("DicomStructureSetLoader::LoadInstance");
       command->SetHttpHeader("Accept-Encoding", "gzip");
 
       std::string uri = "/instances/" + instanceId + "/tags?ignore-length=3006-0050";

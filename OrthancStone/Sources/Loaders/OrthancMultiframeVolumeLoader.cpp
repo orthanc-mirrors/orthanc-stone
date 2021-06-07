@@ -104,6 +104,7 @@ namespace OrthancStone
         // mandatory for RT-DOSE, but is too long to be returned by default
           
         std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+        command->SetCallerName("OrthancMultiframeVolumeLoader::LoadGeometry");
         command->SetUri("/instances/" + loader.GetInstanceId() + "/content/" +
                         Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR.Format());
         command->AcquirePayload(new LoadRTDoseGeometry(loader, dicom.release()));
@@ -177,6 +178,7 @@ namespace OrthancStone
         transferSyntaxUid_ == "1.2.840.10008.1.2.2")
     {
       std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      command->SetCallerName("OrthancMultiframeVolumeLoader::ScheduleFrameDownloads");
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId_ + "/content/" +
                       Orthanc::DICOM_TAG_PIXEL_DATA.Format() + "/0");
@@ -615,6 +617,7 @@ namespace OrthancStone
 
     {
       std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      command->SetCallerName("OrthancMultiframeVolumeLoader::LoadInstance");
       command->SetHttpHeader("Accept-Encoding", "gzip");
       command->SetUri("/instances/" + instanceId + "/tags");
       command->AcquirePayload(new LoadGeometry(*this));
@@ -623,6 +626,7 @@ namespace OrthancStone
 
     {
       std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
+      command->SetCallerName("OrthancMultiframeVolumeLoader::LoadInstance");
       command->SetUri("/instances/" + instanceId + "/metadata/TransferSyntax");
       command->AcquirePayload(new LoadTransferSyntax(*this));
       Schedule(command.release());

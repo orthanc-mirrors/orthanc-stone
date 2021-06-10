@@ -41,9 +41,9 @@ namespace OrthancStone
     }
 
     virtual bool GetStringValue(std::string& result,
-                                const DicomPath& path) const ORTHANC_OVERRIDE;
+                                const Orthanc::DicomPath& path) const ORTHANC_OVERRIDE;
 
     virtual bool GetSequenceSize(size_t& size,
-                                 const DicomPath& path) const ORTHANC_OVERRIDE;
+                                 const Orthanc::DicomPath& path) const ORTHANC_OVERRIDE;
   };
 }

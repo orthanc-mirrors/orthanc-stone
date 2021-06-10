@@ -26,6 +26,8 @@
 #include "GeometryToolbox.h"
 #include "DisjointDataSet.h"
 
+#include <Logging.h>
+
 namespace OrthancStone
 {
   // see header

@@ -30,7 +30,7 @@
 #include "../Scene2D/Color.h"
 #include "../StoneException.h"
 
-#include <FullOrthancDataset.h>
+#include "OrthancDatasets/FullOrthancDataset.h"
 
 #include <list>
 #include <string>

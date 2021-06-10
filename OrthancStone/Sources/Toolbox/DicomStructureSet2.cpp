@@ -31,23 +31,24 @@
 #include <Toolbox.h>
 #include <DicomFormat/DicomTag.h>
 
-#include <FullOrthancDataset.h>
-#include <DicomDatasetReader.h>
+#include "DicomStructure2.h"
+#include "GenericToolbox.h"
+#include "OrthancDatasets/DicomDatasetReader.h"
 
 namespace OrthancStone
 {
-  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_GEOMETRIC_TYPE(0x3006, 0x0042);
-  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_IMAGE_SEQUENCE(0x3006, 0x0016);
-  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_SEQUENCE(0x3006, 0x0040);
-  static const OrthancPlugins::DicomTag DICOM_TAG_CONTOUR_DATA(0x3006, 0x0050);
-  static const OrthancPlugins::DicomTag DICOM_TAG_NUMBER_OF_CONTOUR_POINTS(0x3006, 0x0046);
-  static const OrthancPlugins::DicomTag DICOM_TAG_REFERENCED_SOP_INSTANCE_UID(0x0008, 0x1155);
-  static const OrthancPlugins::DicomTag DICOM_TAG_ROI_CONTOUR_SEQUENCE(0x3006, 0x0039);
-  static const OrthancPlugins::DicomTag DICOM_TAG_ROI_DISPLAY_COLOR(0x3006, 0x002a);
-  static const OrthancPlugins::DicomTag DICOM_TAG_ROI_NAME(0x3006, 0x0026);
-  static const OrthancPlugins::DicomTag DICOM_TAG_RT_ROI_INTERPRETED_TYPE(0x3006, 0x00a4);
-  static const OrthancPlugins::DicomTag DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE(0x3006, 0x0080);
-  static const OrthancPlugins::DicomTag DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE(0x3006, 0x0020);
+  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_GEOMETRIC_TYPE(0x3006, 0x0042);
+  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_IMAGE_SEQUENCE(0x3006, 0x0016);
+  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_SEQUENCE(0x3006, 0x0040);
+  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_DATA(0x3006, 0x0050);
+  static const Orthanc::DicomTag DICOM_TAG_NUMBER_OF_CONTOUR_POINTS(0x3006, 0x0046);
+  static const Orthanc::DicomTag DICOM_TAG_REFERENCED_SOP_INSTANCE_UID(0x0008, 0x1155);
+  static const Orthanc::DicomTag DICOM_TAG_ROI_CONTOUR_SEQUENCE(0x3006, 0x0039);
+  static const Orthanc::DicomTag DICOM_TAG_ROI_DISPLAY_COLOR(0x3006, 0x002a);
+  static const Orthanc::DicomTag DICOM_TAG_ROI_NAME(0x3006, 0x0026);
+  static const Orthanc::DicomTag DICOM_TAG_RT_ROI_INTERPRETED_TYPE(0x3006, 0x00a4);
+  static const Orthanc::DicomTag DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE(0x3006, 0x0080);
+  static const Orthanc::DicomTag DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE(0x3006, 0x0020);
 
   static inline uint8_t ConvertAndClipToByte(double v)
   {
@@ -66,21 +67,21 @@ namespace OrthancStone
   }
 
   static bool ReadDicomToVector(Vector& target,
-    const OrthancPlugins::IDicomDataset& dataset,
-    const OrthancPlugins::DicomPath& tag)
+                                const IDicomDataset& dataset,
+                                const Orthanc::DicomPath& tag)
   {
     std::string value;
     return (dataset.GetStringValue(value, tag) &&
-      GenericToolbox::FastParseVector(target, value));
+            GenericToolbox::FastParseVector(target, value));
   }
 
 
-  void DicomPathToString(std::string& s, const OrthancPlugins::DicomPath& dicomPath)
+  void DicomPathToString(std::string& s, const Orthanc::DicomPath& dicomPath)
   {
     std::stringstream tmp;
     for (size_t i = 0; i < dicomPath.GetPrefixLength(); ++i)
     {
-      OrthancPlugins::DicomTag tag = dicomPath.GetPrefixTag(i);
+      Orthanc::DicomTag tag = dicomPath.GetPrefixTag(i);
 
       // We use this other object to be able to use GetMainTagsName
       // and Format
@@ -88,13 +89,13 @@ namespace OrthancStone
       size_t index = dicomPath.GetPrefixIndex(i);
       tmp << tag2.GetMainTagsName() << " (" << tag2.Format() << ") [" << index << "] / ";
     }
-    const OrthancPlugins::DicomTag& tag = dicomPath.GetFinalTag();
+    const Orthanc::DicomTag& tag = dicomPath.GetFinalTag();
     Orthanc::DicomTag tag2(tag.GetGroup(), tag.GetElement());
     tmp << tag2.GetMainTagsName() << " (" << tag2.Format() << ")";
     s = tmp.str();
   }
 
-  std::ostream& operator<<(std::ostream& s, const OrthancPlugins::DicomPath& dicomPath)
+  std::ostream& operator<<(std::ostream& s, const Orthanc::DicomPath& dicomPath)
   {
     std::string tmp;
     DicomPathToString(tmp, dicomPath);
@@ -114,7 +115,7 @@ namespace OrthancStone
 
   }
 
-  void DicomStructureSet2::SetContents(const OrthancPlugins::FullOrthancDataset& tags)
+  void DicomStructureSet2::SetContents(const FullOrthancDataset& tags)
   {
     FillStructuresFromDataset(tags);
     ComputeDependentProperties();
@@ -128,9 +129,9 @@ namespace OrthancStone
     }
   }
 
-  void DicomStructureSet2::FillStructuresFromDataset(const OrthancPlugins::FullOrthancDataset& tags)
+  void DicomStructureSet2::FillStructuresFromDataset(const FullOrthancDataset& tags)
   {
-    OrthancPlugins::DicomDatasetReader reader(tags);
+    DicomDatasetReader reader(tags);
 
     // a few sanity checks
     size_t count = 0, tmp = 0;
@@ -138,11 +139,11 @@ namespace OrthancStone
     //  DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE (0x3006, 0x0080);
     //  DICOM_TAG_ROI_CONTOUR_SEQUENCE         (0x3006, 0x0039);
     //  DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE   (0x3006, 0x0020);
-    if (!tags.GetSequenceSize(count, DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE) ||
-      !tags.GetSequenceSize(tmp, DICOM_TAG_ROI_CONTOUR_SEQUENCE) ||
-      tmp != count ||
-      !tags.GetSequenceSize(tmp, DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE) ||
-      tmp != count)
+    if (!tags.GetSequenceSize(count, Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE)) ||
+        !tags.GetSequenceSize(tmp, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE)) ||
+        tmp != count ||
+        !tags.GetSequenceSize(tmp, Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE)) ||
+        tmp != count)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
@@ -157,21 +158,21 @@ namespace OrthancStone
     {
       // (0x3006, 0x0080)[i]/(0x3006, 0x00a4)
       structures_[i].interpretation_ = reader.GetStringValue
-      (OrthancPlugins::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
-        DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
-        "No interpretation");
+        (Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
+                            DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
+         "No interpretation");
 
       // (0x3006, 0x0020)[i]/(0x3006, 0x0026)
       structures_[i].name_ = reader.GetStringValue
-      (OrthancPlugins::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
-        DICOM_TAG_ROI_NAME),
-        "No name");
+        (Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
+                            DICOM_TAG_ROI_NAME),
+         "No name");
 
       Vector color;
       // (0x3006, 0x0039)[i]/(0x3006, 0x002a)
-      if (ReadDicomToVector(color, tags, OrthancPlugins::DicomPath(
-        DICOM_TAG_ROI_CONTOUR_SEQUENCE, i, DICOM_TAG_ROI_DISPLAY_COLOR)) 
-        && color.size() == 3)
+      if (ReadDicomToVector(color, tags, Orthanc::DicomPath(
+                              DICOM_TAG_ROI_CONTOUR_SEQUENCE, i, DICOM_TAG_ROI_DISPLAY_COLOR)) 
+          && color.size() == 3)
       {
         structures_[i].red_   = ConvertAndClipToByte(color[0]);
         structures_[i].green_ = ConvertAndClipToByte(color[1]);
@@ -187,46 +188,46 @@ namespace OrthancStone
       size_t countSlices;
       //  DICOM_TAG_ROI_CONTOUR_SEQUENCE          (0x3006, 0x0039);
       //  DICOM_TAG_CONTOUR_SEQUENCE              (0x3006, 0x0040);
-      if (!tags.GetSequenceSize(countSlices, OrthancPlugins::DicomPath(
-        DICOM_TAG_ROI_CONTOUR_SEQUENCE, i, DICOM_TAG_CONTOUR_SEQUENCE)))
+      if (!tags.GetSequenceSize(countSlices, Orthanc::DicomPath(
+                                  DICOM_TAG_ROI_CONTOUR_SEQUENCE, i, DICOM_TAG_CONTOUR_SEQUENCE)))
       {
         LOG(WARNING) << "DicomStructureSet2::SetContents | structure \"" << structures_[i].name_ << "\" has no slices!";
         countSlices = 0;
       }
 
       LOG(INFO) << "New RT structure: \"" << structures_[i].name_
-        << "\" with interpretation \"" << structures_[i].interpretation_
-        << "\" containing " << countSlices << " slices (color: "
-        << static_cast<int>(structures_[i].red_) << ","
+                << "\" with interpretation \"" << structures_[i].interpretation_
+                << "\" containing " << countSlices << " slices (color: "
+                << static_cast<int>(structures_[i].red_) << ","
         << static_cast<int>(structures_[i].green_) << ","
         << static_cast<int>(structures_[i].blue_) << ")";
 
       // These temporary variables avoid allocating many vectors in the loop below
       
       // (0x3006, 0x0039)[i]/(0x3006, 0x0040)[0]/(0x3006, 0x0046)
-      OrthancPlugins::DicomPath countPointsPath(
+      Orthanc::DicomPath countPointsPath(
         DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
         DICOM_TAG_CONTOUR_SEQUENCE, 0,
         DICOM_TAG_NUMBER_OF_CONTOUR_POINTS);
 
-      OrthancPlugins::DicomPath geometricTypePath(
+      Orthanc::DicomPath geometricTypePath(
         DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
         DICOM_TAG_CONTOUR_SEQUENCE, 0,
         DICOM_TAG_CONTOUR_GEOMETRIC_TYPE);
 
-      OrthancPlugins::DicomPath imageSequencePath(
+      Orthanc::DicomPath imageSequencePath(
         DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
         DICOM_TAG_CONTOUR_SEQUENCE, 0,
         DICOM_TAG_CONTOUR_IMAGE_SEQUENCE);
 
       // (3006,0039)[i] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)
-      OrthancPlugins::DicomPath referencedInstancePath(
+      Orthanc::DicomPath referencedInstancePath(
         DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
         DICOM_TAG_CONTOUR_SEQUENCE, 0,
         DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
         DICOM_TAG_REFERENCED_SOP_INSTANCE_UID);
 
-      OrthancPlugins::DicomPath contourDataPath(
+      Orthanc::DicomPath contourDataPath(
         DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
         DICOM_TAG_CONTOUR_SEQUENCE, 0,
         DICOM_TAG_CONTOUR_DATA);
@@ -272,7 +273,7 @@ namespace OrthancStone
 
         Vector points;
         if (!GenericToolbox::FastParseVector(points, slicesData) ||
-          points.size() != 3 * countPoints)
+            points.size() != 3 * countPoints)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }

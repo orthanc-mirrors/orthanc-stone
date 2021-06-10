@@ -4270,7 +4270,7 @@ const char* k_rtStruct_json08 =
 #ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
 static void CheckGroundTruth(
-  const std::vector<OrthancStone::DicomStructure2>& structures,
+  const std::vector<DicomStructure2>& structures,
   const size_t structureIndex,
   const size_t sliceIndex,
   std::vector<double> groundTruth)
@@ -4305,7 +4305,10 @@ TEST(StructureSet, ReadFromJsonThatsAll)
 {
   DicomStructureSet2 structureSet;
 
-  OrthancPlugins::FullOrthancDataset dicom(GetTestJson());
+  Json::Value test;
+  Orthanc::Toolbox::ReadJson(test, k_rtStruct_json00);
+
+  FullOrthancDataset dicom(test);
   //loader.content_.reset(new DicomStructureSet(dicom));
   structureSet.Clear();
 
@@ -5363,14 +5366,16 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_Complete_Regular)
 
 #ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
+#include <SystemToolbox.h>
+
 TEST(StructureSet, ReadFromJsonPart2)
 {
   DicomStructureSet2 structureSet;
   std::string jsonText;
 
-  SystemToolbox::ReadFile(jsonText, "72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json");
+  Orthanc::SystemToolbox::ReadFile(jsonText, "72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json");
 
-  OrthancPlugins::FullOrthancDataset dicom(jsonText);
+  FullOrthancDataset dicom(jsonText);
   //loader.content_.reset(new DicomStructureSet(dicom));
   structureSet.Clear();
 

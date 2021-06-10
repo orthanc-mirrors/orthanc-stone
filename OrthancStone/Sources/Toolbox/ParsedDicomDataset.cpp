@@ -27,7 +27,7 @@
 namespace OrthancStone
 {
   static DcmItem* LookupPath(Orthanc::ParsedDicomFile& dicom,
-                             const DicomPath& path)
+                             const Orthanc::DicomPath& path)
   {
     DcmItem* node = dicom.GetDcmtkObject().getDataset();
       
@@ -61,7 +61,7 @@ namespace OrthancStone
 
     
   bool ParsedDicomDataset::GetStringValue(std::string& result,
-                                          const DicomPath& path) const
+                                          const Orthanc::DicomPath& path) const
   {
     DcmItem* node = LookupPath(dicom_, path);
       
@@ -83,7 +83,7 @@ namespace OrthancStone
 
 
   bool ParsedDicomDataset::GetSequenceSize(size_t& size,
-                                           const DicomPath& path) const
+                                           const Orthanc::DicomPath& path) const
   {
     DcmItem* node = LookupPath(dicom_, path);
       

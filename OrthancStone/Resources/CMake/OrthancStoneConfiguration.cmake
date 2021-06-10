@@ -206,7 +206,6 @@ endif()
 
 list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/OrthancDatasets/DicomDatasetReader.cpp
-  ${ORTHANC_STONE_ROOT}/Toolbox/OrthancDatasets/DicomPath.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/OrthancDatasets/FullOrthancDataset.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/OrthancDatasets/IOrthancConnection.cpp
 

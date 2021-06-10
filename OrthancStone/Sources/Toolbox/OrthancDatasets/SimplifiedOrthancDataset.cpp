@@ -27,7 +27,7 @@
 
 namespace OrthancStone
 {
-  const Json::Value* SimplifiedOrthancDataset::LookupPath(const DicomPath& path) const
+  const Json::Value* SimplifiedOrthancDataset::LookupPath(const Orthanc::DicomPath& path) const
   {
     const Json::Value* content = &root_;
                                   
@@ -105,7 +105,7 @@ namespace OrthancStone
 
 
   bool SimplifiedOrthancDataset::GetStringValue(std::string& result,
-                                                const DicomPath& path) const
+                                                const Orthanc::DicomPath& path) const
   {
     const Json::Value* value = LookupPath(path);
 
@@ -126,7 +126,7 @@ namespace OrthancStone
 
 
   bool SimplifiedOrthancDataset::GetSequenceSize(size_t& size,
-                                                 const DicomPath& path) const
+                                                 const Orthanc::DicomPath& path) const
   {
     const Json::Value* sequence = LookupPath(path);
 

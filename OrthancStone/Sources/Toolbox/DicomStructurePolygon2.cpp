@@ -25,6 +25,8 @@
 
 #include "../Toolbox/LinearAlgebra.h"
 
+#include <Logging.h>
+
 namespace OrthancStone
 {
   void DicomStructurePolygon2::ComputeDependentProperties()

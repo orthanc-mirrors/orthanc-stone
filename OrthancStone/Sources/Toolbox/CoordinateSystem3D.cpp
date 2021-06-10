@@ -138,8 +138,8 @@ namespace OrthancStone
   {
     std::string a, b;
 
-    if (dicom.GetStringValue(a, DicomPath(Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT)) &&
-        dicom.GetStringValue(b, DicomPath(Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT)))
+    if (dicom.GetStringValue(a, Orthanc::DicomPath(Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT)) &&
+        dicom.GetStringValue(b, Orthanc::DicomPath(Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT)))
     {
       Setup(a, b);
     }

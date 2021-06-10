@@ -42,7 +42,7 @@ namespace OrthancStone
   private:
     Json::Value   root_;
 
-    const Json::Value* LookupPath(const DicomPath& path) const;
+    const Json::Value* LookupPath(const Orthanc::DicomPath& path) const;
 
     void CheckRoot() const;
 
@@ -53,9 +53,9 @@ namespace OrthancStone
     explicit SimplifiedOrthancDataset(const std::string& content);
 
     virtual bool GetStringValue(std::string& result,
-                                const DicomPath& path) const ORTHANC_OVERRIDE;
+                                const Orthanc::DicomPath& path) const ORTHANC_OVERRIDE;
 
     virtual bool GetSequenceSize(size_t& size,
-                                 const DicomPath& path) const ORTHANC_OVERRIDE;
+                                 const Orthanc::DicomPath& path) const ORTHANC_OVERRIDE;
   };
 }

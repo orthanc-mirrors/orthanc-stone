@@ -23,12 +23,11 @@
 
 #ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
-#include "DicomStructure2.h"
-#include "CoordinateSystem3D.h"
-#include "Extent2D.h"
 #include "../Scene2D/Color.h"
-
-#include <FullOrthancDataset.h>
+#include "CoordinateSystem3D.h"
+#include "DicomStructure2.h"
+#include "Extent2D.h"
+#include "OrthancDatasets/FullOrthancDataset.h"
 
 #include <list>
 
@@ -40,7 +39,7 @@ namespace OrthancStone
     DicomStructureSet2();
     ~DicomStructureSet2();
    
-    void SetContents(const OrthancPlugins::FullOrthancDataset& tags);
+    void SetContents(const FullOrthancDataset& tags);
 
     size_t GetStructuresCount() const
     {
@@ -56,7 +55,7 @@ namespace OrthancStone
     }
 
     /** Internal use only */
-    void FillStructuresFromDataset(const OrthancPlugins::FullOrthancDataset& tags);
+    void FillStructuresFromDataset(const FullOrthancDataset& tags);
 
     /** Internal use only */
     void ComputeDependentProperties();

@@ -24,15 +24,33 @@
 #####################################################################
 
 if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
-  # DCMTK and curl are necessarily enabled if using Orthanc framework:
-  # "DownloadOrthancFramework.cmake" must be aware of this fact
-  set(ENABLE_DCMTK ON)   
-  set(ENABLE_WEB_CLIENT ON)
-
+  # DCMTK, pugixml and curl are necessarily enabled if using the
+  # system-wide Orthanc framework
   include(${CMAKE_CURRENT_LIST_DIR}/../Orthanc/CMake/DownloadOrthancFramework.cmake)
+  
+  if (ORTHANC_FRAMEWORK_USE_SHARED)
+    include(FindBoost)
+    find_package(Boost COMPONENTS filesystem regex thread ${ORTHANC_BOOST_COMPONENTS})
+    
+    if (NOT Boost_FOUND)
+      message(FATAL_ERROR "Unable to locate Boost on this system")
+    endif()
+    
+    include(FindDCMTK NO_MODULE)
+    link_libraries(${Boost_LIBRARIES} ${DCMTK_LIBRARIES} pugixml jsoncpp)
+  endif()
+
   link_libraries(${ORTHANC_FRAMEWORK_LIBRARIES})
 
+  add_definitions(
+    -DORTHANC_ENABLE_DCMTK=1
+    -DORTHANC_ENABLE_PUGIXML=1
+    )
+  
+  set(ENABLE_DCMTK ON)
   set(ENABLE_LOCALE ON)
+  set(ENABLE_PUGIXML ON)
+  set(ENABLE_WEB_CLIENT ON)
   
 else()
   if (ENABLE_DCMTK)

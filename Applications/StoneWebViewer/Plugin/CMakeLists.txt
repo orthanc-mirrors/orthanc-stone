@@ -46,6 +46,17 @@ include(${CMAKE_SOURCE_DIR}/../../../OrthancStone/Resources/Orthanc/CMake/Downlo
 include_directories(${ORTHANC_FRAMEWORK_ROOT})
 
 if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
+  if (ORTHANC_FRAMEWORK_USE_SHARED)
+    include(FindBoost)
+    find_package(Boost COMPONENTS system)
+    
+    if (NOT Boost_FOUND)
+      message(FATAL_ERROR "Unable to locate Boost on this system")
+    endif()
+    
+    link_libraries(${Boost_LIBRARIES} jsoncpp)
+  endif()
+
   link_libraries(${ORTHANC_FRAMEWORK_LIBRARIES})
 
 else()

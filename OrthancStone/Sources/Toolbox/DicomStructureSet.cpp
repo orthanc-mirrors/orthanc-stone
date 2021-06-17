@@ -342,8 +342,8 @@ namespace OrthancStone
 
         // if prev* and cur* are on opposite sides of y, this means that the
         // segment intersects the plane.
-        if ((prevY < y && curY > y) ||
-            (prevY > y && curY < y))
+        if ((prevY <= y && curY >= y) ||
+            (prevY >= y && curY <= y))
         {
           double p = (curX * prevY - curY * prevX + y * (prevX - curX)) / (prevY - curY);
           xmin = std::min(xmin, p);
@@ -413,8 +413,8 @@ namespace OrthancStone
         double curX, curY;
         geometry_.ProjectPoint2(curX, curY, points_[i]);
 
-        if ((prevX < x && curX > x) ||
-            (prevX > x && curX < x))
+        if ((prevX <= x && curX >= x) ||
+            (prevX >= x && curX <= x))
         {
           double p = (curX * prevY - curY * prevX + x * (curY - prevY)) / (curX - prevX);
           ymin = std::min(ymin, p);

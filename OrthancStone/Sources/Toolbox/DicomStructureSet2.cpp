@@ -83,15 +83,14 @@ namespace OrthancStone
     {
       Orthanc::DicomTag tag = dicomPath.GetPrefixTag(i);
 
-      // We use this other object to be able to use GetMainTagsName
-      // and Format
+      // We use this other object to be able to use Format
       Orthanc::DicomTag tag2(tag.GetGroup(), tag.GetElement());
       size_t index = dicomPath.GetPrefixIndex(i);
-      tmp << tag2.GetMainTagsName() << " (" << tag2.Format() << ") [" << index << "] / ";
+      tmp << " (" << tag2.Format() << ") [" << index << "] / ";
     }
     const Orthanc::DicomTag& tag = dicomPath.GetFinalTag();
     Orthanc::DicomTag tag2(tag.GetGroup(), tag.GetElement());
-    tmp << tag2.GetMainTagsName() << " (" << tag2.Format() << ")";
+    tmp << " (" << tag2.Format() << ")";
     s = tmp.str();
   }
 

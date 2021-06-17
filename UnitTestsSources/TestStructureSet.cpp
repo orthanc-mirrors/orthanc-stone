@@ -4301,6 +4301,8 @@ static void CheckGroundTruth(
 }
 
 
+#include <Toolbox.h>
+
 TEST(StructureSet, ReadFromJsonThatsAll)
 {
   DicomStructureSet2 structureSet;

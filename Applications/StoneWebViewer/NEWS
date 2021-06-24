@@ -1,6 +1,8 @@
 Pending changes in the mainline
 ===============================
 
+* New configuration option "DownloadDicomDir" to download archives
+  containing DICOMDIR instead of a human-readable hierarchy of folders
 * If available, use ZIP streaming from Orthanc >= 1.9.4 to create archives
 
 

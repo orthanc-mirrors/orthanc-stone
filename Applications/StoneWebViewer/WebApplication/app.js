@@ -401,7 +401,7 @@ var app = new Vue({
       creatingArchive: false,
       archiveJob: '',
       mouseTool: 0,
-      orthancSystem: {},  // Only available if "DicomWebRoot" configuration option is set
+      orthancSystem: {},  // Only available if "OrthancApiRoot" configuration option is set
       stoneWebViewerVersion: '...',
       emscriptenVersion: '...',
 
@@ -1011,7 +1011,13 @@ var app = new Vue({
           }
           else {
             var orthancId = response.data[0]['ID'];
-            var uri = that.globalConfiguration.OrthancApiRoot + '/studies/' + orthancId + '/archive';
+            
+            var uri = that.globalConfiguration.OrthancApiRoot + '/studies/' + orthancId;
+            if (that.globalConfiguration.DownloadDicomDir === true) {
+              uri = uri + '/media';
+            } else {
+              uri = uri + '/archive';
+            }
 
             if (that.orthancSystem.ApiVersion >= 13) {
               // ZIP streaming is available (this is Orthanc >=

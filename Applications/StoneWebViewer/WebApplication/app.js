@@ -401,6 +401,7 @@ var app = new Vue({
       creatingArchive: false,
       archiveJob: '',
       mouseTool: 0,
+      orthancSystem: {},  // Only available if "DicomWebRoot" configuration option is set
       stoneWebViewerVersion: '...',
       emscriptenVersion: '...',
 
@@ -998,7 +999,7 @@ var app = new Vue({
         }
     },
 
-    DownloadStudy: function(studyInstanceUid)
+    DownloadStudy: function(studyInstanceUid, event)
     {
       console.log('Creating archive for study: ' + studyInstanceUid);
 
@@ -1010,20 +1011,31 @@ var app = new Vue({
           }
           else {
             var orthancId = response.data[0]['ID'];
-            axios.post(that.globalConfiguration.OrthancApiRoot + '/studies/' + orthancId + '/archive',
-                       {
-                         'Asynchronous' : true
-                       })
-              .then(function(response) {
-                that.creatingArchive = true;
-                that.archiveJob = response.data.ID;
-                setTimeout(that.CheckIsDownloadComplete, 1000);
-              });
+            var uri = that.globalConfiguration.OrthancApiRoot + '/studies/' + orthancId + '/archive';
+
+            if (that.orthancSystem.ApiVersion >= 13) {
+              // ZIP streaming is available (this is Orthanc >=
+              // 1.9.4): Simply give the hand to Orthanc
+              event.preventDefault();
+              window.location.href = uri;
+
+            } else {
+              // ZIP streaming is not available: Create a job to create the archive
+              axios.post(uri, {
+                'Asynchronous' : true
+              })
+                .then(function(response) {
+                  that.creatingArchive = true;
+                  that.archiveJob = response.data.ID;
+                  setTimeout(that.CheckIsDownloadComplete, 1000);
+                });
+            }
           }
         })
         .catch(function (error) {
           alert('Cannot find the study in Orthanc');
         });
+      
     }
   },
   
@@ -1223,6 +1235,13 @@ $(document).ready(function() {
         .catch(function (error) {
           alert('Cannot load the WebAssembly framework');
         });
+
+      if (app.globalConfiguration.OrthancApiRoot) {
+        axios.get(app.globalConfiguration.OrthancApiRoot + '/system')
+          .then(function (response) {
+            app.orthancSystem = response.data;
+          });
+      }
     })
     .catch(function (error) {
       alert('Cannot load the configuration file');

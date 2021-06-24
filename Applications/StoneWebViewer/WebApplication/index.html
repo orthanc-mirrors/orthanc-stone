@@ -188,7 +188,7 @@
                           <!-- download --> 
                           <i class="fa fa-download" v-show="!creatingArchive"
                              data-toggle="tooltip" data-title="Download the study"
-                             @click="DownloadStudy(study.tags[STUDY_INSTANCE_UID])"></i>
+                             @click="DownloadStudy(study.tags[STUDY_INSTANCE_UID], $event)"></i>
                           <i class="fas fa-sync fa-spin" v-show="creatingArchive"
                              data-toggle="tooltip" data-title="A ZIP archive is being created by Orthanc..."></i>
                         </a>

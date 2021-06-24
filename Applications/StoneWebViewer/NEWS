@@ -1,6 +1,8 @@
 Pending changes in the mainline
 ===============================
 
+* If available, use ZIP streaming from Orthanc >= 1.9.4 to create archives
+
 
 Version 2.0 (2021-05-27)
 ========================

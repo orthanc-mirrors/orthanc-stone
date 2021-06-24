@@ -32,10 +32,9 @@
 
 namespace OrthancStone
 {
-  static std::string EncodeGetArguments(const std::string& uri,
-                                        const std::map<std::string, std::string>& arguments)
+  static std::string EncodeGetArguments(const std::map<std::string, std::string>& arguments)
   {
-    std::string s = uri;
+    std::string s;
     bool first = true;
 
     for (std::map<std::string, std::string>::const_iterator
@@ -57,6 +56,39 @@ namespace OrthancStone
     // TODO: Call Orthanc::Toolbox::UriEncode() ?
 
     return s;
+  }
+
+
+  static std::string AddUriSuffix(const std::string& base,
+                                  const std::string& suffix)
+  {
+    if (base.empty())
+    {
+      return suffix;
+    }
+    else if (suffix.empty())
+    {
+      return base;
+    }
+    else
+    {
+      char lastBase = base[base.size() - 1];
+      
+      if (lastBase == '/' &&
+          suffix[0] == '/')
+      {
+        return base + suffix.substr(1);
+      }
+      else if (lastBase == '/' ||
+               suffix[0] == '/')
+      {
+        return base + suffix;
+      }
+      else
+      {
+        return base + "/" + suffix;
+      }
+    }
   }
 
 
@@ -196,7 +228,7 @@ namespace OrthancStone
         std::unique_ptr<HttpCommand> command(new HttpCommand);
         
         command->SetMethod(Orthanc::HttpMethod_Get);
-        command->SetUrl(webService_.GetUrl() + EncodeGetArguments(uri, arguments));
+        command->SetUrl(AddUriSuffix(webService_.GetUrl(), uri + EncodeGetArguments(arguments)));
         command->SetHttpHeaders(webService_.GetHttpHeaders());
 
         for (std::map<std::string, std::string>::const_iterator
@@ -241,7 +273,7 @@ namespace OrthancStone
 
         std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetMethod(Orthanc::HttpMethod_Post);
-        command->SetUri(orthancDicomWebRoot_ + "/servers/" + serverName_ + "/get");
+        command->SetUri(AddUriSuffix(orthancDicomWebRoot_, "/servers/" + serverName_ + "/get"));
         command->SetBody(body);
 
         if (protection.get())

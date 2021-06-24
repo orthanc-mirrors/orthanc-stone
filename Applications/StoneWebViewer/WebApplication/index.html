@@ -299,6 +299,10 @@
 
             </div>        
             <div class="wvLayoutLeft__contentBottom">
+              <div style="width:100%;padding:10px;text-align:center;"
+                   v-if="globalConfiguration.InstitutionLogo != ''">
+                <img style="max-width:100%" v-bind:src="globalConfiguration.InstitutionLogo" />
+              </div>
             </div>        
           </div>
         </div>

@@ -11,7 +11,7 @@ Improvements
   (including detection of collisions thanks to revisions).
   https://book.orthanc-server.com/faq/features.html#metadata-attachments
   
-* Internationalization (i18n). Some possible libraries:
+* Internationalization and translations (i18n). Some possible libraries:
   https://phrase.com/blog/posts/the-best-javascript-i18n-libraries/
 
 * Configurable keyboard shortcuts. See Osimis Web viewer:
@@ -22,6 +22,8 @@ Improvements
   crosshair invalid.
 
 * Handle mobile gestures.
+
+* Display GSPS layers (Grayscale Softcopy Presentation State).
 
 
 -----------------

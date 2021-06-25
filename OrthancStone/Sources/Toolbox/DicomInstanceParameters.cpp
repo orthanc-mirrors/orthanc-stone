@@ -91,10 +91,12 @@ namespace OrthancStone
     uint32_t n;
     if (dicom.ParseUnsignedInteger32(n, Orthanc::DICOM_TAG_NUMBER_OF_FRAMES))
     {
+      hasNumberOfFrames_ = true;
       numberOfFrames_ = n;
     }
     else
     {
+      hasNumberOfFrames_ = false;
       numberOfFrames_ = 1;
     }
 
@@ -261,6 +263,12 @@ namespace OrthancStone
           frameOfReferenceUid_, Orthanc::DICOM_TAG_FRAME_OF_REFERENCE_UID, false))
     {
       frameOfReferenceUid_.clear();
+    }
+
+    if (!dicom.HasTag(Orthanc::DICOM_TAG_INSTANCE_NUMBER) ||
+        !dicom.GetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER).ParseInteger32(instanceNumber_))
+    {
+      instanceNumber_ = 0;
     }
   }
 

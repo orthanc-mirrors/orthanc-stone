@@ -63,6 +63,8 @@ namespace OrthancStone
       double              doseGridScaling_;
       std::string         frameOfReferenceUid_;
       bool                hasPixelSpacing_;
+      bool                hasNumberOfFrames_;
+      int32_t             instanceNumber_;
 
       explicit Data(const Orthanc::DicomMap& dicom);
     };
@@ -240,5 +242,15 @@ namespace OrthancStone
                          double pixelSpacingY);
 
     void EnrichUsingDicomWeb(const Json::Value& dicomweb);
+
+    bool HasNumberOfFrames() const
+    {
+      return data_.hasNumberOfFrames_;
+    }
+
+    int32_t GetInstanceNumber() const
+    {
+      return data_.instanceNumber_;
+    }
   };
 }

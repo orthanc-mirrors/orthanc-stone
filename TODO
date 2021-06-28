@@ -61,6 +61,10 @@ Wishlist
 
 * Use "ImagerPixelSpacing" (0018,1164) tag if "PixelSpacing" is missing
 
+* Support hanging protocols (automatically adapt the layout given the
+  type of modality to be displayed):
+  https://groups.google.com/g/orthanc-users/c/bGtK3q9ZUmg/m/gr8kCcVWCAAJ
+
 
 
 ==================================

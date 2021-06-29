@@ -6,7 +6,9 @@ Pending changes in the mainline
     a human-readable hierarchy of folders
   - "InstitutionLogo" to display the logo of your institution in the viewer
 * If available, use ZIP streaming from Orthanc >= 1.9.4 to create archives
-
+* Group together in a single "virtual series" all the instances
+  without the tag "NumberOfFrames" (0028,0008), for US CINE series
+  
 
 Version 2.0 (2021-05-27)
 ========================

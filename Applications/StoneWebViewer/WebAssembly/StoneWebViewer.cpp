@@ -191,22 +191,18 @@ static const unsigned int DEFAULT_CINE_RATE = 30;
 class VirtualSeries : public boost::noncopyable
 {
 private:
-  class Item
+  class Item : public boost::noncopyable
   {
   private:
-    std::string   seriesInstanceUid_;
-    unsigned int  numberOfFrames_;
+    std::string             seriesInstanceUid_;
+    std::list<std::string>  sopInstanceUids_;
 
   public:
     Item(const std::string& seriesInstanceUid,
-         unsigned int numberOfFrames) :
+         const std::list<std::string>& sopInstanceUids) :
       seriesInstanceUid_(seriesInstanceUid),
-      numberOfFrames_(numberOfFrames)
+      sopInstanceUids_(sopInstanceUids)
     {
-      if (numberOfFrames == 0)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
     }
 
     const std::string& GetSeriesInstanceUid() const
@@ -214,13 +210,13 @@ private:
       return seriesInstanceUid_;
     }
 
-    unsigned int GetNumberOfFrames() const
+    const std::list<std::string>& GetSopInstanceUids() const
     {
-      return numberOfFrames_;
+      return sopInstanceUids_;
     }
   };
 
-  typedef std::map<std::string, Item>  Content;
+  typedef std::map<std::string, Item*>  Content;
 
   Content  content_;
 
@@ -234,23 +230,43 @@ private:
     }
     else
     {
-      return found->second;
-    }  
+      assert(found->second != NULL);
+      return *found->second;
+    }
   }
   
 public:
-  std::string Add(const std::string& seriesInstanceUid,
-                  const std::string& sopInstanceUid,
-                  unsigned int numberOfFrames)
+  ~VirtualSeries()
   {
-    if (content_.find(sopInstanceUid) != content_.end())
+    for (Content::iterator it = content_.begin(); it != content_.end(); ++it)
+    {
+      assert(it->second != NULL);
+      delete it->second;
+    }
+  }
+  
+  std::string AddSingleInstance(const std::string& seriesInstanceUid,
+                                const std::string& sopInstanceUid)
+  {
+    std::list<std::string> sopInstanceUids;
+    sopInstanceUids.push_back(sopInstanceUid);
+    return AddMultipleInstances(seriesInstanceUid, sopInstanceUids);
+  }
+
+  std::string AddMultipleInstances(const std::string& seriesInstanceUid,
+                                   const std::list<std::string>& sopInstanceUids)
+  {
+    // Generate a unique identifier for this virtual series
+    const std::string virtualSeriesId = "virtual-" + boost::lexical_cast<std::string>(content_.size());
+    
+    if (content_.find(virtualSeriesId) != content_.end())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
     else
     {
-      content_.insert(std::make_pair(sopInstanceUid, Item(seriesInstanceUid, numberOfFrames)));
-      return sopInstanceUid;
+      content_.insert(std::make_pair(virtualSeriesId, new Item(seriesInstanceUid, sopInstanceUids)));
+      return virtualSeriesId;
     }
   }
 
@@ -259,9 +275,9 @@ public:
     return GetItem(id).GetSeriesInstanceUid();
   }
 
-  unsigned int GetNumberOfFrames(const std::string& id) const
+  const std::list<std::string>& GetSopInstanceUids(const std::string& id) const
   {
-    return GetItem(id).GetNumberOfFrames();
+    return GetItem(id).GetSopInstanceUids();
   }
 };
 
@@ -304,6 +320,7 @@ private:
   boost::shared_ptr<OrthancStone::SeriesThumbnailsLoader>  thumbnailsLoader_;
   boost::shared_ptr<OrthancStone::SeriesMetadataLoader>    metadataLoader_;
   std::set<std::string>                                    scheduledVirtualSeriesThumbnails_;
+  VirtualSeries                                            virtualSeries_;
 
   explicit ResourcesLoader(OrthancStone::ILoadersContext& context,
                            const OrthancStone::DicomSource& source) :
@@ -606,8 +623,7 @@ public:
     return accessor.IsComplete();
   }
 
-  bool LookupVirtualSeries(VirtualSeries& target /* out */,
-                           std::set<std::string>& virtualSeriesIds /* out */,
+  bool LookupVirtualSeries(std::map<std::string, unsigned int>& virtualSeries /* out */,
                            const std::string& seriesInstanceUid)
   {
     OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
@@ -628,14 +644,45 @@ public:
 
       if (hasMultiframe)
       {
+        std::string studyInstanceUid;
+        std::list<std::string> instancesWithoutFrameNumber;
+        
         for (size_t i = 0; i < accessor.GetInstancesCount(); i++)
         {
           OrthancStone::DicomInstanceParameters p(accessor.GetInstance(i));
 
-          std::string virtualSeriesId = target.Add(seriesInstanceUid, p.GetSopInstanceUid(), p.GetNumberOfFrames());
-          virtualSeriesIds.insert(virtualSeriesId);
-          
-          FetchVirtualSeriesThumbnail(virtualSeriesId, p.GetStudyInstanceUid(), p.GetSeriesInstanceUid(), p.GetSopInstanceUid());
+          if (p.HasNumberOfFrames())
+          {
+            const std::string virtualSeriesId = virtualSeries_.AddSingleInstance(seriesInstanceUid, p.GetSopInstanceUid());
+            if (virtualSeries.find(virtualSeriesId) != virtualSeries.end())
+            {
+              throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+            }
+            else
+            {
+              virtualSeries[virtualSeriesId] = p.GetNumberOfFrames();
+              FetchVirtualSeriesThumbnail(virtualSeriesId, p.GetStudyInstanceUid(), seriesInstanceUid, p.GetSopInstanceUid());
+            }
+          }
+          else
+          {
+            studyInstanceUid = p.GetStudyInstanceUid();
+            instancesWithoutFrameNumber.push_back(p.GetSopInstanceUid());
+          }
+        }
+
+        if (!instancesWithoutFrameNumber.empty())
+        {
+          /**
+           * Group together in a single "virtual series" all the DICOM
+           * instances that have no value for the tag "NumberOfFrames"
+           * (0028,0008). This can happen in US CINE series. New in
+           * Stone Web viewer 2.1.
+           * https://groups.google.com/g/orthanc-users/c/V-vOnlwj06A/m/2sPNwteYAAAJ
+           **/
+          const std::string virtualSeriesId = virtualSeries_.AddMultipleInstances(seriesInstanceUid, instancesWithoutFrameNumber);
+          virtualSeries[virtualSeriesId] = instancesWithoutFrameNumber.size();
+          FetchVirtualSeriesThumbnail(virtualSeriesId, studyInstanceUid, seriesInstanceUid, instancesWithoutFrameNumber.front());
         }
 
         return true;
@@ -675,27 +722,34 @@ public:
     }
   }
 
-  bool SortMultipartInstanceFrames(OrthancStone::SortedFrames& target,
-                                   const std::string& seriesInstanceUid,
-                                   const std::string& sopInstanceUid) const
+  bool SortVirtualSeriesFrames(OrthancStone::SortedFrames& target,
+                               const std::string& virtualSeriesId) const
   {
+    const std::string& seriesInstanceUid = virtualSeries_.GetSeriesInstanceUid(virtualSeriesId);
+    
     OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
     
     if (accessor.IsComplete())
     {
-      for (size_t i = 0; i < accessor.GetInstancesCount(); i++)
+      const std::list<std::string>& sopInstanceUids = virtualSeries_.GetSopInstanceUids(virtualSeriesId);
+
+      target.Clear();
+
+      for (std::list<std::string>::const_iterator
+             it = sopInstanceUids.begin(); it != sopInstanceUids.end(); ++it)
       {
-        std::string s;
-        if (accessor.GetInstance(i).LookupStringValue(s, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
-            s == sopInstanceUid)
+        Orthanc::DicomMap instance;
+        if (accessor.LookupInstance(instance, *it))
         {
-          target.Clear();
-          target.AddInstance(accessor.GetInstance(i));
-          target.Sort();
-          return true;
+          target.AddInstance(instance);
+        }
+        else
+        {
+          LOG(ERROR) << "Missing instance: " << *it;
         }
       }
       
+      target.Sort();
       return true;
     }
     else
@@ -3358,7 +3412,6 @@ static bool softwareRendering_ = false;
 static WebViewerAction leftButtonAction_ = WebViewerAction_Windowing;
 static WebViewerAction middleButtonAction_ = WebViewerAction_Pan;
 static WebViewerAction rightButtonAction_ = WebViewerAction_Zoom;
-static VirtualSeries virtualSeries_;
 
 
 static void FormatTags(std::string& target,
@@ -3712,10 +3765,7 @@ extern "C"
     {
       std::unique_ptr<OrthancStone::SortedFrames> frames(new OrthancStone::SortedFrames);
 
-      const std::string sopInstanceUid = virtualSeriesId;  // TODO
-      
-      if (GetResourcesLoader().SortMultipartInstanceFrames(
-            *frames, virtualSeries_.GetSeriesInstanceUid(virtualSeriesId), sopInstanceUid))
+      if (GetResourcesLoader().SortVirtualSeriesFrames(*frames, virtualSeriesId))
       {
         GetViewport(canvas)->SetFrames(frames.release());
         return 1;
@@ -4051,16 +4101,17 @@ extern "C"
   {
     try
     {
-      std::set<std::string> virtualSeriesIds;
-      if (GetResourcesLoader().LookupVirtualSeries(virtualSeries_, virtualSeriesIds, seriesInstanceUid))
+      typedef std::map<std::string, unsigned int>  VirtualSeries;
+
+      VirtualSeries virtualSeries;
+      if (GetResourcesLoader().LookupVirtualSeries(virtualSeries, seriesInstanceUid))
       {
         Json::Value json = Json::arrayValue;
-        for (std::set<std::string>::const_iterator it = virtualSeriesIds.begin();
-             it != virtualSeriesIds.end(); ++it)
+        for (VirtualSeries::const_iterator it = virtualSeries.begin(); it != virtualSeries.end(); ++it)
         {
           Json::Value item = Json::objectValue;
-          item["ID"] = *it;
-          item["NumberOfFrames"] = virtualSeries_.GetNumberOfFrames(*it);
+          item["ID"] = it->first;
+          item["NumberOfFrames"] = it->second;
           json.append(item);
         }
 

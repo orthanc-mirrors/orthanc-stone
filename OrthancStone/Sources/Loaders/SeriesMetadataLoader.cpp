@@ -236,6 +236,29 @@ namespace OrthancStone
   }
 
 
+  bool SeriesMetadataLoader::Accessor::LookupInstance(Orthanc::DicomMap& target,
+                                                      const std::string& sopInstanceUid) const
+  {
+    if (IsComplete())
+    {     
+      if (series_->HasResource(sopInstanceUid))
+      {
+        target.Clear();
+        series_->MergeResource(target, sopInstanceUid);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }    
+  }
+
+
   void SeriesMetadataLoader::ScheduleLoadSeries(int priority,
                                                 const DicomSource& source,
                                                 const std::string& studyInstanceUid,

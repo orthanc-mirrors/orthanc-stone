@@ -156,6 +156,9 @@ namespace OrthancStone
       size_t GetInstancesCount() const;
 
       const Orthanc::DicomMap& GetInstance(size_t index) const;
+
+      bool LookupInstance(Orthanc::DicomMap& target,
+                          const std::string& sopInstanceUid) const;
     };
 
 

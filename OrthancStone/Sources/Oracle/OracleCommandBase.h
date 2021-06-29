@@ -47,8 +47,15 @@ namespace OrthancStone
 
     virtual Orthanc::IDynamicObject& GetPayload() const;
 
-    void SetCallerName(const std::string callerName) { callerName_ = callerName; }
-    virtual std::string GetCallerName() const { return callerName_; }
+    void SetCallerName(const std::string& callerName)
+    {
+      callerName_ = callerName;
+    }
+    
+    virtual std::string GetCallerName() const ORTHANC_OVERRIDE
+    {
+      return callerName_;
+    }
 
     Orthanc::IDynamicObject* ReleasePayload();
   };

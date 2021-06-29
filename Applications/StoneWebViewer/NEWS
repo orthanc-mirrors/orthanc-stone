@@ -1,6 +1,10 @@
 Pending changes in the mainline
 ===============================
 
+
+Version 2.1 (2021-06-29)
+========================
+
 * New configuration options:
   - "DownloadDicomDir" to download archives containing DICOMDIR instead of
     a human-readable hierarchy of folders

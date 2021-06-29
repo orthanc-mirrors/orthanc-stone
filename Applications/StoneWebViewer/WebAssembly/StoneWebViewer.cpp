@@ -187,6 +187,86 @@ static const unsigned int QUALITY_FULL = 1;
 static const unsigned int DEFAULT_CINE_RATE = 30;
 
 
+
+class VirtualSeries : public boost::noncopyable
+{
+private:
+  class Item
+  {
+  private:
+    std::string   seriesInstanceUid_;
+    unsigned int  numberOfFrames_;
+
+  public:
+    Item(const std::string& seriesInstanceUid,
+         unsigned int numberOfFrames) :
+      seriesInstanceUid_(seriesInstanceUid),
+      numberOfFrames_(numberOfFrames)
+    {
+      if (numberOfFrames == 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+    }
+
+    const std::string& GetSeriesInstanceUid() const
+    {
+      return seriesInstanceUid_;
+    }
+
+    unsigned int GetNumberOfFrames() const
+    {
+      return numberOfFrames_;
+    }
+  };
+
+  typedef std::map<std::string, Item>  Content;
+
+  Content  content_;
+
+  const Item& GetItem(const std::string& id) const
+  {
+    Content::const_iterator found = content_.find(id);
+    
+    if (found == content_.end())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      return found->second;
+    }  
+  }
+  
+public:
+  std::string Add(const std::string& seriesInstanceUid,
+                  const std::string& sopInstanceUid,
+                  unsigned int numberOfFrames)
+  {
+    if (content_.find(sopInstanceUid) != content_.end())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      content_.insert(std::make_pair(sopInstanceUid, Item(seriesInstanceUid, numberOfFrames)));
+      return sopInstanceUid;
+    }
+  }
+
+  const std::string& GetSeriesInstanceUid(const std::string& id) const
+  {
+    return GetItem(id).GetSeriesInstanceUid();
+  }
+
+  unsigned int GetNumberOfFrames(const std::string& id) const
+  {
+    return GetItem(id).GetNumberOfFrames();
+  }
+};
+
+
+
 class ResourcesLoader : public OrthancStone::ObserverBase<ResourcesLoader>
 {
 public:
@@ -209,8 +289,8 @@ public:
                                        const std::string& seriesInstanceUid,
                                        const std::string& pdf) = 0;
 
-    virtual void SignalMultiframeInstanceThumbnailLoaded(const std::string& sopInstanceUid,
-                                                         const std::string& jpeg) = 0;
+    virtual void SignalVirtualSeriesThumbnailLoaded(const std::string& virtualSeriesId,
+                                                    const std::string& jpeg) = 0;
   };
   
 private:
@@ -223,7 +303,7 @@ private:
   boost::shared_ptr<OrthancStone::DicomResourcesLoader>    resourcesLoader_;
   boost::shared_ptr<OrthancStone::SeriesThumbnailsLoader>  thumbnailsLoader_;
   boost::shared_ptr<OrthancStone::SeriesMetadataLoader>    metadataLoader_;
-  std::set<std::string>                                    scheduledMultiframeInstances_;
+  std::set<std::string>                                    scheduledVirtualSeriesThumbnails_;
 
   explicit ResourcesLoader(OrthancStone::ILoadersContext& context,
                            const OrthancStone::DicomSource& source) :
@@ -378,13 +458,14 @@ private:
     }
   }
 
-  void FetchInstanceThumbnail(const std::string& studyInstanceUid,
-                              const std::string& seriesInstanceUid,
-                              const std::string& sopInstanceUid)
+  void FetchVirtualSeriesThumbnail(const std::string& virtualSeriesId,
+                                   const std::string& studyInstanceUid,
+                                   const std::string& seriesInstanceUid,
+                                   const std::string& sopInstanceUid)
   {
-    if (scheduledMultiframeInstances_.find(sopInstanceUid) == scheduledMultiframeInstances_.end())
+    if (scheduledVirtualSeriesThumbnails_.find(virtualSeriesId) == scheduledVirtualSeriesThumbnails_.end())
     {
-      scheduledMultiframeInstances_.insert(sopInstanceUid);
+      scheduledVirtualSeriesThumbnails_.insert(virtualSeriesId);
       
       std::map<std::string, std::string> arguments;
       std::map<std::string, std::string> headers;
@@ -400,7 +481,7 @@ private:
         std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
         lock->Schedule(
           GetSharedObserver(), PRIORITY_LOW + 2, source_.CreateDicomWebCommand(
-            uri, arguments, headers, new Orthanc::SingleValueObject<std::string>(sopInstanceUid)));
+            uri, arguments, headers, new Orthanc::SingleValueObject<std::string>(virtualSeriesId)));
       }
     }
   }
@@ -409,10 +490,10 @@ private:
   {
     if (observer_.get() != NULL)
     {
-      const std::string& sopInstanceUid =
+      const std::string& virtualSeriesId =
         dynamic_cast<const Orthanc::SingleValueObject<std::string>&>(
           message.GetOrigin().GetPayload()).GetValue();
-      observer_->SignalMultiframeInstanceThumbnailLoaded(sopInstanceUid, message.GetAnswer());
+      observer_->SignalVirtualSeriesThumbnailLoaded(virtualSeriesId, message.GetAnswer());
     }
   }
 
@@ -525,38 +606,44 @@ public:
     return accessor.IsComplete();
   }
 
-  bool LookupMultiframeSeries(std::map<std::string, unsigned int>& numberOfFramesPerInstance,
-                              const std::string& seriesInstanceUid)
+  bool LookupVirtualSeries(VirtualSeries& target /* out */,
+                           std::set<std::string>& virtualSeriesIds /* out */,
+                           const std::string& seriesInstanceUid)
   {
-    numberOfFramesPerInstance.clear();
-
     OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
     if (accessor.IsComplete() &&
         accessor.GetInstancesCount() >= 2)
     {
-      bool isMultiframe = false;
+      bool hasMultiframe = false;
       
       for (size_t i = 0; i < accessor.GetInstancesCount(); i++)
       {
         OrthancStone::DicomInstanceParameters p(accessor.GetInstance(i));
-        numberOfFramesPerInstance[p.GetSopInstanceUid()] = p.GetNumberOfFrames();
 
         if (p.GetNumberOfFrames() > 1)
         {
-          isMultiframe = true;
+          hasMultiframe = true;
         }
       }
 
-      if (isMultiframe)
+      if (hasMultiframe)
       {
         for (size_t i = 0; i < accessor.GetInstancesCount(); i++)
         {
           OrthancStone::DicomInstanceParameters p(accessor.GetInstance(i));
-          FetchInstanceThumbnail(p.GetStudyInstanceUid(), p.GetSeriesInstanceUid(), p.GetSopInstanceUid());
-        }
-      }
 
-      return isMultiframe;
+          std::string virtualSeriesId = target.Add(seriesInstanceUid, p.GetSopInstanceUid(), p.GetNumberOfFrames());
+          virtualSeriesIds.insert(virtualSeriesId);
+          
+          FetchVirtualSeriesThumbnail(virtualSeriesId, p.GetStudyInstanceUid(), p.GetSeriesInstanceUid(), p.GetSopInstanceUid());
+        }
+
+        return true;
+      }
+      else
+      {
+        return false;
+      }
     }
     else
     {
@@ -3187,20 +3274,20 @@ public:
   }
 
 
-  virtual void SignalMultiframeInstanceThumbnailLoaded(const std::string& sopInstanceUid,
-                                                       const std::string& jpeg) ORTHANC_OVERRIDE
+  virtual void SignalVirtualSeriesThumbnailLoaded(const std::string& virtualSeriesId,
+                                                  const std::string& jpeg) ORTHANC_OVERRIDE
   {
     std::string dataUriScheme;
     Orthanc::Toolbox::EncodeDataUriScheme(dataUriScheme, "image/jpeg", jpeg);    
     
     EM_ASM({
         const customEvent = document.createEvent("CustomEvent");
-        customEvent.initCustomEvent("MultiframeInstanceThumbnailLoaded", false, false,
-                                    { "sopInstanceUid" : UTF8ToString($0),
+        customEvent.initCustomEvent("VirtualSeriesThumbnailLoaded", false, false,
+                                    { "virtualSeriesId" : UTF8ToString($0),
                                         "thumbnail" : UTF8ToString($1) });
         window.dispatchEvent(customEvent);
       },
-      sopInstanceUid.c_str(),
+      virtualSeriesId.c_str(),
       dataUriScheme.c_str());
   }
 
@@ -3271,6 +3358,7 @@ static bool softwareRendering_ = false;
 static WebViewerAction leftButtonAction_ = WebViewerAction_Windowing;
 static WebViewerAction middleButtonAction_ = WebViewerAction_Pan;
 static WebViewerAction rightButtonAction_ = WebViewerAction_Zoom;
+static VirtualSeries virtualSeries_;
 
 
 static void FormatTags(std::string& target,
@@ -3617,15 +3705,17 @@ extern "C"
 
 
   EMSCRIPTEN_KEEPALIVE
-  int LoadMultipartInstanceInViewport(const char* canvas,
-                                      const char* seriesInstanceUid,
-                                      const char* sopInstanceUid)
+  int LoadVirtualSeriesInViewport(const char* canvas,
+                                  const char* virtualSeriesId)
   {
     try
     {
       std::unique_ptr<OrthancStone::SortedFrames> frames(new OrthancStone::SortedFrames);
+
+      const std::string sopInstanceUid = virtualSeriesId;  // TODO
       
-      if (GetResourcesLoader().SortMultipartInstanceFrames(*frames, seriesInstanceUid, sopInstanceUid))
+      if (GetResourcesLoader().SortMultipartInstanceFrames(
+            *frames, virtualSeries_.GetSeriesInstanceUid(virtualSeriesId), sopInstanceUid))
       {
         GetViewport(canvas)->SetFrames(frames.release());
         return 1;
@@ -3957,18 +4047,21 @@ extern "C"
 
 
   EMSCRIPTEN_KEEPALIVE
-  int LoadMultiframeInstancesFromSeries(const char* seriesInstanceUid)
+  int LookupVirtualSeries(const char* seriesInstanceUid)
   {
     try
     {
-      std::map<std::string, unsigned int> numberOfFramesPerInstance;
-      if (GetResourcesLoader().LookupMultiframeSeries(numberOfFramesPerInstance, seriesInstanceUid))
+      std::set<std::string> virtualSeriesIds;
+      if (GetResourcesLoader().LookupVirtualSeries(virtualSeries_, virtualSeriesIds, seriesInstanceUid))
       {
-        Json::Value json = Json::objectValue;
-        for (std::map<std::string, unsigned int>::const_iterator it =
-               numberOfFramesPerInstance.begin(); it != numberOfFramesPerInstance.end(); ++it)
+        Json::Value json = Json::arrayValue;
+        for (std::set<std::string>::const_iterator it = virtualSeriesIds.begin();
+             it != virtualSeriesIds.end(); ++it)
         {
-          json[it->first] = it->second;
+          Json::Value item = Json::objectValue;
+          item["ID"] = *it;
+          item["NumberOfFrames"] = virtualSeries_.GetNumberOfFrames(*it);
+          json.append(item);
         }
 
         stringBuffer_ = json.toStyledString();

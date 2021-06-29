@@ -188,10 +188,9 @@ Vue.component('viewport', {
 
         var that = this;
         Vue.nextTick(function() {
-          if (newVal.sopInstanceUid !== undefined &&
-              newVal.sopInstanceUid.length > 0) {
-            stone.LoadMultipartInstanceInViewport(
-              that.canvasId, seriesInstanceUid, newVal.sopInstanceUid);
+          if (newVal.virtualSeriesId !== undefined &&
+              newVal.virtualSeriesId.length > 0) {
+            stone.LoadVirtualSeriesInViewport(that.canvasId, newVal.virtualSeriesId);
           }
           else {
             stone.LoadSeriesInViewport(that.canvasId, seriesInstanceUid);
@@ -306,7 +305,7 @@ Vue.component('viewport', {
       // The "parseInt()" is because of Microsoft Edge Legacy (*)
       this.$emit('updated-series', {
         seriesIndex: parseInt(event.dataTransfer.getData('seriesIndex'), 10),
-        sopInstanceUid: event.dataTransfer.getData('sopInstanceUid')
+        virtualSeriesId: event.dataTransfer.getData('virtualSeriesId')
       });
     },
     MakeActive: function() {
@@ -451,7 +450,7 @@ var app = new Vue({
       series: [],
       studies: [],
       seriesIndex: {},  // Maps "SeriesInstanceUID" to "index in this.series"
-      multiframeInstanceThumbnails: {}
+      virtualSeriesThumbnails: {}
     }
   },
   computed: {
@@ -520,20 +519,20 @@ var app = new Vue({
       return s;
     },
 
-    GetActiveMultiframeInstances: function() {
+    GetActiveVirtualSeries: function() {
       var s = [];
 
-      if ('sopInstanceUid' in this.viewport1Content)
-        s.push(this.viewport1Content.sopInstanceUid);
+      if ('virtualSeriesId' in this.viewport1Content)
+        s.push(this.viewport1Content.virtualSeriesId);
 
-      if ('sopInstanceUid' in this.viewport2Content)
-        s.push(this.viewport2Content.sopInstanceUid);
+      if ('virtualSeriesId' in this.viewport2Content)
+        s.push(this.viewport2Content.virtualSeriesId);
 
-      if ('sopInstanceUid' in this.viewport3Content)
-        s.push(this.viewport3Content.sopInstanceUid);
+      if ('virtualSeriesId' in this.viewport3Content)
+        s.push(this.viewport3Content.virtualSeriesId);
 
-      if ('sopInstanceUid' in this.viewport4Content)
-        s.push(this.viewport4Content.sopInstanceUid);
+      if ('virtualSeriesId' in this.viewport4Content)
+        s.push(this.viewport4Content.virtualSeriesId);
 
       return s;
     },
@@ -604,7 +603,7 @@ var app = new Vue({
               'type' : stone.ThumbnailType.LOADING,
               'color': study.color,
               'tags': sourceSeries[i],
-              'multiframeInstances': null
+              'virtualSeries': null
             });
           }
         }
@@ -625,9 +624,9 @@ var app = new Vue({
       event.dataTransfer.setData('seriesIndex', seriesIndex.toString());
     },
 
-    MultiframeInstanceDragStart: function(event, seriesIndex, sopInstanceUid) {
+    VirtualSeriesDragStart: function(event, seriesIndex, virtualSeriesId) {
       event.dataTransfer.setData('seriesIndex', seriesIndex.toString());
-      event.dataTransfer.setData('sopInstanceUid', sopInstanceUid.toString());
+      event.dataTransfer.setData('virtualSeriesId', virtualSeriesId.toString());
     },
 
     SetViewportSeriesInstanceUid: function(viewportIndex, seriesInstanceUid) {
@@ -644,25 +643,25 @@ var app = new Vue({
       if (viewportIndex == 1) {
         this.viewport1Content = {
           series: series,
-          sopInstanceUid: info.sopInstanceUid
+          virtualSeriesId: info.virtualSeriesId
         };
       }
       else if (viewportIndex == 2) {
         this.viewport2Content = {
           series: series,
-          sopInstanceUid: info.sopInstanceUid
+          virtualSeriesId: info.virtualSeriesId
         };
       }
       else if (viewportIndex == 3) {
         this.viewport3Content = {
           series: series,
-          sopInstanceUid: info.sopInstanceUid
+          virtualSeriesId: info.virtualSeriesId
         };
       }
       else if (viewportIndex == 4) {
         this.viewport4Content = {
           series: series,
-          sopInstanceUid: info.sopInstanceUid
+          virtualSeriesId: info.virtualSeriesId
         };
       }
     },
@@ -673,10 +672,10 @@ var app = new Vue({
       });
     },
     
-    ClickMultiframeInstance: function(seriesIndex, sopInstanceUid) {
+    ClickVirtualSeries: function(seriesIndex, virtualSeriesId) {
       this.SetViewportSeries(this.activeViewport, {
         seriesIndex: seriesIndex,
-        sopInstanceUid: sopInstanceUid
+        virtualSeriesId: virtualSeriesId
       });
     },
     
@@ -800,8 +799,8 @@ var app = new Vue({
             delete pendingSeriesPdf_[seriesInstanceUid];
           }
 
-          if (stone.LoadMultiframeInstancesFromSeries(seriesInstanceUid)) {
-            series.multiframeInstances = JSON.parse(stone.GetStringBuffer());
+          if (stone.LookupVirtualSeries(seriesInstanceUid)) {
+            series.virtualSeries = JSON.parse(stone.GetStringBuffer());
           }
         }
 
@@ -1060,8 +1059,8 @@ var app = new Vue({
 
     var that = this;
     
-    window.addEventListener('MultiframeInstanceThumbnailLoaded', function(args) {
-      that.$set(that.multiframeInstanceThumbnails, args.detail.sopInstanceUid, args.detail.thumbnail);
+    window.addEventListener('VirtualSeriesThumbnailLoaded', function(args) {
+      that.$set(that.virtualSeriesThumbnails, args.detail.virtualSeriesId, args.detail.thumbnail);
     });
 
     window.addEventListener('ThumbnailLoaded', function(args) {

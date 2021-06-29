@@ -209,7 +209,7 @@
                               v-bind:class="{ highlighted : GetActiveSeries().includes(series[seriesIndex].tags[SERIES_INSTANCE_UID]), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
                               v-on:dragstart="SeriesDragStart($event, seriesIndex)"
                               v-on:click="ClickSeries(seriesIndex)"
-                              v-if="series[seriesIndex].multiframeInstances === null">
+                              v-if="series[seriesIndex].virtualSeries === null">
                             <div class="wvSerieslist__picture" style="z-index:0"
                                  draggable="true"
                                  v-if="series[seriesIndex].type != stone.ThumbnailType.UNKNOWN"
@@ -261,28 +261,28 @@
 
                           <!-- Series with multiple multiframe instances (CINE) -->
                           <li class="wvSerieslist__seriesItem"
-                              v-bind:class="{ highlighted : GetActiveMultiframeInstances().includes(sopInstanceUid), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
-                              v-for="(numberOfFrames, sopInstanceUid) in series[seriesIndex].multiframeInstances"
-                              v-on:dragstart="MultiframeInstanceDragStart($event, seriesIndex, sopInstanceUid)"
-                              v-on:click="ClickMultiframeInstance(seriesIndex, sopInstanceUid)">
+                              v-bind:class="{ highlighted : GetActiveVirtualSeries().includes(virtualSeries.ID), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
+                              v-for="virtualSeries in series[seriesIndex].virtualSeries"
+                              v-on:dragstart="VirtualSeriesDragStart($event, seriesIndex, virtualSeries.ID)"
+                              v-on:click="ClickVirtualSeries(seriesIndex, virtualSeries.ID)">
                             <div class="wvSerieslist__picture" style="z-index:0"
                                  draggable="true">
                               <img v-if="series[seriesIndex].type == stone.ThumbnailType.IMAGE"
-                                   v-bind:src="sopInstanceUid in multiframeInstanceThumbnails ? multiframeInstanceThumbnails[sopInstanceUid] : series[seriesIndex].thumbnail"
+                                   v-bind:src="virtualSeries.ID in virtualSeriesThumbnails ? virtualSeriesThumbnails[virtualSeries.ID] : series[seriesIndex].thumbnail"
                                    style="vertical-align:baseline"
                                    width="65px" height="65px"
                                    v-bind:title="leftMode == 'full' ? null : '[' + series[seriesIndex].tags[MODALITY] + '] ' + series[seriesIndex].tags[SERIES_DESCRIPTION]"
                                    />
                               
                               <div v-bind:class="'wvSerieslist__badge--' + study.color">
-                                {{ numberOfFrames }}
+                                {{ virtualSeries.NumberOfFrames }}
                               </div>
                             </div>
 
                             <div v-if="leftMode == 'full'" class="wvSerieslist__information"
                                  draggable="true"
-                                 v-on:dragstart="MultiframeInstanceDragStart($event, seriesIndex, sopInstanceUid)"
-                                 v-on:click="MultiframeInstanceDragStart($event, seriesIndex, sopInstanceUid)">
+                                 v-on:dragstart="VirtualSeriesDragStart($event, seriesIndex, virtualSeries.ID)"
+                                 v-on:click="ClickVirtualSeries(seriesIndex, virtualSeries.ID)">
                               <p class="wvSerieslist__label">
                                 [{{ series[seriesIndex].tags[MODALITY] }}]
                                 {{ series[seriesIndex].tags[SERIES_DESCRIPTION] }}

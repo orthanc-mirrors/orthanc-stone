@@ -1,6 +1,7 @@
 Pending changes in the mainline
 ===============================
 
+* Support detection of windowing and rescale in Philips multiframe images
 * Fix values reported in "ww/wc" info panel (windowing width and center)
 
 

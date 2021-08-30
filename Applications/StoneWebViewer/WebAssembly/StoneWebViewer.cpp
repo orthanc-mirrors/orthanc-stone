@@ -1762,6 +1762,17 @@ private:
       }
       else
       {
+        if (GetViewport().windowingPresetCenters_.empty())
+        {
+          // New in Stone Web viewer 2.2: Deal with Philips multiframe
+          // (cf. mail from Tomas Kenda on 2021-08-17)
+          double windowingCenter, windowingWidth;
+          message.GetDicom().GetDefaultWindowing(windowingCenter, windowingWidth, frameNumber_);
+          GetViewport().windowingPresetCenters_.push_back(windowingCenter);
+          GetViewport().windowingPresetWidths_.push_back(windowingWidth);
+          GetViewport().SetWindowingPreset();
+        }
+
         Apply(GetViewport(), message.GetDicom(), frame.release(), sopInstanceUid_, frameNumber_);
 
         if (isPrefetch_)
@@ -1800,12 +1811,9 @@ private:
         }
       
         double rescaleIntercept, rescaleSlope;
-        if (tags.ParseDouble(rescaleIntercept, Orthanc::DICOM_TAG_RESCALE_INTERCEPT) &&
-            tags.ParseDouble(rescaleSlope, Orthanc::DICOM_TAG_RESCALE_SLOPE))
-        {
-          a *= rescaleSlope;
-          b = rescaleIntercept;
-        }
+        dicom.GetRescale(rescaleIntercept, rescaleSlope, frameNumber);
+        a *= rescaleSlope;
+        b = rescaleIntercept;
 
         converted.reset(new Orthanc::Image(Orthanc::PixelFormat_Float32, frameProtection->GetWidth(), frameProtection->GetHeight(), false));
         Orthanc::ImageProcessing::Convert(*converted, *frameProtection);

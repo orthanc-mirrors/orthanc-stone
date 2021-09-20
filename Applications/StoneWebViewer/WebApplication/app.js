@@ -150,7 +150,9 @@ Vue.component('viewport', {
       videoUri: '',
       windowingCenter: 0, 
       windowingWidth: 0,
-      instanceNumber: 0
+      instanceNumber: 0,
+      contentDate: '',
+      contentTime: '',
     }
   },
   watch: {
@@ -171,7 +173,9 @@ Vue.component('viewport', {
       this.windowingCenter = 0;
       this.windowingWidth = 0;
       this.instanceNumber = 0;
-      
+      this.contentDate = '';
+      this.contentTime = ''
+
       if (this.cineTimeoutId !== null) {
         clearTimeout(this.cineTimeoutId);
         this.cineTimeoutId = null;
@@ -255,6 +259,8 @@ Vue.component('viewport', {
         that.numberOfFrames = args.detail.numberOfFrames;
         that.quality = args.detail.quality;
         that.instanceNumber = args.detail.instanceNumber;
+        that.contentDate = args.detail.contentDate;
+        that.contentTime = args.detail.contentTime;
       }
     });
 
@@ -934,6 +940,43 @@ var app = new Vue({
           var month = date.replace(/^([0-9]{4})([0-9]{2})([0-9]{2})$/, '$2');
           var day = date.replace(/^([0-9]{4})([0-9]{2})([0-9]{2})$/, '$3');
           return format.replace(/YYYY/g, year).replace(/MM/g, month).replace(/DD/g, day);
+        }
+      }
+    },
+
+    FormatTime: function(time)
+    {
+      if (time === undefined ||
+        time.length == 0) {
+        return '';
+      }
+      else {
+        var format = this.globalConfiguration['TimeFormat'];
+        if (format === undefined) {
+          // No configuration for the date format, use the DICOM tag as such
+          return time;
+        }
+        else {
+          var timeRegexHMS = /([0-9]{2})([0-9]{2})([0-9]{2})/;
+          var timeRegexHMSms = /([0-9]{2})([0-9]{2})([0-9]{2}).([0-9]*)/
+          var m = time.match(timeRegexHMSms);
+          if (m) {
+            format = format.replace(/hh/g, m[1]).replace(/mm/g, m[2]).replace(/ss/g, m[3]);
+            if (format.indexOf('f') != -1) { // format expects ms
+              return format.replace(/f/g, m[4])
+            } else {
+              return format;
+            }
+          }
+          var m = time.match(timeRegexHMS);
+          if (m) {
+            format = format.replace(/hh/g, m[1]).replace(/mm/g, m[2]).replace(/ss/g, m[3]);
+            if (format.indexOf('f') != -1) { // format expects ms but we could not capture one
+              return format.replace(/.f/g, '')
+            }
+          }
+
+          return time;
         }
       }
     },

@@ -1,6 +1,12 @@
 Pending changes in the mainline
 ===============================
 
+* In the top right overlay, display ContentDate/ContentTime if they are 
+  available in the instance.  If not, StudyDate is displayed (previous
+  behavior)
+* New configuration options:
+  - "TimeFormat" to control the way Dicom Times are displayed.
+
 
 Version 2.2 (2021-08-31)
 ========================

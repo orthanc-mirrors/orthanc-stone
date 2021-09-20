@@ -1450,7 +1450,9 @@ public:
                                     size_t currentFrame,
                                     size_t countFrames,
                                     DisplayedFrameQuality quality,
-                                    unsigned int instanceNumber) = 0;
+                                    unsigned int instanceNumber,
+                                    const std::string& contentDate,
+                                    const std::string& contentTime) = 0;
 
     // "click" is a 3D vector in world coordinates
     virtual void SignalCrosshair(const ViewerViewport& viewport,
@@ -1972,13 +1974,15 @@ private:
     {
       const Orthanc::DicomMap& instance = frames_->GetInstanceOfFrame(cursor_->GetCurrentIndex()).GetTags();
 
-      uint32_t instanceNumber;
-      if (!instance.ParseUnsignedInteger32(instanceNumber, Orthanc::DICOM_TAG_INSTANCE_NUMBER))
-      {
-        instanceNumber = 0;
-      }
-      
-      observer_->SignalFrameUpdated(*this, cursorIndex, frames_->GetFramesCount(), quality, instanceNumber);
+      uint32_t instanceNumber = 0;
+      std::string contentDate;
+      std::string contentTime;
+
+      instance.ParseUnsignedInteger32(instanceNumber, Orthanc::DICOM_TAG_INSTANCE_NUMBER);
+      instance.LookupStringValue(contentDate, Orthanc::DicomTag(0x0008, 0x0023), false);
+      instance.LookupStringValue(contentTime, Orthanc::DicomTag(0x0008, 0x0033), false);
+
+      observer_->SignalFrameUpdated(*this, cursorIndex, frames_->GetFramesCount(), quality, instanceNumber, contentDate, contentTime);
     }
   }
   
@@ -2575,7 +2579,7 @@ public:
     if (observer_.get() != NULL)
     {
       observer_->SignalFrameUpdated(*this, cursor_->GetCurrentIndex(),
-                                    frames_->GetFramesCount(), DisplayedFrameQuality_None, 0);
+                                    frames_->GetFramesCount(), DisplayedFrameQuality_None, 0, "", "");
     }
 
     centralPhysicalWidth_ = 1;
@@ -3257,7 +3261,9 @@ public:
                                   size_t currentFrame,
                                   size_t countFrames,
                                   DisplayedFrameQuality quality,
-                                  unsigned int instanceNumber) ORTHANC_OVERRIDE
+                                  unsigned int instanceNumber,
+                                  const std::string& contentDate,
+                                  const std::string& contentTime) ORTHANC_OVERRIDE
   {
     EM_ASM({
         const customEvent = document.createEvent("CustomEvent");
@@ -3266,13 +3272,19 @@ public:
                                         "currentFrame" : $1,
                                         "numberOfFrames" : $2,
                                         "quality" : $3,
-                                        "instanceNumber" : $4 });
+                                        "instanceNumber" : $4,
+                                        "contentDate" : UTF8ToString($5),
+                                        "contentTime" : UTF8ToString($6),
+                                         });
         window.dispatchEvent(customEvent);
       },
       viewport.GetCanvasId().c_str(),
       static_cast<int>(currentFrame),
       static_cast<int>(countFrames),
-      quality, instanceNumber);
+      quality, 
+      instanceNumber, 
+      contentDate.c_str(),
+      contentTime.c_str());
 
     UpdateReferenceLines();
   }

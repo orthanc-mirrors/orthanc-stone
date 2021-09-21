@@ -66,3 +66,6 @@ cd ~/dev/build/wasm-stone-viewer && ninja install
 Then, the viewer is available on http://localhost:8043/stone-webviewer-live/index.html?study=1.2.3.4.5
 
 If you modify the plugin code, you must of course rebuild the plugin and restart Orthanc
+
+If you modify the scss files, you'll need to run:
+- Applications/StoneWebViewer/Resources$ ./node_modules/node-sass/bin/node-sass ./Styles/styles.scss > ../WebApplication/app.css as explained in Applications/StoneWebViewer/Resources/Styles.txt

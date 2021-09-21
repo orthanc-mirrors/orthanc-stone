@@ -33,6 +33,7 @@ var SERIES_NUMBER = '0020,0011';
 var SERIES_DESCRIPTION = '0008,103e';
 var MODALITY = '0008,0060';
 var PATIENT_BIRTH_DATE = '0010,0030';
+var NON_DISPLAYABLE_MODALITIES = ['PR', 'SR']
 
 // Registry of the PDF series for which the instance metadata is still waiting
 var pendingSeriesPdf_ = {};
@@ -566,6 +567,12 @@ var app = new Vue({
 
       var studies = [];
       var posColor = 0;
+
+      // order series by SeriesNumber
+      sourceSeries.sort((a, b) => {return a[SERIES_NUMBER] - b[SERIES_NUMBER];})
+
+      // discard non displayable series
+      sourceSeries = sourceSeries.filter((s) => {return NON_DISPLAYABLE_MODALITIES.indexOf(s[MODALITY]) == -1; } )
 
       for (var i = 0; i < sourceStudies.length; i++) {
         var studyInstanceUid = sourceStudies[i][STUDY_INSTANCE_UID];

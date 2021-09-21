@@ -1,7 +1,10 @@
 Pending changes in the mainline
 ===============================
 
-* SeriesList: display the SeriesNumber tag in front of image count.
+* SeriesList: 
+  - display the SeriesNumber tag in front of image count.
+  - order series by SeriesNumber
+  - hide non displayable series (PR, SR)
 * In the top right overlay, display ContentDate/ContentTime if they are 
   available in the instance.  If not, StudyDate is displayed (previous
   behavior)

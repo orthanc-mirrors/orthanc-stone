@@ -114,6 +114,11 @@
      * image, this logo will be displayed at the bottom-left of the
      * Stone Web viewer.
      **/
-    "InstitutionLogo" : ""
+    "InstitutionLogo" : "",
+
+    /**
+     * Define a list of modality type that the viewer will ignore.
+     **/
+    "SkipSeriesFromModalities": ["SR", "SEG", "PR"]
   }
 }

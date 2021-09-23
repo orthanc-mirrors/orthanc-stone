@@ -33,7 +33,6 @@ var SERIES_NUMBER = '0020,0011';
 var SERIES_DESCRIPTION = '0008,103e';
 var MODALITY = '0008,0060';
 var PATIENT_BIRTH_DATE = '0010,0030';
-var NON_DISPLAYABLE_MODALITIES = ['PR', 'SR']
 
 // Registry of the PDF series for which the instance metadata is still waiting
 var pendingSeriesPdf_ = {};
@@ -570,9 +569,6 @@ var app = new Vue({
 
       // order series by SeriesNumber
       sourceSeries.sort((a, b) => {return a[SERIES_NUMBER] - b[SERIES_NUMBER];})
-
-      // discard non displayable series
-      sourceSeries = sourceSeries.filter((s) => {return NON_DISPLAYABLE_MODALITIES.indexOf(s[MODALITY]) == -1; } )
 
       for (var i = 0; i < sourceStudies.length; i++) {
         var studyInstanceUid = sourceStudies[i][STUDY_INSTANCE_UID];
@@ -1147,6 +1143,10 @@ window.addEventListener('StoneInitialized', function() {
     stone.SetDicomCacheSize(app.globalConfiguration.DicomCacheSize);
   }
 
+  if ('SkipSeriesFromModalities' in app.globalConfiguration) {
+    stone.SetSkipSeriesFromModalities(JSON.stringify(app.globalConfiguration.SkipSeriesFromModalities));
+  }
+  
   // Bearer token is new in Stone Web viewer 2.0
   var token = getParameterFromUrl('token');
   if (token !== undefined)
@@ -1211,7 +1211,7 @@ window.addEventListener('StoneInitialized', function() {
 
 
 window.addEventListener('ResourcesLoaded', function() {
-  console.log('resources loaded');
+  console.log('resources loaded: ', stone.GetStudiesCount(), 'studies &', stone.GetSeriesCount(), 'series');
 
   var studies = [];
   for (var i = 0; i < stone.GetStudiesCount(); i++) {

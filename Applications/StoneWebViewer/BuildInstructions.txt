@@ -31,6 +31,8 @@ cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC_BUILD -DALLOW_DOWNLOADS=ON ../../ortha
 make -j 6
 
 # build the StoneViewer WASM code
+# note: for fast link time: use -DCMAKE_BUILD_TYPE=RelWithDebInfo.  However, this produces an output that is too large to be embedded in the plugin
+# therefore, when you build the plugin, build the WASM code with -DCMAKE_BUILD_TYPE=Release
 cd ~/dev/build/wasm-stone-viewer
 cmake ../../orthanc-stone/Applications/StoneWebViewer/WebAssembly -DLIBCLANG=/usr/lib/x86_64-linux-gnu/libclang-10.so -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DALLOW_DOWNLOADS=ON -G Ninja
 ninja install

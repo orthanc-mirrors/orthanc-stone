@@ -109,6 +109,17 @@ namespace OrthancStone
       return resources_.find(id) != resources_.end();
     }
 
+    void RemoveResource(const std::string& id)
+    {
+      if (HasResource(id))
+      {
+        Resource* resource = resources_[id];
+        delete resource;
+        resources_.erase(id);
+        flattened_.clear();   // Invalidate the flattened version 
+      }
+    }
+
     void MergeResource(Orthanc::DicomMap& target,
                        const std::string& id) const;
   

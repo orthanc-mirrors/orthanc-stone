@@ -98,7 +98,7 @@
 #include <boost/math/special_functions/round.hpp>
 #include <boost/make_shared.hpp>
 #include <stdio.h>
-
+#include <algorithm>
 
 #if !defined(STONE_WEB_VIEWER_EXPORT)
 // We are not running ParseWebAssemblyExports.py, but we're compiling the wasm
@@ -321,6 +321,7 @@ private:
   boost::shared_ptr<OrthancStone::SeriesMetadataLoader>    metadataLoader_;
   std::set<std::string>                                    scheduledVirtualSeriesThumbnails_;
   VirtualSeries                                            virtualSeries_;
+  std::vector<std::string>                                 skipSeriesFromModalities_;
 
   explicit ResourcesLoader(OrthancStone::ILoadersContext& context,
                            const OrthancStone::DicomSource& source) :
@@ -342,19 +343,40 @@ private:
     LOG(INFO) << "resources loaded: " << dicom.GetSize()
               << ", " << Orthanc::EnumerationToString(payload.GetValue());
 
+    std::vector<std::string> seriesIdsToRemove;
+
     if (payload.GetValue() == Orthanc::ResourceType_Series)
     {
+      // the 'dicom' var is actually equivalent to the 'series_' member in this case
+
       for (size_t i = 0; i < dicom.GetSize(); i++)
       {
-        std::string studyInstanceUid, seriesInstanceUid;
+        std::string studyInstanceUid, seriesInstanceUid, modality;
         if (dicom.GetResource(i).LookupStringValue(
               studyInstanceUid, Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, false) &&
             dicom.GetResource(i).LookupStringValue(
-              seriesInstanceUid, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false))
+              seriesInstanceUid, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false) &&
+            dicom.GetResource(i).LookupStringValue(
+              modality, Orthanc::DICOM_TAG_MODALITY, false))
         {
-          thumbnailsLoader_->ScheduleLoadThumbnail(source_, "", studyInstanceUid, seriesInstanceUid);
-          metadataLoader_->ScheduleLoadSeries(PRIORITY_LOW + 1, source_, studyInstanceUid, seriesInstanceUid);
+          // skip series that should not be displayed
+          if (std::find(skipSeriesFromModalities_.begin(), skipSeriesFromModalities_.end(), modality) == skipSeriesFromModalities_.end())
+          {
+            thumbnailsLoader_->ScheduleLoadThumbnail(source_, "", studyInstanceUid, seriesInstanceUid);
+            metadataLoader_->ScheduleLoadSeries(PRIORITY_LOW + 1, source_, studyInstanceUid, seriesInstanceUid);
+          }
+
+          else
+          {
+            seriesIdsToRemove.push_back(seriesInstanceUid);
+          }
         }
+      }
+
+      for (size_t i = 0; i < seriesIdsToRemove.size(); i++)
+      {
+        LOG(INFO) << "series to hide: " << seriesIdsToRemove[i];
+        dicom.RemoveResource(seriesIdsToRemove[i]);  
       }
     }
 
@@ -515,6 +537,11 @@ private:
   }
 
 public:
+  void SetSkipSeriesFromModalities(const std::vector<std::string>& skipSeriesFromModalities)
+  {
+    skipSeriesFromModalities_ = skipSeriesFromModalities;
+  }
+
   static boost::shared_ptr<ResourcesLoader> Create(OrthancStone::ILoadersContext::ILock& lock,
                                                    const OrthancStone::DicomSource& source)
   {
@@ -3570,6 +3597,27 @@ extern "C"
     EXTERN_CATCH_EXCEPTIONS;
   }
   
+
+  EMSCRIPTEN_KEEPALIVE
+  void SetSkipSeriesFromModalities(const char* value)
+  {
+    try
+    {
+      LOG(WARNING) << "SetSkipSeriesFromModalities " << value;
+      
+      Json::Value modalities;
+      Orthanc::Toolbox::ReadJson(modalities, value);
+      std::vector<std::string> skipSeriesFromModalities;
+
+      for (Json::Value::ArrayIndex i = 0; i < modalities.size(); i++)
+      {
+        skipSeriesFromModalities.push_back(modalities[i].asString());
+      }
+      GetResourcesLoader().SetSkipSeriesFromModalities(skipSeriesFromModalities);
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
+
 
   EMSCRIPTEN_KEEPALIVE
   void FetchAllStudies()

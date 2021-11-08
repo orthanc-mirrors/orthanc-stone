@@ -41,6 +41,9 @@ Wishlist
 * Vertical "timeline" to see the position of the current frame in the
   series, and to change the current frame by clicking on the timeline.
 
+* Display a pixel probe with the Hounsfield Unit.
+  https://groups.google.com/g/orthanc-users/c/m7S0wbYYW5s/m/MBaxIQ_IAAAJ
+
 * Display video files even if the Orthanc REST API is not available
   (using pure DICOMweb). This could possible be done using the
   DICOMweb Bulk Data URI, and/or a dedicated JavaScript video player.

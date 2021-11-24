@@ -27,6 +27,7 @@
 #include <Logging.h>
 
 #include <cassert>
+#include <stdexcept>
 
 namespace OrthancStone 
 {
@@ -87,6 +88,10 @@ namespace OrthancStone
             catch (StoneException& e)
             {
               LOG(ERROR) << "Exception on callable: " << e.What();
+            }
+            catch (std::exception& e)
+            {
+              LOG(ERROR) << "C++ exception on callable: " << e.what();
             }
             catch (...)
             {

@@ -31,7 +31,7 @@
 #if __cplusplus >= 201103L   // Is C++11?
 #  include <cinttypes>  // For PRId64
 #else
-#  define PRId64 "%lld"
+#  define PRId64 "ld"
 #endif
 
 TEST(GenericToolbox, TestLegitDoubleString)

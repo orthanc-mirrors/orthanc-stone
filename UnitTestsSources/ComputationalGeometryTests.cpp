@@ -22,6 +22,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../OrthancStone/Sources/Toolbox/Internals/OrientedIntegerLine2D.h"
+#include "../OrthancStone/Sources/Toolbox/Internals/RectanglesIntegerProjection.h"
 #include "../OrthancStone/Sources/Toolbox/SegmentTree.h"
 
 #include <Logging.h>
@@ -325,4 +327,155 @@ TEST(SegmentTree, Visit)
 
   root.VisitSegment(8, 9, minus);
   ASSERT_TRUE(CheckCounter(root, 0));
+}
+
+
+TEST(UnionOfRectangles, RectanglesIntegerProjection)
+{
+  std::list<OrthancStone::Extent2D> rectangles;
+  rectangles.push_back(OrthancStone::Extent2D(10, 20, 30, 40));
+
+  {
+    OrthancStone::Internals::RectanglesIntegerProjection h(rectangles, true);
+    ASSERT_EQ(2u, h.GetEndpointsCount());
+    ASSERT_EQ(10, h.GetEndpointCoordinate(0));
+    ASSERT_EQ(30, h.GetEndpointCoordinate(1));
+    ASSERT_EQ(1u, h.GetProjectedRectanglesCount());
+    ASSERT_EQ(0u, h.GetProjectedRectangleLow(0));
+    ASSERT_EQ(1u, h.GetProjectedRectangleHigh(0));
+
+    ASSERT_THROW(h.GetEndpointCoordinate(2), Orthanc::OrthancException);
+    ASSERT_THROW(h.GetProjectedRectangleLow(1), Orthanc::OrthancException);
+    ASSERT_THROW(h.GetProjectedRectangleHigh(1), Orthanc::OrthancException);
+  }
+
+  {
+    OrthancStone::Internals::RectanglesIntegerProjection h(rectangles, false);
+    ASSERT_EQ(2u, h.GetEndpointsCount());
+    ASSERT_EQ(20, h.GetEndpointCoordinate(0));
+    ASSERT_EQ(40, h.GetEndpointCoordinate(1));
+    ASSERT_EQ(1u, h.GetProjectedRectanglesCount());
+    ASSERT_EQ(0u, h.GetProjectedRectangleLow(0));
+    ASSERT_EQ(1u, h.GetProjectedRectangleHigh(0));
+  }
+
+  rectangles.push_back(OrthancStone::Extent2D(20, 30, 40, 50));
+
+  {
+    OrthancStone::Internals::RectanglesIntegerProjection h(rectangles, true);
+    ASSERT_EQ(4u, h.GetEndpointsCount());
+    ASSERT_EQ(10, h.GetEndpointCoordinate(0));
+    ASSERT_EQ(20, h.GetEndpointCoordinate(1));
+    ASSERT_EQ(30, h.GetEndpointCoordinate(2));
+    ASSERT_EQ(40, h.GetEndpointCoordinate(3));
+    ASSERT_EQ(2u, h.GetProjectedRectanglesCount());
+    ASSERT_EQ(0u, h.GetProjectedRectangleLow(0));
+    ASSERT_EQ(2u, h.GetProjectedRectangleHigh(0));
+    ASSERT_EQ(1u, h.GetProjectedRectangleLow(1));
+    ASSERT_EQ(3u, h.GetProjectedRectangleHigh(1));
+  }
+
+  {
+    OrthancStone::Internals::RectanglesIntegerProjection h(rectangles, false);
+    ASSERT_EQ(4u, h.GetEndpointsCount());
+    ASSERT_EQ(20, h.GetEndpointCoordinate(0));
+    ASSERT_EQ(30, h.GetEndpointCoordinate(1));
+    ASSERT_EQ(40, h.GetEndpointCoordinate(2));
+    ASSERT_EQ(50, h.GetEndpointCoordinate(3));
+    ASSERT_EQ(2u, h.GetProjectedRectanglesCount());
+    ASSERT_EQ(0u, h.GetProjectedRectangleLow(0));
+    ASSERT_EQ(2u, h.GetProjectedRectangleHigh(0));
+    ASSERT_EQ(1u, h.GetProjectedRectangleLow(1));
+    ASSERT_EQ(3u, h.GetProjectedRectangleHigh(1));
+  }
+}
+
+
+static void Convert(std::vector<size_t>& horizontal,
+                    std::vector<size_t>& vertical,
+                    const OrthancStone::Internals::OrientedIntegerLine2D::Chain& chain)
+{
+  horizontal.clear();
+  vertical.clear();
+
+  for (OrthancStone::Internals::OrientedIntegerLine2D::Chain::const_iterator
+         it = chain.begin(); it != chain.end(); ++it)
+  {
+    horizontal.push_back(it->first);
+    vertical.push_back(it->second);
+  }
+}
+
+
+TEST(UnionOfRectangles, ExtractChains)
+{
+  std::vector<OrthancStone::Internals::OrientedIntegerLine2D> edges;
+  edges.push_back(OrthancStone::Internals::OrientedIntegerLine2D(0, 0, 10, 0));
+  edges.push_back(OrthancStone::Internals::OrientedIntegerLine2D(10, 0, 10, 20));
+  edges.push_back(OrthancStone::Internals::OrientedIntegerLine2D(10, 20, 0, 20));
+
+  std::list<OrthancStone::Internals::OrientedIntegerLine2D::Chain> chains;
+  OrthancStone::Internals::OrientedIntegerLine2D::ExtractChains(chains, edges);
+
+  std::vector<size_t> h, v;
+
+  ASSERT_EQ(1u, chains.size());
+
+  Convert(h, v, chains.front());
+  ASSERT_EQ(4u, h.size());
+  ASSERT_EQ(0u, h[0]);
+  ASSERT_EQ(10u, h[1]);
+  ASSERT_EQ(10u, h[2]);
+  ASSERT_EQ(0u, h[3]);
+  ASSERT_EQ(4u, v.size());
+  ASSERT_EQ(0u, v[0]);
+  ASSERT_EQ(0u, v[1]);
+  ASSERT_EQ(20u, v[2]);
+  ASSERT_EQ(20u, v[3]);
+
+  edges.push_back(OrthancStone::Internals::OrientedIntegerLine2D(5, 5, 10, 5));
+  OrthancStone::Internals::OrientedIntegerLine2D::ExtractChains(chains, edges);
+
+  ASSERT_EQ(2u, chains.size());
+  
+  Convert(h, v, chains.front());
+  ASSERT_EQ(4u, h.size());
+  ASSERT_EQ(0u, h[0]);
+  ASSERT_EQ(10u, h[1]);
+  ASSERT_EQ(10u, h[2]);
+  ASSERT_EQ(0u, h[3]);
+  ASSERT_EQ(4u, v.size());
+  ASSERT_EQ(0u, v[0]);
+  ASSERT_EQ(0u, v[1]);
+  ASSERT_EQ(20u, v[2]);
+  ASSERT_EQ(20u, v[3]);
+  
+  Convert(h, v, chains.back());
+  ASSERT_EQ(2u, h.size());
+  ASSERT_EQ(5u, h[0]);
+  ASSERT_EQ(10u, h[1]);
+  ASSERT_EQ(2u, v.size());
+  ASSERT_EQ(5u, v[0]);
+  ASSERT_EQ(5u, v[1]);
+
+  edges.push_back(OrthancStone::Internals::OrientedIntegerLine2D(0, 20, 5, 5));
+  OrthancStone::Internals::OrientedIntegerLine2D::ExtractChains(chains, edges);
+
+  ASSERT_EQ(1u, chains.size());
+  
+  Convert(h, v, chains.front());
+  ASSERT_EQ(6u, h.size());
+  ASSERT_EQ(0u, h[0]);
+  ASSERT_EQ(10u, h[1]);
+  ASSERT_EQ(10u, h[2]);
+  ASSERT_EQ(0u, h[3]);
+  ASSERT_EQ(5u, h[4]);
+  ASSERT_EQ(10u, h[5]);
+  ASSERT_EQ(6u, v.size());
+  ASSERT_EQ(0u, v[0]);
+  ASSERT_EQ(0u, v[1]);
+  ASSERT_EQ(20u, v[2]);
+  ASSERT_EQ(20u, v[3]);
+  ASSERT_EQ(5u, v[4]);
+  ASSERT_EQ(5u, v[5]);
 }

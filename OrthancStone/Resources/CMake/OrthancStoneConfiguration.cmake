@@ -424,6 +424,10 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/ImageGeometry.h
   ${ORTHANC_STONE_ROOT}/Toolbox/ImageToolbox.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/ImageToolbox.h
+  ${ORTHANC_STONE_ROOT}/Toolbox/Internals/OrientedIntegerLine2D.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/Internals/OrientedIntegerLine2D.h
+  ${ORTHANC_STONE_ROOT}/Toolbox/Internals/RectanglesIntegerProjection.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/Internals/RectanglesIntegerProjection.h
   ${ORTHANC_STONE_ROOT}/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/LinearAlgebra.h
   ${ORTHANC_STONE_ROOT}/Toolbox/PixelTestPatterns.h

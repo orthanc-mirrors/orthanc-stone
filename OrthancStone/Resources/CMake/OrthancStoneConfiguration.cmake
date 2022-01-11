@@ -427,6 +427,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/LinearAlgebra.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/LinearAlgebra.h
   ${ORTHANC_STONE_ROOT}/Toolbox/PixelTestPatterns.h
+  ${ORTHANC_STONE_ROOT}/Toolbox/SegmentTree.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/SegmentTree.h
   ${ORTHANC_STONE_ROOT}/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/ShearWarpProjectiveTransform.h
   ${ORTHANC_STONE_ROOT}/Toolbox/SlicesSorter.cpp

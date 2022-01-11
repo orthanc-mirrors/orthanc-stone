@@ -19,6 +19,7 @@
 
 
 set(UNIT_TESTS_SOURCES
+  ${CMAKE_CURRENT_LIST_DIR}/ComputationalGeometryTests.cpp
   ${CMAKE_CURRENT_LIST_DIR}/DicomTests.cpp
   ${CMAKE_CURRENT_LIST_DIR}/GenericToolboxTests.cpp
   ${CMAKE_CURRENT_LIST_DIR}/GeometryToolboxTests.cpp

@@ -54,6 +54,8 @@ namespace OrthancStone
       {
       }
 
+      // "fullyInside" is true iff. the segment of "node" is fully
+      // inside the user-provided segment
       virtual void Visit(const SegmentTree& node,
                          bool fullyInside) = 0;
     };
@@ -99,10 +101,20 @@ namespace OrthancStone
 
     size_t CountNodes() const;
 
-    // This corresponds to both methods "INSERT()" and "DELETE()" from
-    // the reference textbook
-    void Visit(size_t low,
-               size_t high,
-               IVisitor& visitor);
+    /**
+     * Apply the given visitor to all the segments that intersect the
+     * [low,high] segment. This corresponds to both methods "INSERT()"
+     * and "DELETE()" from the reference textbook.
+     **/
+    void VisitSegment(size_t low,
+                      size_t high,
+                      IVisitor& visitor) const;
+
+    // For unit tests
+    const SegmentTree* FindLeaf(size_t low) const;
+
+    // For unit tests
+    const SegmentTree* FindNode(size_t low,
+                                size_t high) const;
   };
 }

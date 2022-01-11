@@ -104,9 +104,9 @@ namespace OrthancStone
   }
 
 
-  void SegmentTree::Visit(size_t low,
-                          size_t high,
-                          IVisitor& visitor)
+  void SegmentTree::VisitSegment(size_t low,
+                                 size_t high,
+                                 IVisitor& visitor) const
   {
     if (low >= high)
     {
@@ -124,7 +124,7 @@ namespace OrthancStone
     if (b <= bv &&
         ev <= e)
     {
-      // The interval of this node is fully inside the user-provided interval
+      // The segment of this node is fully inside the user-provided segment
       visitor.Visit(*this, true);
     }
     else if (!IsLeaf())
@@ -134,16 +134,71 @@ namespace OrthancStone
 
       if (b < middle)
       {
-        GetLeftChild().Visit(b, e, visitor);
+        GetLeftChild().VisitSegment(b, e, visitor);
       }
 
       if (middle < e)
       {
-        GetRightChild().Visit(b, e, visitor);
+        GetRightChild().VisitSegment(b, e, visitor);
       }
       
-      // The interval of this node only partially intersects the user-provided interval
+      // The segment of this node only partially intersects the user-provided segment
       visitor.Visit(*this, false);
+    }
+  }
+
+
+  const SegmentTree* SegmentTree::FindLeaf(size_t low) const
+  {
+    if (IsLeaf())
+    {
+      if (low == lowBound_)
+      {
+        return this;
+      }
+      else
+      {
+        return NULL;
+      }
+    }
+    else
+    {
+      size_t middle = (lowBound_ + highBound_) / 2;
+      if (low < middle)
+      {
+        return GetLeftChild().FindLeaf(low);
+      }
+      else
+      {
+        return GetRightChild().FindLeaf(low);
+      }
+    }
+  }
+
+
+  const SegmentTree* SegmentTree::FindNode(size_t low,
+                                           size_t high) const
+  {
+    if (low == lowBound_ &&
+        high == highBound_)
+    {
+      return this;
+    }
+    else if (IsLeaf())
+    {
+      return NULL;
+    }
+    else
+    {
+      size_t middle = (lowBound_ + highBound_) / 2;
+      if (low < middle)
+      {
+        return GetLeftChild().FindNode(low, high);
+      }
+      else
+      {
+        return GetRightChild().FindNode(low, high);
+      }
     }
   }
 }

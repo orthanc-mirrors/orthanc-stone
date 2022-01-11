@@ -84,7 +84,7 @@ namespace OrthancStone
   class UnionOfRectangles::Factory : public SegmentTree::IPayloadFactory
   {
   public:
-    virtual Orthanc::IDynamicObject* Create()
+    virtual Orthanc::IDynamicObject* Create() ORTHANC_OVERRIDE
     {
       return new Payload;
     }
@@ -103,7 +103,7 @@ namespace OrthancStone
     }
   
     virtual void Visit(const SegmentTree& node,
-                       bool fullyInside)
+                       bool fullyInside) ORTHANC_OVERRIDE
     {
       Payload& payload = node.GetTypedPayload<Payload>();
 
@@ -384,6 +384,8 @@ namespace OrthancStone
   void UnionOfRectangles::Apply(std::list< std::vector<ScenePoint2D> >& contours,
                                 const std::list<Extent2D>& rectangles)
   {
+    contours.clear();
+
     /**
      * STEP 1
      **/
@@ -392,10 +394,14 @@ namespace OrthancStone
 
     assert(horizontalProjection.GetProjectedRectanglesCount() == verticalProjection.GetProjectedRectanglesCount());
 
-    
     /**
      * STEP 2
      **/
+    if (verticalProjection.GetEndpointsCount() == 0)
+    {
+      return;
+    }
+    
     Factory factory;
     SegmentTree tree(0, verticalProjection.GetEndpointsCount() - 1, factory);
 
@@ -527,8 +533,6 @@ namespace OrthancStone
 
     std::list<Internals::OrientedIntegerLine2D::Chain> chains;
     Internals::OrientedIntegerLine2D::ExtractChains(chains, allEdges);
-
-    contours.clear();
 
     for (std::list<Internals::OrientedIntegerLine2D::Chain>::const_iterator
            it = chains.begin(); it != chains.end(); ++it)

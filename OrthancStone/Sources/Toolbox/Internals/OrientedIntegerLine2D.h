@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <stddef.h>  // For size_t
 #include <vector>
 #include <list>
 

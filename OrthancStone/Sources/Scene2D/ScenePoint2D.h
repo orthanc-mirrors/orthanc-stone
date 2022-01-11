@@ -88,5 +88,10 @@ namespace OrthancStone
     static double SquaredDistancePtSegment(const ScenePoint2D& a,
                                            const ScenePoint2D& b,
                                            const ScenePoint2D& p);
+
+    bool IsEqual(const ScenePoint2D& other) const
+    {
+      return LinearAlgebra::IsCloseToZero(DistancePtPt(*this, other));
+    }
   };
 }

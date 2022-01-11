@@ -25,6 +25,7 @@
 #include "../OrthancStone/Sources/Toolbox/Internals/OrientedIntegerLine2D.h"
 #include "../OrthancStone/Sources/Toolbox/Internals/RectanglesIntegerProjection.h"
 #include "../OrthancStone/Sources/Toolbox/SegmentTree.h"
+#include "../OrthancStone/Sources/Toolbox/UnionOfRectangles.h"
 
 #include <Logging.h>
 #include <OrthancException.h>
@@ -478,4 +479,225 @@ TEST(UnionOfRectangles, ExtractChains)
   ASSERT_EQ(20u, v[3]);
   ASSERT_EQ(5u, v[4]);
   ASSERT_EQ(5u, v[5]);
+}
+
+
+TEST(UnionOfRectangles, Textbook)
+{
+  // This is Figure 8.12 from textbook
+
+  std::list<OrthancStone::Extent2D>  rectangles;
+  rectangles.push_back(OrthancStone::Extent2D(1, 3, 13, 5));
+  rectangles.push_back(OrthancStone::Extent2D(3, 1, 7, 12));
+  rectangles.push_back(OrthancStone::Extent2D(5, 7, 11, 10));
+  rectangles.push_back(OrthancStone::Extent2D(10, 2, 14, 8));
+  rectangles.push_back(OrthancStone::Extent2D(3, 3, 4, 3));  // empty rectangle
+
+  for (unsigned int fillHole = 0; fillHole < 2; fillHole++)
+  {
+    if (fillHole)
+    {
+      rectangles.push_back(OrthancStone::Extent2D(6.5, 4.5, 10.5, 7.5));
+    }
+    
+    std::list< std::vector<OrthancStone::ScenePoint2D> > contours;
+    OrthancStone::UnionOfRectangles::Apply(contours, rectangles);
+
+    ASSERT_EQ(fillHole ? 1u : 2u, contours.size());
+    ASSERT_EQ(17u, contours.front().size());
+    ASSERT_TRUE(contours.front()[0].IsEqual(OrthancStone::ScenePoint2D(3, 12)));
+    ASSERT_TRUE(contours.front()[1].IsEqual(OrthancStone::ScenePoint2D(7, 12)));
+    ASSERT_TRUE(contours.front()[2].IsEqual(OrthancStone::ScenePoint2D(7, 10)));
+    ASSERT_TRUE(contours.front()[3].IsEqual(OrthancStone::ScenePoint2D(11, 10)));
+    ASSERT_TRUE(contours.front()[4].IsEqual(OrthancStone::ScenePoint2D(11, 8)));
+    ASSERT_TRUE(contours.front()[5].IsEqual(OrthancStone::ScenePoint2D(14, 8)));
+    ASSERT_TRUE(contours.front()[6].IsEqual(OrthancStone::ScenePoint2D(14, 2)));
+    ASSERT_TRUE(contours.front()[7].IsEqual(OrthancStone::ScenePoint2D(10, 2)));
+    ASSERT_TRUE(contours.front()[8].IsEqual(OrthancStone::ScenePoint2D(10, 3)));
+    ASSERT_TRUE(contours.front()[9].IsEqual(OrthancStone::ScenePoint2D(7, 3)));
+    ASSERT_TRUE(contours.front()[10].IsEqual(OrthancStone::ScenePoint2D(7, 1)));
+    ASSERT_TRUE(contours.front()[11].IsEqual(OrthancStone::ScenePoint2D(3, 1)));
+    ASSERT_TRUE(contours.front()[12].IsEqual(OrthancStone::ScenePoint2D(3, 3)));
+    ASSERT_TRUE(contours.front()[13].IsEqual(OrthancStone::ScenePoint2D(1, 3)));
+    ASSERT_TRUE(contours.front()[14].IsEqual(OrthancStone::ScenePoint2D(1, 5)));
+    ASSERT_TRUE(contours.front()[15].IsEqual(OrthancStone::ScenePoint2D(3, 5)));
+    ASSERT_TRUE(contours.front()[16].IsEqual(OrthancStone::ScenePoint2D(3, 12)));
+
+    if (!fillHole)
+    {
+      ASSERT_EQ(5u, contours.back().size());
+      ASSERT_TRUE(contours.back()[0].IsEqual(OrthancStone::ScenePoint2D(10, 7)));
+      ASSERT_TRUE(contours.back()[1].IsEqual(OrthancStone::ScenePoint2D(7, 7)));
+      ASSERT_TRUE(contours.back()[2].IsEqual(OrthancStone::ScenePoint2D(7, 5)));
+      ASSERT_TRUE(contours.back()[3].IsEqual(OrthancStone::ScenePoint2D(10, 5)));
+      ASSERT_TRUE(contours.back()[4].IsEqual(OrthancStone::ScenePoint2D(10, 7)));
+    }
+  }
+}
+
+
+#if 0
+static void SaveSvg(const std::list< std::vector<OrthancStone::ScenePoint2D> >& contours)
+{
+  float ww = 15;
+  float hh = 13;
+
+  FILE* fp = fopen("test.svg", "w");
+  fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n");
+  fprintf(fp, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n");
+  fprintf(fp, "<svg width=\"%f\" height=\"%f\" viewBox=\"0 0 %f %f\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n", 100.0f*ww, 100.0f*hh, ww, hh);
+
+  // http://thenewcode.com/1068/Making-Arrows-in-SVG
+  fprintf(fp, "<defs>\n");
+  fprintf(fp, "<marker id=\"arrowhead\" markerWidth=\"2\" markerHeight=\"3\" \n");
+  fprintf(fp, "refX=\"2\" refY=\"1.5\" orient=\"auto\">\n");
+  fprintf(fp, "<polygon points=\"0 0, 2 1.5, 0 3\" />\n");
+  fprintf(fp, "</marker>\n");
+  fprintf(fp, "</defs>\n");
+
+  fprintf(fp, "<rect fill=\"#fff\" stroke=\"#000\" x=\"0\" y=\"0\" width=\"%f\" height=\"%f\"/>\n", ww, hh);
+
+  for (std::list< std::vector<OrthancStone::ScenePoint2D> >::const_iterator
+         it = contours.begin(); it != contours.end(); ++it)
+  {
+    for (size_t i = 0; i + 1 < it->size(); i++)
+    {
+      float x1 = (*it)[i].GetX();
+      float x2 = (*it)[i + 1].GetX();
+      float y1 = (*it)[i].GetY();
+      float y2 = (*it)[i + 1].GetY();
+      
+      fprintf(fp, "<line x1=\"%f\" y1=\"%f\" x2=\"%f\" y2=\"%f\" stroke=\"blue\" stroke-width=\"0.05\" marker-end=\"url(#arrowhead)\"/>\n", x1, y1, x2, y2);
+    }
+  }
+  fprintf(fp, "</svg>\n");
+  
+  fclose(fp);
+}
+#endif
+
+
+TEST(UnionOfRectangles, Complex)
+{
+  {
+    std::list<OrthancStone::Extent2D>  rectangles;
+    rectangles.push_back(OrthancStone::Extent2D(1, 4, 4, 6));
+    rectangles.push_back(OrthancStone::Extent2D(4, 6, 7, 8));
+    rectangles.push_back(OrthancStone::Extent2D(4, 2, 7, 4));
+    rectangles.push_back(OrthancStone::Extent2D(7, 4, 10, 6));
+  
+    std::list< std::vector<OrthancStone::ScenePoint2D> > contours;
+    OrthancStone::UnionOfRectangles::Apply(contours, rectangles);
+
+    ASSERT_EQ(1u, contours.size());
+    ASSERT_EQ(17u, contours.front().size());
+    ASSERT_TRUE(contours.front()[0].IsEqual(OrthancStone::ScenePoint2D(4, 8)));
+    ASSERT_TRUE(contours.front()[1].IsEqual(OrthancStone::ScenePoint2D(7, 8)));
+    ASSERT_TRUE(contours.front()[2].IsEqual(OrthancStone::ScenePoint2D(7, 6)));
+    ASSERT_TRUE(contours.front()[3].IsEqual(OrthancStone::ScenePoint2D(10, 6)));
+    ASSERT_TRUE(contours.front()[4].IsEqual(OrthancStone::ScenePoint2D(10, 4)));
+    ASSERT_TRUE(contours.front()[5].IsEqual(OrthancStone::ScenePoint2D(7, 4)));
+    ASSERT_TRUE(contours.front()[6].IsEqual(OrthancStone::ScenePoint2D(7, 2)));
+    ASSERT_TRUE(contours.front()[7].IsEqual(OrthancStone::ScenePoint2D(4, 2)));
+    ASSERT_TRUE(contours.front()[8].IsEqual(OrthancStone::ScenePoint2D(4, 4)));
+    ASSERT_TRUE(contours.front()[9].IsEqual(OrthancStone::ScenePoint2D(7, 4)));
+    ASSERT_TRUE(contours.front()[10].IsEqual(OrthancStone::ScenePoint2D(7, 6)));
+    ASSERT_TRUE(contours.front()[11].IsEqual(OrthancStone::ScenePoint2D(4, 6)));
+    ASSERT_TRUE(contours.front()[12].IsEqual(OrthancStone::ScenePoint2D(4, 4)));
+    ASSERT_TRUE(contours.front()[13].IsEqual(OrthancStone::ScenePoint2D(1, 4)));
+    ASSERT_TRUE(contours.front()[14].IsEqual(OrthancStone::ScenePoint2D(1, 6)));
+    ASSERT_TRUE(contours.front()[15].IsEqual(OrthancStone::ScenePoint2D(4, 6)));
+    ASSERT_TRUE(contours.front()[16].IsEqual(OrthancStone::ScenePoint2D(4, 8)));
+  }
+  
+  {
+    std::list<OrthancStone::Extent2D>  rectangles;
+    rectangles.push_back(OrthancStone::Extent2D(1, 4, 4, 6));
+    rectangles.push_back(OrthancStone::Extent2D(4, 4, 7, 6));
+  
+    std::list< std::vector<OrthancStone::ScenePoint2D> > contours;
+    OrthancStone::UnionOfRectangles::Apply(contours, rectangles);
+
+    ASSERT_EQ(1u, contours.size());
+    ASSERT_EQ(5u, contours.front().size());
+    ASSERT_TRUE(contours.front()[0].IsEqual(OrthancStone::ScenePoint2D(1, 6)));
+    ASSERT_TRUE(contours.front()[1].IsEqual(OrthancStone::ScenePoint2D(7, 6)));
+    ASSERT_TRUE(contours.front()[2].IsEqual(OrthancStone::ScenePoint2D(7, 4)));
+    ASSERT_TRUE(contours.front()[3].IsEqual(OrthancStone::ScenePoint2D(1, 4)));
+    ASSERT_TRUE(contours.front()[4].IsEqual(OrthancStone::ScenePoint2D(1, 6)));
+  }
+  
+  {
+    std::list<OrthancStone::Extent2D>  rectangles;
+    rectangles.push_back(OrthancStone::Extent2D(1, 4, 4, 6));
+    rectangles.push_back(OrthancStone::Extent2D(1, 6, 4, 8));
+  
+    std::list< std::vector<OrthancStone::ScenePoint2D> > contours;
+    OrthancStone::UnionOfRectangles::Apply(contours, rectangles);
+
+    ASSERT_EQ(1u, contours.size());
+    ASSERT_EQ(5u, contours.front().size());
+    ASSERT_TRUE(contours.front()[0].IsEqual(OrthancStone::ScenePoint2D(1, 8)));
+    ASSERT_TRUE(contours.front()[1].IsEqual(OrthancStone::ScenePoint2D(4, 8)));
+    ASSERT_TRUE(contours.front()[2].IsEqual(OrthancStone::ScenePoint2D(4, 4)));
+    ASSERT_TRUE(contours.front()[3].IsEqual(OrthancStone::ScenePoint2D(1, 4)));
+    ASSERT_TRUE(contours.front()[4].IsEqual(OrthancStone::ScenePoint2D(1, 8)));
+  }
+  
+  {
+    std::list<OrthancStone::Extent2D>  rectangles;
+    rectangles.push_back(OrthancStone::Extent2D(1, 1, 2, 2));
+    rectangles.push_back(OrthancStone::Extent2D(4, 4, 7, 6));
+    rectangles.push_back(OrthancStone::Extent2D(4, 6, 7, 8));
+
+    std::list< std::vector<OrthancStone::ScenePoint2D> > contours;
+    OrthancStone::UnionOfRectangles::Apply(contours, rectangles);
+    
+    ASSERT_EQ(2u, contours.size());
+    
+    ASSERT_EQ(5u, contours.front().size());
+    ASSERT_TRUE(contours.front()[0].IsEqual(OrthancStone::ScenePoint2D(4, 8)));
+    ASSERT_TRUE(contours.front()[1].IsEqual(OrthancStone::ScenePoint2D(7, 8)));
+    ASSERT_TRUE(contours.front()[2].IsEqual(OrthancStone::ScenePoint2D(7, 4)));
+    ASSERT_TRUE(contours.front()[3].IsEqual(OrthancStone::ScenePoint2D(4, 4)));
+    ASSERT_TRUE(contours.front()[4].IsEqual(OrthancStone::ScenePoint2D(4, 8)));
+    
+    ASSERT_EQ(5u, contours.back().size());
+    ASSERT_TRUE(contours.back()[0].IsEqual(OrthancStone::ScenePoint2D(1, 2)));
+    ASSERT_TRUE(contours.back()[1].IsEqual(OrthancStone::ScenePoint2D(2, 2)));
+    ASSERT_TRUE(contours.back()[2].IsEqual(OrthancStone::ScenePoint2D(2, 1)));
+    ASSERT_TRUE(contours.back()[3].IsEqual(OrthancStone::ScenePoint2D(1, 1)));
+    ASSERT_TRUE(contours.back()[4].IsEqual(OrthancStone::ScenePoint2D(1, 2)));
+  }
+
+#if 0
+  {
+    std::list<OrthancStone::Extent2D>  rectangles;
+    rectangles.push_back(OrthancStone::Extent2D(1, 4, 4, 6));
+    rectangles.push_back(OrthancStone::Extent2D(6, 4, 9, 6));
+    rectangles.push_back(OrthancStone::Extent2D(4, 6, 7, 8));
+    rectangles.push_back(OrthancStone::Extent2D(4, 2, 7, 6));
+
+    std::list< std::vector<OrthancStone::ScenePoint2D> > contours;
+    OrthancStone::UnionOfRectangles::Apply(contours, rectangles);
+
+    SaveSvg(contours);
+    
+    ASSERT_EQ(1u, contours.size());
+    ASSERT_EQ(13u, contours.front().size());
+    ASSERT_TRUE(contours.front()[0].IsEqual(OrthancStone::ScenePoint2D(4, 8)));
+    ASSERT_TRUE(contours.front()[1].IsEqual(OrthancStone::ScenePoint2D(7, 8)));
+    ASSERT_TRUE(contours.front()[2].IsEqual(OrthancStone::ScenePoint2D(7, 6)));
+    ASSERT_TRUE(contours.front()[3].IsEqual(OrthancStone::ScenePoint2D(9, 6)));
+    ASSERT_TRUE(contours.front()[4].IsEqual(OrthancStone::ScenePoint2D(7, 6)));
+    ASSERT_TRUE(contours.front()[5].IsEqual(OrthancStone::ScenePoint2D(4, 4)));
+    ASSERT_TRUE(contours.front()[6].IsEqual(OrthancStone::ScenePoint2D(1, 4)));
+    ASSERT_TRUE(contours.front()[7].IsEqual(OrthancStone::ScenePoint2D()));
+    ASSERT_TRUE(contours.front()[8].IsEqual(OrthancStone::ScenePoint2D()));
+    ASSERT_TRUE(contours.front()[9].IsEqual(OrthancStone::ScenePoint2D()));
+    ASSERT_TRUE(contours.front()[10].IsEqual(OrthancStone::ScenePoint2D()));
+    ASSERT_TRUE(contours.front()[11].IsEqual(OrthancStone::ScenePoint2D()));
+    ASSERT_TRUE(contours.front()[12].IsEqual(OrthancStone::ScenePoint2D()));
+  }
+#endif
 }

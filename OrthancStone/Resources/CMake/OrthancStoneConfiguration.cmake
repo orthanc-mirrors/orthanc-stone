@@ -445,6 +445,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/TextRenderer.h
   ${ORTHANC_STONE_ROOT}/Toolbox/UndoRedoStack.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/UndoRedoStack.h
+  ${ORTHANC_STONE_ROOT}/Toolbox/UnionOfRectangles.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/UnionOfRectangles.h
   
   ${ORTHANC_STONE_ROOT}/Viewport/IViewport.h
   ${ORTHANC_STONE_ROOT}/Viewport/DefaultViewportInteractor.cpp

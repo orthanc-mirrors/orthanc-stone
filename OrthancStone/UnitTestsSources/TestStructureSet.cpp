@@ -126,7 +126,7 @@ TEST(StructureSet, ReadFromJsonThatsAll)
   */
 
   // (0x3006, 0x0080) seq. size
-  EXPECT_EQ(7, structures.size());
+  EXPECT_EQ(7u, structures.size());
 
   // (0x3006, 0x0080)[i]/(0x3006, 0x00a4)
   for (size_t i = 0; i < 5; ++i)
@@ -286,7 +286,7 @@ static void CreateBasicStructure(DicomStructure2& structure)
 {
   // see https://www.dropbox.com/s/1o1vg53hsbvx4cc/test-rtstruct-polygons.jpg?dl=0
   EXPECT_EQ(pointsCoord1Count, pointsCoord2Count);
-  EXPECT_EQ(11, pointsCoord2Count);
+  EXPECT_EQ(11u, pointsCoord2Count);
 
   for (size_t slice = 0; slice < 3; ++slice)
   {
@@ -383,7 +383,7 @@ TEST(StructureSet, CutAxialInsideFar)
   bool ok = structure.Project(segments, cuttingPlane);
   EXPECT_TRUE(ok);
 
-  EXPECT_EQ(11, segments.size());
+  EXPECT_EQ(11u, segments.size());
   for (size_t i = 0; i < segments.size(); ++i)
   {
     EXPECT_LT(i, pointsCoord1Count);
@@ -471,7 +471,7 @@ TEST(StructureSet, CutCoronalInsideClose)
 
   // compute intersection
   ASSERT_TRUE(structure.Project(segments, cuttingPlane));
-  EXPECT_EQ(24, segments.size());
+  EXPECT_EQ(24u, segments.size());
 
   size_t numberOfVeryShortSegments = 0;
   for (size_t iSegment = 0; iSegment < segments.size(); ++iSegment)
@@ -485,7 +485,7 @@ TEST(StructureSet, CutCoronalInsideClose)
       }
     }
   }
-  EXPECT_EQ(8, numberOfVeryShortSegments);
+  EXPECT_EQ(8u, numberOfVeryShortSegments);
 }
 
 #endif 
@@ -1179,7 +1179,7 @@ TEST(StructureSet, ReadFromJsonPart2)
   structureSet.FillStructuresFromDataset(dicom);
   structureSet.ComputeDependentProperties();
 
-  const std::vector<DicomStructure2>& structures = structureSet.structures_;
+  //const std::vector<DicomStructure2>& structures = structureSet.structures_;
 }
 
 #endif 

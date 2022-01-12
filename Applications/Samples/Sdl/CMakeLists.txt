@@ -66,6 +66,7 @@ DownloadPackage(
 EmbedResources(
   COLORMAP_HOT ${CMAKE_SOURCE_DIR}/../../Resources/Colormaps/hot.lut
   UBUNTU_FONT  ${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83/Ubuntu-R.ttf
+  RT_STRUCT_00 ${CMAKE_SOURCE_DIR}/../../../OrthancStone/UnitTestsSources/TestStructureSet.json
   )
 
 SortFilesInSourceGroups()

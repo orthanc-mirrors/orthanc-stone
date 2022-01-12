@@ -77,6 +77,11 @@ include(${ORTHANC_STONE_ROOT}/../Resources/Orthanc/CMake/GoogleTestConfiguration
 
 
 include(${CMAKE_SOURCE_DIR}/../../../../OrthancStone/UnitTestsSources/UnitTestsSources.cmake)
+
+EmbedResources(
+  RT_STRUCT_00 ${CMAKE_SOURCE_DIR}/../../../../OrthancStone/UnitTestsSources/TestStructureSet.json
+  )
+
 add_executable(UnitTests
   # Testing Stone
   ${UNIT_TESTS_SOURCES}

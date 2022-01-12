@@ -277,12 +277,20 @@ namespace OrthancStone
                                                   unsigned int width,
                                                   unsigned int height)
   {
-    AffineTransform2D t;
-    t.matrix_(0, 0) = (flipX ? -1 : 1);
-    t.matrix_(0, 2) = (flipX ? width : 0);
-    t.matrix_(1, 1) = (flipY ? -1 : 1);
-    t.matrix_(1, 2) = (flipY ? height : 0);
+    if (width == 0 ||
+        height == 0)
+    {
+      return AffineTransform2D();  // Identity
+    }
+    else
+    {
+      AffineTransform2D t;
+      t.matrix_(0, 0) = (flipX ? -1 : 1);
+      t.matrix_(0, 2) = (flipX ? width : 0);
+      t.matrix_(1, 1) = (flipY ? -1 : 1);
+      t.matrix_(1, 2) = (flipY ? height : 0);
 
-    return t;
+      return t;
+    }
   }
 }

@@ -22,9 +22,103 @@
 
 #include "../Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h"
 
+#include "../../OrthancStone/Sources/Toolbox/AffineTransform2D.h"
+
 #include <EmbeddedResources.h>
 
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+#include <Images/NumpyWriter.h>
 #include <Logging.h>
+
+#include <boost/math/constants/constants.hpp>
+
+
+static Orthanc::PixelFormat Convert(OrthancPluginPixelFormat format)
+{
+  switch (format)
+  {
+    case OrthancPluginPixelFormat_RGB24:
+      return Orthanc::PixelFormat_RGB24;
+
+    case OrthancPluginPixelFormat_Grayscale8:
+      return Orthanc::PixelFormat_Grayscale8;
+
+    case OrthancPluginPixelFormat_Grayscale16:
+      return Orthanc::PixelFormat_Grayscale16;
+
+    case OrthancPluginPixelFormat_SignedGrayscale16:
+      return Orthanc::PixelFormat_SignedGrayscale16;
+
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+  }
+}
+
+
+static void RenderNumpyFrame(OrthancPluginRestOutput* output,
+                             const char* url,
+                             const OrthancPluginHttpRequest* request)
+{
+  // TODO: Parameters in GET
+  // TODO: Rescale slope/intercept
+  
+  OrthancPlugins::MemoryBuffer dicom;
+  dicom.GetDicomInstance(request->groups[0]);
+
+  unsigned int frame = boost::lexical_cast<unsigned int>(request->groups[1]);
+  
+  OrthancPlugins::OrthancImage image;
+  image.DecodeDicomImage(dicom.GetData(), dicom.GetSize(), frame);
+  
+  Orthanc::ImageAccessor source;
+  source.AssignReadOnly(Convert(image.GetPixelFormat()), image.GetWidth(), image.GetHeight(),
+                        image.GetPitch(), image.GetBuffer());
+
+  double angle = 0;
+  double scaling = 1;
+  double offsetX = 0;
+  double offsetY = 0;
+  bool flipX = false;
+  bool flipY = false;
+
+  OrthancStone::AffineTransform2D t;
+  t = OrthancStone::AffineTransform2D::Combine(
+    OrthancStone::AffineTransform2D::CreateOffset(static_cast<double>(image.GetWidth()) / 2.0 + offsetX,
+                                                  static_cast<double>(image.GetHeight()) / 2.0 + offsetY),
+    OrthancStone::AffineTransform2D::CreateScaling(scaling, scaling),
+    OrthancStone::AffineTransform2D::CreateRotation(angle / 180.0 * boost::math::constants::pi<double>()),
+    OrthancStone::AffineTransform2D::CreateOffset(-static_cast<double>(image.GetWidth()) / 2.0,
+                                                  -static_cast<double>(image.GetHeight()) / 2.0),
+    OrthancStone::AffineTransform2D::CreateFlip(flipX, flipY, image.GetWidth(), image.GetHeight()));
+  
+  std::unique_ptr<Orthanc::ImageAccessor> modified;
+  
+  if (source.GetFormat() == Orthanc::PixelFormat_RGB24)
+  {
+    LOG(WARNING) << "Bilinear interpolation for color images is not implemented yet";
+
+    modified.reset(new Orthanc::Image(source.GetFormat(), source.GetWidth(), source.GetHeight(), false));
+    t.Apply(*modified, source, OrthancStone::ImageInterpolation_Nearest, true);
+  }
+  else
+  {
+    Orthanc::Image converted(Orthanc::PixelFormat_Float32, image.GetWidth(), image.GetHeight(), false);
+    Orthanc::ImageProcessing::Convert(converted, source);
+
+    modified.reset(new Orthanc::Image(converted.GetFormat(), converted.GetWidth(), converted.GetHeight(), false));
+    t.Apply(*modified, converted, OrthancStone::ImageInterpolation_Bilinear, true);
+  }
+
+  assert(modified.get() != NULL);
+  
+  std::string answer;
+  Orthanc::NumpyWriter writer;
+  Orthanc::IImageWriter::WriteToMemory(writer, answer, *modified);
+
+  OrthancPluginAnswerBuffer(OrthancPlugins::GetGlobalContext(), output,
+                            answer.c_str(), answer.size(), "text/plain");
+}
 
 
 extern "C"
@@ -54,6 +148,7 @@ extern "C"
 
     try
     {
+      OrthancPlugins::RegisterRestCallback<RenderNumpyFrame>("/stone/instances/([^/]+)/frames/([0-9]+)/numpy", true);
     }
     catch (...)
     {

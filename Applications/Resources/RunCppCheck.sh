@@ -77,6 +77,7 @@ ${CPPCHECK} --enable=all --quiet --std=c++11 \
             ../../Applications/Samples \
             ../../Applications/StoneWebViewer \
             ../../OrthancStone/Sources \
+            ../../RenderingPlugin/Sources \
             \
             -i ../../Applications/Samples/RtViewerPlugin/i \
             -i ../../Applications/Samples/Sdl/i \

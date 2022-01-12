@@ -49,7 +49,7 @@ SET(ENABLE_PUGIXML ON)   # To test compilation of OsiriX annotations
 
 include(${CMAKE_SOURCE_DIR}/../../Platforms/Sdl/OrthancStoneSdlConfiguration.cmake)
 include(${CMAKE_SOURCE_DIR}/Utilities.cmake)
-include(${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/UnitTestsSources.cmake)
+include(${CMAKE_SOURCE_DIR}/../../../OrthancStone/UnitTestsSources/UnitTestsSources.cmake)
 
 if (NOT ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
   # This include must be after "OrthancStoneConfiguration.cmake" to
@@ -121,7 +121,7 @@ add_custom_command(
   TARGET UnitTests
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy
-    "${CMAKE_SOURCE_DIR}/../../../UnitTestsSources/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json" 
+    "${CMAKE_SOURCE_DIR}/../../../OrthancStone/UnitTestsSources/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json" 
     "$<TARGET_FILE_DIR:UnitTests>/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json"
 )
 

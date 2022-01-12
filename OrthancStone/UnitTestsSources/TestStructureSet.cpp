@@ -6,18 +6,20 @@
  * Copyright (C) 2021-2022 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Affero General Public License
+ * modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation, either version 3 of
  * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Affero General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program. If not, see
+ * <http://www.gnu.org/licenses/>.
  **/
+
 
 // working around a bug where the Visual C++ compiler would get 
 // stuck trying to compile this cpp file in release mode
@@ -29,11 +31,11 @@
 #  pragma warning(disable: 4748)
 #endif
 
-#include "../OrthancStone/Sources/Loaders/DicomStructureSetLoader.h"
-#include "../OrthancStone/Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
-#include "../OrthancStone/Sources/Toolbox/DicomStructureSet2.h"
-#include "../OrthancStone/Sources/Toolbox/DicomStructureSetUtils.h"
-#include "../OrthancStone/Sources/Toolbox/DisjointDataSet.h"
+#include "../Sources/Loaders/DicomStructureSetLoader.h"
+#include "../Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
+#include "../Sources/Toolbox/DicomStructureSet2.h"
+#include "../Sources/Toolbox/DicomStructureSetUtils.h"
+#include "../Sources/Toolbox/DisjointDataSet.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/make_shared.hpp>

@@ -20,7 +20,7 @@
  **/
 
 
-#include "../../Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h"
+#include "../../../RenderingPlugin/Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h"
 
 #include <EmbeddedResources.h>
 

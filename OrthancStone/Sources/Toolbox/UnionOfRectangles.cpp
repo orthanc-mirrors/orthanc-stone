@@ -97,7 +97,7 @@ namespace OrthancStone
     Operation  operation_;
   
   public:
-    Visitor(Operation operation) :
+    explicit Visitor(Operation operation) :
       operation_(operation)
     {
     }
@@ -481,7 +481,7 @@ namespace OrthancStone
     horizontalJunctions.reserve(2 * verticalEdges.size());
 
     for (std::list<Internals::OrientedIntegerLine2D>::const_iterator
-           it = verticalEdges.begin(); it != verticalEdges.end(); it++)
+           it = verticalEdges.begin(); it != verticalEdges.end(); ++it)
     {
       assert(it->GetX1() == it->GetX2());
       horizontalJunctions.push_back(HorizontalJunction(it->GetX1(), it->GetY1(), it->GetY2(), it->IsDownward()));
@@ -518,13 +518,13 @@ namespace OrthancStone
     allEdges.reserve(horizontalEdges.size() + verticalEdges.size());
     
     for (std::list<Internals::OrientedIntegerLine2D>::const_iterator
-           it = horizontalEdges.begin(); it != horizontalEdges.end(); it++)
+           it = horizontalEdges.begin(); it != horizontalEdges.end(); ++it)
     {
       allEdges.push_back(*it);
     }
     
     for (std::list<Internals::OrientedIntegerLine2D>::const_iterator
-           it = verticalEdges.begin(); it != verticalEdges.end(); it++)
+           it = verticalEdges.begin(); it != verticalEdges.end(); ++it)
     {
       allEdges.push_back(*it);
     }

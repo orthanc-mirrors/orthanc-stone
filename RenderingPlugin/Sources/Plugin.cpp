@@ -23,6 +23,7 @@
 #include "../Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h"
 
 #include "../../OrthancStone/Sources/Toolbox/AffineTransform2D.h"
+#include "../../OrthancStone/Sources/Toolbox/DicomInstanceParameters.h"
 
 #include <EmbeddedResources.h>
 
@@ -61,7 +62,20 @@ static void RenderNumpyFrame(OrthancPluginRestOutput* output,
                              const OrthancPluginHttpRequest* request)
 {
   // TODO: Parameters in GET
-  // TODO: Rescale slope/intercept
+
+  OrthancPlugins::MemoryBuffer tags;
+  if (!tags.RestApiGet("/instances/" + std::string(request->groups[0]) + "/tags", false))
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
+  }
+
+  Json::Value json;
+  tags.ToJson(json);
+
+  Orthanc::DicomMap m;
+  m.FromDicomAsJson(json);
+
+  OrthancStone::DicomInstanceParameters parameters(m);
   
   OrthancPlugins::MemoryBuffer dicom;
   dicom.GetDicomInstance(request->groups[0]);
@@ -103,11 +117,11 @@ static void RenderNumpyFrame(OrthancPluginRestOutput* output,
   }
   else
   {
-    Orthanc::Image converted(Orthanc::PixelFormat_Float32, image.GetWidth(), image.GetHeight(), false);
-    Orthanc::ImageProcessing::Convert(converted, source);
+    std::unique_ptr<Orthanc::ImageAccessor> converted(parameters.ConvertToFloat(source));
 
-    modified.reset(new Orthanc::Image(converted.GetFormat(), converted.GetWidth(), converted.GetHeight(), false));
-    t.Apply(*modified, converted, OrthancStone::ImageInterpolation_Bilinear, true);
+    assert(converted.get() != NULL);
+    modified.reset(new Orthanc::Image(converted->GetFormat(), converted->GetWidth(), converted->GetHeight(), false));
+    t.Apply(*modified, *converted, OrthancStone::ImageInterpolation_Bilinear, true);
   }
 
   assert(modified.get() != NULL);

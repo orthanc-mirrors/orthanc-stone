@@ -5,18 +5,17 @@
 # Copyright (C) 2021-2022 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
 #
 # This program is free software: you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public License
+# modify it under the terms of the GNU Affero General Public License
 # as published by the Free Software Foundation, either version 3 of
 # the License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# Lesser General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Affero General Public License for more details.
 #
-# You should have received a copy of the GNU Lesser General Public
-# License along with this program. If not, see
-# <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 cmake_minimum_required(VERSION 2.8.3)
@@ -26,7 +25,7 @@ project(OrthancStone)
 
 set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "mainline")
 set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "hg")
-set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/" CACHE PATH "Where to put the WebAssembly binaries")
+set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../../wasm-binaries/" CACHE PATH "Where to put the WebAssembly binaries")
 
 
 # Configuration of the Emscripten compiler for WebAssembly target
@@ -51,7 +50,7 @@ add_definitions(
 # ---------------------------------------------------------------
 set(ALLOW_DOWNLOADS ON)
 
-include(${CMAKE_SOURCE_DIR}/../../Applications/Platforms/WebAssembly/OrthancStoneWebAssemblyParameters.cmake)
+include(${CMAKE_SOURCE_DIR}/../OrthancStoneWebAssemblyParameters.cmake)
 
 SET(ENABLE_DCMTK ON)  # Necessary for the tests of the Orthanc framework
 SET(ENABLE_PUGIXML ON)  # Necessary for the tests of the Orthanc framework
@@ -62,7 +61,7 @@ SET(ORTHANC_SANDBOXED ON)
 
 # this will set up the build system for Stone of Orthanc and will
 # populate the ORTHANC_STONE_SOURCES CMake variable
-include(${CMAKE_SOURCE_DIR}/../../Applications/Platforms/WebAssembly/OrthancStoneWebAssemblyConfiguration.cmake)
+include(${CMAKE_SOURCE_DIR}/../OrthancStoneWebAssemblyConfiguration.cmake)
 
 
 ################################################################################
@@ -77,7 +76,7 @@ include(${ORTHANC_STONE_ROOT}/../Resources/Orthanc/CMake/DownloadPackage.cmake)
 include(${ORTHANC_STONE_ROOT}/../Resources/Orthanc/CMake/GoogleTestConfiguration.cmake)
 
 
-include(${CMAKE_SOURCE_DIR}/../UnitTestsSources.cmake)
+include(${CMAKE_SOURCE_DIR}/../../../../OrthancStone/UnitTestsSources/UnitTestsSources.cmake)
 add_executable(UnitTests
   # Testing Stone
   ${UNIT_TESTS_SOURCES}

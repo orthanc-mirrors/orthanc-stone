@@ -33,3 +33,11 @@ set(UNIT_TESTS_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/UnitTestsMain.cpp
   ${CMAKE_CURRENT_LIST_DIR}/VolumeRenderingTests.cpp
   )
+
+EmbedResources(
+  RT_STRUCT_00 ${CMAKE_CURRENT_LIST_DIR}/TestStructureSet.json
+  )
+
+add_definitions(
+  -DBGO_ENABLE_DICOMSTRUCTURESETLOADER2=1
+  )

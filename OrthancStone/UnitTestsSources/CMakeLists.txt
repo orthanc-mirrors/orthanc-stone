@@ -20,6 +20,7 @@
 
 
 cmake_minimum_required(VERSION 2.8.10)
+cmake_policy(SET CMP0058 NEW)
 
 project(UnitTests)
 
@@ -53,6 +54,14 @@ add_executable(UnitTests
   ${GOOGLE_TEST_SOURCES}
   ${ORTHANC_STONE_SOURCES}
   )
+
+add_custom_command(
+  TARGET UnitTests
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy
+    "${CMAKE_SOURCE_DIR}/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json" 
+    "$<TARGET_FILE_DIR:UnitTests>/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json"
+)
 
 
 #####################################################################

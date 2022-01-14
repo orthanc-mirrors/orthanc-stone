@@ -700,7 +700,7 @@ namespace OrthancStone
   }
 
 
-  void DicomStructureSet::GetReferencedInstances(std::set<std::string>& instances)
+  void DicomStructureSet::GetReferencedInstances(std::set<std::string>& instances) const
   {
     for (Structures::const_iterator structure = structures_.begin();
          structure != structures_.end(); ++structure)
@@ -1086,5 +1086,27 @@ namespace OrthancStone
       }
     }
 #endif
+  }
+
+
+  void DicomStructureSet::GetStructurePoints(std::list< std::vector<Vector> >& target,
+                                             size_t structureIndex,
+                                             const std::string& sopInstanceUid) const
+  {
+    target.clear();
+    
+    const Structure& structure = GetStructure(structureIndex);
+
+    // TODO - Could be optimized by adding a multimap on "Structure", mapping
+    // from SOP Instance UID to polygons
+    
+    for (Polygons::const_iterator it = structure.polygons_.begin();
+         it != structure.polygons_.end(); ++it)
+    {
+      if (it->GetSopInstanceUid() == sopInstanceUid)
+      {
+        target.push_back(it->GetPoints());
+      }
+    }
   }
 }

@@ -20,10 +20,12 @@
  **/
 
 
+#include "OrthancPluginConnection.h"
 #include "../Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h"
 
 #include "../../OrthancStone/Sources/Toolbox/AffineTransform2D.h"
 #include "../../OrthancStone/Sources/Toolbox/DicomInstanceParameters.h"
+#include "../../OrthancStone/Sources/Toolbox/DicomStructureSet.h"
 
 #include <EmbeddedResources.h>
 
@@ -32,8 +34,97 @@
 #include <Images/NumpyWriter.h>
 #include <Logging.h>
 #include <SerializationToolbox.h>
+#include <Toolbox.h>
 
 #include <boost/math/constants/constants.hpp>
+
+
+class DicomStructureCache : public boost::noncopyable
+{
+private:
+  boost::mutex   mutex_;
+  std::string    instanceId_;
+  std::unique_ptr<OrthancStone::DicomStructureSet> rtstruct_;
+
+  DicomStructureCache()  // Singleton design pattern
+  {
+  }
+  
+public:
+  void Invalidate(const std::string& instanceId)
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+
+    if (instanceId_ == instanceId)
+    {
+      rtstruct_.reset(NULL);
+    }
+  }
+
+  static DicomStructureCache& GetSingleton()
+  {
+    static DicomStructureCache instance;
+    return instance;
+  }
+
+  class Accessor : public boost::noncopyable
+  {
+  private:
+    boost::mutex::scoped_lock               lock_;
+    std::string                             instanceId_;
+    const OrthancStone::DicomStructureSet*  rtstruct_;
+
+  public:
+    Accessor(DicomStructureCache& that,
+             const std::string& instanceId) :
+      lock_(that.mutex_),
+      instanceId_(instanceId),
+      rtstruct_(NULL)
+    {
+      if (that.instanceId_ == instanceId &&
+          that.rtstruct_.get() != NULL)
+      {
+        rtstruct_ = that.rtstruct_.get();
+      }
+      else
+      {
+        try
+        {
+          OrthancStone::OrthancPluginConnection connection;
+          OrthancStone::FullOrthancDataset dataset(connection, "/instances/" + instanceId + "/tags?ignore-length=3006-0050");
+          that.rtstruct_.reset(new OrthancStone::DicomStructureSet(dataset));
+          that.instanceId_ = instanceId;
+          rtstruct_ = that.rtstruct_.get();
+        }
+        catch (Orthanc::OrthancException&)
+        {
+        }
+      }
+    }
+
+    const std::string& GetInstanceId() const
+    {
+      return instanceId_;
+    }
+
+    bool IsValid() const
+    {
+      return rtstruct_ != NULL;
+    }
+
+    const OrthancStone::DicomStructureSet& GetRtStruct() const
+    {
+      if (IsValid())
+      {
+        return *rtstruct_;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+    }
+  };
+};
 
 
 static Orthanc::PixelFormat Convert(OrthancPluginPixelFormat format)
@@ -206,7 +297,247 @@ static void RenderNumpyFrame(OrthancPluginRestOutput* output,
   Orthanc::IImageWriter::WriteToMemory(writer, answer, *modified);
   
   OrthancPluginAnswerBuffer(OrthancPlugins::GetGlobalContext(), output,
-                            answer.c_str(), answer.size(), "text/plain");
+                            answer.c_str(), answer.size(), "application/octet-stream");
+}
+
+
+static bool IsRtStruct(const std::string& instanceId)
+{
+  static const char* SOP_CLASS_UID = "0008,0016";
+  static const char* RT_STRUCT_IOD = "1.2.840.10008.5.1.4.1.1.481.3";
+      
+  std::string s;
+  if (OrthancPlugins::RestApiGetString(s, "/instances/" + instanceId + "/content/" + SOP_CLASS_UID, false) &&
+      !s.empty())
+  {
+    if (s[s.size() - 1] == '\0')  // Deal with DICOM padding
+    {
+      s.resize(s.size() - 1);
+    }
+    
+    return s == RT_STRUCT_IOD;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+
+static void ListRtStruct(OrthancPluginRestOutput* output,
+                         const char* url,
+                         const OrthancPluginHttpRequest* request)
+{
+  // This is a quick version of "/tools/find" on "SOPClassUID" (the
+  // latter would load all the DICOM files from disk)
+
+  static const char* INSTANCES = "Instances";
+  
+  Json::Value series;
+  OrthancPlugins::RestApiGet(series, "/series?expand", false);
+
+  if (series.type() != Json::arrayValue)
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+  }
+
+  Json::Value answer = Json::arrayValue;
+
+  for (Json::Value::ArrayIndex i = 0; i < series.size(); i++)
+  {
+    if (series[i].type() != Json::objectValue ||
+        !series[i].isMember(INSTANCES) ||
+        series[i][INSTANCES].type() != Json::arrayValue)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+    
+    const Json::Value& instances = series[i][INSTANCES];
+
+    for (Json::Value::ArrayIndex j = 0; j < instances.size(); j++)
+    {
+      if (instances[j].type() != Json::stringValue)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+    }
+    
+    if (instances.size() > 0 &&
+        IsRtStruct(instances[0].asString()))
+    {
+      for (Json::Value::ArrayIndex j = 0; j < instances.size(); j++)
+      {
+        answer.append(instances[j].asString());
+      }
+    }
+  }
+
+  std::string s = answer.toStyledString();
+  OrthancPluginAnswerBuffer(OrthancPlugins::GetGlobalContext(), output, s.c_str(), s.size(), "application/json");
+}
+
+
+static void GetRtStruct(OrthancPluginRestOutput* output,
+                        const char* url,
+                        const OrthancPluginHttpRequest* request)
+{
+  static const char* STRUCTURES = "Structures";
+  static const char* INSTANCES = "Instances";
+  
+  DicomStructureCache::Accessor accessor(DicomStructureCache::GetSingleton(), request->groups[0]);
+
+  if (!accessor.IsValid())
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
+  }
+
+  Json::Value answer;
+  answer[STRUCTURES] = Json::arrayValue;
+
+  for (size_t i = 0; i < accessor.GetRtStruct().GetStructuresCount(); i++)
+  {
+    Json::Value color = Json::arrayValue;
+    color.append(accessor.GetRtStruct().GetStructureColor(i).GetRed());
+    color.append(accessor.GetRtStruct().GetStructureColor(i).GetGreen());
+    color.append(accessor.GetRtStruct().GetStructureColor(i).GetBlue());
+    
+    Json::Value structure;
+    structure["Name"] = accessor.GetRtStruct().GetStructureName(i);
+    structure["Interpretation"] = accessor.GetRtStruct().GetStructureInterpretation(i);
+    structure["Color"] = color;
+    
+    answer[STRUCTURES].append(structure);
+  }
+
+  std::set<std::string> sopInstanceUids;
+  accessor.GetRtStruct().GetReferencedInstances(sopInstanceUids);
+
+  answer[INSTANCES] = Json::arrayValue;
+  for (std::set<std::string>::const_iterator it = sopInstanceUids.begin(); it != sopInstanceUids.end(); ++it)
+  {
+    OrthancPlugins::OrthancString s;
+    s.Assign(OrthancPluginLookupInstance(OrthancPlugins::GetGlobalContext(), it->c_str()));
+
+    std::string t;
+    s.ToString(t);
+
+    answer[INSTANCES].append(t);
+  }  
+
+  std::string s = answer.toStyledString();
+  OrthancPluginAnswerBuffer(OrthancPlugins::GetGlobalContext(), output, s.c_str(), s.size(), "application/json");
+}
+
+
+static void RenderRtStruct(OrthancPluginRestOutput* output,
+                           const char* url,
+                           const OrthancPluginHttpRequest* request)
+{
+  static const char* MAIN_DICOM_TAGS = "MainDicomTags";
+  
+  DicomStructureCache::Accessor accessor(DicomStructureCache::GetSingleton(), request->groups[0]);
+
+  if (!accessor.IsValid())
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
+  }
+
+  std::string structureName;
+  std::string instanceId;
+
+  for (uint32_t i = 0; i < request->getCount; i++)
+  {
+    std::string key(request->getKeys[i]);
+    std::string value(request->getValues[i]);
+
+    if (key == "structure")
+    {
+      structureName = value;
+    }
+    else if (key == "instance")
+    {
+      instanceId = value;
+    }
+    else
+    {
+      LOG(WARNING) << "Unsupported option: " << key;
+    }
+  }
+
+  if (structureName.empty())
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
+                                    "Missing option \"structure\" to provide the structure name");
+  }
+
+  if (instanceId.empty())
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
+                                    "Missing option \"instance\" to provide the Orthanc identifier of the instance of interest");
+  }
+
+  size_t structureIndex;
+  bool found = false;
+  for (size_t i = 0; i < accessor.GetRtStruct().GetStructuresCount(); i++)
+  {
+    if (accessor.GetRtStruct().GetStructureName(i) == structureName)
+    {
+      structureIndex = i;
+      found = true;
+      break;
+    }
+  }
+
+  if (!found)
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem,
+                                    "Unknown structure name: " + structureName);
+  }
+
+  Json::Value instance;
+  if (!OrthancPlugins::RestApiGet(instance, "/instances/" + instanceId, false))
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem,
+                                    "Unknown instance with Orthanc ID: " + instanceId);
+  }
+
+  if (instance.type() != Json::objectValue ||
+      !instance.isMember(MAIN_DICOM_TAGS) ||
+      instance[MAIN_DICOM_TAGS].type() != Json::objectValue)
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+  }
+
+  std::string sopInstanceUid = Orthanc::SerializationToolbox::ReadString(instance[MAIN_DICOM_TAGS], "SOPInstanceUID");
+  
+
+  std::list< std::vector<OrthancStone::Vector> > p;
+  accessor.GetRtStruct().GetStructurePoints(p, structureIndex, sopInstanceUid);
+
+  std::string s = "hello";
+  OrthancPluginAnswerBuffer(OrthancPlugins::GetGlobalContext(), output, s.c_str(), s.size(), "application/json");
+}
+
+
+OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
+                                        OrthancPluginResourceType resourceType,
+                                        const char* resourceId)
+{
+  switch (changeType)
+  {
+    case OrthancPluginChangeType_Deleted:
+      if (resourceType == OrthancPluginResourceType_Instance)
+      {
+        DicomStructureCache::GetSingleton().Invalidate(resourceId);
+      }
+      
+      break;
+
+    default:
+      break;
+  }
+
+  return OrthancPluginErrorCode_Success;
 }
 
 
@@ -238,6 +569,10 @@ extern "C"
     try
     {
       OrthancPlugins::RegisterRestCallback<RenderNumpyFrame>("/stone/instances/([^/]+)/frames/([0-9]+)/numpy", true);
+      OrthancPlugins::RegisterRestCallback<ListRtStruct>("/stone/rt-struct", true);
+      OrthancPlugins::RegisterRestCallback<GetRtStruct>("/stone/rt-struct/([^/]+)/info", true);
+      OrthancPlugins::RegisterRestCallback<RenderRtStruct>("/stone/rt-struct/([^/]+)/numpy", true);
+      OrthancPluginRegisterOnChangeCallback(context, OnChangeCallback);
     }
     catch (...)
     {

@@ -35,6 +35,7 @@
 #include "OrthancDatasets/FullOrthancDataset.h"
 #include "../Scene2D/Color.h"
 #include "../Scene2D/PolylineSceneLayer.h"
+#include "../Scene2D/ScenePoint2D.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1
 #  include <DicomParsing/ParsedDicomFile.h>
@@ -196,7 +197,7 @@ namespace OrthancStone
                            uint8_t& blue,
                            size_t index) const;
 
-    void GetReferencedInstances(std::set<std::string>& instances);
+    void GetReferencedInstances(std::set<std::string>& instances) const;
 
     void AddReferencedSlice(const std::string& sopInstanceUid,
                             const std::string& seriesInstanceUid,
@@ -236,5 +237,9 @@ namespace OrthancStone
     {
       ProjectOntoLayer(layer, plane, structureIndex, GetStructureColor(structureIndex));
     }
+
+    void GetStructurePoints(std::list< std::vector<Vector> >& target,
+                            size_t structureIndex,
+                            const std::string& sopInstanceUid) const;
   };
 }

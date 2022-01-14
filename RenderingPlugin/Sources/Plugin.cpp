@@ -514,6 +514,19 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
   std::list< std::vector<OrthancStone::Vector> > p;
   accessor.GetRtStruct().GetStructurePoints(p, structureIndex, sopInstanceUid);
 
+  // curl 'http://localhost:8042/stone/rt-struct/54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9/numpy?structure=BODY&instance=0dd13003-9b1b2712-0fb44325-48c28c99-430d111b'
+  unsigned int count = 0;
+  for (std::list< std::vector<OrthancStone::Vector> >::const_iterator
+         it = p.begin(); it != p.end(); ++it)
+  {
+    printf("%d: ", count++);
+    for (size_t i = 0; i < it->size(); i++)
+    {
+      printf("(%.1f,%.1f,%.1f) ", (*it)[i][0], (*it)[i][1], (*it)[i][2]);
+    }
+    printf("\n");
+  }
+
   std::string s = "hello";
   OrthancPluginAnswerBuffer(OrthancPlugins::GetGlobalContext(), output, s.c_str(), s.size(), "application/json");
 }

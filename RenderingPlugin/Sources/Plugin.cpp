@@ -31,6 +31,7 @@
 #include <Images/ImageProcessing.h>
 #include <Images/NumpyWriter.h>
 #include <Logging.h>
+#include <SerializationToolbox.h>
 
 #include <boost/math/constants/constants.hpp>
 
@@ -57,11 +58,91 @@ static Orthanc::PixelFormat Convert(OrthancPluginPixelFormat format)
 }
 
 
+static bool ParseBoolean(const std::string& key,
+                         const std::string& value)
+{
+  bool result;
+  
+  if (Orthanc::SerializationToolbox::ParseBoolean(result, value))
+  {
+    return result;
+  }
+  else
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
+                                    "Bad value for " + key + ": " + value);
+  }
+}
+
+
+static double ParseDouble(const std::string& key,
+                         const std::string& value)
+{
+  double result;
+  
+  if (Orthanc::SerializationToolbox::ParseDouble(result, value))
+  {
+    return result;
+  }
+  else
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
+                                    "Bad value for " + key + ": " + value);
+  }
+}
+
+
 static void RenderNumpyFrame(OrthancPluginRestOutput* output,
                              const char* url,
                              const OrthancPluginHttpRequest* request)
 {
-  // TODO: Parameters in GET
+  double angleRadians = 0;
+  double scaling = 1;
+  double offsetX = 0;
+  double offsetY = 0;
+  bool flipX = false;
+  bool flipY = false;
+  bool compress = false;
+
+  for (uint32_t i = 0; i < request->getCount; i++)
+  {
+    std::string key(request->getKeys[i]);
+    std::string value(request->getValues[i]);
+
+    if (key == "angle")
+    {
+      double angle = ParseDouble(key, value);
+      angleRadians = angle / 180.0 * boost::math::constants::pi<double>();
+    }
+    else if (key == "scaling")
+    {
+      scaling = ParseDouble(key, value);
+    }
+    else if (key == "offset-x")
+    {
+      offsetX = ParseDouble(key, value);
+    }
+    else if (key == "offset-y")
+    {
+      offsetY = ParseDouble(key, value);
+    }
+    else if (key == "flip-x")
+    {
+      flipX = ParseBoolean(key, value);
+    }
+    else if (key == "flip-y")
+    {
+      flipY = ParseBoolean(key, value);
+    }
+    else if (key == "compress")
+    {
+      compress = ParseBoolean(key, value);
+    }
+    else
+    {
+      LOG(WARNING) << "Unsupported option: " << key;
+    }
+  }
 
   OrthancPlugins::MemoryBuffer tags;
   if (!tags.RestApiGet("/instances/" + std::string(request->groups[0]) + "/tags", false))
@@ -89,19 +170,12 @@ static void RenderNumpyFrame(OrthancPluginRestOutput* output,
   source.AssignReadOnly(Convert(image.GetPixelFormat()), image.GetWidth(), image.GetHeight(),
                         image.GetPitch(), image.GetBuffer());
 
-  double angle = 0;
-  double scaling = 1;
-  double offsetX = 0;
-  double offsetY = 0;
-  bool flipX = false;
-  bool flipY = false;
-
   OrthancStone::AffineTransform2D t;
   t = OrthancStone::AffineTransform2D::Combine(
     OrthancStone::AffineTransform2D::CreateOffset(static_cast<double>(image.GetWidth()) / 2.0 + offsetX,
                                                   static_cast<double>(image.GetHeight()) / 2.0 + offsetY),
     OrthancStone::AffineTransform2D::CreateScaling(scaling, scaling),
-    OrthancStone::AffineTransform2D::CreateRotation(angle / 180.0 * boost::math::constants::pi<double>()),
+    OrthancStone::AffineTransform2D::CreateRotation(angleRadians),
     OrthancStone::AffineTransform2D::CreateOffset(-static_cast<double>(image.GetWidth()) / 2.0,
                                                   -static_cast<double>(image.GetHeight()) / 2.0),
     OrthancStone::AffineTransform2D::CreateFlip(flipX, flipY, image.GetWidth(), image.GetHeight()));
@@ -128,8 +202,9 @@ static void RenderNumpyFrame(OrthancPluginRestOutput* output,
   
   std::string answer;
   Orthanc::NumpyWriter writer;
+  writer.SetCompressed(compress);
   Orthanc::IImageWriter::WriteToMemory(writer, answer, *modified);
-
+  
   OrthancPluginAnswerBuffer(OrthancPlugins::GetGlobalContext(), output,
                             answer.c_str(), answer.size(), "text/plain");
 }

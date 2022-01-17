@@ -183,16 +183,258 @@ static double ParseDouble(const std::string& key,
 }
 
 
+static unsigned int ParseUnsignedInteger(const std::string& key,
+                                         const std::string& value)
+{
+  uint32_t result;
+  
+  if (Orthanc::SerializationToolbox::ParseUnsignedInteger32(result, value))
+  {
+    return result;
+  }
+  else
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
+                                    "Bad value for " + key + ": " + value);
+  }
+}
+
+
+
+class DataAugmentationParameters : public boost::noncopyable
+{
+private:
+  double       angleRadians_;
+  double       scaling_;
+  double       offsetX_;
+  double       offsetY_;
+  bool         flipX_;
+  bool         flipY_;
+  bool         hasResize_;
+  unsigned int targetWidth_;
+  unsigned int targetHeight_;
+
+  void ApplyInternal(Orthanc::ImageAccessor& target,
+                     const Orthanc::ImageAccessor& source)
+  {
+    if (source.GetWidth() == 0 ||
+        source.GetHeight() == 0)
+    {
+      Orthanc::ImageProcessing::Set(target, 0);  // Clear the image
+    }
+    else if (target.GetWidth() == 0 ||
+             target.GetHeight() == 0)
+    {
+      // Nothing to do
+    }
+    else
+    {
+      OrthancStone::AffineTransform2D transform = ComputeTransform(source.GetWidth(), source.GetHeight());
+      
+      OrthancStone::ImageInterpolation interpolation;
+      
+      if (source.GetFormat() == Orthanc::PixelFormat_RGB24)
+      {
+        LOG(WARNING) << "Bilinear interpolation for color images is not implemented yet";
+        interpolation = OrthancStone::ImageInterpolation_Nearest;
+      }
+      else
+      {
+        interpolation = OrthancStone::ImageInterpolation_Bilinear;
+      }
+
+      transform.Apply(target, source, interpolation, true /* clear */);
+    }
+  }    
+
+
+  Orthanc::ImageAccessor* ApplyUnchecked(const Orthanc::ImageAccessor& source)
+  {
+    std::unique_ptr<Orthanc::ImageAccessor> target;
+    
+    if (hasResize_)
+    {
+      target.reset(new Orthanc::Image(source.GetFormat(), targetWidth_, targetHeight_, false));
+    }
+    else
+    {
+      target.reset(new Orthanc::Image(source.GetFormat(), source.GetWidth(), source.GetHeight(), false));
+    }
+    
+    ApplyInternal(*target, source);
+    return target.release();
+  }
+
+
+public:
+  DataAugmentationParameters()
+  {
+    Clear();
+  }
+  
+
+  void Clear()
+  {
+    angleRadians_ = 0;
+    scaling_ = 1;
+    offsetX_ = 0;
+    offsetY_ = 0;
+    flipX_ = false;
+    flipY_ = false;
+    hasResize_ = false;
+    targetWidth_ = 0;
+    targetHeight_ = 0;
+  }
+
+  
+  OrthancStone::AffineTransform2D ComputeTransform(unsigned int sourceWidth,
+                                                   unsigned int sourceHeight) const
+  {
+    unsigned int w = (hasResize_ ? targetWidth_ : sourceWidth);
+    unsigned int h = (hasResize_ ? targetHeight_ : sourceHeight);
+
+    if (w == 0 ||
+        h == 0 ||
+        sourceWidth == 0 ||
+        sourceHeight == 0)
+    {
+      // Division by zero
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    
+    double r = std::min(static_cast<double>(w) / static_cast<double>(sourceWidth),
+                        static_cast<double>(h) / static_cast<double>(sourceHeight));
+
+    OrthancStone::AffineTransform2D resize = OrthancStone::AffineTransform2D::Combine(
+      OrthancStone::AffineTransform2D::CreateOffset(static_cast<double>(w) / 2.0,
+                                                    static_cast<double>(h) / 2.0),
+      OrthancStone::AffineTransform2D::CreateScaling(r, r));
+
+    OrthancStone::AffineTransform2D dataAugmentation = OrthancStone::AffineTransform2D::Combine(
+      OrthancStone::AffineTransform2D::CreateScaling(scaling_, scaling_),
+      OrthancStone::AffineTransform2D::CreateOffset(offsetX_, offsetY_),
+      OrthancStone::AffineTransform2D::CreateRotation(angleRadians_),
+      OrthancStone::AffineTransform2D::CreateOffset(-static_cast<double>(sourceWidth) / 2.0,
+                                                    -static_cast<double>(sourceHeight) / 2.0),
+      OrthancStone::AffineTransform2D::CreateFlip(flipX_, flipY_, sourceWidth, sourceHeight));
+
+    return OrthancStone::AffineTransform2D::Combine(resize, dataAugmentation);
+  }
+  
+  
+  bool ParseParameter(const std::string& key,
+                      const std::string& value)
+  {
+    if (key == "angle")
+    {
+      double angle = ParseDouble(key, value);
+      angleRadians_ = angle / 180.0 * boost::math::constants::pi<double>();
+      return true;
+    }
+    else if (key == "scaling")
+    {
+      scaling_ = ParseDouble(key, value);
+      return true;
+    }
+    else if (key == "offset-x")
+    {
+      offsetX_ = ParseDouble(key, value);
+      return true;
+    }
+    else if (key == "offset-y")
+    {
+      offsetY_ = ParseDouble(key, value);
+      return true;
+    }
+    else if (key == "flip-x")
+    {
+      flipX_ = ParseBoolean(key, value);
+      return true;
+    }
+    else if (key == "flip-y")
+    {
+      flipY_ = ParseBoolean(key, value);
+      return true;
+    }
+    else if (key == "resize")
+    {
+      std::vector<std::string> tokens;
+      Orthanc::Toolbox::TokenizeString(tokens, value, ',');
+      if (tokens.size() != 2)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
+                                        "Must provide two integers separated by commas in " + key + ": " + value);
+      }
+      else
+      {
+        targetWidth_ = ParseUnsignedInteger(key, tokens[0]);
+        targetHeight_ = ParseUnsignedInteger(key, tokens[1]);
+        hasResize_ = true;
+        return true;
+      }
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+  
+  Orthanc::ImageAccessor* Apply(const Orthanc::ImageAccessor& source)
+  {
+    if (source.GetFormat() != Orthanc::PixelFormat_RGB24 &&
+        source.GetFormat() != Orthanc::PixelFormat_Float32)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+    }
+    else
+    {
+      return ApplyUnchecked(source);
+    }
+  }
+
+  
+  Orthanc::ImageAccessor* ApplyBinaryMask(const Orthanc::ImageAccessor& source)
+  {
+    if (source.GetFormat() != Orthanc::PixelFormat_Grayscale8)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat,
+                                      "A segmentation mask should be a grayscale image");
+    }
+    else
+    {
+      std::unique_ptr<Orthanc::ImageAccessor> target(ApplyUnchecked(source));
+
+      const unsigned int h = target->GetHeight();
+      const unsigned int w = target->GetWidth();
+      
+      for (unsigned int y = 0; y < h; y++)
+      {
+        uint8_t* p = reinterpret_cast<uint8_t*>(target->GetRow(y));
+        for (unsigned int x = 0; x < w; x++, p++)
+        {
+          if (*p < 128)
+          {
+            *p = 0;
+          }
+          else
+          {
+            *p = 255;
+          }
+        }
+      }
+
+      return target.release();
+    }
+  }
+};
+
+
 static void RenderNumpyFrame(OrthancPluginRestOutput* output,
                              const char* url,
                              const OrthancPluginHttpRequest* request)
 {
-  double angleRadians = 0;
-  double scaling = 1;
-  double offsetX = 0;
-  double offsetY = 0;
-  bool flipX = false;
-  bool flipY = false;
+  DataAugmentationParameters dataAugmentation;
   bool compress = false;
 
   for (uint32_t i = 0; i < request->getCount; i++)
@@ -200,41 +442,19 @@ static void RenderNumpyFrame(OrthancPluginRestOutput* output,
     std::string key(request->getKeys[i]);
     std::string value(request->getValues[i]);
 
-    if (key == "angle")
+    if (!dataAugmentation.ParseParameter(key, value))
     {
-      double angle = ParseDouble(key, value);
-      angleRadians = angle / 180.0 * boost::math::constants::pi<double>();
-    }
-    else if (key == "scaling")
-    {
-      scaling = ParseDouble(key, value);
-    }
-    else if (key == "offset-x")
-    {
-      offsetX = ParseDouble(key, value);
-    }
-    else if (key == "offset-y")
-    {
-      offsetY = ParseDouble(key, value);
-    }
-    else if (key == "flip-x")
-    {
-      flipX = ParseBoolean(key, value);
-    }
-    else if (key == "flip-y")
-    {
-      flipY = ParseBoolean(key, value);
-    }
-    else if (key == "compress")
-    {
-      compress = ParseBoolean(key, value);
-    }
-    else
-    {
-      LOG(WARNING) << "Unsupported option: " << key;
+      if (key == "compress")
+      {
+        compress = ParseBoolean(key, value);
+      }
+      else
+      {
+        LOG(WARNING) << "Unsupported option for data augmentation: " << key;
+      }
     }
   }
-
+  
   OrthancPlugins::MemoryBuffer tags;
   if (!tags.RestApiGet("/instances/" + std::string(request->groups[0]) + "/tags", false))
   {
@@ -261,32 +481,22 @@ static void RenderNumpyFrame(OrthancPluginRestOutput* output,
   source.AssignReadOnly(Convert(image.GetPixelFormat()), image.GetWidth(), image.GetHeight(),
                         image.GetPitch(), image.GetBuffer());
 
-  OrthancStone::AffineTransform2D t;
-  t = OrthancStone::AffineTransform2D::Combine(
-    OrthancStone::AffineTransform2D::CreateOffset(static_cast<double>(image.GetWidth()) / 2.0 + offsetX,
-                                                  static_cast<double>(image.GetHeight()) / 2.0 + offsetY),
-    OrthancStone::AffineTransform2D::CreateScaling(scaling, scaling),
-    OrthancStone::AffineTransform2D::CreateRotation(angleRadians),
-    OrthancStone::AffineTransform2D::CreateOffset(-static_cast<double>(image.GetWidth()) / 2.0,
-                                                  -static_cast<double>(image.GetHeight()) / 2.0),
-    OrthancStone::AffineTransform2D::CreateFlip(flipX, flipY, image.GetWidth(), image.GetHeight()));
-  
   std::unique_ptr<Orthanc::ImageAccessor> modified;
-  
-  if (source.GetFormat() == Orthanc::PixelFormat_RGB24)
-  {
-    LOG(WARNING) << "Bilinear interpolation for color images is not implemented yet";
 
-    modified.reset(new Orthanc::Image(source.GetFormat(), source.GetWidth(), source.GetHeight(), false));
-    t.Apply(*modified, source, OrthancStone::ImageInterpolation_Nearest, true);
+  if (parameters.GetSopClassUid() == OrthancStone::SopClassUid_DicomSeg)
+  {
+    modified.reset(dataAugmentation.ApplyBinaryMask(source));
+  }
+  else if (source.GetFormat() == Orthanc::PixelFormat_RGB24)
+  {
+    modified.reset(dataAugmentation.Apply(source));
   }
   else
   {
     std::unique_ptr<Orthanc::ImageAccessor> converted(parameters.ConvertToFloat(source));
-
     assert(converted.get() != NULL);
-    modified.reset(new Orthanc::Image(converted->GetFormat(), converted->GetWidth(), converted->GetHeight(), false));
-    t.Apply(*modified, *converted, OrthancStone::ImageInterpolation_Bilinear, true);
+    
+    modified.reset(dataAugmentation.Apply(*converted));
   }
 
   assert(modified.get() != NULL);

@@ -60,7 +60,11 @@ namespace OrthancStone
     else if (s == "1.2.840.10008.5.1.4.1.1.77.1.4.1")
     {
       return SopClassUid_VideoPhotographicImageStorage;
-    }      
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.66.4")
+    {
+      return SopClassUid_DicomSeg;
+    }
     else
     {
       //LOG(INFO) << "Other SOP class UID: " << source;

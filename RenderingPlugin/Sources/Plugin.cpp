@@ -407,7 +407,8 @@ public:
 
       const unsigned int h = target->GetHeight();
       const unsigned int w = target->GetWidth();
-      
+
+      // Apply thresholding to get back a binary image
       for (unsigned int y = 0; y < h; y++)
       {
         uint8_t* p = reinterpret_cast<uint8_t*>(target->GetRow(y));
@@ -428,6 +429,38 @@ public:
     }
   }
 };
+
+
+static OrthancStone::DicomInstanceParameters* GetInstanceParameters(const std::string& orthancId)
+{
+  OrthancPlugins::MemoryBuffer tags;
+  if (!tags.RestApiGet("/instances/" + orthancId + "/tags", false))
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
+  }
+
+  Json::Value json;
+  tags.ToJson(json);
+
+  Orthanc::DicomMap m;
+  m.FromDicomAsJson(json);
+
+  return new OrthancStone::DicomInstanceParameters(m);
+}
+
+
+static void AnswerNumpyImage(OrthancPluginRestOutput* output,
+                             const Orthanc::ImageAccessor& image,
+                             bool compress)
+{
+  std::string answer;
+  Orthanc::NumpyWriter writer;
+  writer.SetCompressed(compress);
+  Orthanc::IImageWriter::WriteToMemory(writer, answer, image);
+  
+  OrthancPluginAnswerBuffer(OrthancPlugins::GetGlobalContext(), output,
+                            answer.c_str(), answer.size(), "application/octet-stream");
+}
 
 
 static void RenderNumpyFrame(OrthancPluginRestOutput* output,
@@ -454,20 +487,8 @@ static void RenderNumpyFrame(OrthancPluginRestOutput* output,
       }
     }
   }
-  
-  OrthancPlugins::MemoryBuffer tags;
-  if (!tags.RestApiGet("/instances/" + std::string(request->groups[0]) + "/tags", false))
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
-  }
 
-  Json::Value json;
-  tags.ToJson(json);
-
-  Orthanc::DicomMap m;
-  m.FromDicomAsJson(json);
-
-  OrthancStone::DicomInstanceParameters parameters(m);
+  std::unique_ptr<OrthancStone::DicomInstanceParameters> parameters(GetInstanceParameters(request->groups[0]));
   
   OrthancPlugins::MemoryBuffer dicom;
   dicom.GetDicomInstance(request->groups[0]);
@@ -483,7 +504,7 @@ static void RenderNumpyFrame(OrthancPluginRestOutput* output,
 
   std::unique_ptr<Orthanc::ImageAccessor> modified;
 
-  if (parameters.GetSopClassUid() == OrthancStone::SopClassUid_DicomSeg)
+  if (parameters->GetSopClassUid() == OrthancStone::SopClassUid_DicomSeg)
   {
     modified.reset(dataAugmentation.ApplyBinaryMask(source));
   }
@@ -493,21 +514,14 @@ static void RenderNumpyFrame(OrthancPluginRestOutput* output,
   }
   else
   {
-    std::unique_ptr<Orthanc::ImageAccessor> converted(parameters.ConvertToFloat(source));
+    std::unique_ptr<Orthanc::ImageAccessor> converted(parameters->ConvertToFloat(source));
     assert(converted.get() != NULL);
     
     modified.reset(dataAugmentation.Apply(*converted));
   }
 
   assert(modified.get() != NULL);
-  
-  std::string answer;
-  Orthanc::NumpyWriter writer;
-  writer.SetCompressed(compress);
-  Orthanc::IImageWriter::WriteToMemory(writer, answer, *modified);
-  
-  OrthancPluginAnswerBuffer(OrthancPlugins::GetGlobalContext(), output,
-                            answer.c_str(), answer.size(), "application/octet-stream");
+  AnswerNumpyImage(output, *modified, compress);
 }
 
 
@@ -639,12 +653,11 @@ static void GetRtStruct(OrthancPluginRestOutput* output,
 }
 
 
+
 static void RenderRtStruct(OrthancPluginRestOutput* output,
                            const char* url,
                            const OrthancPluginHttpRequest* request)
 {
-  static const char* MAIN_DICOM_TAGS = "MainDicomTags";
-  
   DicomStructureCache::Accessor accessor(DicomStructureCache::GetSingleton(), request->groups[0]);
 
   if (!accessor.IsValid())
@@ -686,6 +699,8 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
                                     "Missing option \"instance\" to provide the Orthanc identifier of the instance of interest");
   }
 
+  std::unique_ptr<OrthancStone::DicomInstanceParameters> parameters(GetInstanceParameters(instanceId));
+
   size_t structureIndex;
   bool found = false;
   for (size_t i = 0; i < accessor.GetRtStruct().GetStructuresCount(); i++)
@@ -704,41 +719,29 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
                                     "Unknown structure name: " + structureName);
   }
 
-  Json::Value instance;
-  if (!OrthancPlugins::RestApiGet(instance, "/instances/" + instanceId, false))
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem,
-                                    "Unknown instance with Orthanc ID: " + instanceId);
-  }
+  std::list< std::vector<OrthancStone::Vector> > polygons;
+  accessor.GetRtStruct().GetStructurePoints(polygons, structureIndex, parameters->GetSopInstanceUid());
 
-  if (instance.type() != Json::objectValue ||
-      !instance.isMember(MAIN_DICOM_TAGS) ||
-      instance[MAIN_DICOM_TAGS].type() != Json::objectValue)
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-  }
+  Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, parameters->GetWidth(), parameters->GetHeight(), false);
+  Orthanc::ImageProcessing::Set(tmp, 0);
 
-  std::string sopInstanceUid = Orthanc::SerializationToolbox::ReadString(instance[MAIN_DICOM_TAGS], "SOPInstanceUID");
-  
-
-  std::list< std::vector<OrthancStone::Vector> > p;
-  accessor.GetRtStruct().GetStructurePoints(p, structureIndex, sopInstanceUid);
-
-  // curl 'http://localhost:8042/stone/rt-struct/54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9/numpy?structure=BODY&instance=0dd13003-9b1b2712-0fb44325-48c28c99-430d111b'
-  unsigned int count = 0;
   for (std::list< std::vector<OrthancStone::Vector> >::const_iterator
-         it = p.begin(); it != p.end(); ++it)
+         it = polygons.begin(); it != polygons.end(); ++it)
   {
-    printf("%d: ", count++);
+    std::vector<Orthanc::ImageProcessing::ImagePoint> points;
+    points.reserve(it->size());
+
     for (size_t i = 0; i < it->size(); i++)
     {
-      printf("(%.1f,%.1f,%.1f) ", (*it)[i][0], (*it)[i][1], (*it)[i][2]);
+      double x, y;
+      parameters->GetGeometry().ProjectPoint(x, y, (*it) [i]);
+      points.push_back(Orthanc::ImageProcessing::ImagePoint(x, y));
     }
-    printf("\n");
+
+    Orthanc::ImageProcessing::FillPolygon(tmp, points, 255);
   }
 
-  std::string s = "hello";
-  OrthancPluginAnswerBuffer(OrthancPlugins::GetGlobalContext(), output, s.c_str(), s.size(), "application/json");
+  AnswerNumpyImage(output, tmp, true);
 }
 
 

@@ -1109,4 +1109,41 @@ namespace OrthancStone
       }
     }
   }
+
+
+  void DicomStructureSet::Test()
+  {
+    printf("OK\n");
+
+    for (size_t i = 0; i < structures_.size(); i++)
+    {
+      const Polygons& polygons = structures_[i].polygons_;
+
+      for (Polygons::const_iterator it = polygons.begin(); it != polygons.end(); ++it)
+      {
+        const Points& points = it->GetPoints();
+        
+        if (points.size() >= 3)
+        {
+          const Vector& a = points[0];
+          const Vector& b = points[1];
+          const Vector& c = points[2];
+          Vector n;
+          LinearAlgebra::CrossProduct(n, b - a, c - a);
+          LinearAlgebra::NormalizeVector(n);
+          if (n[2] < 0)
+            n = -n;
+          //LinearAlgebra::Print(n);
+
+          // https://en.wikipedia.org/wiki/Vector_fields_in_cylindrical_and_spherical_coordinates#Vector_fields_2
+          double r = 1.0;
+          double theta = acos(n[2]);
+          double phi = atan(n[1]);
+          printf("%.02f %.02f %.02f => ", n[0], n[1], n[2]);
+          printf("%.02f %.02f =>", theta, phi);
+          printf("%.02f %.02f %.02f\n", r * sin(theta) * cos(phi), r * sin(theta) * sin(phi), r * cos(theta));
+        }
+      }
+    }
+  }
 }

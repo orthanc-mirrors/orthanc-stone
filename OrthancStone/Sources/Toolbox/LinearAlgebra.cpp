@@ -717,6 +717,49 @@ namespace OrthancStone
 
       return m;
     }
+
+
+    template <typename T>
+    static T ComputeMedianInternal(std::vector<T>& v)
+    {
+      if (v.size() == 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange, "Empty vector");
+      }
+      
+      const size_t middle = v.size() / 2;
+      nth_element(v.begin(), v.begin() + middle, v.end());
+
+      T median = v[middle];
+      
+      if (v.size() % 2 == 1)
+      {
+        return median;
+      }
+      else
+      {
+        /**
+         * Side-effect of "nth_element()": "All of the elements before
+         * this new nth element are less than or equal to the elements
+         * after the new nth element."
+         * https://en.cppreference.com/w/cpp/algorithm/nth_element
+         **/
+        
+        typename std::vector<T>::const_iterator m = std::max_element(v.begin(), v.begin() + middle);
+
+        return (*m + median) / static_cast<T>(2);
+      }
+    }
+
+    double ComputeMedian(std::vector<double>& v)
+    {
+      return ComputeMedianInternal<double>(v);
+    }
+
+    float ComputeMedian(std::vector<float>& v)
+    {
+      return ComputeMedianInternal<float>(v);
+    }
   }
 
   std::ostream& operator<<(std::ostream& s, const Vector& vec)

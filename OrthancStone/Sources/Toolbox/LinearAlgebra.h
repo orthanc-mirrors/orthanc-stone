@@ -297,5 +297,9 @@ namespace OrthancStone
     bool IsShearMatrix(const Matrix& shear);  
 
     Matrix InvertShearMatrix(const Matrix& shear);
+
+    double ComputeMedian(std::vector<double>& v);
+
+    float ComputeMedian(std::vector<float>& v);
   };
 }

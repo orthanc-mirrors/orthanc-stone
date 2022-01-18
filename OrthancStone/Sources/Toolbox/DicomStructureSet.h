@@ -241,5 +241,7 @@ namespace OrthancStone
     void GetStructurePoints(std::list< std::vector<Vector> >& target,
                             size_t structureIndex,
                             const std::string& sopInstanceUid) const;
+
+    void Test();
   };
 }

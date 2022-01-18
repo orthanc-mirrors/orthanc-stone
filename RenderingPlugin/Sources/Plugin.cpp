@@ -71,9 +71,9 @@ public:
   class Accessor : public boost::noncopyable
   {
   private:
-    boost::mutex::scoped_lock               lock_;
-    std::string                             instanceId_;
-    const OrthancStone::DicomStructureSet*  rtstruct_;
+    boost::mutex::scoped_lock         lock_;
+    std::string                       instanceId_;
+    OrthancStone::DicomStructureSet*  rtstruct_;
 
   public:
     Accessor(DicomStructureCache& that,
@@ -113,7 +113,7 @@ public:
       return rtstruct_ != NULL;
     }
 
-    const OrthancStone::DicomStructureSet& GetRtStruct() const
+    OrthancStone::DicomStructureSet& GetRtStruct() const
     {
       if (IsValid())
       {
@@ -765,6 +765,7 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
 }
 
 
+
 OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
                                         OrthancPluginResourceType resourceType,
                                         const char* resourceId)
@@ -778,6 +779,13 @@ OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
       }
       
       break;
+
+    case OrthancPluginChangeType_OrthancStarted:
+    {
+      DicomStructureCache::Accessor accessor(DicomStructureCache::GetSingleton(), "54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");
+      accessor.GetRtStruct().Test();
+      break;
+    }
 
     default:
       break;

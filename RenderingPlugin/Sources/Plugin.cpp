@@ -31,6 +31,7 @@
 
 #include <Images/Image.h>
 #include <Images/ImageProcessing.h>
+#include <Images/PngWriter.h>
 #include <Images/NumpyWriter.h>
 #include <Logging.h>
 #include <SerializationToolbox.h>
@@ -658,32 +659,34 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
                            const char* url,
                            const OrthancPluginHttpRequest* request)
 {
-  DicomStructureCache::Accessor accessor(DicomStructureCache::GetSingleton(), request->groups[0]);
-
-  if (!accessor.IsValid())
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
-  }
-
+  DataAugmentationParameters dataAugmentation;
   std::string structureName;
   std::string instanceId;
+  bool compress = false;
 
   for (uint32_t i = 0; i < request->getCount; i++)
   {
     std::string key(request->getKeys[i]);
     std::string value(request->getValues[i]);
 
-    if (key == "structure")
+    if (!dataAugmentation.ParseParameter(key, value))
     {
-      structureName = value;
-    }
-    else if (key == "instance")
-    {
-      instanceId = value;
-    }
-    else
-    {
-      LOG(WARNING) << "Unsupported option: " << key;
+      if (key == "structure")
+      {
+        structureName = value;
+      }
+      else if (key == "instance")
+      {
+        instanceId = value;
+      }
+      else if (key == "compress")
+      {
+        compress = ParseBoolean(key, value);
+      }
+      else
+      {
+        LOG(WARNING) << "Unsupported option: " << key;
+      }
     }
   }
 
@@ -698,33 +701,45 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
                                     "Missing option \"instance\" to provide the Orthanc identifier of the instance of interest");
   }
-
+  
   std::unique_ptr<OrthancStone::DicomInstanceParameters> parameters(GetInstanceParameters(instanceId));
 
-  size_t structureIndex;
-  bool found = false;
-  for (size_t i = 0; i < accessor.GetRtStruct().GetStructuresCount(); i++)
-  {
-    if (accessor.GetRtStruct().GetStructureName(i) == structureName)
-    {
-      structureIndex = i;
-      found = true;
-      break;
-    }
-  }
-
-  if (!found)
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem,
-                                    "Unknown structure name: " + structureName);
-  }
-
   std::list< std::vector<OrthancStone::Vector> > polygons;
-  accessor.GetRtStruct().GetStructurePoints(polygons, structureIndex, parameters->GetSopInstanceUid());
+
+  {
+    DicomStructureCache::Accessor accessor(DicomStructureCache::GetSingleton(), request->groups[0]);
+
+    if (!accessor.IsValid())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
+    }
+
+    size_t structureIndex;
+    bool found = false;
+    for (size_t i = 0; i < accessor.GetRtStruct().GetStructuresCount(); i++)
+    {
+      if (accessor.GetRtStruct().GetStructureName(i) == structureName)
+      {
+        structureIndex = i;
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem,
+                                      "Unknown structure name: " + structureName);
+    }
+
+    accessor.GetRtStruct().GetStructurePoints(polygons, structureIndex, parameters->GetSopInstanceUid());
+  }
 
   Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, parameters->GetWidth(), parameters->GetHeight(), false);
   Orthanc::ImageProcessing::Set(tmp, 0);
-
+  
+  OrthancStone::AffineTransform2D transform = dataAugmentation.ComputeTransform(parameters->GetWidth(), parameters->GetHeight());
+  
   for (std::list< std::vector<OrthancStone::Vector> >::const_iterator
          it = polygons.begin(); it != polygons.end(); ++it)
   {
@@ -735,13 +750,18 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
     {
       double x, y;
       parameters->GetGeometry().ProjectPoint(x, y, (*it) [i]);
+      x /= parameters->GetPixelSpacingX();
+      y /= parameters->GetPixelSpacingY();
+      
+      transform.Apply(x, y);
+
       points.push_back(Orthanc::ImageProcessing::ImagePoint(x, y));
     }
 
     Orthanc::ImageProcessing::FillPolygon(tmp, points, 255);
   }
 
-  AnswerNumpyImage(output, tmp, true);
+  AnswerNumpyImage(output, tmp, compress);
 }
 
 

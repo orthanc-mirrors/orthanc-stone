@@ -38,6 +38,11 @@ namespace OrthancStone
     {
       size_t             count_;
       std::list<double>  values_;
+
+      Bucket() :
+        count_(0)
+      {
+      }
     };
     
     Internals::BucketMapper  mapper_;

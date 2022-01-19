@@ -176,4 +176,29 @@ namespace OrthancStone
 
     y = LinearAlgebra::ComputeMedian(v);
   }
+
+
+  void BucketAccumulator2D::Print(FILE* fp) const
+  {
+    fprintf(fp, "         ");
+    
+    for (size_t x = 0; x < mapperX_.GetSize(); x++)
+    {
+      fprintf(fp, "%7.2f ", mapperX_.GetBucketCenter(x));
+    }
+
+    fprintf(fp, "\n");
+    
+    for (size_t y = 0; y < mapperY_.GetSize(); y++)
+    {
+      fprintf(fp, "%7.2f: ", mapperY_.GetBucketCenter(y));
+
+      for (size_t x = 0; x < mapperX_.GetSize(); x++)
+      {
+        fprintf(fp, "%7lu ", GetBucketContentSize(x, y));
+      }
+
+      fprintf(fp, "\n");
+    }
+  }
 }

@@ -152,6 +152,8 @@ namespace OrthancStone
 
     Structures        structures_;
     ReferencedSlices  referencedSlices_;
+    Vector            estimatedNormal_;
+    double            estimatedSliceThickness_;
 
     void Setup(const IDicomDataset& dataset);
     
@@ -168,6 +170,8 @@ namespace OrthancStone
       const Structure& structure,
       const CoordinateSystem3D& slice) const;
 
+    void EstimateGeometry();
+    
   public:
     explicit DicomStructureSet(const FullOrthancDataset& instance)
     {
@@ -242,6 +246,14 @@ namespace OrthancStone
                             size_t structureIndex,
                             const std::string& sopInstanceUid) const;
 
-    void Test();
+    const Vector& GetEstimatedNormal() const
+    {
+      return estimatedNormal_;
+    }
+
+    const double GetEstimatedSliceThickness() const
+    {
+      return estimatedSliceThickness_;
+    }
   };
 }

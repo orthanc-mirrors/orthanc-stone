@@ -26,6 +26,7 @@
 #include "Internals/BucketMapper.h"
 
 #include <list>
+#include <stdio.h>
 #include <vector>
 
 
@@ -39,6 +40,11 @@ namespace OrthancStone
       size_t             count_;
       std::list<double>  valuesX_;
       std::list<double>  valuesY_;
+
+      Bucket() :
+        count_(0)
+      {
+      }
     };
     
     Internals::BucketMapper  mapperX_;
@@ -119,5 +125,7 @@ namespace OrthancStone
 
     void ComputeBestMedian(double& x,
                            double& y) const;
+
+    void Print(FILE* fp) const;
   };
 }

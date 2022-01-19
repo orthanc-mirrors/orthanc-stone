@@ -783,7 +783,8 @@ OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
     case OrthancPluginChangeType_OrthancStarted:
     {
       DicomStructureCache::Accessor accessor(DicomStructureCache::GetSingleton(), "54460695-ba3885ee-ddf61ac0-f028e31d-a6e474d9");
-      accessor.GetRtStruct().Test();
+      OrthancStone::LinearAlgebra::Print(accessor.GetRtStruct().GetEstimatedNormal());
+      printf("Slice thickness: %f\n", accessor.GetRtStruct().GetEstimatedSliceThickness());
       break;
     }
 

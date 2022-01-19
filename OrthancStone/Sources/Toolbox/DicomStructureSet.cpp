@@ -29,6 +29,8 @@
 
 #include "OrthancDatasets/DicomDatasetReader.h"
 
+#include "BucketAccumulator2D.h"
+
 #include <Logging.h>
 #include <OrthancException.h>
 #include <Toolbox.h>
@@ -44,6 +46,7 @@
 
 #include <limits>
 #include <stdio.h>
+#include <boost/math/constants/constants.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
@@ -58,7 +61,7 @@
 #endif
 
 
-typedef boost::geometry::model::d2::point_xy<double> BoostPoint;
+  typedef boost::geometry::model::d2::point_xy<double> BoostPoint;
 typedef boost::geometry::model::polygon<BoostPoint> BoostPolygon;
 typedef boost::geometry::model::multi_polygon<BoostPolygon>  BoostMultiPolygon;
 
@@ -625,6 +628,9 @@ namespace OrthancStone
         structures_[i].polygons_.push_back(polygon);
       }
     }
+
+    EstimateGeometry();
+    
 #if STONE_TIME_BLOCKING_OPS
     boost::posix_time::ptime timerEnd = boost::posix_time::microsec_clock::universal_time();
     boost::posix_time::time_duration duration = timerEnd - timerStart;
@@ -1111,10 +1117,98 @@ namespace OrthancStone
   }
 
 
-  void DicomStructureSet::Test()
+  void DicomStructureSet::EstimateGeometry()
   {
-    printf("OK\n");
+    static const double PI = boost::math::constants::pi<double>();
 
+    BucketAccumulator2D accumulator(0, PI, 9,   /* for acos() */
+                                    -PI, PI, 9, /* for atan() */
+                                    true /* store values */);
+
+    unsigned int countPolygons = 0;
+    for (size_t i = 0; i < structures_.size(); i++)
+    {
+      const Polygons& polygons = structures_[i].polygons_;
+
+      for (Polygons::const_iterator it = polygons.begin(); it != polygons.end(); ++it)
+      {
+        countPolygons++;
+        
+        const Points& points = it->GetPoints();
+        
+        if (points.size() >= 3)
+        {
+          // Compute the normal of the polygon using 3 successive points
+          Vector normal;
+          bool valid = false;
+
+          for (size_t i = 0; i + 2 < points.size(); i++)
+          {
+            const Vector& a = points[i];
+            const Vector& b = points[i + 1];
+            const Vector& c = points[i + 2];
+            LinearAlgebra::CrossProduct(normal, b - a, c - a);  // (*)
+            LinearAlgebra::NormalizeVector(normal);
+
+            if (LinearAlgebra::IsNear(boost::numeric::ublas::norm_2(normal), 1.0))  // (**)
+            {
+              valid = true;
+              break;
+            }
+          }
+
+          if (valid)
+          {
+            // Check that all the points of the polygon lie in the plane defined by the normal
+            double d1 = GeometryToolbox::ProjectAlongNormal(points[0], normal);
+          
+            for (size_t i = 1; i < points.size(); i++)
+            {
+              double d2 = GeometryToolbox::ProjectAlongNormal(points[i], normal);
+            
+              if (!LinearAlgebra::IsNear(d1, d2))
+              {
+                valid = false;
+                break;
+              }
+            }
+          }
+
+          if (valid)
+          {
+            if (normal[2] < 0)
+            {
+              normal = -normal;
+            }
+
+            // The normal is a non-zero unit vector because of (*) and (**), so "r == 1"
+            // https://en.wikipedia.org/wiki/Vector_fields_in_cylindrical_and_spherical_coordinates#Vector_fields_2
+            
+            const double theta = acos(normal[2]);
+            const double phi = atan(normal[1]);
+            accumulator.AddValue(theta, phi);
+          }
+        }
+      }
+    }
+
+    size_t bestX, bestY;
+    accumulator.FindBestBucket(bestX, bestY);
+
+    if (accumulator.GetBucketContentSize(bestX, bestY) > 0)
+    {
+      double normalTheta, normalPhi;
+      accumulator.ComputeBestMedian(normalTheta, normalPhi);
+      
+      // Back to (x,y,z) normal, taking "r == 1"
+      // https://en.wikipedia.org/wiki/Vector_fields_in_cylindrical_and_spherical_coordinates#Vector_fields_2
+      double sinTheta = sin(normalTheta);
+      estimatedNormal_ = LinearAlgebra::CreateVector(sinTheta * cos(normalPhi), sinTheta * sin(normalPhi), cos(normalTheta));
+    }
+      
+    std::vector<double> polygonsProjection;
+    polygonsProjection.reserve(countPolygons);
+    
     for (size_t i = 0; i < structures_.size(); i++)
     {
       const Polygons& polygons = structures_[i].polygons_;
@@ -1122,28 +1216,31 @@ namespace OrthancStone
       for (Polygons::const_iterator it = polygons.begin(); it != polygons.end(); ++it)
       {
         const Points& points = it->GetPoints();
-        
-        if (points.size() >= 3)
-        {
-          const Vector& a = points[0];
-          const Vector& b = points[1];
-          const Vector& c = points[2];
-          Vector n;
-          LinearAlgebra::CrossProduct(n, b - a, c - a);
-          LinearAlgebra::NormalizeVector(n);
-          if (n[2] < 0)
-            n = -n;
-          //LinearAlgebra::Print(n);
-
-          // https://en.wikipedia.org/wiki/Vector_fields_in_cylindrical_and_spherical_coordinates#Vector_fields_2
-          double r = 1.0;
-          double theta = acos(n[2]);
-          double phi = atan(n[1]);
-          printf("%.02f %.02f %.02f => ", n[0], n[1], n[2]);
-          printf("%.02f %.02f =>", theta, phi);
-          printf("%.02f %.02f %.02f\n", r * sin(theta) * cos(phi), r * sin(theta) * sin(phi), r * cos(theta));
-        }
+        polygonsProjection.push_back(GeometryToolbox::ProjectAlongNormal(points[0], estimatedNormal_));
       }
+    }
+
+    std::sort(polygonsProjection.begin(), polygonsProjection.end());
+
+    std::vector<double> deltas;
+    deltas.reserve(polygonsProjection.size());
+
+    for (size_t i = 0; i + 1 < polygonsProjection.size(); i++)
+    {
+      if (!LinearAlgebra::IsNear(polygonsProjection[i], polygonsProjection[i + 1]))
+      {
+        assert(polygonsProjection[i + 1] > polygonsProjection[i]);
+        deltas.push_back(polygonsProjection[i + 1] - polygonsProjection[i]);
+      }
+    }
+
+    if (deltas.empty())
+    {
+      estimatedSliceThickness_ = 1;
+    }
+    else
+    {
+      estimatedSliceThickness_ = LinearAlgebra::ComputeMedian(deltas);
     }
   }
 }

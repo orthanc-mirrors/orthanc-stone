@@ -772,6 +772,7 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
     accessor.GetRtStruct().GetStructurePoints(polygons, structureIndex, parameters->GetSopInstanceUid());
   }
 
+  // We use a "XOR" filler for the polygons in order to deal with holes in the RT-STRUCT
   XorFiller filler(parameters->GetWidth(), parameters->GetHeight());
   OrthancStone::AffineTransform2D transform = dataAugmentation.ComputeTransform(parameters->GetWidth(), parameters->GetHeight());
   

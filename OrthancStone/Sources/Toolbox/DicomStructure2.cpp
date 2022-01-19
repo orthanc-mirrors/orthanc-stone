@@ -195,7 +195,7 @@ namespace OrthancStone
   }
 
 
-    bool DicomStructure2::Project(std::vector< std::pair<Point2D, Point2D> > & segments, const CoordinateSystem3D & plane) const
+    bool DicomStructure2::Project(std::vector< std::pair<ScenePoint2D, ScenePoint2D> > & segments, const CoordinateSystem3D & plane) const
     {
       segments.clear();
 
@@ -237,7 +237,7 @@ namespace OrthancStone
 
             // let's compute the intersection between the polygon and the plane
             // intersections are in plane coords
-            std::vector<Point2D> intersections;
+            std::vector<ScenePoint2D> intersections;
 
             polygons_[i].ProjectOnConstantPlane(intersections, plane);
 
@@ -257,12 +257,12 @@ namespace OrthancStone
             for (size_t iRect = 0; iRect < numRects; ++iRect)
             {
               RtStructRectangleInSlab rectangle;
-              ORTHANC_ASSERT(LinearAlgebra::IsNear(intersections[2 * iRect].y, intersections[2 * iRect + 1].y));
+              ORTHANC_ASSERT(LinearAlgebra::IsNear(intersections[2 * iRect].GetY(), intersections[2 * iRect + 1].GetY()));
               ORTHANC_ASSERT((2 * iRect + 1) < intersections.size());
-              double x1 = intersections[2 * iRect].x;
-              double x2 = intersections[2 * iRect + 1].x;
-              double y1 = intersections[2 * iRect].y - sliceThickness_ * 0.5;
-              double y2 = intersections[2 * iRect].y + sliceThickness_ * 0.5;
+              double x1 = intersections[2 * iRect].GetX();
+              double x2 = intersections[2 * iRect + 1].GetX();
+              double y1 = intersections[2 * iRect].GetY() - sliceThickness_ * 0.5;
+              double y2 = intersections[2 * iRect].GetY() + sliceThickness_ * 0.5;
 
               rectangle.xmin = std::min(x1, x2);
               rectangle.xmax = std::max(x1, x2);

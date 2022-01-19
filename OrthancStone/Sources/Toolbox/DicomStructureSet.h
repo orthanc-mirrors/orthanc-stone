@@ -29,7 +29,6 @@
 #  error The macro ORTHANC_ENABLE_DCMTK must be defined
 #endif
 
-#include "DicomStructureSetUtils.h"
 #include "CoordinateSystem3D.h"
 #include "Extent2D.h"
 #include "OrthancDatasets/FullOrthancDataset.h"
@@ -163,9 +162,9 @@ namespace OrthancStone
   
     bool ProjectStructure(
 #if USE_BOOST_UNION_FOR_POLYGONS == 1
-      std::vector< std::vector<Point2D> >& polygons,
+      std::vector< std::vector<ScenePoint2D> >& polygons,
 #else
-      std::vector< std::pair<Point2D, Point2D> >& segments,
+      std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
 #endif
       const Structure& structure,
       const CoordinateSystem3D& slice) const;
@@ -209,14 +208,14 @@ namespace OrthancStone
     Vector GetNormal() const;
 
 #if USE_BOOST_UNION_FOR_POLYGONS == 1
-    bool ProjectStructure(std::vector< std::vector<Point2D> >& polygons,
+    bool ProjectStructure(std::vector< std::vector<ScenePoint2D> >& polygons,
                           size_t index,
                           const CoordinateSystem3D& slice) const
     {
       return ProjectStructure(polygons, GetStructure(index), slice);
     }
 #else
-    bool ProjectStructure(std::vector< std::pair<Point2D, Point2D> >& segments,
+    bool ProjectStructure(std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
                           size_t index,
                           const CoordinateSystem3D& slice) const
     {

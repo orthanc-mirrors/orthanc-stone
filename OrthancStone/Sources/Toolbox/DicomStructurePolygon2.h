@@ -75,13 +75,13 @@ namespace OrthancStone
       return points_.size();
     }
 
-    const Point3D& GetPoint(size_t i) const
+    const Vector& GetPoint(size_t i) const
     {
       ORTHANC_ASSERT(state_ == Valid);
       return points_.at(i);
     }
 
-    void AddPoint(const Point3D& v)
+    void AddPoint(const Vector& v)
     {
       ORTHANC_ASSERT(state_ == Building);
       points_.push_back(v);
@@ -99,7 +99,7 @@ namespace OrthancStone
     on the plane, in the plane coordinate system.
     */
     void ProjectOnParallelPlane(
-      std::vector< std::pair<Point2D,Point2D> >& segments,
+      std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
       const CoordinateSystem3D& plane) const;
 
     /**
@@ -108,7 +108,7 @@ namespace OrthancStone
     constant Y)
     */
     void ProjectOnConstantPlane(
-      std::vector<Point2D>& intersections,
+      std::vector<ScenePoint2D>& intersections,
       const CoordinateSystem3D& plane) const;
 
     /**
@@ -121,7 +121,7 @@ namespace OrthancStone
     /**
     The normal sign is left undefined for now
     */
-    Vector3D GetNormal() const
+    Vector GetNormal() const
     {
       return normal_;
     }
@@ -149,8 +149,8 @@ namespace OrthancStone
     };
     std::string           referencedSopInstanceUid_;
     CoordinateSystem3D    geometry_;
-    std::vector<Point3D>  points_;
-    Vector3D              normal_; // sign is irrelevant for now
+    std::vector<Vector>  points_;
+    Vector              normal_; // sign is irrelevant for now
     State                 state_;
     double                minX_, maxX_, minY_, maxY_, minZ_, maxZ_;
     Type                  type_;

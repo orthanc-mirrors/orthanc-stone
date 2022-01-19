@@ -25,37 +25,11 @@
 #include <vector>
 #include <utility>
 
+#include "../Scene2D/ScenePoint2D.h"
 #include "../Toolbox/LinearAlgebra.h"
 
 namespace OrthancStone
 {
-#if 0
-  struct Point3D
-  {
-    Point3D(double x, double y, double z) : x(x), y(y), z(z) {}
-    Point3D() : x(0), y(0), z(0) {}
-    double x, y, z;
-  };
-
-  struct Vector3D
-  {
-    Vector3D(double x, double y, double z) : x(x), y(y), z(z) {}
-    Vector3D() : x(0), y(0), z(0) {}
-    double x, y, z;
-  };
-#else
-  typedef Vector Vector3D;
-  typedef Vector Point3D;
-#endif
-
-  struct Point2D
-  {
-    Point2D(double x, double y) : x(x), y(y) {}
-    Point2D() : x(0), y(0) {}
-    double x, y;
-  };
-
-
   /** Internal */
   struct RtStructRectangleInSlab
   {
@@ -75,12 +49,12 @@ namespace OrthancStone
 #endif
 
   /** Internal */
-  void ConvertListOfSlabsToSegments(std::vector< std::pair<Point2D, Point2D> >& segments, const std::vector<RtStructRectanglesInSlab>& slabCuts, const size_t totalRectCount);
+  void ConvertListOfSlabsToSegments(std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments, const std::vector<RtStructRectanglesInSlab>& slabCuts, const size_t totalRectCount);
 
   /** Internal */
   void AddSlabBoundaries(std::vector<std::pair<double, RectangleBoundaryKind> >& boundaries, const std::vector<RtStructRectanglesInSlab>& slabCuts, size_t iSlab);
 
   /** Internal */
-  void ProcessBoundaryList(std::vector< std::pair<Point2D, Point2D> >& segments, const std::vector<std::pair<double, RectangleBoundaryKind> >& boundaries, double y);
+  void ProcessBoundaryList(std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments, const std::vector<std::pair<double, RectangleBoundaryKind> >& boundaries, double y);
 
 }

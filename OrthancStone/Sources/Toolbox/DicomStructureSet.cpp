@@ -22,14 +22,12 @@
 
 
 #include "DicomStructureSet.h"
-#include "DicomStructureSetUtils.h"
-
-#include "GeometryToolbox.h"
-#include "GenericToolbox.h"
-
-#include "OrthancDatasets/DicomDatasetReader.h"
+#include "DicomStructureSetUtils.h"  // TODO REMOVE
 
 #include "BucketAccumulator2D.h"
+#include "GenericToolbox.h"
+#include "GeometryToolbox.h"
+#include "OrthancDatasets/DicomDatasetReader.h"
 
 #include <Logging.h>
 #include <OrthancException.h>
@@ -41,7 +39,7 @@
 #endif
 
 #if STONE_TIME_BLOCKING_OPS
-# include <boost/date_time/posix_time/posix_time.hpp>
+#  include <boost/date_time/posix_time/posix_time.hpp>
 #endif
 
 #include <limits>
@@ -61,7 +59,7 @@
 #endif
 
 
-  typedef boost::geometry::model::d2::point_xy<double> BoostPoint;
+typedef boost::geometry::model::d2::point_xy<double> BoostPoint;
 typedef boost::geometry::model::polygon<BoostPoint> BoostPolygon;
 typedef boost::geometry::model::multi_polygon<BoostPolygon>  BoostMultiPolygon;
 
@@ -833,9 +831,9 @@ namespace OrthancStone
 
   bool DicomStructureSet::ProjectStructure(
 #if USE_BOOST_UNION_FOR_POLYGONS == 1
-    std::vector< std::vector<Point2D> >& polygons,
+    std::vector< std::vector<ScenePoint2D> >& polygons,
 #else
-    std::vector< std::pair<Point2D, Point2D> >& segments,
+    std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
 #endif
     const Structure& structure,
     const CoordinateSystem3D& sourceSlice) const
@@ -861,26 +859,26 @@ namespace OrthancStone
         if (polygon->IsOnSlice(slice))
         {
 #if USE_BOOST_UNION_FOR_POLYGONS == 1
-          polygons.push_back(std::vector<Point2D>());
+          polygons.push_back(std::vector<ScenePoint2D>());
           
           for (Points::const_iterator p = polygon->GetPoints().begin();
                p != polygon->GetPoints().end(); ++p)
           {
             double x, y;
             slice.ProjectPoint2(x, y, *p);
-            polygons.back().push_back(Point2D(x, y));
+            polygons.back().push_back(ScenePoint2D(x, y));
           }
 #else
           // we need to add all the segments corresponding to this polygon
           const std::vector<Vector>& points3D = polygon->GetPoints();
           if (points3D.size() >= 3)
           {
-            Point2D prev2D;
+            ScenePoint2D prev2D;
             {
               Vector prev = points3D[0];
               double prevX, prevY;
               slice.ProjectPoint2(prevX, prevY, prev);
-              prev2D = Point2D(prevX, prevY);
+              prev2D = ScenePoint2D(prevX, prevY);
             }
 
             size_t pointCount = points3D.size();
@@ -889,8 +887,8 @@ namespace OrthancStone
               Vector next = points3D[ipt];
               double nextX, nextY;
               slice.ProjectPoint2(nextX, nextY, next);
-              Point2D next2D(nextX, nextY);
-              segments.push_back(std::pair<Point2D, Point2D>(prev2D, next2D));
+              ScenePoint2D next2D(nextX, nextY);
+              segments.push_back(std::pair<ScenePoint2D, ScenePoint2D>(prev2D, next2D));
               prev2D = next2D;
             }
           }
@@ -1012,7 +1010,7 @@ namespace OrthancStone
         polygons[i].resize(outer.size());
         for (size_t j = 0; j < outer.size(); j++)
         {
-          polygons[i][j] = Point2D(outer[j].x(), outer[j].y());
+          polygons[i][j] = ScenePoint2D(outer[j].x(), outer[j].y());
         }
       }  
 #endif
@@ -1024,7 +1022,7 @@ namespace OrthancStone
         double x1, y1, x2, y2;
         if (polygon->Project(x1, y1, x2, y2, slice))
         {
-          std::vector<Point2D> p(4);
+          std::vector<ScenePoint2D> p(4);
           p[0] = std::make_pair(x1, y1);
           p[1] = std::make_pair(x2, y1);
           p[2] = std::make_pair(x2, y2);
@@ -1049,7 +1047,7 @@ namespace OrthancStone
                                            const Color& color) const
   {
 #if USE_BOOST_UNION_FOR_POLYGONS == 1
-    std::vector< std::vector<Point2D> > polygons;
+    std::vector< std::vector<ScenePoint2D> > polygons;
     if (ProjectStructure(polygons, structureIndex, plane))
     {
       for (size_t j = 0; j < polygons.size(); j++)
@@ -1067,15 +1065,15 @@ namespace OrthancStone
     }
     
 #else
-    std::vector< std::pair<Point2D, Point2D> >  segments;
+    std::vector< std::pair<ScenePoint2D, ScenePoint2D> >  segments;
 
     if (ProjectStructure(segments, structureIndex, plane))
     {
       for (size_t j = 0; j < segments.size(); j++)
       {
         std::vector<ScenePoint2D> chain(2);
-        chain[0] = ScenePoint2D(segments[j].first.x, segments[j].first.y);
-        chain[1] = ScenePoint2D(segments[j].second.x, segments[j].second.y);
+        chain[0] = ScenePoint2D(segments[j].first.GetX(), segments[j].first.GetY());
+        chain[1] = ScenePoint2D(segments[j].second.GetX(), segments[j].second.GetY());
         layer.AddChain(chain, false, color.GetRed(), color.GetGreen(), color.GetBlue());
       }
     }

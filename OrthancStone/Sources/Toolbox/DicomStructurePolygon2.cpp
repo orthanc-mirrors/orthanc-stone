@@ -37,7 +37,7 @@ namespace OrthancStone
     for (size_t j = 0; j < points_.size(); ++j)
     {
       // TODO: move to AddPoint!
-      const Point3D& p = points_[j];
+      const Vector& p = points_[j];
       if (p[0] < minX_)
         minX_ = p[0];
       if (p[0] > maxX_)
@@ -83,7 +83,7 @@ namespace OrthancStone
 
 
   void DicomStructurePolygon2::ProjectOnConstantPlane(
-    std::vector<Point2D>& intersections, const CoordinateSystem3D& plane) const
+    std::vector<ScenePoint2D>& intersections, const CoordinateSystem3D& plane) const
   {
     // the plane can either have constant X, or constant Y.
     // - for constant Z planes, use the ProjectOnParallelPlane method
@@ -177,10 +177,10 @@ namespace OrthancStone
             // in that case, we choose to label both points as an intersection
             double x, y;
             plane.ProjectPoint(x, y, points_[iPoint]);
-            intersections.push_back(Point2D(x, y));
+            intersections.push_back(ScenePoint2D(x, y));
 
             plane.ProjectPoint(x, y, points_[iPoint + 1]);
-            intersections.push_back(Point2D(x, y));
+            intersections.push_back(ScenePoint2D(x, y));
           }
           else
           {
@@ -235,7 +235,7 @@ namespace OrthancStone
       for (size_t i = 0; i < uIntersections.size(); ++i)
       {
         double x = uIntersections[i];
-        intersections.push_back(Point2D(x, minZ_));
+        intersections.push_back(ScenePoint2D(x, minZ_));
       }
     } // end of if (pointCount >= 3)
     else
@@ -245,7 +245,7 @@ namespace OrthancStone
   } 
 
   void DicomStructurePolygon2::ProjectOnParallelPlane(
-    std::vector< std::pair<Point2D, Point2D> >& segments, 
+    std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments, 
     const CoordinateSystem3D& plane) const
   {
     if (points_.size() < 3)
@@ -268,29 +268,29 @@ namespace OrthancStone
     {
       // segment between point j and j+1
 
-      const Point3D& point0 = GetPoint(j);
+      const Vector& point0 = GetPoint(j);
       // subtract plane origin x and y
-      Point2D p0(point0[0] - planeOriginX, point0[1] - planeOriginY);
+      ScenePoint2D p0(point0[0] - planeOriginX, point0[1] - planeOriginY);
     
-      const Point3D& point1 = GetPoint(j+1);
+      const Vector& point1 = GetPoint(j+1);
       // subtract plane origin x and y
-      Point2D p1(point1[0] - planeOriginX, point1[1] - planeOriginY);
+      ScenePoint2D p1(point1[0] - planeOriginX, point1[1] - planeOriginY);
 
-      segments.push_back(std::pair<Point2D, Point2D>(p0,p1));
+      segments.push_back(std::pair<ScenePoint2D, ScenePoint2D>(p0,p1));
     }
 
 
     // final segment 
 
-    const Point3D& point0 = GetPoint(points_.size() - 1);
+    const Vector& point0 = GetPoint(points_.size() - 1);
     // subtract plane origin x and y
-    Point2D p0(point0[0] - planeOriginX, point0[1] - planeOriginY);
+    ScenePoint2D p0(point0[0] - planeOriginX, point0[1] - planeOriginY);
 
-    const Point3D& point1 = GetPoint(0);
+    const Vector& point1 = GetPoint(0);
     // subtract plane origin x and y
-    Point2D p1(point1[0] - planeOriginX, point1[1] - planeOriginY);
+    ScenePoint2D p1(point1[0] - planeOriginX, point1[1] - planeOriginY);
 
-    segments.push_back(std::pair<Point2D, Point2D>(p0, p1));
+    segments.push_back(std::pair<ScenePoint2D, ScenePoint2D>(p0, p1));
   }
 
   double DicomStructurePolygon2::GetZ() const

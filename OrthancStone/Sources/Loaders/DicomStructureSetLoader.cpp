@@ -30,7 +30,7 @@
 #include <Toolbox.h>
 
 #if STONE_TIME_BLOCKING_OPS
-# include <boost/date_time/posix_time/posix_time.hpp>
+#  include <boost/date_time/posix_time/posix_time.hpp>
 #endif
 
 #include <algorithm>
@@ -371,7 +371,7 @@ namespace OrthancStone
           const Color& color = content_.GetStructureColor(i);
 
 #if USE_BOOST_UNION_FOR_POLYGONS == 1
-          std::vector< std::vector<Point2D> > polygons;
+          std::vector< std::vector<ScenePoint2D> > polygons;
           
           if (content_.ProjectStructure(polygons, i, cuttingPlane))
           {
@@ -382,14 +382,14 @@ namespace OrthancStone
               
               for (size_t k = 0; k < polygons[j].size(); k++)
               {
-                chain[k] = ScenePoint2D(polygons[j][k].x, polygons[j][k].y);
+                chain[k] = ScenePoint2D(polygons[j][k].GetX(), polygons[j][k].GetY());
               }
               
               layer->AddChain(chain, true /* closed */, color);
             }
           }
 #else
-          std::vector< std::pair<Point2D, Point2D> > segments;
+          std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
 
           if (content_.ProjectStructure(segments, i, cuttingPlane))
           {
@@ -398,8 +398,8 @@ namespace OrthancStone
               PolylineSceneLayer::Chain chain;
               chain.resize(2);
 
-              chain[0] = ScenePoint2D(segments[j].first.x, segments[j].first.y);
-              chain[1] = ScenePoint2D(segments[j].second.x, segments[j].second.y);
+              chain[0] = ScenePoint2D(segments[j].first.GetX(), segments[j].first.GetY());
+              chain[1] = ScenePoint2D(segments[j].second.GetX(), segments[j].second.GetY());
 
               layer->AddChain(chain, false /* NOT closed */, color);
             }

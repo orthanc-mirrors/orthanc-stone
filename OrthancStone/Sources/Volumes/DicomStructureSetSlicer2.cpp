@@ -90,7 +90,7 @@ namespace OrthancStone
       {
         const Color& color = structure.GetColor();
 
-        std::vector< std::pair<Point2D, Point2D> > segments;
+        std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
 
         if (structure.Project(segments, cuttingPlane))
         {
@@ -99,8 +99,8 @@ namespace OrthancStone
             PolylineSceneLayer::Chain chain;
             chain.resize(2);
 
-            chain[0] = ScenePoint2D(segments[j].first.x, segments[j].first.y);
-            chain[1] = ScenePoint2D(segments[j].second.x, segments[j].second.y);
+            chain[0] = ScenePoint2D(segments[j].first.GetX(), segments[j].first.GetY());
+            chain[1] = ScenePoint2D(segments[j].second.GetX(), segments[j].second.GetY());
 
             layer->AddChain(chain, false /* NOT closed */, color);
           }

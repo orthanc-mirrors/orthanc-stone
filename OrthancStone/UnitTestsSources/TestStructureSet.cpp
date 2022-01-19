@@ -72,7 +72,7 @@ static void CheckGroundTruth(
 
   for (size_t i = 0; i < polygon.GetPointCount(); ++i)
   {
-    const Point3D& point = polygon.GetPoint(i);
+    const Vector& point = polygon.GetPoint(i);
 
     // loop over X, Y then Z.
     for (size_t j = 0; j < 3; ++j)
@@ -244,7 +244,7 @@ TEST(StructureSet2, ReadFromJsonAndCompute2)
 #ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
 static bool CutStructureWithPlane(
-  std::vector< std::pair<Point2D, Point2D> >& segments,
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
   const DicomStructure2& structure,
   const double originX, const double originY, const double originZ,
   const double axisX_X, const double axisX_Y, const double axisX_Z,
@@ -253,7 +253,7 @@ static bool CutStructureWithPlane(
 {
   // create an AXIAL cutting plane, too far away from the volume 
   // (> sliceThickness/2)
-  Point3D origin, axisX, axisY;
+  Vector origin, axisX, axisY;
   LinearAlgebra::AssignVector(origin, originX, originY, originZ);
   LinearAlgebra::AssignVector(axisX, axisX_X, axisX_Y, axisX_Z);
   LinearAlgebra::AssignVector(axisY, axisY_X, axisY_Y, axisY_Z);
@@ -286,7 +286,7 @@ static void CreateBasicStructure(DicomStructure2& structure)
     DicomStructurePolygon2 polygon("Oblomptu", "CLOSED_PLANAR");
     for (size_t ip = 0; ip < pointsCoord1Count; ++ip)
     {
-      Point3D pt;
+      Vector pt;
       double pt0 = pointsCoord1[ip];
       double pt1 = pointsCoord2[ip];
       double pt2 = 4 * (static_cast<double>(slice) - 1); // -4, 0, 4 
@@ -303,7 +303,7 @@ TEST(StructureSet2, CutAxialOutsideTop)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
-  std::vector< std::pair<Point2D, Point2D> > segments;
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
 
   // create an AXIAL cutting plane, too far away from the volume 
   // (> sliceThickness/2)
@@ -319,7 +319,7 @@ TEST(StructureSet2, CutAxialOutsideBottom)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
-  std::vector< std::pair<Point2D, Point2D> > segments;
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
 
   // create an AXIAL cutting plane, too far away from the volume 
   // (> sliceThickness/2)
@@ -334,7 +334,7 @@ TEST(StructureSet2, CutAxialInsideClose)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
-  std::vector< std::pair<Point2D, Point2D> > segments;
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
 
   // create an AXIAL cutting plane in the volume
   bool ok = CutStructureWithPlane(segments, structure,
@@ -349,12 +349,12 @@ TEST(StructureSet2, CutAxialInsideClose)
     EXPECT_LT(i, POLYGON_POINT_COUNT);
     EXPECT_LT(i, POLYGON_POINT_COUNT);
 
-    const Point2D& pt = segments[i].first;
+    const ScenePoint2D& pt = segments[i].first;
 
     // ...should be at the same location as the 3D coords since the plane 
     // is rooted at 0,0,0 with normal 0,0,1
-    EXPECT_NEAR(pt.x, pointsCoord1[i], DELTA_MAX);
-    EXPECT_NEAR(pt.y, pointsCoord2[i], DELTA_MAX);
+    EXPECT_NEAR(pt.GetX(), pointsCoord1[i], DELTA_MAX);
+    EXPECT_NEAR(pt.GetY(), pointsCoord2[i], DELTA_MAX);
   }
 }
 
@@ -363,10 +363,10 @@ TEST(StructureSet2, CutAxialInsideFar)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
-  std::vector< std::pair<Point2D, Point2D> > segments;
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
 
   // create an AXIAL cutting plane
-  Point3D origin, axisX, axisY;
+  Vector origin, axisX, axisY;
   LinearAlgebra::AssignVector(origin, 0, 0, 0);
   LinearAlgebra::AssignVector(axisX, 1, 0, 0);
   LinearAlgebra::AssignVector(axisY, 0, 1, 0);
@@ -383,12 +383,12 @@ TEST(StructureSet2, CutAxialInsideFar)
     EXPECT_LT(i, pointsCoord2Count);
 
     // the 2D points of the projected polygon
-    const Point2D& pt = segments[i].first;
+    const ScenePoint2D& pt = segments[i].first;
 
     // ...should be at the same location as the 3D coords since the plane 
     // is rooted at 0,0,0 with normal 0,0,1
-    EXPECT_NEAR(pt.x, pointsCoord1[i], DELTA_MAX);
-    EXPECT_NEAR(pt.y, pointsCoord2[i], DELTA_MAX);
+    EXPECT_NEAR(pt.GetX(), pointsCoord1[i], DELTA_MAX);
+    EXPECT_NEAR(pt.GetY(), pointsCoord2[i], DELTA_MAX);
   }
 }
 
@@ -396,10 +396,10 @@ TEST(StructureSet2, CutCoronalOutsideClose)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
-  std::vector< std::pair<Point2D, Point2D> > segments;
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
 
   // create an X,Z cutting plane, outside of the volume
-  Point3D origin, axisX, axisY;
+  Vector origin, axisX, axisY;
   LinearAlgebra::AssignVector(origin, 0, 0, 0);
   LinearAlgebra::AssignVector(axisX, 1, 0, 0);
   LinearAlgebra::AssignVector(axisY, 0, 0, 1);
@@ -416,7 +416,7 @@ TEST(StructureSet2, CutCoronalInsideClose1DTest)
   CreateBasicStructure(structure);
 
   // create an X,Z cutting plane, outside of the volume
-  Point3D origin, axisX, axisY;
+  Vector origin, axisX, axisY;
   LinearAlgebra::AssignVector(origin, 0, 3, 0);
   LinearAlgebra::AssignVector(axisX, 1, 0, 0);
   LinearAlgebra::AssignVector(axisY, 0, 0, 1);
@@ -432,19 +432,19 @@ TEST(StructureSet2, CutCoronalInsideClose1DTest)
 
     // let's compute the intersection between the polygon and the plane
     // intersections are in plane coords
-    std::vector<Point2D> intersects;
+    std::vector<ScenePoint2D> intersects;
     topSlab.ProjectOnConstantPlane(intersects, cuttingPlane);
 
     ASSERT_EQ(4u, intersects.size());
 
-    EXPECT_NEAR(2, intersects[0].x, DELTA_MAX);
-    EXPECT_NEAR(4, intersects[1].x, DELTA_MAX);
-    EXPECT_NEAR(7, intersects[2].x, DELTA_MAX);
-    EXPECT_NEAR(8, intersects[3].x, DELTA_MAX);
+    EXPECT_NEAR(2, intersects[0].GetX(), DELTA_MAX);
+    EXPECT_NEAR(4, intersects[1].GetX(), DELTA_MAX);
+    EXPECT_NEAR(7, intersects[2].GetX(), DELTA_MAX);
+    EXPECT_NEAR(8, intersects[3].GetX(), DELTA_MAX);
 
     for (size_t i = 0; i < 4u; ++i)
     {
-      EXPECT_NEAR(polygonZ, intersects[i].y, DELTA_MAX);
+      EXPECT_NEAR(polygonZ, intersects[i].GetY(), DELTA_MAX);
     }
   }
 }
@@ -453,10 +453,10 @@ TEST(StructureSet2, CutCoronalInsideClose)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
-  std::vector< std::pair<Point2D, Point2D> > segments;
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
 
   // create an X,Z cutting plane, outside of the volume
-  Point3D origin, axisX, axisY;
+  Vector origin, axisX, axisY;
   LinearAlgebra::AssignVector(origin, 0, 3, 0);
   LinearAlgebra::AssignVector(axisX, 1, 0, 0);
   LinearAlgebra::AssignVector(axisY, 0, 0, 1);
@@ -470,9 +470,9 @@ TEST(StructureSet2, CutCoronalInsideClose)
   for (size_t iSegment = 0; iSegment < segments.size(); ++iSegment)
   {
     // count the NON vertical very short segments 
-    if (LinearAlgebra::IsNear(segments[iSegment].first.x, segments[iSegment].second.x))
+    if (LinearAlgebra::IsNear(segments[iSegment].first.GetX(), segments[iSegment].second.GetX()))
     {
-      if (LinearAlgebra::IsNear(segments[iSegment].first.y, segments[iSegment].second.y))
+      if (LinearAlgebra::IsNear(segments[iSegment].first.GetY(), segments[iSegment].second.GetY()))
       {
         numberOfVeryShortSegments++;
       }
@@ -551,10 +551,10 @@ TEST(StructureSet2, CutSagittalInsideClose)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
-  std::vector< std::pair<Point2D, Point2D> > segments;
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
 
   // create an X,Z cutting plane, inside of the volume
-  Point3D origin, axisX, axisY;
+  Vector origin, axisX, axisY;
   LinearAlgebra::AssignVector(origin, 0, 3, 0);
   LinearAlgebra::AssignVector(axisX, 1, 0, 0);
   LinearAlgebra::AssignVector(axisY, 0, 0, 1);
@@ -629,7 +629,7 @@ void AddSlabBoundaries(
 
 /*
 void ProcessBoundaryList(
-  std::vector< std::pair<Point2D, Point2D> >& segments,
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
   const std::vector<std::pair<double, RectangleBoundaryKind> >& boundaries,
   double y)
 */
@@ -731,7 +731,7 @@ TEST(StructureSet2, ConvertListOfSlabsToSegments_EmptyBoundaries)
   std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
   FillTestRectangleList(slabCuts);
   boundaries.clear();
-  std::vector< std::pair<Point2D, Point2D> > segments;
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
   ASSERT_NO_THROW(ProcessBoundaryList(segments, boundaries, 42.0));
   ASSERT_EQ(0u, segments.size());
 }
@@ -743,22 +743,22 @@ TEST(StructureSet2, ConvertListOfSlabsToSegments_TopRow_Horizontal)
 
   // top row
   {
-    std::vector< std::pair<Point2D, Point2D> > segments;
+    std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
     std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
     AddSlabBoundaries(boundaries, slabCuts, 0);
     ProcessBoundaryList(segments, boundaries, slabCuts[0][0].ymin);
 
     ASSERT_EQ(2u, segments.size());
 
-    ASSERT_NEAR( 5.0, segments[0].first.x, DELTA_MAX);
-    ASSERT_NEAR(31.0, segments[0].second.x, DELTA_MAX);
-    ASSERT_NEAR( 0.0, segments[0].first.y, DELTA_MAX);
-    ASSERT_NEAR( 0.0, segments[0].second.y, DELTA_MAX);
+    ASSERT_NEAR( 5.0, segments[0].first.GetX(), DELTA_MAX);
+    ASSERT_NEAR(31.0, segments[0].second.GetX(), DELTA_MAX);
+    ASSERT_NEAR( 0.0, segments[0].first.GetY(), DELTA_MAX);
+    ASSERT_NEAR( 0.0, segments[0].second.GetY(), DELTA_MAX);
 
-    ASSERT_NEAR(36.0, segments[1].first.x, DELTA_MAX);
-    ASSERT_NEAR(50.0, segments[1].second.x, DELTA_MAX);
-    ASSERT_NEAR( 0.0, segments[1].first.y, DELTA_MAX);
-    ASSERT_NEAR( 0.0, segments[1].second.y, DELTA_MAX);
+    ASSERT_NEAR(36.0, segments[1].first.GetX(), DELTA_MAX);
+    ASSERT_NEAR(50.0, segments[1].second.GetX(), DELTA_MAX);
+    ASSERT_NEAR( 0.0, segments[1].first.GetY(), DELTA_MAX);
+    ASSERT_NEAR( 0.0, segments[1].second.GetY(), DELTA_MAX);
   }
 }
 
@@ -772,7 +772,7 @@ TEST(StructureSet2, ConvertListOfSlabsToSegments_All_Horizontal)
   {
     std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
     AddSlabBoundaries(boundaries, slabCuts, 0);
-    std::vector< std::pair<Point2D, Point2D> > segments;
+    std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
     ProcessBoundaryList(segments, boundaries, slabCuts[0][0].ymin);
   }
 
@@ -781,50 +781,50 @@ TEST(StructureSet2, ConvertListOfSlabsToSegments_All_Horizontal)
     std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
     AddSlabBoundaries(boundaries, slabCuts, 0);
     AddSlabBoundaries(boundaries, slabCuts, 1);
-    std::vector< std::pair<Point2D, Point2D> > segments;
+    std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
     ProcessBoundaryList(segments, boundaries, slabCuts[0][0].ymax);
 
     ASSERT_EQ(4u, segments.size());
 
-    ASSERT_NEAR(05.0, segments[0].first.x, DELTA_MAX);
-    ASSERT_NEAR(20.0, segments[0].second.x, DELTA_MAX);
-    ASSERT_NEAR(05.0, segments[0].first.y, DELTA_MAX);
-    ASSERT_NEAR(05.0, segments[0].second.y, DELTA_MAX);
+    ASSERT_NEAR(05.0, segments[0].first.GetX(), DELTA_MAX);
+    ASSERT_NEAR(20.0, segments[0].second.GetX(), DELTA_MAX);
+    ASSERT_NEAR(05.0, segments[0].first.GetY(), DELTA_MAX);
+    ASSERT_NEAR(05.0, segments[0].second.GetY(), DELTA_MAX);
 
-    ASSERT_NEAR(31.0, segments[1].first.x, DELTA_MAX);
-    ASSERT_NEAR(36.0, segments[1].second.x, DELTA_MAX);
-    ASSERT_NEAR(05.0, segments[1].first.y, DELTA_MAX);
-    ASSERT_NEAR(05.0, segments[1].second.y, DELTA_MAX);
+    ASSERT_NEAR(31.0, segments[1].first.GetX(), DELTA_MAX);
+    ASSERT_NEAR(36.0, segments[1].second.GetX(), DELTA_MAX);
+    ASSERT_NEAR(05.0, segments[1].first.GetY(), DELTA_MAX);
+    ASSERT_NEAR(05.0, segments[1].second.GetY(), DELTA_MAX);
 
-    ASSERT_NEAR(45.0, segments[2].first.x, DELTA_MAX);
-    ASSERT_NEAR(50.0, segments[2].second.x, DELTA_MAX);
-    ASSERT_NEAR(05.0, segments[2].first.y, DELTA_MAX);
-    ASSERT_NEAR(05.0, segments[2].second.y, DELTA_MAX);
+    ASSERT_NEAR(45.0, segments[2].first.GetX(), DELTA_MAX);
+    ASSERT_NEAR(50.0, segments[2].second.GetX(), DELTA_MAX);
+    ASSERT_NEAR(05.0, segments[2].first.GetY(), DELTA_MAX);
+    ASSERT_NEAR(05.0, segments[2].second.GetY(), DELTA_MAX);
 
-    ASSERT_NEAR(52.0, segments[3].first.x, DELTA_MAX);
-    ASSERT_NEAR(70.0, segments[3].second.x, DELTA_MAX);
-    ASSERT_NEAR(05.0, segments[3].first.y, DELTA_MAX);
-    ASSERT_NEAR(05.0, segments[3].second.y, DELTA_MAX);
+    ASSERT_NEAR(52.0, segments[3].first.GetX(), DELTA_MAX);
+    ASSERT_NEAR(70.0, segments[3].second.GetX(), DELTA_MAX);
+    ASSERT_NEAR(05.0, segments[3].first.GetY(), DELTA_MAX);
+    ASSERT_NEAR(05.0, segments[3].second.GetY(), DELTA_MAX);
   }
 
   // bottom row
   {
     std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
     AddSlabBoundaries(boundaries, slabCuts, 1);
-    std::vector< std::pair<Point2D, Point2D> > segments;
+    std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
     ProcessBoundaryList(segments, boundaries, slabCuts[1][0].ymax);
 
     ASSERT_EQ(2u, segments.size());
 
-    ASSERT_NEAR(20.0, segments[0].first.x, DELTA_MAX);
-    ASSERT_NEAR(45.0, segments[0].second.x, DELTA_MAX);
-    ASSERT_NEAR(10.0, segments[0].first.y, DELTA_MAX);
-    ASSERT_NEAR(10.0, segments[0].second.y, DELTA_MAX);
+    ASSERT_NEAR(20.0, segments[0].first.GetX(), DELTA_MAX);
+    ASSERT_NEAR(45.0, segments[0].second.GetX(), DELTA_MAX);
+    ASSERT_NEAR(10.0, segments[0].first.GetY(), DELTA_MAX);
+    ASSERT_NEAR(10.0, segments[0].second.GetY(), DELTA_MAX);
 
-    ASSERT_NEAR(52.0, segments[1].first.x, DELTA_MAX);
-    ASSERT_NEAR(70.0, segments[1].second.x, DELTA_MAX);
-    ASSERT_NEAR(10.0, segments[1].first.y, DELTA_MAX);
-    ASSERT_NEAR(10.0, segments[1].second.y, DELTA_MAX);
+    ASSERT_NEAR(52.0, segments[1].first.GetX(), DELTA_MAX);
+    ASSERT_NEAR(70.0, segments[1].second.GetX(), DELTA_MAX);
+    ASSERT_NEAR(10.0, segments[1].first.GetY(), DELTA_MAX);
+    ASSERT_NEAR(10.0, segments[1].second.GetY(), DELTA_MAX);
   }
 
 }
@@ -834,7 +834,7 @@ TEST(StructureSet2, ConvertListOfSlabsToSegments_Complete_Empty)
   std::vector< RtStructRectanglesInSlab > slabCuts;
   std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
 
-  std::vector< std::pair<Point2D, Point2D> > segments;
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
 
   ASSERT_NO_THROW(ConvertListOfSlabsToSegments(segments, slabCuts, 0));
   ASSERT_EQ(0u, segments.size());
@@ -846,312 +846,312 @@ TEST(StructureSet2, ConvertListOfSlabsToSegments_Complete_Regular)
   std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
   size_t totalRectCount = FillTestRectangleList(slabCuts);
 
-  std::vector< std::pair<Point2D, Point2D> > segments;
+  std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
 
   ASSERT_NO_THROW(ConvertListOfSlabsToSegments(segments, slabCuts, totalRectCount));
   ASSERT_EQ(60u, segments.size());
 
   size_t i = 0;
 
-  ASSERT_NEAR(segments[i].first.x, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 0.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 5.0000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 31.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 0.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 31.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 31.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 31.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 5.0000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 36.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 0.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 36.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 36.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 36.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 5.0000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 50.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 0.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 50.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 50.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 50.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 5.0000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 10.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 45.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 45.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 45.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 45.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 10.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 52.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 52.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 52.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 52.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 10.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 70.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 70.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 70.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 70.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 10.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 0.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 0.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 15.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 32.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 32.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 32.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 32.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 15.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 35.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 35.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 35.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 35.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 15.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 44.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 44.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 44.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 44.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 15.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 60.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 60.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 60.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 60.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 15.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 75.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 75.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 75.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 75.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 15.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 15.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 20.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 41.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 15.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 41.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 41.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 41.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 20.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 46.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 15.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 46.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 46.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 46.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 20.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 80.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 15.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 80.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 80.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 80.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 20.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 34.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 34.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 34.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 34.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 25.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 42.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 42.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 42.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 42.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 25.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 90.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 90.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 90.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 90.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 25.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 96.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 96.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 96.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 96.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 25.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 1.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 1.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 1.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 1.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 33.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 33.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 33.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 33.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 40.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 40.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 40.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 40.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 43.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 43.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 43.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 43.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 51.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 51.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 51.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 51.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 61.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 61.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 61.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 61.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 76.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 76.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 76.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 76.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 95.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 95.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 95.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 95.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 0.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 31.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 31.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 0.0000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 36.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 0.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 50.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 36.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 50.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 0.0000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 5.0000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 31.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 36.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 31.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 36.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 5.0000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 45.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 50.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 45.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 50.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 5.0000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 52.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 5.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 70.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 52.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 5.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 70.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 5.0000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 0.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 10.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 32.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 35.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 32.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 35.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 10.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 44.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 45.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 44.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 45.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 10.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 52.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 60.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 52.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 60.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 10.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 70.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 75.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 70.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 75.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 10.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 0.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 15.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 0.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 15.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 32.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 15.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 35.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 32.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 35.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 15.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 41.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 15.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 44.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 41.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 44.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 15.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 46.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 15.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 60.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 46.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 60.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 15.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 75.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 15.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 80.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 75.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 15.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 80.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 15.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 10.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 34.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 10.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 34.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 20.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 41.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 42.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 41.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 42.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 20.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 46.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 80.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 46.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 80.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 20.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 90.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 20.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 96.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 90.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 20.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 96.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 20.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 1.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 33.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 1.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 33.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 25.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 34.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 40.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 34.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 40.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 25.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 42.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 43.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 42.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 43.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 25.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 51.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 61.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 51.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 61.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 25.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 76.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 90.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 76.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 90.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 25.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 95.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 25.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 96.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 95.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 25.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 96.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 25.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 1.0000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 30.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 33.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 1.0000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 33.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 40.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 30.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 43.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 40.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 43.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 51.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 30.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 61.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 51.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 61.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
   i++;
-  ASSERT_NEAR(segments[i].first.x, 76.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].first.y, 30.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.x, 95.000000000000000, DELTA_MAX);
-  ASSERT_NEAR(segments[i].second.y, 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetX(), 76.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].first.GetY(), 30.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetX(), 95.000000000000000, DELTA_MAX);
+  ASSERT_NEAR(segments[i].second.GetY(), 30.000000000000000, DELTA_MAX);
 }
 
 #if defined(BGO_ENABLE_DICOMSTRUCTURESETLOADER2) && (ORTHANC_SANDBOXED != 1)

@@ -118,12 +118,12 @@ namespace OrthancStone
 
     // static
     void ProcessBoundaryList(
-      std::vector< std::pair<Point2D, Point2D> > & segments,
+      std::vector< std::pair<ScenePoint2D, ScenePoint2D> > & segments,
       const std::vector<std::pair<double, RectangleBoundaryKind> > & boundaries,
       double y)
     {
-      Point2D start;
-      Point2D end;
+      ScenePoint2D start;
+      ScenePoint2D end;
       int curNumberOfSegments = 0; // we count the number of segments. we only draw if it is 1 (not 0 or 2)
       for (size_t i = 0; i < boundaries.size(); ++i)
       {
@@ -138,14 +138,12 @@ namespace OrthancStone
             break;
           case 1:
             // a new segment has begun!
-            start.x = boundaries[i].first;
-            start.y = y;
+            start = ScenePoint2D(boundaries[i].first, y);
             break;
           case 2:
             // an extra segment has begun : stop the current one (we don't draw overlaps)
-            end.x = boundaries[i].first;
-            end.y = y;
-            segments.push_back(std::pair<Point2D, Point2D>(start, end));
+            end = ScenePoint2D(boundaries[i].first, y);
+            segments.push_back(std::pair<ScenePoint2D, ScenePoint2D>(start, end));
             break;
           default:
             //assert(false); // seen IRL ! 
@@ -158,14 +156,12 @@ namespace OrthancStone
           {
           case 0:
             // a lone (thus active) segment has ended.
-            end.x = boundaries[i].first;
-            end.y = y;
-            segments.push_back(std::pair<Point2D, Point2D>(start, end));
+            end = ScenePoint2D(boundaries[i].first, y);
+            segments.push_back(std::pair<ScenePoint2D, ScenePoint2D>(start, end));
             break;
           case 1:
             // an extra segment has ended : start a new one one
-            start.x = boundaries[i].first;
-            start.y = y;
+            start = ScenePoint2D(boundaries[i].first, y);
             break;
           default:
             // this should not happen!
@@ -182,7 +178,7 @@ namespace OrthancStone
 
 #if 0
     void ConvertListOfSlabsToSegments(
-      std::vector< std::pair<Point2D, Point2D> >& segments,
+      std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
       const std::vector<RtStructRectanglesInSlab>& slabCuts,
       const size_t totalRectCount)
     {
@@ -191,7 +187,7 @@ namespace OrthancStone
 #else
     // See https://www.dropbox.com/s/bllco6q8aazxk44/2019-09-18-rtstruct-cut-algorithm-rect-merge.png
     void ConvertListOfSlabsToSegments(
-      std::vector< std::pair<Point2D, Point2D> > & segments,
+      std::vector< std::pair<ScenePoint2D, ScenePoint2D> > & segments,
       const std::vector<RtStructRectanglesInSlab> & slabCuts,
       const size_t totalRectCount)
     {
@@ -210,14 +206,14 @@ namespace OrthancStone
         {
           const RtStructRectangleInSlab& rect = slabCuts[iSlab][iRect];
           {
-            Point2D p1(rect.xmin, rect.ymin);
-            Point2D p2(rect.xmin, rect.ymax);
-            segments.push_back(std::pair<Point2D, Point2D>(p1, p2));
+            ScenePoint2D p1(rect.xmin, rect.ymin);
+            ScenePoint2D p2(rect.xmin, rect.ymax);
+            segments.push_back(std::pair<ScenePoint2D, ScenePoint2D>(p1, p2));
           }
           {
-            Point2D p1(rect.xmax, rect.ymin);
-            Point2D p2(rect.xmax, rect.ymax);
-            segments.push_back(std::pair<Point2D, Point2D>(p1, p2));
+            ScenePoint2D p1(rect.xmax, rect.ymin);
+            ScenePoint2D p2(rect.xmax, rect.ymax);
+            segments.push_back(std::pair<ScenePoint2D, ScenePoint2D>(p1, p2));
           }
         }
       }

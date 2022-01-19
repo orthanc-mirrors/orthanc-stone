@@ -113,7 +113,7 @@ namespace OrthancStone
     connected rectangles together. Connected, here, means sharing at least part
     of an edge --> union/find data structures and algorithm.
     */
-    bool Project(std::vector< std::pair<Point2D, Point2D> >& polygons, const CoordinateSystem3D& plane) const;
+    bool Project(std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& polygons, const CoordinateSystem3D& plane) const;
 
     std::string                         interpretation_;
     std::string                         name_;
@@ -146,7 +146,7 @@ namespace OrthancStone
     void ComputeSliceThickness();
 
     std::vector<DicomStructurePolygon2> polygons_;
-    Vector3D                            normal_;
+    Vector                            normal_;
     double                              sliceThickness_;
 
     /*

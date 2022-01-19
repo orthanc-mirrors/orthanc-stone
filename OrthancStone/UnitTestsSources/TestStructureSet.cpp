@@ -31,6 +31,7 @@
 #  pragma warning(disable: 4748)
 #endif
 
+#include "../Sources/Toolbox/DicomStructureSet.h"
 #include "../Sources/Toolbox/DicomStructureSet2.h"
 #include "../Sources/Toolbox/DicomStructureSetUtils.h"
 #include "../Sources/Toolbox/DisjointDataSet.h"
@@ -87,7 +88,7 @@ static void CheckGroundTruth(
 
 #include <Toolbox.h>
 
-TEST(StructureSet, ReadFromJsonThatsAll)
+TEST(StructureSet2, ReadFromJsonThatsAll)
 {
   /*
     The "RT_STRUCT_00" string is the reply to the following Orthanc request:
@@ -99,11 +100,8 @@ TEST(StructureSet, ReadFromJsonThatsAll)
 
   DicomStructureSet2 structureSet;
 
-  Json::Value test;
-  Orthanc::Toolbox::ReadJson(test, Orthanc::EmbeddedResources::GetFileResourceBuffer(Orthanc::EmbeddedResources::RT_STRUCT_00),
-                             Orthanc::EmbeddedResources::GetFileResourceSize(Orthanc::EmbeddedResources::RT_STRUCT_00));
-
-  FullOrthancDataset dicom(test);
+  FullOrthancDataset dicom(Orthanc::EmbeddedResources::GetFileResourceBuffer(Orthanc::EmbeddedResources::RT_STRUCT_00),
+                           Orthanc::EmbeddedResources::GetFileResourceSize(Orthanc::EmbeddedResources::RT_STRUCT_00));
   structureSet.Clear();
 
   structureSet.FillStructuresFromDataset(dicom);
@@ -220,7 +218,7 @@ TEST(StructureSet, ReadFromJsonThatsAll)
 
 #if 0
 
-TEST(StructureSet, ReadFromJsonAndCompute1)
+TEST(StructureSet2, ReadFromJsonAndCompute1)
 {
   DicomStructureSet2 structureSet;
 
@@ -232,7 +230,7 @@ TEST(StructureSet, ReadFromJsonAndCompute1)
   structureSet.ComputeDependentProperties();
 }
 
-TEST(StructureSet, ReadFromJsonAndCompute2)
+TEST(StructureSet2, ReadFromJsonAndCompute2)
 {
   DicomStructureSet2 structureSet;
 
@@ -301,7 +299,7 @@ static void CreateBasicStructure(DicomStructure2& structure)
 }
 
 
-TEST(StructureSet, CutAxialOutsideTop)
+TEST(StructureSet2, CutAxialOutsideTop)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
@@ -317,7 +315,7 @@ TEST(StructureSet, CutAxialOutsideTop)
 }
 
 
-TEST(StructureSet, CutAxialOutsideBottom)
+TEST(StructureSet2, CutAxialOutsideBottom)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
@@ -332,7 +330,7 @@ TEST(StructureSet, CutAxialOutsideBottom)
   EXPECT_FALSE(ok);
 }
 
-TEST(StructureSet, CutAxialInsideClose)
+TEST(StructureSet2, CutAxialInsideClose)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
@@ -361,7 +359,7 @@ TEST(StructureSet, CutAxialInsideClose)
 }
 
 
-TEST(StructureSet, CutAxialInsideFar)
+TEST(StructureSet2, CutAxialInsideFar)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
@@ -394,7 +392,7 @@ TEST(StructureSet, CutAxialInsideFar)
   }
 }
 
-TEST(StructureSet, CutCoronalOutsideClose)
+TEST(StructureSet2, CutCoronalOutsideClose)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
@@ -412,7 +410,7 @@ TEST(StructureSet, CutCoronalOutsideClose)
   EXPECT_FALSE(ok);
 }
 
-TEST(StructureSet, CutCoronalInsideClose1DTest)
+TEST(StructureSet2, CutCoronalInsideClose1DTest)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
@@ -451,7 +449,7 @@ TEST(StructureSet, CutCoronalInsideClose1DTest)
   }
 }
 
-TEST(StructureSet, CutCoronalInsideClose)
+TEST(StructureSet2, CutCoronalInsideClose)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
@@ -549,7 +547,7 @@ TEST(DisjointDataSet, BasicTest)
 
 #ifdef BGO_ENABLE_DICOMSTRUCTURESETLOADER2
 
-TEST(StructureSet, CutSagittalInsideClose)
+TEST(StructureSet2, CutSagittalInsideClose)
 {
   DicomStructure2 structure;
   CreateBasicStructure(structure);
@@ -637,7 +635,7 @@ void ProcessBoundaryList(
 */
 
 
-TEST(StructureSet, ProcessBoundaryList_Empty)
+TEST(StructureSet2, ProcessBoundaryList_Empty)
 {
   std::vector< RtStructRectanglesInSlab > slabCuts;
   std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
@@ -647,7 +645,7 @@ TEST(StructureSet, ProcessBoundaryList_Empty)
   ASSERT_EQ(0u, boundaries.size());
 }
 
-TEST(StructureSet, ProcessBoundaryListTopRow)
+TEST(StructureSet2, ProcessBoundaryListTopRow)
 {
   std::vector< RtStructRectanglesInSlab > slabCuts;
   std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
@@ -678,7 +676,7 @@ TEST(StructureSet, ProcessBoundaryListTopRow)
   }
 }
 
-TEST(StructureSet, ProcessBoundaryListRows_0_and_1)
+TEST(StructureSet2, ProcessBoundaryListRows_0_and_1)
 {
   std::vector< RtStructRectanglesInSlab > slabCuts;
   std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
@@ -727,7 +725,7 @@ TEST(StructureSet, ProcessBoundaryListRows_0_and_1)
   }
 }
 
-TEST(StructureSet, ConvertListOfSlabsToSegments_EmptyBoundaries)
+TEST(StructureSet2, ConvertListOfSlabsToSegments_EmptyBoundaries)
 {
   std::vector< RtStructRectanglesInSlab > slabCuts;
   std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
@@ -738,7 +736,7 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_EmptyBoundaries)
   ASSERT_EQ(0u, segments.size());
 }
 
-TEST(StructureSet, ConvertListOfSlabsToSegments_TopRow_Horizontal)
+TEST(StructureSet2, ConvertListOfSlabsToSegments_TopRow_Horizontal)
 {
   std::vector< RtStructRectanglesInSlab > slabCuts;
   FillTestRectangleList(slabCuts);
@@ -764,7 +762,7 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_TopRow_Horizontal)
   }
 }
 
-TEST(StructureSet, ConvertListOfSlabsToSegments_All_Horizontal)
+TEST(StructureSet2, ConvertListOfSlabsToSegments_All_Horizontal)
 {
   std::vector< RtStructRectanglesInSlab > slabCuts;
   std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
@@ -831,7 +829,7 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_All_Horizontal)
 
 }
 
-TEST(StructureSet, ConvertListOfSlabsToSegments_Complete_Empty)
+TEST(StructureSet2, ConvertListOfSlabsToSegments_Complete_Empty)
 {
   std::vector< RtStructRectanglesInSlab > slabCuts;
   std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
@@ -842,7 +840,7 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_Complete_Empty)
   ASSERT_EQ(0u, segments.size());
 }
 
-TEST(StructureSet, ConvertListOfSlabsToSegments_Complete_Regular)
+TEST(StructureSet2, ConvertListOfSlabsToSegments_Complete_Regular)
 {
   std::vector< RtStructRectanglesInSlab > slabCuts;
   std::vector<std::pair<double, RectangleBoundaryKind> > boundaries;
@@ -1160,7 +1158,7 @@ TEST(StructureSet, ConvertListOfSlabsToSegments_Complete_Regular)
 
 #include <SystemToolbox.h>
 
-TEST(StructureSet, ReadFromJsonPart2)
+TEST(StructureSet2, ReadFromJsonPart2)
 {
   DicomStructureSet2 structureSet;
   std::string jsonText;
@@ -1178,3 +1176,67 @@ TEST(StructureSet, ReadFromJsonPart2)
 
 #endif 
 // BGO_ENABLE_DICOMSTRUCTURESETLOADER2
+
+
+TEST(StructureSet, ReadFromJson)
+{
+  FullOrthancDataset dicom(Orthanc::EmbeddedResources::GetFileResourceBuffer(Orthanc::EmbeddedResources::RT_STRUCT_00),
+                           Orthanc::EmbeddedResources::GetFileResourceSize(Orthanc::EmbeddedResources::RT_STRUCT_00));
+
+  DicomStructureSet rtstruct(dicom);
+
+  ASSERT_DOUBLE_EQ(0.0, rtstruct.GetEstimatedNormal() [0]);
+  ASSERT_DOUBLE_EQ(0.0, rtstruct.GetEstimatedNormal() [1]);
+  ASSERT_DOUBLE_EQ(1.0, rtstruct.GetEstimatedNormal() [2]);
+  ASSERT_DOUBLE_EQ(3.0, rtstruct.GetEstimatedSliceThickness());
+
+  // (0x3006, 0x0080) seq. size
+  ASSERT_EQ(7u, rtstruct.GetStructuresCount());
+
+  // (0x3006, 0x0080)[i]/(0x3006, 0x00a4)
+  for (size_t i = 0; i < 5; ++i)
+  {
+    ASSERT_EQ("ORGAN", rtstruct.GetStructureInterpretation(i));
+  }
+  
+  ASSERT_EQ("EXTERNAL", rtstruct.GetStructureInterpretation(5));
+  ASSERT_EQ("PTV", rtstruct.GetStructureInterpretation(6));
+
+  // (0x3006, 0x0020)[i]/(0x3006, 0x0026)
+  ASSERT_EQ("LN300", rtstruct.GetStructureName(0));
+  ASSERT_EQ("Cortical Bone", rtstruct.GetStructureName(1));
+  ASSERT_EQ("Adipose", rtstruct.GetStructureName(2));
+  ASSERT_EQ("CB2-50%", rtstruct.GetStructureName(3));
+  ASSERT_EQ("Water", rtstruct.GetStructureName(4));
+  ASSERT_EQ("External", rtstruct.GetStructureName(5));
+  ASSERT_EQ("PTV", rtstruct.GetStructureName(6));
+
+  // (0x3006, 0x0039)[i]/(0x3006, 0x002a)
+  ASSERT_EQ(255, rtstruct.GetStructureColor(0).GetRed());
+  ASSERT_EQ(0, rtstruct.GetStructureColor(0).GetGreen());
+  ASSERT_EQ(0, rtstruct.GetStructureColor(0).GetBlue());
+
+  ASSERT_EQ(0, rtstruct.GetStructureColor(1).GetRed());
+  ASSERT_EQ(255, rtstruct.GetStructureColor(1).GetGreen());
+  ASSERT_EQ(255, rtstruct.GetStructureColor(1).GetBlue());
+
+  ASSERT_EQ(255, rtstruct.GetStructureColor(2).GetRed());
+  ASSERT_EQ(0, rtstruct.GetStructureColor(2).GetGreen());
+  ASSERT_EQ(255, rtstruct.GetStructureColor(2).GetBlue());
+
+  ASSERT_EQ(0, rtstruct.GetStructureColor(3).GetRed());
+  ASSERT_EQ(0, rtstruct.GetStructureColor(3).GetGreen());
+  ASSERT_EQ(255, rtstruct.GetStructureColor(3).GetBlue());
+
+  ASSERT_EQ(0, rtstruct.GetStructureColor(4).GetRed());
+  ASSERT_EQ(128, rtstruct.GetStructureColor(4).GetGreen());
+  ASSERT_EQ(255, rtstruct.GetStructureColor(4).GetBlue());
+
+  ASSERT_EQ(0, rtstruct.GetStructureColor(5).GetRed());
+  ASSERT_EQ(128, rtstruct.GetStructureColor(5).GetGreen());
+  ASSERT_EQ(0, rtstruct.GetStructureColor(5).GetBlue());
+
+  ASSERT_EQ(255, rtstruct.GetStructureColor(6).GetRed());
+  ASSERT_EQ(0, rtstruct.GetStructureColor(6).GetGreen());
+  ASSERT_EQ(255, rtstruct.GetStructureColor(6).GetBlue());
+}

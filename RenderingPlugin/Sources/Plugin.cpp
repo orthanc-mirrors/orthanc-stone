@@ -659,6 +659,43 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
                            const char* url,
                            const OrthancPluginHttpRequest* request)
 {
+  class XorFiller : public Orthanc::ImageProcessing::IPolygonFiller
+  {
+  private:
+    Orthanc::Image  image_;
+
+  public:
+    XorFiller(unsigned int width,
+              unsigned int height) :
+      image_(Orthanc::PixelFormat_Grayscale8, width, height, false)
+    {
+      Orthanc::ImageProcessing::Set(image_, 0);
+    }
+
+    const Orthanc::ImageAccessor& GetImage() const
+    {
+      return image_;
+    }
+
+    virtual void Fill(int y,
+                      int x1,
+                      int x2) ORTHANC_OVERRIDE
+    {
+      assert(x1 > 0 &&
+             x1 <= x2 &&
+             x2 < static_cast<int>(image_.GetWidth()) &&
+             y > 0 &&
+             y < static_cast<int>(image_.GetHeight()));
+      
+      uint8_t* p = reinterpret_cast<uint8_t*>(image_.GetRow(y)) + x1;
+
+      for (int i = x1; i <= x2; i++, p++)
+      {
+        *p = (*p ^ 0xff);
+      }
+    }
+  };
+  
   DataAugmentationParameters dataAugmentation;
   std::string structureName;
   std::string instanceId;
@@ -735,9 +772,7 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
     accessor.GetRtStruct().GetStructurePoints(polygons, structureIndex, parameters->GetSopInstanceUid());
   }
 
-  Orthanc::Image tmp(Orthanc::PixelFormat_Grayscale8, parameters->GetWidth(), parameters->GetHeight(), false);
-  Orthanc::ImageProcessing::Set(tmp, 0);
-  
+  XorFiller filler(parameters->GetWidth(), parameters->GetHeight());
   OrthancStone::AffineTransform2D transform = dataAugmentation.ComputeTransform(parameters->GetWidth(), parameters->GetHeight());
   
   for (std::list< std::vector<OrthancStone::Vector> >::const_iterator
@@ -758,10 +793,10 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
       points.push_back(Orthanc::ImageProcessing::ImagePoint(x, y));
     }
 
-    Orthanc::ImageProcessing::FillPolygon(tmp, points, 255);
+    Orthanc::ImageProcessing::FillPolygon(filler, points);
   }
 
-  AnswerNumpyImage(output, tmp, compress);
+  AnswerNumpyImage(output, filler.GetImage(), compress);
 }
 
 

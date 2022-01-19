@@ -23,6 +23,8 @@
 
 #include <gtest/gtest.h>
 
+#include "../Sources/Toolbox/BucketAccumulator1D.h"
+#include "../Sources/Toolbox/BucketAccumulator2D.h"
 #include "../Sources/Toolbox/Internals/OrientedIntegerLine2D.h"
 #include "../Sources/Toolbox/Internals/RectanglesIntegerProjection.h"
 #include "../Sources/Toolbox/LinearAlgebra.h"
@@ -1007,312 +1009,6 @@ TEST(LinearAlgebra, ComputeMedian)
 }
 
 
-
-
-
-
-namespace OrthancStone
-{
-  namespace Internals
-  {
-    class BucketMapper : public boost::noncopyable
-    {
-    private:
-      double  minValue_;
-      double  maxValue_;
-      size_t  bucketsCount_;
-
-    public:
-      BucketMapper(double minValue,
-                   double maxValue,
-                   size_t bucketsCount) :
-        minValue_(minValue),
-        maxValue_(maxValue),
-        bucketsCount_(bucketsCount)
-      {
-        if (minValue >= maxValue ||
-            bucketsCount <= 0)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-        }    
-      }                   
-
-      size_t GetSize() const
-      {
-        return bucketsCount_;
-      }
-
-      void CheckIndex(size_t i) const
-      {
-        if (i >= bucketsCount_)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-        }
-      }
-
-      double GetBucketLow(size_t i) const
-      {
-        CheckIndex(i);
-        double alpha = static_cast<double>(i) / static_cast<double>(bucketsCount_);
-        return (1.0 - alpha) * minValue_ + alpha * maxValue_;
-      }
-
-      double GetBucketHigh(size_t i) const
-      {    
-        CheckIndex(i);
-        double alpha = static_cast<double>(i + 1) / static_cast<double>(bucketsCount_);
-        return (1.0 - alpha) * minValue_ + alpha * maxValue_;
-      }
-
-      double GetBucketCenter(size_t i) const
-      {    
-        CheckIndex(i);
-        double alpha = (static_cast<double>(i) + 0.5) / static_cast<double>(bucketsCount_);
-        return (1.0 - alpha) * minValue_ + alpha * maxValue_;
-      }
-    
-      size_t GetBucketIndex(double value) const
-      {
-        if (value < minValue_ ||
-            value > maxValue_)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-        }
-        else
-        {
-          double tmp = (value - minValue_) / (maxValue_ - minValue_) * static_cast<double>(bucketsCount_);
-          assert(tmp >= 0 && tmp <= static_cast<double>(bucketsCount_));
-
-          size_t bucket = static_cast<unsigned int>(std::floor(tmp));
-          if (bucket == bucketsCount_)  // This is the case if "value == maxValue_"
-          {
-            return bucketsCount_ - 1;
-          }
-          else
-          {
-            return bucket;
-          }
-        }
-      }    
-    };
-  }
-
-  
-  class BucketAccumulator1D : public boost::noncopyable
-  {
-  private:
-    struct Bucket
-    {
-      size_t             count_;
-      std::list<double>  values_;
-    };
-    
-    Internals::BucketMapper  mapper_;
-    std::vector<Bucket>      buckets_;
-    bool                     storeValues_;
-
-  public:
-    BucketAccumulator1D(double minValue,
-                        double maxValue,
-                        size_t countBuckets,
-                        bool storeValues) :
-      mapper_(minValue, maxValue, countBuckets),
-      buckets_(countBuckets),
-      storeValues_(storeValues)
-    {
-    }
-
-    size_t GetSize() const
-    {
-      return mapper_.GetSize();
-    }
-
-    double GetBucketLow(size_t i) const
-    {
-      return mapper_.GetBucketLow(i);
-    }
-
-    double GetBucketHigh(size_t i) const
-    {    
-      return mapper_.GetBucketHigh(i);
-    }
-
-    double GetBucketCenter(size_t i) const
-    {    
-      return mapper_.GetBucketCenter(i);
-    }
-    
-    size_t GetBucketContentSize(size_t i) const
-    {
-      mapper_.CheckIndex(i);
-      return buckets_[i].count_;
-    }
-
-    void AddValue(double value)
-    {
-      Bucket& bucket = buckets_[mapper_.GetBucketIndex(value)];
-
-      bucket.count_++;
-
-      if (storeValues_)
-      {
-        bucket.values_.push_back(value);
-      }
-    }
-
-    size_t FindBestBucket() const
-    {
-      size_t best = 0;
-
-      for (size_t i = 0; i < buckets_.size(); i++)
-      {
-        if (buckets_[i].count_ > buckets_[best].count_)
-        {
-          best = i;
-        }
-      }
-    
-      return best;
-    }
-
-    double ComputeBestCenter() const
-    {
-      return GetBucketCenter(FindBestBucket());
-    }
-
-    double ComputeBestMedian() const
-    {
-      if (!storeValues_)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      
-      const std::list<double>& values = buckets_[FindBestBucket()].values_;
-
-      std::vector<double> v;
-      v.reserve(values.size());
-      for (std::list<double>::const_iterator it = values.begin(); it != values.end(); ++it)
-      {
-        v.push_back(*it);
-      }
-
-      return LinearAlgebra::ComputeMedian(v);
-    }
-  };
-
-
-  class BucketAccumulator2D : public boost::noncopyable
-  {
-  private:
-    struct Bucket
-    {
-      size_t             count_;
-      std::list<double>  valuesX_;
-      std::list<double>  valuesY_;
-    };
-    
-    Internals::BucketMapper  mapperX_;
-    Internals::BucketMapper  mapperY_;
-    std::vector<Bucket>      buckets_;
-    bool                     storeValues_;
-
-    size_t FindBestInternal() const
-    {
-      size_t best = 0;
-
-      for (size_t i = 0; i < buckets_.size(); i++)
-      {
-        if (buckets_[i].count_ > buckets_[best].count_)
-        {
-          best = i;
-        }
-      }
-
-      return best;
-    }
-
-  public:
-    BucketAccumulator2D(double minValueX,
-                        double maxValueX,
-                        size_t countBucketsX,
-                        double minValueY,
-                        double maxValueY,
-                        size_t countBucketsY,
-                        bool storeValues) :
-      mapperX_(minValueX, maxValueX, countBucketsX),
-      mapperY_(minValueY, maxValueY, countBucketsY),
-      buckets_(countBucketsX * countBucketsY),
-      storeValues_(storeValues)
-    {
-    }
-
-    void AddValue(double valueX,
-                  double valueY)
-    {
-      size_t x = mapperX_.GetBucketIndex(valueX);
-      size_t y = mapperY_.GetBucketIndex(valueY);
-      
-      Bucket& bucket = buckets_[x + y * mapperX_.GetSize()];
-
-      bucket.count_++;
-
-      if (storeValues_)
-      {
-        bucket.valuesX_.push_back(valueX);
-        bucket.valuesY_.push_back(valueY);
-      }
-    }
-
-    void FindBestBucket(size_t& bucketX,
-                        size_t& bucketY) const
-    {
-      size_t best = FindBestInternal();
-      bucketX = best % mapperX_.GetSize();
-      bucketY = best / mapperX_.GetSize();
-    }
-
-    void ComputeBestCenter(double& x,
-                           double& y) const
-    {
-      size_t bucketX, bucketY;
-      FindBestBucket(bucketX, bucketY);
-      x = mapperX_.GetBucketCenter(bucketX);
-      y = mapperY_.GetBucketCenter(bucketY);
-    }
-
-    void ComputeBestMedian(double& x,
-                           double& y) const
-    {
-      if (!storeValues_)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      
-      const std::list<double>& valuesX = buckets_[FindBestInternal()].valuesX_;
-      const std::list<double>& valuesY = buckets_[FindBestInternal()].valuesY_;
-
-      std::vector<double> v;
-      v.reserve(valuesX.size());
-      for (std::list<double>::const_iterator it = valuesX.begin(); it != valuesX.end(); ++it)
-      {
-        v.push_back(*it);
-      }
-
-      x = LinearAlgebra::ComputeMedian(v);
-
-      v.clear();
-      v.reserve(valuesY.size());
-      for (std::list<double>::const_iterator it = valuesY.begin(); it != valuesY.end(); ++it)
-      {
-        v.push_back(*it);
-      }
-
-      y = LinearAlgebra::ComputeMedian(v);
-    }
-  };
-}
-
-
 TEST(BucketAccumulator1D, Basic)
 {
   for (int storeValues = 0; storeValues <= 1; storeValues++)
@@ -1340,6 +1036,19 @@ TEST(BucketAccumulator1D, Basic)
     ASSERT_EQ(0u, b.GetBucketContentSize(2));
     ASSERT_EQ(0u, b.GetBucketContentSize(3));
 
+    ASSERT_THROW(b.GetBucketIndex(-10.0001), Orthanc::OrthancException);
+    ASSERT_EQ(0u, b.GetBucketIndex(-10));
+    ASSERT_EQ(0u, b.GetBucketIndex(-0.0001));
+    ASSERT_EQ(1u, b.GetBucketIndex(0));
+    ASSERT_EQ(1u, b.GetBucketIndex(9.9999));
+    ASSERT_EQ(2u, b.GetBucketIndex(10));
+    ASSERT_EQ(2u, b.GetBucketIndex(19.9999));
+    ASSERT_EQ(3u, b.GetBucketIndex(20));
+    ASSERT_EQ(3u, b.GetBucketIndex(30));
+    ASSERT_THROW(b.GetBucketIndex(30.0001), Orthanc::OrthancException);
+
+    ASSERT_EQ(0u, b.FindBestBucket());
+    ASSERT_DOUBLE_EQ(-5.0, b.ComputeBestCenter());
     ASSERT_THROW(b.ComputeBestMedian(), Orthanc::OrthancException);  // No data point
 
     b.AddValue(-10.0);
@@ -1349,10 +1058,12 @@ TEST(BucketAccumulator1D, Basic)
     b.AddValue(20.0);
     b.AddValue(29.9999);
     b.AddValue(30.0);
+    ASSERT_THROW(b.AddValue(-10.00001), Orthanc::OrthancException);
     ASSERT_THROW(b.AddValue(30.00001), Orthanc::OrthancException);
 
     ASSERT_EQ(3u, b.FindBestBucket());
-    ASSERT_EQ(25.0, b.ComputeBestCenter());
+    ASSERT_EQ(3u, b.GetBucketContentSize(b.FindBestBucket()));
+    ASSERT_DOUBLE_EQ(25.0, b.ComputeBestCenter());
   
     ASSERT_EQ(1u, b.GetBucketContentSize(0));
     ASSERT_EQ(2u, b.GetBucketContentSize(1));
@@ -1365,7 +1076,7 @@ TEST(BucketAccumulator1D, Basic)
     }
     else
     {
-      ASSERT_EQ(29.9999, b.ComputeBestMedian());
+      ASSERT_DOUBLE_EQ(29.9999, b.ComputeBestMedian());
     }
   }
 }
@@ -1376,14 +1087,92 @@ TEST(BucketAccumulator2D, Basic)
   {
     OrthancStone::BucketAccumulator2D b(-10, 30, 4,
                                         0, 3, 3, storeValues != 0);
+    
+    size_t bx, by;
+    b.FindBestBucket(bx, by);
+    ASSERT_EQ(0u, bx);
+    ASSERT_EQ(0u, by);
 
+    for (by = 0; by < 3; by++)
+    {
+      for (bx = 0; bx < 4; bx++)
+      {
+        ASSERT_EQ(0u, b.GetBucketContentSize(bx, by));
+      }
+    }
+
+    b.GetSize(bx, by);
+    ASSERT_EQ(4u, bx);
+    ASSERT_EQ(3u, by);
+
+    ASSERT_DOUBLE_EQ(-10.0, b.GetBucketLowX(0));
+    ASSERT_DOUBLE_EQ(0.0, b.GetBucketLowX(1));
+    ASSERT_DOUBLE_EQ(10.0, b.GetBucketLowX(2));
+    ASSERT_DOUBLE_EQ(20.0, b.GetBucketLowX(3));
+    ASSERT_THROW(b.GetBucketLowX(4), Orthanc::OrthancException);
+
+    ASSERT_DOUBLE_EQ(0.0, b.GetBucketLowY(0));
+    ASSERT_DOUBLE_EQ(1.0, b.GetBucketLowY(1));
+    ASSERT_DOUBLE_EQ(2.0, b.GetBucketLowY(2));
+    ASSERT_THROW(b.GetBucketLowY(3), Orthanc::OrthancException);
+
+    ASSERT_DOUBLE_EQ(0.0, b.GetBucketHighX(0));
+    ASSERT_DOUBLE_EQ(10.0, b.GetBucketHighX(1));
+    ASSERT_DOUBLE_EQ(20.0, b.GetBucketHighX(2));
+    ASSERT_DOUBLE_EQ(30.0, b.GetBucketHighX(3));
+    ASSERT_THROW(b.GetBucketHighX(4), Orthanc::OrthancException);
+
+    ASSERT_DOUBLE_EQ(1.0, b.GetBucketHighY(0));
+    ASSERT_DOUBLE_EQ(2.0, b.GetBucketHighY(1));
+    ASSERT_DOUBLE_EQ(3.0, b.GetBucketHighY(2));
+    ASSERT_THROW(b.GetBucketHighY(3), Orthanc::OrthancException);
+
+    ASSERT_DOUBLE_EQ(-5.0, b.GetBucketCenterX(0));
+    ASSERT_DOUBLE_EQ(5.0, b.GetBucketCenterX(1));
+    ASSERT_DOUBLE_EQ(15.0, b.GetBucketCenterX(2));
+    ASSERT_DOUBLE_EQ(25.0, b.GetBucketCenterX(3));
+    ASSERT_THROW(b.GetBucketCenterX(4), Orthanc::OrthancException);
+
+    ASSERT_DOUBLE_EQ(0.5, b.GetBucketCenterY(0));
+    ASSERT_DOUBLE_EQ(1.5, b.GetBucketCenterY(1));
+    ASSERT_DOUBLE_EQ(2.5, b.GetBucketCenterY(2));
+    ASSERT_THROW(b.GetBucketCenterY(3), Orthanc::OrthancException);
+
+    b.GetBucketIndex(bx, by, 5, 2.5);
+    ASSERT_EQ(1u, bx);
+    ASSERT_EQ(2u, by);
+    b.AddValue(4.5, 2.2);
+    ASSERT_THROW(b.AddValue(-10.001, 2), Orthanc::OrthancException);
+    ASSERT_THROW(b.AddValue(30.001, 2), Orthanc::OrthancException);
+    ASSERT_THROW(b.AddValue(0, -0.0001), Orthanc::OrthancException);
+    ASSERT_THROW(b.AddValue(0, 3.0001), Orthanc::OrthancException);
+    
+    b.FindBestBucket(bx, by);
+    ASSERT_EQ(1u, bx);
+    ASSERT_EQ(2u, by);
+
+    for (by = 0; by < 3; by++)
+    {
+      for (bx = 0; bx < 4; bx++)
+      {
+        ASSERT_EQ((bx == 1u && by == 2u) ? 1u : 0u, b.GetBucketContentSize(bx, by));
+      }
+    }
+    
+    double dx, dy;
+    b.ComputeBestCenter(dx, dy);
+    ASSERT_DOUBLE_EQ(5.0, dx);
+    ASSERT_DOUBLE_EQ(2.5, dy);
+    
     if (storeValues == 0)
     {
-      //ASSERT_THROW(b.ComputeBestMedian(), Orthanc::OrthancException);
+      ASSERT_THROW(b.ComputeBestMedian(dx, dy), Orthanc::OrthancException);
     }
     else
     {
-      //ASSERT_EQ(29.9999, b.ComputeBestMedian());
+      b.ComputeBestMedian(dx, dy);
+      ASSERT_DOUBLE_EQ(4.5, dx);
+      ASSERT_DOUBLE_EQ(2.2, dy);
     }
   }
 }

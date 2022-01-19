@@ -131,7 +131,7 @@ if (ENABLE_OPENGL)
     # 'shared:WARNING: emcc: cannot find library "nul"'.
     include(FindOpenGL)
     if (NOT OPENGL_FOUND)
-      message(FATAL_ERROR "Cannot find OpenGL on your system")
+      message(FATAL_ERROR "Cannot find OpenGL on your system. Please install the libgl-dev package.")
     endif()
 
     link_libraries(${OPENGL_LIBRARIES})
@@ -395,6 +395,10 @@ list(APPEND ORTHANC_STONE_SOURCES
 
   ${ORTHANC_STONE_ROOT}/Toolbox/AffineTransform2D.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/AffineTransform2D.h
+  ${ORTHANC_STONE_ROOT}/Toolbox/BucketAccumulator1D.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/BucketAccumulator1D.h
+  ${ORTHANC_STONE_ROOT}/Toolbox/BucketAccumulator2D.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/BucketAccumulator2D.h
   ${ORTHANC_STONE_ROOT}/Toolbox/CoordinateSystem3D.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/CoordinateSystem3D.h
   ${ORTHANC_STONE_ROOT}/Toolbox/DicomInstanceParameters.cpp
@@ -424,6 +428,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/ImageGeometry.h
   ${ORTHANC_STONE_ROOT}/Toolbox/ImageToolbox.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/ImageToolbox.h
+  ${ORTHANC_STONE_ROOT}/Toolbox/Internals/BucketMapper.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/Internals/BucketMapper.h
   ${ORTHANC_STONE_ROOT}/Toolbox/Internals/OrientedIntegerLine2D.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/Internals/OrientedIntegerLine2D.h
   ${ORTHANC_STONE_ROOT}/Toolbox/Internals/RectanglesIntegerProjection.cpp

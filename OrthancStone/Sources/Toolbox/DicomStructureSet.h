@@ -195,12 +195,6 @@ namespace OrthancStone
 
     Color GetStructureColor(size_t index) const;
 
-    // TODO - remove
-    void GetStructureColor(uint8_t& red,
-                           uint8_t& green,
-                           uint8_t& blue,
-                           size_t index) const;
-
     void GetReferencedInstances(std::set<std::string>& instances) const;
 
     void AddReferencedSlice(const std::string& sopInstanceUid,

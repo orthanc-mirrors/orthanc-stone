@@ -31,8 +31,6 @@
 #  pragma warning(disable: 4748)
 #endif
 
-#include "../Sources/Loaders/DicomStructureSetLoader.h"
-#include "../Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
 #include "../Sources/Toolbox/DicomStructureSet2.h"
 #include "../Sources/Toolbox/DicomStructureSetUtils.h"
 #include "../Sources/Toolbox/DisjointDataSet.h"
@@ -106,7 +104,6 @@ TEST(StructureSet, ReadFromJsonThatsAll)
                              Orthanc::EmbeddedResources::GetFileResourceSize(Orthanc::EmbeddedResources::RT_STRUCT_00));
 
   FullOrthancDataset dicom(test);
-  //loader.content_.reset(new DicomStructureSet(dicom));
   structureSet.Clear();
 
   structureSet.FillStructuresFromDataset(dicom);
@@ -228,7 +225,6 @@ TEST(StructureSet, ReadFromJsonAndCompute1)
   DicomStructureSet2 structureSet;
 
   OrthancPlugins::FullOrthancDataset dicom(GetTestJson());
-  //loader.content_.reset(new DicomStructureSet(dicom));
   structureSet.Clear();
 
   structureSet.FillStructuresFromDataset(dicom);
@@ -241,7 +237,6 @@ TEST(StructureSet, ReadFromJsonAndCompute2)
   DicomStructureSet2 structureSet;
 
   OrthancPlugins::FullOrthancDataset dicom(GetTestJson());
-  //loader.content_.reset(new DicomStructureSet(dicom));
   structureSet.Clear();
 
   structureSet.SetContents(dicom);
@@ -1173,7 +1168,6 @@ TEST(StructureSet, ReadFromJsonPart2)
   Orthanc::SystemToolbox::ReadFile(jsonText, "72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json");
 
   FullOrthancDataset dicom(jsonText);
-  //loader.content_.reset(new DicomStructureSet(dicom));
   structureSet.Clear();
 
   structureSet.FillStructuresFromDataset(dicom);

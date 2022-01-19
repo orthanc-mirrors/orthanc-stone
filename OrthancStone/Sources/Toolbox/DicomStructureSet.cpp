@@ -694,18 +694,6 @@ namespace OrthancStone
   }
   
     
-  void DicomStructureSet::GetStructureColor(uint8_t& red,
-                                            uint8_t& green,
-                                            uint8_t& blue,
-                                            size_t index) const
-  {
-    const Structure& s = GetStructure(index);
-    red = s.red_;
-    green = s.green_;
-    blue = s.blue_;
-  }
-
-
   void DicomStructureSet::GetReferencedInstances(std::set<std::string>& instances) const
   {
     for (Structures::const_iterator structure = structures_.begin();

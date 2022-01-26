@@ -95,7 +95,7 @@ namespace OrthancStone
     */
     void SetArgument(const std::string& key, const std::string& value);
 
-    const VolumeImageGeometry& GetMainGeometry();
+    VolumeImageGeometry GetMainGeometry();
 
     static boost::shared_ptr<RtViewerApp> Create();
 

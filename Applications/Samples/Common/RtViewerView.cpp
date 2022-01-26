@@ -206,7 +206,7 @@ namespace OrthancStone
 
   void RtViewerView::RetrieveGeometry()
   {
-    const VolumeImageGeometry& geometry = GetApp()->GetMainGeometry();
+    VolumeImageGeometry geometry = GetApp()->GetMainGeometry();
 
     const unsigned int depth = geometry.GetProjectionDepth(projection_);
     currentPlane_ = depth / 2;

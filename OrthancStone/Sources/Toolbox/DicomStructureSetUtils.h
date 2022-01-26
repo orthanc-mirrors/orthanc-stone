@@ -49,12 +49,18 @@ namespace OrthancStone
 #endif
 
   /** Internal */
-  void ConvertListOfSlabsToSegments(std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments, const std::vector<RtStructRectanglesInSlab>& slabCuts, const size_t totalRectCount);
+  void ConvertListOfSlabsToSegments(std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
+                                    const std::vector<RtStructRectanglesInSlab>& slabCuts,
+                                    const size_t totalRectCount);
 
   /** Internal */
-  void AddSlabBoundaries(std::vector<std::pair<double, RectangleBoundaryKind> >& boundaries, const std::vector<RtStructRectanglesInSlab>& slabCuts, size_t iSlab);
+  void AddSlabBoundaries(std::vector<std::pair<double, RectangleBoundaryKind> >& boundaries,
+                         const std::vector<RtStructRectanglesInSlab>& slabCuts,
+                         size_t iSlab);
 
   /** Internal */
-  void ProcessBoundaryList(std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments, const std::vector<std::pair<double, RectangleBoundaryKind> >& boundaries, double y);
+  void ProcessBoundaryList(std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
+                           const std::vector<std::pair<double, RectangleBoundaryKind> >& boundaries,
+                           double y);
 
 }

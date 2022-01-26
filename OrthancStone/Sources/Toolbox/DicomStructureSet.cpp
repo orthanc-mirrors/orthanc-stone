@@ -21,6 +21,8 @@
  **/
 
 
+#define USE_BOOST_UNION_FOR_POLYGONS 1
+
 #include "DicomStructureSet.h"
 #include "DicomStructureSetUtils.h"  // TODO REMOVE
 
@@ -42,13 +44,20 @@
 #  include <boost/date_time/posix_time/posix_time.hpp>
 #endif
 
+#if !defined(USE_BOOST_UNION_FOR_POLYGONS)
+#  error Macro USE_BOOST_UNION_FOR_POLYGONS must be defined
+#endif
+
 #include <limits>
 #include <stdio.h>
 #include <boost/math/constants/constants.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
-#include <boost/geometry/multi/geometries/multi_polygon.hpp>
+
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
+#  include <boost/geometry.hpp>
+#  include <boost/geometry/geometries/point_xy.hpp>
+#  include <boost/geometry/geometries/polygon.hpp>
+#  include <boost/geometry/multi/geometries/multi_polygon.hpp>
+#endif
 
 #if defined(_MSC_VER)
 #  pragma warning(pop)
@@ -59,10 +68,11 @@
 #endif
 
 
+#if USE_BOOST_UNION_FOR_POLYGONS == 1
+
 typedef boost::geometry::model::d2::point_xy<double> BoostPoint;
 typedef boost::geometry::model::polygon<BoostPoint> BoostPolygon;
 typedef boost::geometry::model::multi_polygon<BoostPolygon>  BoostMultiPolygon;
-
 
 static void Union(BoostMultiPolygon& output,
                   std::vector<BoostPolygon>& input)
@@ -94,8 +104,6 @@ static void Union(BoostMultiPolygon& output,
   }
 }
 
-#if USE_BOOST_UNION_FOR_POLYGONS == 1
-
 static BoostPolygon CreateRectangle(float x1, float y1,
                                     float x2, float y2)
 {
@@ -122,12 +130,14 @@ namespace OrthancStone
     return rect;
   }
 
-  bool CompareRectanglesForProjection(const std::pair<RtStructRectangleInSlab,double>& r1, const std::pair<RtStructRectangleInSlab, double>& r2)
+  bool CompareRectanglesForProjection(const std::pair<RtStructRectangleInSlab,double>& r1,
+                                      const std::pair<RtStructRectangleInSlab, double>& r2)
   {
     return r1.second < r2.second;
   }
 
-  bool CompareSlabsY(const RtStructRectanglesInSlab& r1, const RtStructRectanglesInSlab& r2)
+  bool CompareSlabsY(const RtStructRectanglesInSlab& r1,
+                     const RtStructRectanglesInSlab& r2)
   {
     if ((r1.size() == 0) || (r2.size() == 0))
       return false;
@@ -829,22 +839,13 @@ namespace OrthancStone
     }
   }
 
-  bool DicomStructureSet::ProjectStructure(
-#if USE_BOOST_UNION_FOR_POLYGONS == 1
-    std::vector< std::vector<ScenePoint2D> >& polygons,
-#else
-    std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
-#endif
-    const Structure& structure,
-    const CoordinateSystem3D& sourceSlice) const
+  bool DicomStructureSet::ProjectStructure(std::vector< std::vector<ScenePoint2D> >& chains,
+                                           const Structure& structure,
+                                           const CoordinateSystem3D& sourceSlice) const
   {
     const CoordinateSystem3D slice = CoordinateSystem3D::NormalizeCuttingPlane(sourceSlice);
     
-#if USE_BOOST_UNION_FOR_POLYGONS == 1
-    polygons.clear();
-#else
-    segments.clear();
-#endif
+    chains.clear();
 
     Vector normal = GetNormal();
     
@@ -853,51 +854,30 @@ namespace OrthancStone
     {
       // This is an axial projection
 
+      chains.reserve(structure.polygons_.size());
+      
       for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
-        if (polygon->IsOnSlice(slice))
+        const Points& points = polygon->GetPoints();
+        
+        if (polygon->IsOnSlice(slice) &&
+            !points.empty())
         {
-#if USE_BOOST_UNION_FOR_POLYGONS == 1
-          polygons.push_back(std::vector<ScenePoint2D>());
+          chains.push_back(std::vector<ScenePoint2D>());
+          chains.back().reserve(points.size() + 1);
           
-          for (Points::const_iterator p = polygon->GetPoints().begin();
-               p != polygon->GetPoints().end(); ++p)
+          for (Points::const_iterator p = points.begin();
+               p != points.end(); ++p)
           {
             double x, y;
             slice.ProjectPoint2(x, y, *p);
-            polygons.back().push_back(ScenePoint2D(x, y));
+            chains.back().push_back(ScenePoint2D(x, y));
           }
-#else
-          // we need to add all the segments corresponding to this polygon
-          const std::vector<Vector>& points3D = polygon->GetPoints();
-          if (points3D.size() >= 3)
-          {
-            ScenePoint2D prev2D;
-            {
-              Vector prev = points3D[0];
-              double prevX, prevY;
-              slice.ProjectPoint2(prevX, prevY, prev);
-              prev2D = ScenePoint2D(prevX, prevY);
-            }
 
-            size_t pointCount = points3D.size();
-            for (size_t ipt = 1; ipt < pointCount; ++ipt)
-            {
-              Vector next = points3D[ipt];
-              double nextX, nextY;
-              slice.ProjectPoint2(nextX, nextY, next);
-              ScenePoint2D next2D(nextX, nextY);
-              segments.push_back(std::pair<ScenePoint2D, ScenePoint2D>(prev2D, next2D));
-              prev2D = next2D;
-            }
-          }
-          else
-          {
-            LOG(ERROR) << "Contour with less than 3 points!";
-            // !!!
-          }
-#endif
+          double x0, y0;
+          slice.ProjectPoint2(x0, y0, points.front());
+          chains.back().push_back(ScenePoint2D(x0, y0));
         }
       }
 
@@ -906,7 +886,6 @@ namespace OrthancStone
     else if (GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetAxisX()) ||
              GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetAxisY()))
     {
-#if 1
       // Sagittal or coronal projection
 
 #if USE_BOOST_UNION_FOR_POLYGONS == 1
@@ -997,39 +976,32 @@ namespace OrthancStone
       // now we need to sort the slabs in increasing Y order (see ConvertListOfSlabsToSegments)
       std::sort(rectanglesForEachSlab.begin(), rectanglesForEachSlab.end(), CompareSlabsY);
 
+      std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
       ConvertListOfSlabsToSegments(segments, rectanglesForEachSlab, projected.size());
+
+      chains.resize(segments.size());
+      for (size_t i = 0; i < segments.size(); i++)
+      {
+        chains[i].resize(2);
+        chains[i][0] = segments[i].first;
+        chains[i][1] = segments[i].second;
+      }
+      
 #else
       BoostMultiPolygon merged;
       Union(merged, projected);
 
-      polygons.resize(merged.size());
+      chains.resize(merged.size());
       for (size_t i = 0; i < merged.size(); i++)
       {
         const std::vector<BoostPoint>& outer = merged[i].outer();
 
-        polygons[i].resize(outer.size());
+        chains[i].resize(outer.size());
         for (size_t j = 0; j < outer.size(); j++)
         {
-          polygons[i][j] = ScenePoint2D(outer[j].x(), outer[j].y());
+          chains[i][j] = ScenePoint2D(outer[j].x(), outer[j].y());
         }
       }  
-#endif
-
-#else
-      for (Polygons::iterator polygon = structure.polygons_.begin();
-           polygon != structure.polygons_.end(); ++polygon)
-      {
-        double x1, y1, x2, y2;
-        if (polygon->Project(x1, y1, x2, y2, slice))
-        {
-          std::vector<ScenePoint2D> p(4);
-          p[0] = std::make_pair(x1, y1);
-          p[1] = std::make_pair(x2, y1);
-          p[2] = std::make_pair(x2, y2);
-          p[3] = std::make_pair(x1, y2);
-          polygons.push_back(p);
-        }
-      }
 #endif
       
       return true;
@@ -1046,38 +1018,15 @@ namespace OrthancStone
                                            size_t structureIndex,
                                            const Color& color) const
   {
-#if USE_BOOST_UNION_FOR_POLYGONS == 1
-    std::vector< std::vector<ScenePoint2D> > polygons;
-    if (ProjectStructure(polygons, structureIndex, plane))
-    {
-      for (size_t j = 0; j < polygons.size(); j++)
-      {
-        std::vector<ScenePoint2D> chain;
-        chain.reserve(polygons[j].size());
-
-        for (size_t k = 0; k < polygons[j].size(); k++)
-        {
-          chain.push_back(ScenePoint2D(polygons[j][k].x, polygons[j][k].y));
-        }
-
-        layer.AddChain(chain, true, color.GetRed(), color.GetGreen(), color.GetBlue());
-      }
-    }
+    std::vector< std::vector<ScenePoint2D> > chains;
     
-#else
-    std::vector< std::pair<ScenePoint2D, ScenePoint2D> >  segments;
-
-    if (ProjectStructure(segments, structureIndex, plane))
+    if (ProjectStructure(chains, structureIndex, plane))
     {
-      for (size_t j = 0; j < segments.size(); j++)
+      for (size_t j = 0; j < chains.size(); j++)
       {
-        std::vector<ScenePoint2D> chain(2);
-        chain[0] = ScenePoint2D(segments[j].first.GetX(), segments[j].first.GetY());
-        chain[1] = ScenePoint2D(segments[j].second.GetX(), segments[j].second.GetY());
-        layer.AddChain(chain, false, color.GetRed(), color.GetGreen(), color.GetBlue());
+        layer.AddChain(chains[j], false, color.GetRed(), color.GetGreen(), color.GetBlue());
       }
     }
-#endif
   }
 
 

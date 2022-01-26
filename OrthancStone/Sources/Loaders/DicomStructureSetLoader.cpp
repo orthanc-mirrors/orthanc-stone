@@ -366,45 +366,10 @@ namespace OrthancStone
 
       for (size_t i = 0; i < content_.GetStructuresCount(); i++)
       {
-        if ((visibility_.size() == 0) || visibility_.at(i))
+        if (visibility_.size() == 0 ||
+            visibility_.at(i))
         {
-          const Color& color = content_.GetStructureColor(i);
-
-#if USE_BOOST_UNION_FOR_POLYGONS == 1
-          std::vector< std::vector<ScenePoint2D> > polygons;
-          
-          if (content_.ProjectStructure(polygons, i, cuttingPlane))
-          {
-            for (size_t j = 0; j < polygons.size(); j++)
-            {
-              PolylineSceneLayer::Chain chain;
-              chain.resize(polygons[j].size());
-              
-              for (size_t k = 0; k < polygons[j].size(); k++)
-              {
-                chain[k] = ScenePoint2D(polygons[j][k].GetX(), polygons[j][k].GetY());
-              }
-              
-              layer->AddChain(chain, true /* closed */, color);
-            }
-          }
-#else
-          std::vector< std::pair<ScenePoint2D, ScenePoint2D> > segments;
-
-          if (content_.ProjectStructure(segments, i, cuttingPlane))
-          {
-            for (size_t j = 0; j < segments.size(); j++)
-            {
-              PolylineSceneLayer::Chain chain;
-              chain.resize(2);
-
-              chain[0] = ScenePoint2D(segments[j].first.GetX(), segments[j].first.GetY());
-              chain[1] = ScenePoint2D(segments[j].second.GetX(), segments[j].second.GetY());
-
-              layer->AddChain(chain, false /* NOT closed */, color);
-            }
-          }
-#endif        
+          content_.ProjectOntoLayer(*layer, cuttingPlane, i, content_.GetStructureColor(i));
         }
       }
 

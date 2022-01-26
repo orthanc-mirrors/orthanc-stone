@@ -41,7 +41,7 @@ OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
       {
         throw Orthanc::OrthancException(
           Orthanc::ErrorCode_InternalError,
-          "The Stone MPR RT viewer requires the Web Viewer plugin to be installed");
+          "The Stone MPR RT viewer requires the Orthanc Web Viewer plugin to be installed");
       }
     }
   }

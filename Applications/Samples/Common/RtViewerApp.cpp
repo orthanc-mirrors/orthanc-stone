@@ -67,12 +67,17 @@ namespace OrthancStone
     }
   }
 
-  const VolumeImageGeometry& RtViewerApp::GetMainGeometry()
+  VolumeImageGeometry RtViewerApp::GetMainGeometry()
   {
     ORTHANC_ASSERT(geometryProvider_.get() != NULL);
-    ORTHANC_ASSERT(geometryProvider_->HasGeometry());
-    const VolumeImageGeometry& geometry = geometryProvider_->GetImageGeometry();
-    return geometry;
+    if (geometryProvider_->HasGeometry())
+    {
+      return geometryProvider_->GetImageGeometry();
+    }
+    else
+    {
+      return VolumeImageGeometry();
+    }
   }
 
   RtViewerApp::RtViewerApp() :

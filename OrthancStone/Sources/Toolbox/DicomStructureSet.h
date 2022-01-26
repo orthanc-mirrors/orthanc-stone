@@ -40,8 +40,6 @@
 #  include <DicomParsing/ParsedDicomFile.h>
 #endif
 
-//#define USE_BOOST_UNION_FOR_POLYGONS 1
-
 
 #include <list>
 
@@ -160,14 +158,9 @@ namespace OrthancStone
 
     Structure& GetStructure(size_t index);
   
-    bool ProjectStructure(
-#if USE_BOOST_UNION_FOR_POLYGONS == 1
-      std::vector< std::vector<ScenePoint2D> >& polygons,
-#else
-      std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
-#endif
-      const Structure& structure,
-      const CoordinateSystem3D& slice) const;
+    bool ProjectStructure(std::vector< std::vector<ScenePoint2D> >& chains,
+                          const Structure& structure,
+                          const CoordinateSystem3D& slice) const;
 
     void EstimateGeometry();
     
@@ -207,21 +200,12 @@ namespace OrthancStone
 
     Vector GetNormal() const;
 
-#if USE_BOOST_UNION_FOR_POLYGONS == 1
-    bool ProjectStructure(std::vector< std::vector<ScenePoint2D> >& polygons,
+    bool ProjectStructure(std::vector< std::vector<ScenePoint2D> >& chains,
                           size_t index,
                           const CoordinateSystem3D& slice) const
     {
-      return ProjectStructure(polygons, GetStructure(index), slice);
+      return ProjectStructure(chains, GetStructure(index), slice);
     }
-#else
-    bool ProjectStructure(std::vector< std::pair<ScenePoint2D, ScenePoint2D> >& segments,
-                          size_t index,
-                          const CoordinateSystem3D& slice) const
-    {
-      return ProjectStructure(segments, GetStructure(index), slice);
-    }
-#endif
 
     void ProjectOntoLayer(PolylineSceneLayer& layer,
                           const CoordinateSystem3D& plane,

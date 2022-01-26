@@ -21,10 +21,9 @@
  **/
 
 
-#define USE_BOOST_UNION_FOR_POLYGONS 1
+#define USE_BOOST_UNION_FOR_POLYGONS 0
 
 #include "DicomStructureSet.h"
-#include "DicomStructureSetUtils.h"  // TODO REMOVE
 
 #include "BucketAccumulator2D.h"
 #include "GenericToolbox.h"
@@ -57,6 +56,9 @@
 #  include <boost/geometry/geometries/point_xy.hpp>
 #  include <boost/geometry/geometries/polygon.hpp>
 #  include <boost/geometry/multi/geometries/multi_polygon.hpp>
+#else
+#  include "DicomStructureSetUtils.h"  // TODO REMOVE
+#  include "UnionOfRectangles.h"
 #endif
 
 #if defined(_MSC_VER)
@@ -190,28 +192,6 @@ namespace OrthancStone
             GenericToolbox::FastParseVector(target, value));
   }
 
-  void DicomStructureSet::Polygon::CheckPointIsOnSlice(const Vector& v) const
-  {
-    if (hasSlice_)
-    {
-      double magnitude =
-        GeometryToolbox::ProjectAlongNormal(v, geometry_.GetNormal());
-      if(!LinearAlgebra::IsNear(
-           magnitude,
-           projectionAlongNormal_,
-           sliceThickness_ / 2.0 /* in mm */ ))
-      {
-        LOG(ERROR) << "This RT-STRUCT contains a point that is off the "
-                   << "slice of its instance | "
-                   << "magnitude = " << magnitude << " | "
-                   << "projectionAlongNormal_ = " << projectionAlongNormal_ << " | "
-                   << "tolerance (sliceThickness_ / 2.0) = " << (sliceThickness_ / 2.0);
-
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-      }
-    }
-  }
-
   bool DicomStructureSet::Polygon::IsPointOnSliceIfAny(const Vector& v) const
   {
     if (hasSlice_)
@@ -269,6 +249,8 @@ namespace OrthancStone
       }
       else
       {
+        // return true;  // TODO - TEST
+        
         const CoordinateSystem3D& geometry = it->second.geometry_;
         
         hasSlice_ = true;
@@ -315,8 +297,6 @@ namespace OrthancStone
                                            double& y2,
                                            const CoordinateSystem3D& slice) const
   {
-    // TODO: optimize this method using a sweep-line algorithm for polygons
-    
     if (!hasSlice_ ||
         points_.size() <= 1)
     {
@@ -916,6 +896,36 @@ namespace OrthancStone
           chains[i][j] = ScenePoint2D(outer[j].x(), outer[j].y());
         }
       }  
+
+#elif 0
+
+      // TODO - Fix possible infinite loop in UnionOfRectangles
+      
+      std::list<Extent2D> rectangles;
+      
+      for (Polygons::const_iterator polygon = structure.polygons_.begin();
+           polygon != structure.polygons_.end(); ++polygon)
+      {
+        double x1, y1, x2, y2;
+
+        if (polygon->Project(x1, y1, x2, y2, slice))
+        {
+          rectangles.push_back(Extent2D(x1, y1, x2, y2));
+        }
+      }
+
+      typedef std::list< std::vector<ScenePoint2D> >  Contours;
+
+      Contours contours;
+      UnionOfRectangles::Apply(contours, rectangles);
+
+      chains.reserve(contours.size());
+      
+      for (Contours::const_iterator it = contours.begin(); it != contours.end(); ++it)
+      {
+        chains.push_back(*it);
+      }
+      
 #else
       // this will contain the intersection of the polygon slab with
       // the cutting plane, projected on the cutting plane coord system 

@@ -83,7 +83,6 @@ namespace OrthancStone
       Points              points_;
       Extent2D            extent_;
 
-      void CheckPointIsOnSlice(const Vector& v) const;
       bool IsPointOnSliceIfAny(const Vector& v) const;
 
     public:

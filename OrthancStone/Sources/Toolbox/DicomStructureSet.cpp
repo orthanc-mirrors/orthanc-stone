@@ -901,6 +901,21 @@ namespace OrthancStone
           projected.push_back(CreateRectangle(x1, y1, x2, y2));
         }
       }
+
+      BoostMultiPolygon merged;
+      Union(merged, projected);
+
+      chains.resize(merged.size());
+      for (size_t i = 0; i < merged.size(); i++)
+      {
+        const std::vector<BoostPoint>& outer = merged[i].outer();
+
+        chains[i].resize(outer.size());
+        for (size_t j = 0; j < outer.size(); j++)
+        {
+          chains[i][j] = ScenePoint2D(outer[j].x(), outer[j].y());
+        }
+      }  
 #else
       // this will contain the intersection of the polygon slab with
       // the cutting plane, projected on the cutting plane coord system 
@@ -926,9 +941,7 @@ namespace OrthancStone
                                                static_cast<float>(y2)),curZ));
         }
       }
-#endif
 
-#if USE_BOOST_UNION_FOR_POLYGONS != 1
       // projected contains a set of rectangles specified by two opposite
       // corners (x1,y1,x2,y2)
       // we need to merge them 
@@ -986,22 +999,6 @@ namespace OrthancStone
         chains[i][0] = segments[i].first;
         chains[i][1] = segments[i].second;
       }
-      
-#else
-      BoostMultiPolygon merged;
-      Union(merged, projected);
-
-      chains.resize(merged.size());
-      for (size_t i = 0; i < merged.size(); i++)
-      {
-        const std::vector<BoostPoint>& outer = merged[i].outer();
-
-        chains[i].resize(outer.size());
-        for (size_t j = 0; j < outer.size(); j++)
-        {
-          chains[i][j] = ScenePoint2D(outer[j].x(), outer[j].y());
-        }
-      }  
 #endif
       
       return true;

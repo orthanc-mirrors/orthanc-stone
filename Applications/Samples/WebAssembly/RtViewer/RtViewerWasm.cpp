@@ -80,9 +80,18 @@ namespace OrthancStone
 
     int delta = 0;
     if (wheelEvent->deltaY < 0)
+    {
       delta = -1;
-    if (wheelEvent->deltaY > 0)
+    }
+    else if (wheelEvent->deltaY > 0)
+    {
       delta = 1;
+    }
+
+    if (wheelEvent->mouse.ctrlKey)
+    {
+      delta *= 10;
+    }
 
     that->Scroll(delta);
 

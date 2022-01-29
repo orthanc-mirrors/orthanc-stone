@@ -24,10 +24,10 @@
 #include "../../Common/SampleHelpers.h"
 
 // Stone of Orthanc includes
+#include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyLoadersContext.h"
+#include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
-#include "../../../Platforms/WebAssembly/WebAssemblyLoadersContext.h"
-#include "../../../Platforms/WebAssembly/WebGLViewport.h"
 
 #include <Toolbox.h>
 

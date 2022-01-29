@@ -22,11 +22,11 @@
 
 #include "SingleFrameViewerApplication.h"
 
+#include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyLoadersContext.h"
+#include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
+#include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewportsRegistry.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
-#include "../../../Platforms/WebAssembly/WebGLViewport.h"
-#include "../../../Platforms/WebAssembly/WebAssemblyLoadersContext.h"
-#include "../../../Platforms/WebAssembly/WebGLViewportsRegistry.h"
 
 #include <Compatibility.h>  // For std::unique_ptr<>
 #include <Toolbox.h>

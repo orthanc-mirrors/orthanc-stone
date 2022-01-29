@@ -49,7 +49,7 @@ add_definitions(
 # ---------------------------------------------------------------
 set(ALLOW_DOWNLOADS ON)
 
-include(${CMAKE_SOURCE_DIR}/../../Platforms/WebAssembly/OrthancStoneWebAssemblyParameters.cmake)
+include(${CMAKE_SOURCE_DIR}/../../../OrthancStone/Resources/CMake/OrthancStoneWebAssemblyParameters.cmake)
 
 SET(ENABLE_DCMTK ON)
 SET(ENABLE_DCMTK_NETWORKING OFF)
@@ -61,12 +61,7 @@ SET(ORTHANC_SANDBOXED ON)
 
 # this will set up the build system for Stone of Orthanc and will
 # populate the ORTHANC_STONE_SOURCES CMake variable
-include(${CMAKE_SOURCE_DIR}/../../Platforms/WebAssembly/OrthancStoneWebAssemblyConfiguration.cmake)
-
-include_directories(
-  ${CMAKE_SOURCE_DIR}/../../../OrthancStone/Sources/
-  ${CMAKE_SOURCE_DIR}/../../Platforms/WebAssembly/
-  )
+include(${CMAKE_SOURCE_DIR}/../../../OrthancStone/Resources/CMake/OrthancStoneWebAssemblyConfiguration.cmake)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
   # specific flags go here

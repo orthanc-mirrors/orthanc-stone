@@ -65,35 +65,35 @@
 #include <Logging.h>
 
 // Stone includes
-#include <Loaders/DicomResourcesLoader.h>
-#include <Loaders/SeriesMetadataLoader.h>
-#include <Loaders/SeriesThumbnailsLoader.h>
-#include <Messages/ObserverBase.h>
-#include <Oracle/ParseDicomFromWadoCommand.h>
-#include <Oracle/ParseDicomSuccessMessage.h>
-#include <Scene2D/AnnotationsSceneLayer.h>
-#include <Scene2D/ArrowSceneLayer.h>
-#include <Scene2D/ColorTextureSceneLayer.h>
-#include <Scene2D/FloatTextureSceneLayer.h>
-#include <Scene2D/MacroSceneLayer.h>
-#include <Scene2D/OsiriXLayerFactory.h>
-#include <Scene2D/PolylineSceneLayer.h>
-#include <Scene2D/TextSceneLayer.h>
-#include <Scene2DViewport/ViewportController.h>
-#include <StoneException.h>
-#include <Toolbox/DicomInstanceParameters.h>
-#include <Toolbox/GeometryToolbox.h>
-#include <Toolbox/OsiriX/AngleAnnotation.h>
-#include <Toolbox/OsiriX/CollectionOfAnnotations.h>
-#include <Toolbox/OsiriX/LineAnnotation.h>
-#include <Toolbox/OsiriX/TextAnnotation.h>
-#include <Toolbox/SortedFrames.h>
-#include <Viewport/DefaultViewportInteractor.h>
+#include "../../../OrthancStone/Sources/Loaders/DicomResourcesLoader.h"
+#include "../../../OrthancStone/Sources/Loaders/SeriesMetadataLoader.h"
+#include "../../../OrthancStone/Sources/Loaders/SeriesThumbnailsLoader.h"
+#include "../../../OrthancStone/Sources/Messages/ObserverBase.h"
+#include "../../../OrthancStone/Sources/Oracle/ParseDicomFromWadoCommand.h"
+#include "../../../OrthancStone/Sources/Oracle/ParseDicomSuccessMessage.h"
+#include "../../../OrthancStone/Sources/Scene2D/AnnotationsSceneLayer.h"
+#include "../../../OrthancStone/Sources/Scene2D/ArrowSceneLayer.h"
+#include "../../../OrthancStone/Sources/Scene2D/ColorTextureSceneLayer.h"
+#include "../../../OrthancStone/Sources/Scene2D/FloatTextureSceneLayer.h"
+#include "../../../OrthancStone/Sources/Scene2D/MacroSceneLayer.h"
+#include "../../../OrthancStone/Sources/Scene2D/OsiriXLayerFactory.h"
+#include "../../../OrthancStone/Sources/Scene2D/PolylineSceneLayer.h"
+#include "../../../OrthancStone/Sources/Scene2D/TextSceneLayer.h"
+#include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
+#include "../../../OrthancStone/Sources/StoneException.h"
+#include "../../../OrthancStone/Sources/Toolbox/DicomInstanceParameters.h"
+#include "../../../OrthancStone/Sources/Toolbox/GeometryToolbox.h"
+#include "../../../OrthancStone/Sources/Toolbox/OsiriX/AngleAnnotation.h"
+#include "../../../OrthancStone/Sources/Toolbox/OsiriX/CollectionOfAnnotations.h"
+#include "../../../OrthancStone/Sources/Toolbox/OsiriX/LineAnnotation.h"
+#include "../../../OrthancStone/Sources/Toolbox/OsiriX/TextAnnotation.h"
+#include "../../../OrthancStone/Sources/Toolbox/SortedFrames.h"
+#include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 
 // WebAssembly includes
-#include <WebAssemblyCairoViewport.h>
-#include <WebAssemblyLoadersContext.h>
-#include <WebGLViewport.h>
+#include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyCairoViewport.h"
+#include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyLoadersContext.h"
+#include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
 
 
 #include <boost/math/special_functions/round.hpp>

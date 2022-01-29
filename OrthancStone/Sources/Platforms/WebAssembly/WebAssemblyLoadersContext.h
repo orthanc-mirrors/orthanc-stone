@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "../../../OrthancStone/Sources/Loaders/ILoadersContext.h"
-#include "../../../OrthancStone/Sources/Loaders/OracleScheduler.h"
+#include "../../Loaders/ILoadersContext.h"
+#include "../../Loaders/OracleScheduler.h"
 #include "WebAssemblyOracle.h"
 
 #include <list>

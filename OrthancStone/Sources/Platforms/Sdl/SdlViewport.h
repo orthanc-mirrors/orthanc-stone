@@ -35,11 +35,11 @@
 #endif
 
 #include "SdlOpenGLContext.h"
-#include "../../../OrthancStone/Sources/Scene2D/CairoCompositor.h"
-#include "../../../OrthancStone/Sources/Viewport/IViewport.h"
+#include "../../Scene2D/CairoCompositor.h"
+#include "../../Viewport/IViewport.h"
 
 #if ORTHANC_ENABLE_OPENGL == 1
-#  include "../../../OrthancStone/Sources/Scene2D/OpenGLCompositor.h"
+#  include "../../Scene2D/OpenGLCompositor.h"
 #endif
 
 #include <SDL_events.h>

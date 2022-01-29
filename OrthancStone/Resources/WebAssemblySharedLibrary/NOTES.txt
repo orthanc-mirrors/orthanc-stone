@@ -15,4 +15,4 @@ Then, if the installation path was "~/Downloads/emsdk/":
 # cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DALLOW_DOWNLOADS=ON -G Ninja
 # ninja install
 
-=> The binaries will be put in "../../../../wasm-binaries/"
+=> The binaries will be put in "../../../wasm-binaries/"

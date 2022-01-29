@@ -23,8 +23,8 @@
 
 #include "WebGLViewportsRegistry.h"
 
-#include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
-#include "../../../OrthancStone/Sources/Toolbox/GenericToolbox.h"
+#include "../../Scene2DViewport/ViewportController.h"
+#include "../../Toolbox/GenericToolbox.h"
 
 #include <OrthancException.h>
 

@@ -39,7 +39,7 @@
 #  error Support for OpenGL is disabled
 #endif
 
-#include "../../../OrthancStone/Sources/OpenGL/IOpenGLContext.h"
+#include "../../OpenGL/IOpenGLContext.h"
 
 #include <Compatibility.h>  // For ORTHANC_OVERRIDE
 

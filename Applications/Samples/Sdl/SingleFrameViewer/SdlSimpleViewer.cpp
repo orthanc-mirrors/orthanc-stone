@@ -30,6 +30,7 @@
 #include "../../Common/SampleHelpers.h"
 
 #include "../../../../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
+#include "../../../../OrthancStone/Sources/Platforms/Sdl/SdlViewport.h"
 #include "../../../../OrthancStone/Sources/Scene2D/AnnotationsSceneLayer.h"
 #include "../../../../OrthancStone/Sources/Scene2DViewport/AngleMeasureTool.h"
 #include "../../../../OrthancStone/Sources/Scene2DViewport/LineMeasureTool.h"
@@ -37,7 +38,6 @@
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
 #include "../../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
-#include "../../../Platforms/Sdl/SdlViewport.h"
 
 #include <EmbeddedResources.h>
 #include <Compatibility.h>  // For std::unique_ptr<>

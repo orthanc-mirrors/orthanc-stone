@@ -28,9 +28,9 @@
 // Stone of Orthanc includes
 #include "../../../../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
 #include "../../../../OrthancStone/Sources/OpenGL/OpenGLIncludes.h"
+#include "../../../../OrthancStone/Sources/Platforms/Sdl/SdlOpenGLContext.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
-#include "../../../Platforms/Sdl/SdlOpenGLContext.h"
 
 // Orthanc (a.o. for screenshot capture)
 #include <Compatibility.h>  // For std::unique_ptr<>

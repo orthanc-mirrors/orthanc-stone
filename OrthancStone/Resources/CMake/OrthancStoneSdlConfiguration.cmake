@@ -22,7 +22,7 @@
 ## Sanity check of the configuration
 #####################################################################
 
-include(${ORTHANC_STONE_ROOT}/../Resources/CMake/OrthancStoneConfiguration.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/OrthancStoneConfiguration.cmake)
 
 if (ORTHANC_SANDBOXED)
   message(FATAL_ERROR "Cannot enable SDL in sandboxed environments")
@@ -62,13 +62,13 @@ endif()
 #####################################################################
 
 list(APPEND ORTHANC_STONE_SOURCES
-  ${CMAKE_CURRENT_LIST_DIR}/SdlViewport.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/SdlWindow.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/../../Sources/Platforms/Sdl/SdlViewport.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/../../Sources/Platforms/Sdl/SdlWindow.cpp
   ${SDL_SOURCES}
   )
 
 if (ENABLE_OPENGL)
   list(APPEND ORTHANC_STONE_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/SdlOpenGLContext.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../Sources/Platforms/Sdl/SdlOpenGLContext.cpp
     )
 endif()

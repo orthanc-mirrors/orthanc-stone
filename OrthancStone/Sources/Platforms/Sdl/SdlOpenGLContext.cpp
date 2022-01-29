@@ -21,7 +21,7 @@
  **/
 
 #include "SdlOpenGLContext.h"
-#include "../../../OrthancStone/Sources/StoneException.h"
+#include "../../StoneException.h"
 
 #if ORTHANC_ENABLE_SDL == 1
 

@@ -30,15 +30,15 @@
 
 #include "WebAssemblyOracle.h"
 
-#include "../../../OrthancStone/Sources/Oracle/OracleCommandExceptionMessage.h"
+#include "../../Oracle/OracleCommandExceptionMessage.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1
-#  include "../../../OrthancStone/Sources/Oracle/ParseDicomSuccessMessage.h"
+#  include "../../Oracle/ParseDicomSuccessMessage.h"
 #endif
 
-#include "../../../OrthancStone/Sources/Oracle/GetOrthancImageCommand.h"
-#include "../../../OrthancStone/Sources/Oracle/GetOrthancWebViewerJpegCommand.h"
-#include "../../../OrthancStone/Sources/Oracle/HttpCommand.h"
-#include "../../../OrthancStone/Sources/Oracle/OrthancRestApiCommand.h"
-#include "../../../OrthancStone/Sources/Oracle/ParseDicomFromWadoCommand.h"
-#include "../../../OrthancStone/Sources/Oracle/SleepOracleCommand.h"
+#include "../../Oracle/GetOrthancImageCommand.h"
+#include "../../Oracle/GetOrthancWebViewerJpegCommand.h"
+#include "../../Oracle/HttpCommand.h"
+#include "../../Oracle/OrthancRestApiCommand.h"
+#include "../../Oracle/ParseDicomFromWadoCommand.h"
+#include "../../Oracle/SleepOracleCommand.h"

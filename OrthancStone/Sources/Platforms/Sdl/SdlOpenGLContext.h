@@ -24,7 +24,7 @@
 
 #if ORTHANC_ENABLE_SDL == 1
 
-#include "../../../OrthancStone/Sources/OpenGL/IOpenGLContext.h"
+#include "../../OpenGL/IOpenGLContext.h"
 #include "SdlWindow.h"
 
 #include <Compatibility.h>  // For ORTHANC_OVERRIDE

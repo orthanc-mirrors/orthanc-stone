@@ -25,7 +25,7 @@ project(OrthancStone)
 
 set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "hg")
 set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "mainline")
-include(${CMAKE_SOURCE_DIR}/../../Platforms/Sdl/OrthancStoneSdlParameters.cmake)
+include(${CMAKE_SOURCE_DIR}/../../../OrthancStone/Resources/CMake/OrthancStoneSdlParameters.cmake)
 
 if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
   set(ORTHANC_BOOST_COMPONENTS program_options)
@@ -47,7 +47,7 @@ set(ENABLE_DCMTK ON)  # <==
 set(ENABLE_SDL ON)
 SET(ENABLE_PUGIXML ON)   # To test compilation of OsiriX annotations
 
-include(${CMAKE_SOURCE_DIR}/../../Platforms/Sdl/OrthancStoneSdlConfiguration.cmake)
+include(${CMAKE_SOURCE_DIR}/../../../OrthancStone/Resources/CMake/OrthancStoneSdlConfiguration.cmake)
 include(${CMAKE_SOURCE_DIR}/Utilities.cmake)
 include(${CMAKE_SOURCE_DIR}/../../../OrthancStone/UnitTestsSources/UnitTestsSources.cmake)
 

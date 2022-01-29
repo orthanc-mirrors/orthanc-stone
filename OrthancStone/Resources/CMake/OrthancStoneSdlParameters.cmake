@@ -22,41 +22,23 @@
 
 
 #####################################################################
-## Sanity check of the configuration
+## Load generic parameters
 #####################################################################
 
-set(ENABLE_WEB_CLIENT OFF)
-include(${ORTHANC_STONE_ROOT}/../Resources/CMake/OrthancStoneConfiguration.cmake)
-
-if (NOT ORTHANC_SANDBOXED)
-  message(FATAL_ERROR "WebAssembly target must me configured as sandboxed")
-endif()
-
-if (NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-  message(FATAL_ERROR "WebAssembly target requires the emscripten compiler")    
-endif()
-
-add_definitions(
-  -DORTHANC_ENABLE_SDL=0
-  -DORTHANC_ENABLE_WASM=1
-  )
+include(${CMAKE_CURRENT_LIST_DIR}/OrthancStoneParameters.cmake)
 
 
 #####################################################################
-## Additional source files for WebAssembly
+## CMake parameters tunable by the user
 #####################################################################
 
-list(APPEND ORTHANC_STONE_SOURCES
-  ${CMAKE_CURRENT_LIST_DIR}/WebAssemblyCairoViewport.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/WebAssemblyLoadersContext.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/WebAssemblyOracle.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/WebAssemblyViewport.cpp
-  )
+# Advanced parameters to fine-tune linking against system libraries
+set(USE_SYSTEM_SDL ON CACHE BOOL "Use the system version of SDL2")
 
-if (ENABLE_OPENGL)
-  list(APPEND ORTHANC_STONE_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/WebAssemblyOpenGLContext.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/WebGLViewport.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/WebGLViewportsRegistry.cpp
-    )
-endif()
+
+#####################################################################
+## Internal CMake parameters to enable the optional subcomponents of
+## the Stone of Orthanc
+#####################################################################
+
+set(ENABLE_THREADS ON CACHE INTERNAL "")

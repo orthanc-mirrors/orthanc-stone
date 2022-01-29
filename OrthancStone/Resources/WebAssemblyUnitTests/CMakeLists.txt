@@ -27,7 +27,7 @@ project(OrthancStone)
 
 set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "mainline")
 set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "hg")
-set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../../wasm-binaries/" CACHE PATH "Where to put the WebAssembly binaries")
+set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/" CACHE PATH "Where to put the WebAssembly binaries")
 
 
 # Configuration of the Emscripten compiler for WebAssembly target
@@ -52,7 +52,7 @@ add_definitions(
 # ---------------------------------------------------------------
 set(ALLOW_DOWNLOADS ON)
 
-include(${CMAKE_SOURCE_DIR}/../OrthancStoneWebAssemblyParameters.cmake)
+include(${CMAKE_SOURCE_DIR}/../CMake/OrthancStoneWebAssemblyParameters.cmake)
 
 SET(ENABLE_DCMTK ON)  # Necessary for the tests of the Orthanc framework
 SET(ENABLE_PUGIXML ON)  # Necessary for the tests of the Orthanc framework
@@ -63,7 +63,7 @@ SET(ORTHANC_SANDBOXED ON)
 
 # this will set up the build system for Stone of Orthanc and will
 # populate the ORTHANC_STONE_SOURCES CMake variable
-include(${CMAKE_SOURCE_DIR}/../OrthancStoneWebAssemblyConfiguration.cmake)
+include(${CMAKE_SOURCE_DIR}/../CMake/OrthancStoneWebAssemblyConfiguration.cmake)
 
 
 ################################################################################
@@ -78,10 +78,10 @@ include(${ORTHANC_STONE_ROOT}/../Resources/Orthanc/CMake/DownloadPackage.cmake)
 include(${ORTHANC_STONE_ROOT}/../Resources/Orthanc/CMake/GoogleTestConfiguration.cmake)
 
 
-include(${CMAKE_SOURCE_DIR}/../../../../OrthancStone/UnitTestsSources/UnitTestsSources.cmake)
+include(${CMAKE_SOURCE_DIR}/../../UnitTestsSources/UnitTestsSources.cmake)
 
 EmbedResources(
-  RT_STRUCT_00 ${CMAKE_SOURCE_DIR}/../../../../OrthancStone/UnitTestsSources/TestStructureSet.json
+  RT_STRUCT_00 ${CMAKE_SOURCE_DIR}/../../UnitTestsSources/TestStructureSet.json
   )
 
 add_executable(UnitTests

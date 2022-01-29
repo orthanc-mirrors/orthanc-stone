@@ -25,7 +25,7 @@
 ## Load generic parameters
 #####################################################################
 
-include(${CMAKE_CURRENT_LIST_DIR}/../../../OrthancStone/Resources/CMake/OrthancStoneParameters.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/OrthancStoneParameters.cmake)
 
 
 #####################################################################

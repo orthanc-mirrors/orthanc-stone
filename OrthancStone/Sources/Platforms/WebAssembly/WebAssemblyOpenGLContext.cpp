@@ -23,7 +23,7 @@
 
 #include "WebAssemblyOpenGLContext.h"
 
-#include "../../../OrthancStone/Sources/StoneException.h"
+#include "../../StoneException.h"
 
 #include <Logging.h>
 #include <OrthancException.h>

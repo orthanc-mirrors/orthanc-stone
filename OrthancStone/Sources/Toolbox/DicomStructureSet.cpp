@@ -900,7 +900,7 @@ namespace OrthancStone
       {
         double x1, y1, x2, y2;
 
-        if (polygon->Project(x1, y1, x2, y2, slice))
+        if (polygon->Project(x1, y1, x2, y2, slice, GetEstimatedNormal(), GetEstimatedSliceThickness()))
         {
           projected.push_back(CreateRectangle(x1, y1, x2, y2));
         }
@@ -921,10 +921,8 @@ namespace OrthancStone
         }
       }  
 
-#elif 0
+#elif 1
 
-      // TODO - Fix possible infinite loop in UnionOfRectangles
-      
       std::list<Extent2D> rectangles;
       
       for (Polygons::const_iterator polygon = structure.polygons_.begin();
@@ -932,7 +930,7 @@ namespace OrthancStone
       {
         double x1, y1, x2, y2;
 
-        if (polygon->Project(x1, y1, x2, y2, slice))
+        if (polygon->Project(x1, y1, x2, y2, slice, GetEstimatedNormal(), GetEstimatedSliceThickness()))
         {
           rectangles.push_back(Extent2D(x1, y1, x2, y2));
         }

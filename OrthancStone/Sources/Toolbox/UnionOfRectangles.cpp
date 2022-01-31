@@ -307,7 +307,7 @@ namespace OrthancStone
       }
       else if (x_ == other.x_)
       {
-        return isLeft_;
+        return static_cast<int>(isLeft_) < static_cast<int>(other.isLeft_);
       }
       else
       {

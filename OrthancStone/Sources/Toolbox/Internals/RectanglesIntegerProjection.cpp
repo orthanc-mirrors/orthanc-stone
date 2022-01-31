@@ -58,7 +58,7 @@ namespace OrthancStone
         }
         else if (value_ == other.value_)
         {
-          return isLow_;
+          return static_cast<int>(isLow_) < static_cast<int>(other.isLow_);
         }
         else
         {

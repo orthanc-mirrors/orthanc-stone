@@ -217,8 +217,6 @@ namespace OrthancStone
     {
       planes_[z] = geometry.GetProjectionSlice(projection_, z);
     }
-
-    UpdateLayers();
   }
 
   void RtViewerView::UpdateLayers()

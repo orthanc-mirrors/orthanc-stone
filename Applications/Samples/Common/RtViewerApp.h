@@ -126,7 +126,6 @@ namespace OrthancStone
     void HandleGeometryReady(const DicomVolumeImage::GeometryReadyMessage& message);
     
     // TODO: wire this
-    void HandleCTLoaded(const OrthancSeriesVolumeProgressiveLoader::VolumeImageReadyInHighQuality& message);
     void HandleCTContentUpdated(const DicomVolumeImage::ContentUpdatedMessage& message);
     void HandleDoseLoaded(const DicomVolumeImage::ContentUpdatedMessage& message);
     void HandleStructuresReady(const DicomStructureSetLoader::StructuresReady& message);
@@ -135,7 +134,6 @@ namespace OrthancStone
 
   private:
     void RetrieveGeometry();
-    void FitContent();
     void InvalidateAllViewports();
     void UpdateLayersInAllViews();
 
@@ -162,6 +160,8 @@ namespace OrthancStone
     boost::shared_ptr<IFlexiblePointerTracker> activeTracker_;
 
     boost::shared_ptr<UndoStack> undoStack_;
+
+    bool isFirstSlice_;
   };
 
 }

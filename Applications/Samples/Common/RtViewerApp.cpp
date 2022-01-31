@@ -25,25 +25,25 @@
 #include "SampleHelpers.h"
 
 // Stone of Orthanc
-#include "../../../OrthancStone/Sources/StoneInitialization.h"
+#include "../../../OrthancStone/Sources/Oracle/GetOrthancWebViewerJpegCommand.h"
 #include "../../../OrthancStone/Sources/Scene2D/CairoCompositor.h"
 #include "../../../OrthancStone/Sources/Scene2D/ColorTextureSceneLayer.h"
+#include "../../../OrthancStone/Sources/Scene2D/GrayscaleStyleConfigurator.h"
+#include "../../../OrthancStone/Sources/Scene2D/LookupTableStyleConfigurator.h"
 #include "../../../OrthancStone/Sources/Scene2D/OpenGLCompositor.h"
 #include "../../../OrthancStone/Sources/Scene2D/PanSceneTracker.h"
-#include "../../../OrthancStone/Sources/Scene2D/ZoomSceneTracker.h"
 #include "../../../OrthancStone/Sources/Scene2D/RotateSceneTracker.h"
-#include "../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"
-#include "../../../OrthancStone/Sources/Scene2DViewport/CreateLineMeasureTracker.h"
+#include "../../../OrthancStone/Sources/Scene2D/ZoomSceneTracker.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/CreateAngleMeasureTracker.h"
+#include "../../../OrthancStone/Sources/Scene2DViewport/CreateLineMeasureTracker.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/IFlexiblePointerTracker.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/MeasureTool.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/PredeclaredTypes.h"
-#include "../../../OrthancStone/Sources/Volumes/VolumeSceneLayerSource.h"
-#include "../../../OrthancStone/Sources/Oracle/GetOrthancWebViewerJpegCommand.h"
-#include "../../../OrthancStone/Sources/Scene2D/GrayscaleStyleConfigurator.h"
-#include "../../../OrthancStone/Sources/Scene2D/LookupTableStyleConfigurator.h"
-#include "../../../OrthancStone/Sources/Volumes/DicomVolumeImageMPRSlicer.h"
+#include "../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"
 #include "../../../OrthancStone/Sources/StoneException.h"
+#include "../../../OrthancStone/Sources/StoneInitialization.h"
+#include "../../../OrthancStone/Sources/Volumes/DicomVolumeImageMPRSlicer.h"
+#include "../../../OrthancStone/Sources/Volumes/VolumeSceneLayerSource.h"
 
 // Orthanc
 #include <Logging.h>
@@ -84,7 +84,8 @@ namespace OrthancStone
     // Create the volumes that will be filled later on
     ctVolume_(boost::make_shared<DicomVolumeImage>()),
     doseVolume_(boost::make_shared<DicomVolumeImage>()),
-    undoStack_(new UndoStack)
+    undoStack_(new UndoStack),
+    isFirstSlice_(true)
   {
   }
 
@@ -142,9 +143,6 @@ namespace OrthancStone
     Register<DicomVolumeImage::GeometryReadyMessage>
       (*ctLoader_, &RtViewerApp::HandleGeometryReady);
 
-    Register<OrthancSeriesVolumeProgressiveLoader::VolumeImageReadyInHighQuality>
-      (*ctLoader_, &RtViewerApp::HandleCTLoaded);
-
     Register<DicomVolumeImage::ContentUpdatedMessage>
       (*ctLoader_, &RtViewerApp::HandleCTContentUpdated);
 
@@ -197,20 +195,7 @@ namespace OrthancStone
 
   void RtViewerApp::HandleGeometryReady(const DicomVolumeImage::GeometryReadyMessage& message)
   {
-    for (size_t i = 0; i < views_.size(); ++i)
-    {
-      views_[i]->RetrieveGeometry();
-    }
-    FitContent();
     UpdateLayersInAllViews();
-  }
-
-  void RtViewerApp::FitContent()
-  {
-    for (size_t i = 0; i < views_.size(); ++i)
-    {
-      views_[i]->FitContent();
-    }
   }
 
   void RtViewerApp::UpdateLayersInAllViews()
@@ -221,17 +206,19 @@ namespace OrthancStone
     }
   }
 
-  void RtViewerApp::HandleCTLoaded(const OrthancSeriesVolumeProgressiveLoader::VolumeImageReadyInHighQuality& message)
-  {
-    for (size_t i = 0; i < views_.size(); ++i)
-    {
-      views_[i]->RetrieveGeometry();
-    }
-    UpdateLayersInAllViews();
-  }
-
   void RtViewerApp::HandleCTContentUpdated(const DicomVolumeImage::ContentUpdatedMessage& message)
   {
+    if (isFirstSlice_)
+    {
+      for (size_t i = 0; i < views_.size(); ++i)
+      {
+        views_[i]->RetrieveGeometry();
+        views_[i]->FitContent();
+      }
+
+      isFirstSlice_ = false;
+    }
+    
     UpdateLayersInAllViews();
   }
 

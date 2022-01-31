@@ -103,7 +103,9 @@ namespace OrthancStone
 
       bool UpdateReferencedSlice(const ReferencedSlices& slices);
 
-      bool IsOnSlice(const CoordinateSystem3D& geometry) const;
+      bool IsOnSlice(const CoordinateSystem3D& geometry,
+                     const Vector& estimatedNormal,
+                     double estimatedSliceThickness) const;
 
       const Vector& GetGeometryOrigin() const
       {
@@ -129,7 +131,9 @@ namespace OrthancStone
                    double& y1,
                    double& x2,
                    double& y2,
-                   const CoordinateSystem3D& slice) const;
+                   const CoordinateSystem3D& slice,
+                   const Vector& estimatedNormal,
+                   double estimatedSliceThickness) const;
     };
 
     typedef std::list<Polygon>  Polygons;

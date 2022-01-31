@@ -274,28 +274,52 @@ namespace OrthancStone
     }
   }
 
-  bool DicomStructureSet::Polygon::IsOnSlice(const CoordinateSystem3D& slice) const
+  bool DicomStructureSet::Polygon::IsOnSlice(const CoordinateSystem3D& slice,
+                                             const Vector& estimatedNormal,
+                                             double estimatedSliceThickness) const
   {
     bool isOpposite = false;
 
-    if (points_.empty() ||
-        !hasSlice_ ||
-        !GeometryToolbox::IsParallelOrOpposite(isOpposite, slice.GetNormal(), geometry_.GetNormal()))
+    if (points_.empty())
     {
       return false;
     }
-    
-    double d = GeometryToolbox::ProjectAlongNormal(slice.GetOrigin(), geometry_.GetNormal());
-
-    return (LinearAlgebra::IsNear(d, projectionAlongNormal_,
-                                  sliceThickness_ / 2.0));
+    else if (hasSlice_)
+    {
+      // Use the actual geometry of this specific slice
+      if (!GeometryToolbox::IsParallelOrOpposite(isOpposite, slice.GetNormal(), geometry_.GetNormal()))
+      {
+        return false;
+      }
+      else
+      {
+        double d = GeometryToolbox::ProjectAlongNormal(slice.GetOrigin(), geometry_.GetNormal());
+        return (LinearAlgebra::IsNear(d, projectionAlongNormal_, sliceThickness_ / 2.0));
+      }
+    }
+    else
+    {
+      // Use the estimated geometry for the global RT-STRUCT volume
+      if (!GeometryToolbox::IsParallelOrOpposite(isOpposite, slice.GetNormal(), estimatedNormal))
+      {
+        return false;
+      }
+      else
+      {
+        double d1 = GeometryToolbox::ProjectAlongNormal(slice.GetOrigin(), estimatedNormal);
+        double d2 = GeometryToolbox::ProjectAlongNormal(points_.front(), estimatedNormal);
+        return (LinearAlgebra::IsNear(d1, d2, estimatedSliceThickness / 2.0));
+      }
+    }
   }
     
   bool DicomStructureSet::Polygon::Project(double& x1,
                                            double& y1,
                                            double& x2,
                                            double& y2,
-                                           const CoordinateSystem3D& slice) const
+                                           const CoordinateSystem3D& slice,
+                                           const Vector& estimatedNormal,
+                                           double estimatedSliceThickness) const
   {
     if (!hasSlice_ ||
         points_.size() <= 1)
@@ -841,7 +865,7 @@ namespace OrthancStone
       {
         const Points& points = polygon->GetPoints();
         
-        if (polygon->IsOnSlice(slice) &&
+        if (polygon->IsOnSlice(slice, GetEstimatedNormal(), GetEstimatedSliceThickness()) &&
             !points.empty())
         {
           chains.push_back(std::vector<ScenePoint2D>());
@@ -938,7 +962,7 @@ namespace OrthancStone
       {
         double x1, y1, x2, y2;
 
-        if (polygon->Project(x1, y1, x2, y2, slice))
+        if (polygon->Project(x1, y1, x2, y2, slice, GetEstimatedNormal(), GetEstimatedSliceThickness()))
         {
           double curZ = polygon->GetGeometryOrigin()[2];
 

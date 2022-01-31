@@ -211,7 +211,7 @@ namespace OrthancStone
   {
     if (stack.size() % 2 != 0)
     {
-      throw std::runtime_error("internal error");
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
 
     typedef std::pair<size_t, size_t>  Interval;
@@ -224,7 +224,7 @@ namespace OrthancStone
       stack.pop();
       size_t low = stack.top();
       stack.pop();
-    
+
       if (!intervals.empty() &&
           intervals.back().second == low)
       {
@@ -240,19 +240,43 @@ namespace OrthancStone
     for (std::list<Interval>::const_iterator
            it = intervals.begin(); it != intervals.end(); ++it)
     {
-      if (it->first == it->second)
+      if (it->first >= it->second)
       {
-        throw std::runtime_error("parameter out of range");
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
     
       // By convention, the left sides go downward, and the right go upward
       if (isLeft)
       {
-        edges.push_back(Internals::OrientedIntegerLine2D(x, it->first, x, it->second));
+        if (!edges.empty() &&
+            edges.back().GetX1() == x &&
+            edges.back().GetX2() == x &&
+            edges.back().GetY1() == it->second &&
+            edges.back().GetY2() == it->first)
+        {
+          // The two successive vertical segments cancel each other
+          edges.pop_back();
+        }
+        else
+        {
+          edges.push_back(Internals::OrientedIntegerLine2D(x, it->first, x, it->second));
+        }
       }
       else
       {
-        edges.push_back(Internals::OrientedIntegerLine2D(x, it->second, x, it->first));
+        if (!edges.empty() &&
+            edges.back().GetX1() == x &&
+            edges.back().GetX2() == x &&
+            edges.back().GetY1() == it->first &&
+            edges.back().GetY2() == it->second)
+        {
+          // The two successive vertical segments cancel each other
+          edges.pop_back();
+        }
+        else
+        {
+          edges.push_back(Internals::OrientedIntegerLine2D(x, it->second, x, it->first));
+        }
       }
     }
   }

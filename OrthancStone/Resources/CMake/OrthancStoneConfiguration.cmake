@@ -403,17 +403,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/CoordinateSystem3D.h
   ${ORTHANC_STONE_ROOT}/Toolbox/DicomInstanceParameters.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/DicomInstanceParameters.h
-  ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructure2.cpp
-  ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructure2.h
-  ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructurePolygon2.cpp
-  ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructurePolygon2.h
   ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructureSet.h
-  ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructureSet2.cpp
-  ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructureSet2.h
-  ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructureSetUtils.cpp
-  ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructureSetUtils.h
-  ${ORTHANC_STONE_ROOT}/Toolbox/DisjointDataSet.h
   ${ORTHANC_STONE_ROOT}/Toolbox/DynamicBitmap.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/DynamicBitmap.h
   ${ORTHANC_STONE_ROOT}/Toolbox/Extent2D.cpp
@@ -469,8 +460,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Volumes/VolumeReslicer.h
   ${ORTHANC_STONE_ROOT}/Volumes/VolumeSceneLayerSource.cpp
   ${ORTHANC_STONE_ROOT}/Volumes/VolumeSceneLayerSource.h
-  ${ORTHANC_STONE_ROOT}/Volumes/DicomStructureSetSlicer2.cpp
-  ${ORTHANC_STONE_ROOT}/Volumes/DicomStructureSetSlicer2.h
   ${ORTHANC_STONE_ROOT}/Volumes/DicomVolumeImage.h
   ${ORTHANC_STONE_ROOT}/Volumes/DicomVolumeImage.cpp
   ${ORTHANC_STONE_ROOT}/Volumes/DicomVolumeImage.h

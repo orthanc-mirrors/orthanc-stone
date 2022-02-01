@@ -148,7 +148,7 @@ namespace OrthancStone
     assert(minValue_ <= maxValue_);
     // TODO: debug to be removed
     if (fabs(maxValue_ - minValue_) < 0.0001) {
-      LOG(INFO) << "LookupTableTextureSceneLayer::FitRange(): minValue_ = " << minValue_ << " maxValue_ = " << maxValue_;
+      LOG(TRACE) << "LookupTableTextureSceneLayer::FitRange(): minValue_ = " << minValue_ << " maxValue_ = " << maxValue_;
     }
     IncrementRevision();
   }

@@ -218,8 +218,6 @@ namespace OrthancStone
       }
       else
       {
-        // return true;  // TODO - TEST
-        
         const CoordinateSystem3D& geometry = it->second.geometry_;
         
         hasSlice_ = true;
@@ -281,7 +279,30 @@ namespace OrthancStone
       }
     }
   }
-    
+
+
+  static void AddSegmentIfIntersection(Extent2D& extent,
+                                       const CoordinateSystem3D& cuttingPlane,
+                                       const Vector& p1,
+                                       const Vector& p2,
+                                       double originDistance)
+  {
+    // Does this segment intersects the cutting plane?
+    double d1 = cuttingPlane.ProjectAlongNormal(p1);
+    double d2 = cuttingPlane.ProjectAlongNormal(p2);
+      
+    if ((d1 < originDistance && d2 > originDistance) ||
+        (d1 > originDistance && d2 < originDistance))
+    {
+      // This is an intersection: Add the segment
+      double x, y;
+      cuttingPlane.ProjectPoint2(x, y, p1);
+      extent.AddPoint(x, y);
+      cuttingPlane.ProjectPoint2(x, y, p2);
+      extent.AddPoint(x, y);
+    }
+  }
+  
   bool DicomStructureSet::Polygon::Project(double& x1,
                                            double& y1,
                                            double& x2,
@@ -290,7 +311,6 @@ namespace OrthancStone
                                            const Vector& estimatedNormal,
                                            double estimatedSliceThickness) const
   {
-#if 0
     if (points_.size() <= 1)
     {
       return false;
@@ -303,162 +323,41 @@ namespace OrthancStone
       normal = geometry_.GetNormal();
       thickness = sliceThickness_;
     }
-    
+
     bool isOpposite;
     if (!GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, cuttingPlane.GetAxisX()) &&
         !GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, cuttingPlane.GetAxisY()))
     {
-      printf("UUUU\n");
       return false;
     }
 
-    return false;
+    const double d = cuttingPlane.ProjectAlongNormal(cuttingPlane.GetOrigin());
     
-#else
-    if (!hasSlice_ ||
-        points_.size() <= 1)
+    Extent2D extent;
+    AddSegmentIfIntersection(extent, cuttingPlane, points_[points_.size() - 1], points_[0], d);
+    for (size_t i = 1; i < points_.size(); i++)
     {
-      return false;
+      AddSegmentIfIntersection(extent, cuttingPlane, points_[i - 1], points_[i], d);
     }
 
-    double x, y;
-    geometry_.ProjectPoint2(x, y, cuttingPlane.GetOrigin());
-      
-    bool isOpposite;
-    if (GeometryToolbox::IsParallelOrOpposite
-        (isOpposite, cuttingPlane.GetNormal(), geometry_.GetAxisY()))
+    if (extent.GetWidth() > 0 ||
+        extent.GetHeight() > 0)
     {
-      // plane is constant Y
+      // Let's convert them to 3D world geometry to add the slice thickness
+      Vector p1 = (cuttingPlane.MapSliceToWorldCoordinates(extent.GetX1(), extent.GetY1()) +
+                   thickness / 2.0 * normal);
+      Vector p2 = (cuttingPlane.MapSliceToWorldCoordinates(extent.GetX2(), extent.GetY2()) -
+                   thickness / 2.0 * normal);
 
-      if (y < extent_.GetY1() ||
-          y > extent_.GetY2())
-      {
-        // The polygon does not intersect the input slice
-        return false;
-      }
-        
-      bool isFirst = true;
-      double xmin = std::numeric_limits<double>::infinity();
-      double xmax = -std::numeric_limits<double>::infinity();
-
-      double prevX, prevY;
-      geometry_.ProjectPoint2(prevX, prevY, points_[points_.size() - 1]);
-        
-      for (size_t i = 0; i < points_.size(); i++)
-      {
-        // Reference: ../../Resources/Computations/IntersectSegmentAndHorizontalLine.py
-        double curX, curY;
-        geometry_.ProjectPoint2(curX, curY, points_[i]);
-
-        // if prev* and cur* are on opposite sides of y, this means that the
-        // segment intersects the plane.
-        if ((prevY <= y && curY >= y) ||
-            (prevY >= y && curY <= y))
-        {
-          double p = (curX * prevY - curY * prevX + y * (prevX - curX)) / (prevY - curY);
-          xmin = std::min(xmin, p);
-          xmax = std::max(xmax, p);
-          isFirst = false;
-
-          // xmin and xmax represent the extent of the rectangle along the 
-          // intersection between the plane and the polygon geometry
-
-        }
-
-        prevX = curX;
-        prevY = curY;
-      }
-        
-      // if NO segment intersects the plane
-      if (isFirst)
-      {
-        return false;
-      }
-      else
-      {
-        // y is the plane y coord in the polygon geometry
-        // xmin and xmax are ALSO expressed in the polygon geometry
-
-        // let's convert them to 3D world geometry...
-        Vector p1 = (geometry_.MapSliceToWorldCoordinates(xmin, y) +
-                     sliceThickness_ / 2.0 * geometry_.GetNormal());
-        Vector p2 = (geometry_.MapSliceToWorldCoordinates(xmax, y) -
-                     sliceThickness_ / 2.0 * geometry_.GetNormal());
-          
-        // then to the cutting plane geometry...
-        cuttingPlane.ProjectPoint2(x1, y1, p1);
-        cuttingPlane.ProjectPoint2(x2, y2, p2);
-        return true;
-      }
-    }
-    else if (GeometryToolbox::IsParallelOrOpposite
-             (isOpposite, cuttingPlane.GetNormal(), geometry_.GetAxisX()))
-    {
-      // plane is constant X => Sagittal view (remember that in the
-      // sagittal projection, the normal must be swapped)
-
-      
-      /*
-        Please read the comments in the section above, by taking into account
-        the fact that, in this case, the plane has a constant X, not Y (in 
-        polygon geometry_ coordinates)
-      */
-
-      if (x < extent_.GetX1() ||
-          x > extent_.GetX2())
-      {
-        return false;
-      }
-
-      bool isFirst = true;
-      double ymin = std::numeric_limits<double>::infinity();
-      double ymax = -std::numeric_limits<double>::infinity();
-
-      double prevX, prevY;
-      geometry_.ProjectPoint2(prevX, prevY, points_[points_.size() - 1]);
-        
-      for (size_t i = 0; i < points_.size(); i++)
-      {
-        // Reference: ../../Resources/Computations/IntersectSegmentAndVerticalLine.py
-        double curX, curY;
-        geometry_.ProjectPoint2(curX, curY, points_[i]);
-
-        if ((prevX <= x && curX >= x) ||
-            (prevX >= x && curX <= x))
-        {
-          double p = (curX * prevY - curY * prevX + x * (curY - prevY)) / (curX - prevX);
-          ymin = std::min(ymin, p);
-          ymax = std::max(ymax, p);
-          isFirst = false;
-        }
-
-        prevX = curX;
-        prevY = curY;
-      }
-        
-      if (isFirst)
-      {
-        return false;
-      }
-      else
-      {
-        Vector p1 = (geometry_.MapSliceToWorldCoordinates(x, ymin) +
-                     sliceThickness_ / 2.0 * geometry_.GetNormal());
-        Vector p2 = (geometry_.MapSliceToWorldCoordinates(x, ymax) -
-                     sliceThickness_ / 2.0 * geometry_.GetNormal());
-
-        cuttingPlane.ProjectPoint2(x1, y1, p1);
-        cuttingPlane.ProjectPoint2(x2, y2, p2);
-
-        return true;
-      }
+      // Then back to the cutting plane geometry
+      cuttingPlane.ProjectPoint2(x1, y1, p1);
+      cuttingPlane.ProjectPoint2(x2, y2, p2);
+      return true;
     }
     else
     {
-      // Should not happen
       return false;
     }
-#endif
   }
 
   

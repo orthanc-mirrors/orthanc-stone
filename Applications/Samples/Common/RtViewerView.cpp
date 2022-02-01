@@ -194,7 +194,7 @@ namespace OrthancStone
       {
         next = static_cast<size_t>(temp);
       }
-      LOG(INFO) << "RtViewerView::Scroll(" << delta << ") --> slice is now = " << next;
+      LOG(TRACE) << "RtViewerView::Scroll(" << delta << ") --> slice is now = " << next;
 
       if (next != static_cast<int>(currentPlane_))
       {

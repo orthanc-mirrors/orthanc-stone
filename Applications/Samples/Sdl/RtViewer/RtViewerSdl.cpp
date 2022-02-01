@@ -423,6 +423,12 @@ namespace OrthancStone
             if (sdlEvent.wheel.y > 0)
               delta = 1;
 
+            if (SDL_SCANCODE_LCTRL < scancodeCount &&
+                keyboardState[SDL_SCANCODE_LCTRL])  // Speed up scrolling if CTRL is down
+            {
+              delta *= 10;
+            }
+
             view->Scroll(delta);
           }
           else

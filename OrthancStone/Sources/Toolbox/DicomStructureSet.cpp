@@ -243,7 +243,7 @@ namespace OrthancStone
     }
   }
 
-  bool DicomStructureSet::Polygon::IsOnSlice(const CoordinateSystem3D& slice,
+  bool DicomStructureSet::Polygon::IsOnSlice(const CoordinateSystem3D& cuttingPlane,
                                              const Vector& estimatedNormal,
                                              double estimatedSliceThickness) const
   {
@@ -256,26 +256,26 @@ namespace OrthancStone
     else if (hasSlice_)
     {
       // Use the actual geometry of this specific slice
-      if (!GeometryToolbox::IsParallelOrOpposite(isOpposite, slice.GetNormal(), geometry_.GetNormal()))
+      if (!GeometryToolbox::IsParallelOrOpposite(isOpposite, cuttingPlane.GetNormal(), geometry_.GetNormal()))
       {
         return false;
       }
       else
       {
-        double d = GeometryToolbox::ProjectAlongNormal(slice.GetOrigin(), geometry_.GetNormal());
+        double d = GeometryToolbox::ProjectAlongNormal(cuttingPlane.GetOrigin(), geometry_.GetNormal());
         return (LinearAlgebra::IsNear(d, projectionAlongNormal_, sliceThickness_ / 2.0));
       }
     }
     else
     {
       // Use the estimated geometry for the global RT-STRUCT volume
-      if (!GeometryToolbox::IsParallelOrOpposite(isOpposite, slice.GetNormal(), estimatedNormal))
+      if (!GeometryToolbox::IsParallelOrOpposite(isOpposite, cuttingPlane.GetNormal(), estimatedNormal))
       {
         return false;
       }
       else
       {
-        double d1 = GeometryToolbox::ProjectAlongNormal(slice.GetOrigin(), estimatedNormal);
+        double d1 = GeometryToolbox::ProjectAlongNormal(cuttingPlane.GetOrigin(), estimatedNormal);
         double d2 = GeometryToolbox::ProjectAlongNormal(points_.front(), estimatedNormal);
         return (LinearAlgebra::IsNear(d1, d2, estimatedSliceThickness / 2.0));
       }
@@ -286,10 +286,35 @@ namespace OrthancStone
                                            double& y1,
                                            double& x2,
                                            double& y2,
-                                           const CoordinateSystem3D& slice,
+                                           const CoordinateSystem3D& cuttingPlane,
                                            const Vector& estimatedNormal,
                                            double estimatedSliceThickness) const
   {
+#if 0
+    if (points_.size() <= 1)
+    {
+      return false;
+    }
+
+    Vector normal = estimatedNormal;
+    double thickness = estimatedSliceThickness;
+    if (hasSlice_)
+    {
+      normal = geometry_.GetNormal();
+      thickness = sliceThickness_;
+    }
+    
+    bool isOpposite;
+    if (!GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, cuttingPlane.GetAxisX()) &&
+        !GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, cuttingPlane.GetAxisY()))
+    {
+      printf("UUUU\n");
+      return false;
+    }
+
+    return false;
+    
+#else
     if (!hasSlice_ ||
         points_.size() <= 1)
     {
@@ -297,11 +322,11 @@ namespace OrthancStone
     }
 
     double x, y;
-    geometry_.ProjectPoint2(x, y, slice.GetOrigin());
+    geometry_.ProjectPoint2(x, y, cuttingPlane.GetOrigin());
       
     bool isOpposite;
     if (GeometryToolbox::IsParallelOrOpposite
-        (isOpposite, slice.GetNormal(), geometry_.GetAxisY()))
+        (isOpposite, cuttingPlane.GetNormal(), geometry_.GetAxisY()))
     {
       // plane is constant Y
 
@@ -361,13 +386,13 @@ namespace OrthancStone
                      sliceThickness_ / 2.0 * geometry_.GetNormal());
           
         // then to the cutting plane geometry...
-        slice.ProjectPoint2(x1, y1, p1);
-        slice.ProjectPoint2(x2, y2, p2);
+        cuttingPlane.ProjectPoint2(x1, y1, p1);
+        cuttingPlane.ProjectPoint2(x2, y2, p2);
         return true;
       }
     }
     else if (GeometryToolbox::IsParallelOrOpposite
-             (isOpposite, slice.GetNormal(), geometry_.GetAxisX()))
+             (isOpposite, cuttingPlane.GetNormal(), geometry_.GetAxisX()))
     {
       // plane is constant X => Sagittal view (remember that in the
       // sagittal projection, the normal must be swapped)
@@ -422,8 +447,8 @@ namespace OrthancStone
         Vector p2 = (geometry_.MapSliceToWorldCoordinates(x, ymax) -
                      sliceThickness_ / 2.0 * geometry_.GetNormal());
 
-        slice.ProjectPoint2(x1, y1, p1);
-        slice.ProjectPoint2(x2, y2, p2);
+        cuttingPlane.ProjectPoint2(x1, y1, p1);
+        cuttingPlane.ProjectPoint2(x2, y2, p2);
 
         return true;
       }
@@ -433,6 +458,7 @@ namespace OrthancStone
       // Should not happen
       return false;
     }
+#endif
   }
 
   
@@ -814,16 +840,16 @@ namespace OrthancStone
 
   bool DicomStructureSet::ProjectStructure(std::vector< std::vector<ScenePoint2D> >& chains,
                                            const Structure& structure,
-                                           const CoordinateSystem3D& sourceSlice) const
+                                           const CoordinateSystem3D& cuttingPlane) const
   {
-    const CoordinateSystem3D slice = CoordinateSystem3D::NormalizeCuttingPlane(sourceSlice);
+    const CoordinateSystem3D cutting = CoordinateSystem3D::NormalizeCuttingPlane(cuttingPlane);
     
     chains.clear();
 
     Vector normal = GetNormal();
     
     bool isOpposite;    
-    if (GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetNormal()))
+    if (GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, cutting.GetNormal()))
     {
       // This is an axial projection
 
@@ -834,7 +860,7 @@ namespace OrthancStone
       {
         const Points& points = polygon->GetPoints();
         
-        if (polygon->IsOnSlice(slice, GetEstimatedNormal(), GetEstimatedSliceThickness()) &&
+        if (polygon->IsOnSlice(cutting, GetEstimatedNormal(), GetEstimatedSliceThickness()) &&
             !points.empty())
         {
           chains.push_back(std::vector<ScenePoint2D>());
@@ -844,20 +870,20 @@ namespace OrthancStone
                p != points.end(); ++p)
           {
             double x, y;
-            slice.ProjectPoint2(x, y, *p);
+            cutting.ProjectPoint2(x, y, *p);
             chains.back().push_back(ScenePoint2D(x, y));
           }
 
           double x0, y0;
-          slice.ProjectPoint2(x0, y0, points.front());
+          cutting.ProjectPoint2(x0, y0, points.front());
           chains.back().push_back(ScenePoint2D(x0, y0));
         }
       }
 
       return true;
     }
-    else if (GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetAxisX()) ||
-             GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, slice.GetAxisY()))
+    else if (GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, cutting.GetAxisX()) ||
+             GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, cutting.GetAxisY()))
     {
       // Sagittal or coronal projection
 
@@ -869,7 +895,7 @@ namespace OrthancStone
       {
         double x1, y1, x2, y2;
 
-        if (polygon->Project(x1, y1, x2, y2, slice, GetEstimatedNormal(), GetEstimatedSliceThickness()))
+        if (polygon->Project(x1, y1, x2, y2, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness()))
         {
           projected.push_back(CreateRectangle(x1, y1, x2, y2));
         }
@@ -899,7 +925,7 @@ namespace OrthancStone
       {
         double x1, y1, x2, y2;
 
-        if (polygon->Project(x1, y1, x2, y2, slice, GetEstimatedNormal(), GetEstimatedSliceThickness()))
+        if (polygon->Project(x1, y1, x2, y2, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness()))
         {
           rectangles.push_back(Extent2D(x1, y1, x2, y2));
         }
@@ -929,13 +955,13 @@ namespace OrthancStone
 
 
   void DicomStructureSet::ProjectOntoLayer(PolylineSceneLayer& layer,
-                                           const CoordinateSystem3D& plane,
+                                           const CoordinateSystem3D& cuttingPlane,
                                            size_t structureIndex,
                                            const Color& color) const
   {
     std::vector< std::vector<ScenePoint2D> > chains;
     
-    if (ProjectStructure(chains, structureIndex, plane))
+    if (ProjectStructure(chains, structureIndex, cuttingPlane))
     {
       for (size_t j = 0; j < chains.size(); j++)
       {

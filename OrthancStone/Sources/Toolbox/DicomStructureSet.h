@@ -103,7 +103,7 @@ namespace OrthancStone
 
       bool UpdateReferencedSlice(const ReferencedSlices& slices);
 
-      bool IsOnSlice(const CoordinateSystem3D& geometry,
+      bool IsOnSlice(const CoordinateSystem3D& cuttingPlane,
                      const Vector& estimatedNormal,
                      double estimatedSliceThickness) const;
 
@@ -131,7 +131,7 @@ namespace OrthancStone
                    double& y1,
                    double& x2,
                    double& y2,
-                   const CoordinateSystem3D& slice,
+                   const CoordinateSystem3D& cuttingPlane,
                    const Vector& estimatedNormal,
                    double estimatedSliceThickness) const;
     };
@@ -163,7 +163,7 @@ namespace OrthancStone
   
     bool ProjectStructure(std::vector< std::vector<ScenePoint2D> >& chains,
                           const Structure& structure,
-                          const CoordinateSystem3D& slice) const;
+                          const CoordinateSystem3D& cuttingPlane) const;
 
     void EstimateGeometry();
     
@@ -205,21 +205,21 @@ namespace OrthancStone
 
     bool ProjectStructure(std::vector< std::vector<ScenePoint2D> >& chains,
                           size_t index,
-                          const CoordinateSystem3D& slice) const
+                          const CoordinateSystem3D& cuttingPlane) const
     {
-      return ProjectStructure(chains, GetStructure(index), slice);
+      return ProjectStructure(chains, GetStructure(index), cuttingPlane);
     }
 
     void ProjectOntoLayer(PolylineSceneLayer& layer,
-                          const CoordinateSystem3D& plane,
+                          const CoordinateSystem3D& cuttingPlane,
                           size_t structureIndex,
                           const Color& color) const;
 
     void ProjectOntoLayer(PolylineSceneLayer& layer,
-                          const CoordinateSystem3D& plane,
+                          const CoordinateSystem3D& cuttingPlane,
                           size_t structureIndex) const
     {
-      ProjectOntoLayer(layer, plane, structureIndex, GetStructureColor(structureIndex));
+      ProjectOntoLayer(layer, cuttingPlane, structureIndex, GetStructureColor(structureIndex));
     }
 
     void GetStructurePoints(std::list< std::vector<Vector> >& target,

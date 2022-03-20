@@ -40,6 +40,12 @@
 #include <boost/math/constants/constants.hpp>
 
 
+static const char* const INSTANCES = "Instances";  
+static const char* const RT_STRUCT_IOD = "1.2.840.10008.5.1.4.1.1.481.3";
+static const char* const SOP_CLASS_UID = "0008,0016";
+static const char* const STRUCTURES = "Structures";
+
+
 class DicomStructureCache : public boost::noncopyable
 {
 private:
@@ -528,9 +534,6 @@ static void RenderNumpyFrame(OrthancPluginRestOutput* output,
 
 static bool IsRtStruct(const std::string& instanceId)
 {
-  static const char* SOP_CLASS_UID = "0008,0016";
-  static const char* RT_STRUCT_IOD = "1.2.840.10008.5.1.4.1.1.481.3";
-      
   std::string s;
   if (OrthancPlugins::RestApiGetString(s, "/instances/" + instanceId + "/content/" + SOP_CLASS_UID, false) &&
       !s.empty())
@@ -556,8 +559,6 @@ static void ListRtStruct(OrthancPluginRestOutput* output,
   // This is a quick version of "/tools/find" on "SOPClassUID" (the
   // latter would load all the DICOM files from disk)
 
-  static const char* INSTANCES = "Instances";
-  
   Json::Value series;
   OrthancPlugins::RestApiGet(series, "/series?expand", false);
 
@@ -606,9 +607,6 @@ static void GetRtStruct(OrthancPluginRestOutput* output,
                         const char* url,
                         const OrthancPluginHttpRequest* request)
 {
-  static const char* STRUCTURES = "Structures";
-  static const char* INSTANCES = "Instances";
-  
   DicomStructureCache::Accessor accessor(DicomStructureCache::GetSingleton(), request->groups[0]);
 
   if (!accessor.IsValid())

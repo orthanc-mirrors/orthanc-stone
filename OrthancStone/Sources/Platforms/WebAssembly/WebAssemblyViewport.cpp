@@ -275,9 +275,13 @@ namespace OrthancStone
   void WebAssemblyViewport::Invalidate()
   {
     LOG(TRACE) << "WebAssemblyViewport::Invalidate()\n";
-    long id = emscripten_request_animation_frame(OnRequestAnimationFrame, 
-                                                 CreateObjectCookie());
-    //animationFrameCallbackIds_.push_back(id);
+
+#if 1
+    emscripten_request_animation_frame(OnRequestAnimationFrame, CreateObjectCookie());
+#else
+    animationFrameCallbackIds_.push_back(
+      emscripten_request_animation_frame(OnRequestAnimationFrame, CreateObjectCookie()));
+#endif
   }
 
   void WebAssemblyViewport::FitForPrint()

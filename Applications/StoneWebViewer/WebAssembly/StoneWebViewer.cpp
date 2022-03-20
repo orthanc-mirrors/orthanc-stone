@@ -543,7 +543,7 @@ public:
     skipSeriesFromModalities_ = skipSeriesFromModalities;
   }
 
-  static boost::shared_ptr<ResourcesLoader> Create(OrthancStone::ILoadersContext::ILock& lock,
+  static boost::shared_ptr<ResourcesLoader> Create(const OrthancStone::ILoadersContext::ILock& lock,
                                                    const OrthancStone::DicomSource& source)
   {
     boost::shared_ptr<ResourcesLoader> loader(new ResourcesLoader(lock.GetContext(), source));

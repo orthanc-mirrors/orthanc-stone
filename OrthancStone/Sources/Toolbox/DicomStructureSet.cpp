@@ -917,11 +917,11 @@ namespace OrthancStone
           Vector normal;
           bool valid = false;
 
-          for (size_t i = 0; i + 2 < points.size(); i++)
+          for (size_t j = 0; j + 2 < points.size(); j++)
           {
-            const Vector& a = points[i];
-            const Vector& b = points[i + 1];
-            const Vector& c = points[i + 2];
+            const Vector& a = points[j];
+            const Vector& b = points[j + 1];
+            const Vector& c = points[j + 2];
             LinearAlgebra::CrossProduct(normal, b - a, c - a);  // (*)
             LinearAlgebra::NormalizeVector(normal);
 
@@ -937,9 +937,9 @@ namespace OrthancStone
             // Check that all the points of the polygon lie in the plane defined by the normal
             double d1 = GeometryToolbox::ProjectAlongNormal(points[0], normal);
           
-            for (size_t i = 1; i < points.size(); i++)
+            for (size_t j = 1; j < points.size(); j++)
             {
-              double d2 = GeometryToolbox::ProjectAlongNormal(points[i], normal);
+              double d2 = GeometryToolbox::ProjectAlongNormal(points[j], normal);
             
               if (!LinearAlgebra::IsNear(d1, d2))
               {

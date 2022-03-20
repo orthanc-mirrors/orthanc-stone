@@ -41,7 +41,7 @@ namespace OrthancStone
       bucketsCount_(bucketsCount)
     {
       if (minValue >= maxValue ||
-          bucketsCount <= 0)
+          bucketsCount == 0)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }

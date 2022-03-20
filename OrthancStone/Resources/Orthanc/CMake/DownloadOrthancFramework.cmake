@@ -142,6 +142,8 @@ if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "hg" OR
         set(ORTHANC_FRAMEWORK_MD5 "4b5d05683d747c29b2860ad79d11e62e")
       elseif (ORTHANC_FRAMEWORK_VERSION STREQUAL "1.9.7")
         set(ORTHANC_FRAMEWORK_MD5 "c912bbb860d640d3ae3003b5c9698205")
+      elseif (ORTHANC_FRAMEWORK_VERSION STREQUAL "1.10.0")
+        set(ORTHANC_FRAMEWORK_MD5 "8610c82d9153f22e929f2110f8f60279")
 
       # Below this point are development snapshots that were used to
       # release some plugin, before an official release of the Orthanc
@@ -163,7 +165,7 @@ if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "hg" OR
         # For "Toolbox::ReadJson()" and "Toolbox::Write{...}Json()" (pre-1.9.0)
         set(ORTHANC_FRAMEWORK_MD5 "9af92080e57c60dd288eba46ce606c00")
       elseif (ORTHANC_FRAMEWORK_VERSION STREQUAL "b2e08d83e21d")
-        # WSI 1.1 (framework pre-1.9.8), to remove "-std=c++11"
+        # WSI 1.1 (framework pre-1.10.0), to remove "-std=c++11"
         set(ORTHANC_FRAMEWORK_MD5 "2eaa073cbb4b44ffba199ad93393b2b1")
       endif()
     endif()

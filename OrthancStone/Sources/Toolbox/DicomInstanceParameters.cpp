@@ -596,16 +596,16 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
     }
 
+    std::unique_ptr<TextureBaseSceneLayer> texture;
+
     if (sourceFormat == Orthanc::PixelFormat_RGB24)
     {
       // This is the case of a color image. No conversion has to be done.
-      return new ColorTextureSceneLayer(pixelData);
+      texture.reset(new ColorTextureSceneLayer(pixelData));
     }
     else
     {
       // This is the case of a grayscale frame. Convert it to Float32.
-      std::unique_ptr<FloatTextureSceneLayer> texture;
-
       if (pixelData.GetFormat() == Orthanc::PixelFormat_Float32)
       {
         texture.reset(new FloatTextureSceneLayer(pixelData));
@@ -616,27 +616,34 @@ namespace OrthancStone
         texture.reset(new FloatTextureSceneLayer(*converted));
       }
 
+      FloatTextureSceneLayer& floatTexture = dynamic_cast<FloatTextureSceneLayer&>(*texture);
+
       if (GetWindowingPresetsCount() > 0)
       {
-        texture->SetCustomWindowing(GetWindowingPresetCenter(0), GetWindowingPresetWidth(0));
+        floatTexture.SetCustomWindowing(GetWindowingPresetCenter(0), GetWindowingPresetWidth(0));
       }
       
       switch (GetImageInformation().GetPhotometricInterpretation())
       {
         case Orthanc::PhotometricInterpretation_Monochrome1:
-          texture->SetInverted(true);
+          floatTexture.SetInverted(true);
           break;
           
         case Orthanc::PhotometricInterpretation_Monochrome2:
-          texture->SetInverted(false);
+          floatTexture.SetInverted(false);
           break;
 
         default:
           break;
       }
-
-      return texture.release();
     }
+
+    if (HasPixelSpacing())
+    {
+      texture->SetPixelSpacing(GetPixelSpacingX(), GetPixelSpacingY());
+    }
+    
+    return texture.release();
   }
 
 

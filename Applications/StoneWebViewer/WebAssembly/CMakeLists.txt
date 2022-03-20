@@ -31,7 +31,12 @@ set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/Sto
 # ---------------------------------------------------------------
 set(USE_WASM ON CACHE BOOL "")
 
-set(WASM_FLAGS "${WASM_FLAGS} -s WASM=1 -s FETCH=1 -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0")
+# "-Wno-unused-command-line-argument" is used to avoid annoying
+# warnings about setting WASM, FETCH and ASSERTIONS, which was
+# required for earlier versions of emsdk:
+# https://groups.google.com/g/emscripten-discuss/c/VX4enWfadUE
+set(WASM_FLAGS "${WASM_FLAGS} -s WASM=1 -s FETCH=1 -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0 -Wno-unused-command-line-argument")
+
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(WASM_FLAGS "${WASM_FLAGS} -s SAFE_HEAP=1")
 endif()
@@ -96,9 +101,18 @@ EmbedResources(
 set(LIBCLANG "libclang-4.0.so.1" CACHE PATH "Version of clang to generate the code model")
 set(STONE_WRAPPER ${CMAKE_CURRENT_BINARY_DIR}/stone.js)
 
+include(FindPython3 OPTIONAL RESULT_VARIABLE HAS_CMAKE_PYTHON3)
+if (HAS_CMAKE_PYTHON3 STREQUAL "NOTFOUND" OR
+    NOT Python3_FOUND)
+  # CMake <= 3.12 or Python 3 not available: Fallback to Python 2.7
+  set(CLANG_PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE})
+else()
+  set(CLANG_PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
+endif()
+
 add_custom_command(
   COMMAND
-  ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/ParseWebAssemblyExports.py --libclang=${LIBCLANG} ${CMAKE_SOURCE_DIR}/StoneWebViewer.cpp > ${STONE_WRAPPER}
+  ${CLANG_PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/ParseWebAssemblyExports.py --libclang=${LIBCLANG} ${CMAKE_SOURCE_DIR}/StoneWebViewer.cpp > ${STONE_WRAPPER}
   DEPENDS
   ${CMAKE_SOURCE_DIR}/StoneWebViewer.cpp
   ${CMAKE_SOURCE_DIR}/ParseWebAssemblyExports.py

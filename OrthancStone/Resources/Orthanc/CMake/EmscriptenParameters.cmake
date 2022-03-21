@@ -29,6 +29,13 @@ endif()
 # setting it inside "WASM_FLAGS" creates link errors, at least with
 # side modules. TODO: Understand why
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s DISABLE_EXCEPTION_CATCHING=0")
+
+# "-Wno-unused-command-line-argument" is used to avoid annoying
+# warnings about setting WASM, FETCH and ASSERTIONS, which was
+# required for earlier versions of emsdk:
+# https://groups.google.com/g/emscripten-discuss/c/VX4enWfadUE
+set(WASM_FLAGS "${WASM_FLAGS} -Wno-unused-command-line-argument")
+
 #set(WASM_FLAGS "${WASM_FLAGS} -s DISABLE_EXCEPTION_CATCHING=0")
 
 if (EMSCRIPTEN_TARGET_MODE STREQUAL "wasm")

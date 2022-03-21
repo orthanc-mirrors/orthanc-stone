@@ -31,12 +31,7 @@ set(ORTHANC_STONE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/../../../wasm-binaries/Sto
 # ---------------------------------------------------------------
 set(USE_WASM ON CACHE BOOL "")
 
-# "-Wno-unused-command-line-argument" is used to avoid annoying
-# warnings about setting WASM, FETCH and ASSERTIONS, which was
-# required for earlier versions of emsdk:
-# https://groups.google.com/g/emscripten-discuss/c/VX4enWfadUE
-set(WASM_FLAGS "${WASM_FLAGS} -s WASM=1 -s FETCH=1 -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0 -Wno-unused-command-line-argument")
-
+set(WASM_FLAGS "${WASM_FLAGS} -s WASM=1 -s FETCH=1 -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0")
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(WASM_FLAGS "${WASM_FLAGS} -s SAFE_HEAP=1")
 endif()

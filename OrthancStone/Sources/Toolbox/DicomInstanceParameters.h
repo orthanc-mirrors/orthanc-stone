@@ -202,6 +202,13 @@ namespace OrthancStone
 
     LookupTableTextureSceneLayer* CreateLookupTableTexture(const Orthanc::ImageAccessor& pixelData) const;
 
+    // NB: According to the DICOM standard, the top-left pixel has
+    // (originX, originY) equals to (1,1):
+    // https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.9.2.html
+    LookupTableTextureSceneLayer* CreateOverlayTexture(int originX,
+                                                       int originY,
+                                                       const Orthanc::ImageAccessor& overlay) const;
+
     bool HasIndexInSeries() const
     {
       return data_.hasIndexInSeries_;

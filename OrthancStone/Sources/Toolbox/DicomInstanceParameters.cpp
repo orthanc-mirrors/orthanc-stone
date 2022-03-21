@@ -569,8 +569,8 @@ namespace OrthancStone
   }
 
 
-  TextureBaseSceneLayer* DicomInstanceParameters::CreateTexture
-  (const Orthanc::ImageAccessor& pixelData) const
+  TextureBaseSceneLayer* DicomInstanceParameters::CreateTexture(
+    const Orthanc::ImageAccessor& pixelData) const
   {
     // {
     //   const Orthanc::ImageAccessor& source = pixelData;
@@ -647,23 +647,49 @@ namespace OrthancStone
   }
 
 
-  LookupTableTextureSceneLayer* DicomInstanceParameters::CreateLookupTableTexture
-  (const Orthanc::ImageAccessor& pixelData) const
+  LookupTableTextureSceneLayer* DicomInstanceParameters::CreateLookupTableTexture(
+    const Orthanc::ImageAccessor& pixelData) const
   {
-    std::unique_ptr<FloatTextureSceneLayer> texture;
-
+    std::unique_ptr<LookupTableTextureSceneLayer> texture;
+    
     if (pixelData.GetFormat() == Orthanc::PixelFormat_Float32)
     {
-      return new LookupTableTextureSceneLayer(pixelData);
+      texture.reset(new LookupTableTextureSceneLayer(pixelData));
     }
     else
     {
       std::unique_ptr<Orthanc::ImageAccessor> converted(ConvertToFloat(pixelData));
-      return new LookupTableTextureSceneLayer(*converted);
+      texture.reset(new LookupTableTextureSceneLayer(*converted));
     }
+
+    if (HasPixelSpacing())
+    {
+      texture->SetPixelSpacing(GetPixelSpacingX(), GetPixelSpacingY());
+    }
+
+    return texture.release();
   }
 
   
+  LookupTableTextureSceneLayer* DicomInstanceParameters::CreateOverlayTexture(
+    int originX,
+    int originY,
+    const Orthanc::ImageAccessor& overlay) const
+  {
+    if (overlay.GetFormat() != Orthanc::PixelFormat_Grayscale8)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+    }
+
+    std::unique_ptr<LookupTableTextureSceneLayer> texture(CreateLookupTableTexture(overlay));
+
+    texture->SetOrigin(static_cast<double>(originX - 1) * texture->GetPixelSpacingX(),
+                       static_cast<double>(originY - 1) * texture->GetPixelSpacingY());
+
+    return texture.release();
+  }
+
+
   unsigned int DicomInstanceParameters::GetIndexInSeries() const
   {
     if (data_.hasIndexInSeries_)

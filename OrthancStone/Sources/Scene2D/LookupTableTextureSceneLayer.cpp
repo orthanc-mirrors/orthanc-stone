@@ -33,13 +33,14 @@ namespace OrthancStone
   LookupTableTextureSceneLayer::LookupTableTextureSceneLayer(const Orthanc::ImageAccessor& texture) :
     applyLog_(false)
   {
+    if (texture.GetFormat() == Orthanc::PixelFormat_Float32)
+    {
+      SetTexture(Orthanc::Image::Clone(texture));
+    }
+    else
     {
       std::unique_ptr<Orthanc::ImageAccessor> t(
-        new Orthanc::Image(Orthanc::PixelFormat_Float32, 
-                           texture.GetWidth(), 
-                           texture.GetHeight(), 
-                           false));
-
+        new Orthanc::Image(Orthanc::PixelFormat_Float32, texture.GetWidth(), texture.GetHeight(), false));
       Orthanc::ImageProcessing::Convert(*t, texture);
       SetTexture(t.release());
     }

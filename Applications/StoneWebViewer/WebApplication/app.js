@@ -186,21 +186,24 @@ Vue.component('viewport', {
       var seriesInstanceUid = newVal.series.tags[SERIES_INSTANCE_UID];
       stone.SpeedUpFetchSeriesMetadata(studyInstanceUid, seriesInstanceUid);
 
-      if ((newVal.series.type == stone.ThumbnailType.IMAGE ||
-           newVal.series.type == stone.ThumbnailType.NO_PREVIEW) &&
-          newVal.series.complete) {
-        this.status = 'ready';
-
-        var that = this;
-        Vue.nextTick(function() {
-          if (newVal.virtualSeriesId !== undefined &&
-              newVal.virtualSeriesId.length > 0) {
-            stone.LoadVirtualSeriesInViewport(that.canvasId, newVal.virtualSeriesId);
-          }
-          else {
-            stone.LoadSeriesInViewport(that.canvasId, seriesInstanceUid);
-          }
-        });
+      if (newVal.series.type == stone.ThumbnailType.IMAGE ||
+          newVal.series.type == stone.ThumbnailType.NO_PREVIEW) {
+        if (newVal.series.complete) {
+          this.status = 'ready';
+          
+          var that = this;
+          Vue.nextTick(function() {
+            if (newVal.virtualSeriesId !== undefined &&
+                newVal.virtualSeriesId.length > 0) {
+              stone.LoadVirtualSeriesInViewport(that.canvasId, newVal.virtualSeriesId);
+            }
+            else {
+              stone.LoadSeriesInViewport(that.canvasId, seriesInstanceUid);
+            }
+          });
+        } else {
+          console.warn('Series is incomplete: ' + seriesInstanceUid);
+        }
       }
       else if (newVal.series.type == stone.ThumbnailType.PDF) {
         if (newVal.series.complete) {
@@ -248,6 +251,9 @@ Vue.component('viewport', {
         else {
           console.warn('Videos are not supported by the Stone Web viewer alone yet, the Orthanc REST API is needed');
         }
+      }
+      else {
+        console.error('Unable to handle this series: ' + seriesInstanceUid);
       }
     }
   },

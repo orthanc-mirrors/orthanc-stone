@@ -161,13 +161,15 @@ namespace OrthancStone
   
   void OracleScheduler::CheckInvariants() const
   {
-#ifndef NDEBUG
-    /*char buf[1024];
-      sprintf(buf, "active: %d %d %d ; pending: %lu %lu %lu", 
-      activeHighPriorityCommands_, activeStandardPriorityCommands_, activeLowPriorityCommands_,
-      highPriorityQueue_.size(), standardPriorityQueue_.size(), lowPriorityQueue_.size());
-      LOG(INFO) << buf;*/
+#if 0
+    char buf[1024];
+    sprintf(buf, "active: %d %d %d ; pending: %lu %lu %lu", 
+            activeHighPriorityCommands_, activeStandardPriorityCommands_, activeLowPriorityCommands_,
+            highPriorityQueue_.size(), standardPriorityQueue_.size(), lowPriorityQueue_.size());
+    LOG(WARNING) << buf;
+#endif
   
+#ifndef NDEBUG
     assert(activeHighPriorityCommands_ <= maxHighPriorityCommands_);
     assert(activeStandardPriorityCommands_ <= maxStandardPriorityCommands_);
     assert(activeLowPriorityCommands_ <= maxLowPriorityCommands_);
@@ -192,6 +194,32 @@ namespace OrthancStone
   }
 
   
+  void OracleScheduler::ModifyNumberOfActiveCommands(Priority priority,
+                                                     int delta)
+  {
+    switch (priority)
+    {
+      case Priority_High:
+        assert(static_cast<int>(activeHighPriorityCommands_) + delta >= 0);
+        activeHighPriorityCommands_ += delta;
+        break;
+
+      case Priority_Standard:
+        assert(static_cast<int>(activeStandardPriorityCommands_) + delta >= 0);
+        activeStandardPriorityCommands_ += delta;
+        break;
+
+      case Priority_Low:
+        assert(static_cast<int>(activeLowPriorityCommands_) + delta >= 0);
+        activeLowPriorityCommands_ += delta;
+        break;
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+  }
+    
+
   void OracleScheduler::SpawnFromQueue(Queue& queue,
                                        Priority priority)
   {
@@ -212,6 +240,8 @@ namespace OrthancStone
       boost::shared_ptr<IObserver> observer(command->GetReceiver().lock());
       if (observer)
       {
+        ModifyNumberOfActiveCommands(priority, 1);
+        
         if (oracle_.Schedule(GetSharedObserver(), command->WrapCommand(priority)))
         {
           /**
@@ -224,27 +254,11 @@ namespace OrthancStone
            * "shared_ptr<OracleScheduler>" of the Stone context (check
            * out "sjo-playground/WebViewer/Backend/Leak")
            **/
-
-          switch (priority)
-          {
-            case Priority_High:
-              activeHighPriorityCommands_ ++;
-              break;
-
-            case Priority_Standard:
-              activeStandardPriorityCommands_ ++;
-              break;
-
-            case Priority_Low:
-              activeLowPriorityCommands_ ++;
-              break;
-
-            default:
-              throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-          }
         }
         else
         {
+          // This is similar to "RemoveActiveCommand()"
+          ModifyNumberOfActiveCommands(priority, -1);
           totalProcessed_ ++;
         }
       }
@@ -320,27 +334,8 @@ namespace OrthancStone
 
     totalProcessed_ ++;
 
-    switch (payload.GetActivePriority())
-    {
-      case Priority_High:
-        assert(activeHighPriorityCommands_ > 0);
-        activeHighPriorityCommands_ --;
-        break;
-
-      case Priority_Standard:
-        assert(activeStandardPriorityCommands_ > 0);
-        activeStandardPriorityCommands_ --;
-        break;
-
-      case Priority_Low:
-        assert(activeLowPriorityCommands_ > 0);
-        activeLowPriorityCommands_ --;
-        break;
-
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-    }
-
+    ModifyNumberOfActiveCommands(payload.GetActivePriority(), -1);
+    
     SpawnCommands();
 
     CheckInvariants();

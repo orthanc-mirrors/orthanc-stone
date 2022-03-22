@@ -85,6 +85,9 @@ namespace OrthancStone
 
     void CheckInvariants() const;
 
+    void ModifyNumberOfActiveCommands(Priority priority,
+                                      int delta);
+
     void SpawnFromQueue(Queue& queue,
                         Priority priority);
 

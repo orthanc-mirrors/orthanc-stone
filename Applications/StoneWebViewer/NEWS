@@ -2,16 +2,16 @@ Pending changes in the mainline
 ===============================
 
 * Display of overlays
-* SeriesList: 
-  - display the SeriesNumber tag in front of image count.
-  - order series by SeriesNumber
-  - don't show non displayable series (see "SkipSeriesFromModalities")
+* List of series: 
+  - Display the SeriesNumber tag in front of image count
+  - Order series by SeriesNumber
+  - Don't show non displayable series (see "SkipSeriesFromModalities")
 * In the top right overlay, display ContentDate/ContentTime if they are 
-  available in the instance.  If not, StudyDate is displayed (previous
-  behavior)
+  available in the instance. If not, StudyDate is displayed (previous
+  behavior).
 * New configuration options:
-  - "TimeFormat" to control the way Dicom Times are displayed.
-  - "SkipSeriesFromModalities" to ignore series from given modality types.
+  - "TimeFormat" to control the way Dicom Times are displayed
+  - "SkipSeriesFromModalities" to ignore series from given modality types
 
 
 Version 2.2 (2021-08-31)

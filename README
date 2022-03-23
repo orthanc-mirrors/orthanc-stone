@@ -123,8 +123,8 @@ in "./OrthancStone/".
 We also kindly ask scientific works and clinical studies that make use
 of Orthanc to cite Orthanc in their associated publications.
 Similarly, we ask open-source and closed-source products that make use
-of Orthanc to warn us about this use. You can cite our work using the
-following BibTeX entry:
+of Orthanc to warn us about this use. You can cite our work on the
+Stone of Orthanc using the two following BibTeX entries:
 
 @Article{Jodogne2018,
   author="Jodogne, S{\'e}bastien",
@@ -141,3 +141,14 @@ following BibTeX entry:
   url="https://doi.org/10.1007/s10278-018-0082-y"
 }
 
+@inproceedings{Jodogne2022,
+  author="Jodogne, S{\'e}bastien",
+  title="Rendering Medical Images using {WebAssembly}",
+  booktitle="Proc. of the 15th International Joint Conference on Biomedical Engineering Systems and Technologies",
+  year="2022",
+  month="Feb",
+  volume="2",
+  pages="43--51",
+  doi="10.5220/0000156300003123",
+  url="http://hdl.handle.net/2078.1/257268"
+}

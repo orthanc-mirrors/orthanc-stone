@@ -1462,6 +1462,86 @@ public:
 
 
 
+class OverlaysRegistry : public boost::noncopyable
+{
+private:
+  typedef std::map<std::string, OrthancStone::LookupTableTextureSceneLayer*>  Content;
+
+  Content  content_;
+
+public:
+  ~OverlaysRegistry()
+  {
+    for (Content::iterator it = content_.begin(); it != content_.end(); ++it)
+    {
+      assert(it->second != NULL);
+      delete it->second;
+    }
+  }
+
+  static OverlaysRegistry& GetInstance()
+  {
+    static OverlaysRegistry singleton;
+    return singleton;
+  }
+
+  void Register(const std::string& sopInstanceUid,
+                const OrthancStone::DicomInstanceParameters& parameters,
+                int overlayX,
+                int overlayY,
+                const Orthanc::ImageAccessor& overlay)
+  {
+    // Don't register twice the same overlay
+    Content::iterator found = content_.find(sopInstanceUid);
+    if (found == content_.end())
+    {
+      content_[sopInstanceUid] = parameters.CreateOverlayTexture(overlayX, overlayY, overlay);
+    }
+  }
+
+  class Accessor : public boost::noncopyable
+  {
+  private:
+    const OrthancStone::LookupTableTextureSceneLayer* texture_;
+
+  public:
+    Accessor(const OverlaysRegistry& registry,
+             const std::string& sopInstanceUid)
+    {
+      Content::const_iterator found = registry.content_.find(sopInstanceUid);
+      if (found == registry.content_.end())
+      {
+        texture_ = NULL;
+      }
+      else
+      {
+        assert(found->second != NULL);
+        texture_ = found->second;
+      }
+    }
+
+    bool IsValid() const
+    {
+      return texture_ != NULL;
+    }
+
+    OrthancStone::LookupTableTextureSceneLayer* CreateTexture() const
+    {
+      if (texture_ == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        return dynamic_cast<OrthancStone::LookupTableTextureSceneLayer*>(texture_->Clone());
+      }
+    }
+  };
+};
+
+
+
+
 class ViewerViewport : public OrthancStone::ObserverBase<ViewerViewport>
 {
 public:
@@ -1505,9 +1585,10 @@ public:
 
 private:
   static const int LAYER_TEXTURE = 0;
-  static const int LAYER_REFERENCE_LINES = 1;
-  static const int LAYER_ANNOTATIONS_OSIRIX = 2;
-  static const int LAYER_ANNOTATIONS_STONE = 3;
+  static const int LAYER_OVERLAY = 1;
+  static const int LAYER_REFERENCE_LINES = 2;
+  static const int LAYER_ANNOTATIONS_OSIRIX = 3;
+  static const int LAYER_ANNOTATIONS_STONE = 4;
 
   
   class ICommand : public Orthanc::IDynamicObject
@@ -1823,6 +1904,8 @@ private:
       Orthanc::DicomMap tags;
       dicom.ExtractDicomSummary(tags, ORTHANC_STONE_MAX_TAG_LENGTH);
 
+      OrthancStone::DicomInstanceParameters parameters(tags);
+
       std::unique_ptr<Orthanc::ImageAccessor> converted;
       
       if (frameProtection->GetFormat() == Orthanc::PixelFormat_RGB24)
@@ -1831,25 +1914,28 @@ private:
       }
       else
       {
-        double a = 1;
-        double b = 0;
-
-        double doseScaling;
-        if (tags.ParseDouble(doseScaling, Orthanc::DICOM_TAG_DOSE_GRID_SCALING))
-        {
-          a = doseScaling;
-        }
-      
-        double rescaleIntercept, rescaleSlope;
-        dicom.GetRescale(rescaleIntercept, rescaleSlope, frameNumber);
-        a *= rescaleSlope;
-        b = rescaleIntercept;
-
         converted.reset(new Orthanc::Image(Orthanc::PixelFormat_Float32, frameProtection->GetWidth(), frameProtection->GetHeight(), false));
         Orthanc::ImageProcessing::Convert(*converted, *frameProtection);
-        Orthanc::ImageProcessing::ShiftScale2(*converted, b, a, false);        
+        parameters.ApplyRescaleAndDoseScaling(*converted, false /* don't use double */);
       }
 
+      try
+      {
+        int x, y;
+        std::unique_ptr<Orthanc::ImageAccessor> overlay(dicom.DecodeAllOverlays(x, y));
+
+        if (overlay.get() != NULL &&
+            overlay->GetWidth() > 0 &&
+            overlay->GetHeight() > 0)
+        {
+          OverlaysRegistry::GetInstance().Register(sopInstanceUid, parameters, x, y, *overlay);
+        }
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        LOG(ERROR) << "Cannot decode overlays from instance " << sopInstanceUid;
+      }
+      
       assert(converted.get() != NULL);
       viewport.RenderCurrentSceneFromCommand(*converted, sopInstanceUid, frameNumber, DisplayedFrameQuality_High);
       viewport.framesCache_->Acquire(sopInstanceUid, frameNumber, converted.release(), QUALITY_FULL);
@@ -2107,6 +2193,18 @@ private:
       layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
     }
 
+    std::unique_ptr<OrthancStone::LookupTableTextureSceneLayer> overlay;
+
+    {
+      OverlaysRegistry::Accessor accessor(OverlaysRegistry::GetInstance(), instance.GetSopInstanceUid());
+      if (accessor.IsValid())
+      {
+        overlay.reset(accessor.CreateTexture());
+        overlay->SetFlipX(flipX_);
+        overlay->SetFlipY(flipY_);
+      }
+    }
+
     std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsOsiriX;
 
     if (osiriXAnnotations_)
@@ -2138,6 +2236,15 @@ private:
       OrthancStone::Scene2D& scene = lock->GetController().GetScene();
 
       scene.SetLayer(LAYER_TEXTURE, layer.release());
+
+      if (overlay.get() != NULL)
+      {
+        scene.SetLayer(LAYER_OVERLAY, overlay.release());
+      }
+      else
+      {
+        scene.DeleteLayer(LAYER_OVERLAY);
+      }
 
       if (annotationsOsiriX.get() != NULL)
       {
@@ -2335,6 +2442,15 @@ private:
         OrthancStone::TextureBaseSceneLayer& layer = 
           dynamic_cast<OrthancStone::TextureBaseSceneLayer&>(
             lock->GetController().GetScene().GetLayer(LAYER_TEXTURE));
+
+        layer.SetFlipX(flipX_);
+        layer.SetFlipY(flipY_);
+      }
+
+      {
+        OrthancStone::TextureBaseSceneLayer& layer = 
+          dynamic_cast<OrthancStone::TextureBaseSceneLayer&>(
+            lock->GetController().GetScene().GetLayer(LAYER_OVERLAY));
 
         layer.SetFlipX(flipX_);
         layer.SetFlipY(flipY_);

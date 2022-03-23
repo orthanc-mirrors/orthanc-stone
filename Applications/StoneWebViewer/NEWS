@@ -1,6 +1,7 @@
 Pending changes in the mainline
 ===============================
 
+* Display of overlays
 * SeriesList: 
   - display the SeriesNumber tag in front of image count.
   - order series by SeriesNumber

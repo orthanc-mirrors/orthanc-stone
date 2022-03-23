@@ -75,9 +75,6 @@ namespace OrthancStone
     std::unique_ptr<Orthanc::DicomMap>               tags_;
     std::unique_ptr<Orthanc::DicomImageInformation>  imageInformation_;  // Lazy evaluation
 
-    void ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
-                                    bool useDouble) const;
-
   public:
     explicit DicomInstanceParameters(const DicomInstanceParameters& other) :
       data_(other.data_),
@@ -230,6 +227,9 @@ namespace OrthancStone
     {
       return data_.doseGridScaling_;
     }
+
+    void ApplyRescaleAndDoseScaling(Orthanc::ImageAccessor& image,
+                                    bool useDouble) const;
 
     double ApplyRescale(double value) const;
 

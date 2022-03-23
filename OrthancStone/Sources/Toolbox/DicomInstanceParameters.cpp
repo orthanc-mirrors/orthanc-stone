@@ -355,45 +355,18 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
     }
 
-    double factor = data_.doseGridScaling_;
+    double scaling = data_.doseGridScaling_;
     double offset = 0.0;
 
     if (data_.hasRescale_)
     {
-      factor *= data_.rescaleSlope_;
+      scaling *= data_.rescaleSlope_;
       offset = data_.rescaleIntercept_;
     }
 
-    if (!LinearAlgebra::IsNear(factor, 1) ||
-        !LinearAlgebra::IsNear(offset, 0))
-    {
-      const unsigned int width = image.GetWidth();
-      const unsigned int height = image.GetHeight();
-        
-      for (unsigned int y = 0; y < height; y++)
-      {
-        float* p = reinterpret_cast<float*>(image.GetRow(y));
-
-        if (useDouble)
-        {
-          // Slower, accurate implementation using double
-          for (unsigned int x = 0; x < width; x++, p++)
-          {
-            double value = static_cast<double>(*p);
-            *p = static_cast<float>(value * factor + offset);
-          }
-        }
-        else
-        {
-          // Fast, approximate implementation using float
-          for (unsigned int x = 0; x < width; x++, p++)
-          {
-            *p = (*p) * static_cast<float>(factor) + static_cast<float>(offset);
-          }
-        }
-      }
-    }
+    Orthanc::ImageProcessing::ShiftScale2(image, offset, scaling, false);
   }
+  
 
   double DicomInstanceParameters::GetRescaleIntercept() const
   {
@@ -686,6 +659,29 @@ namespace OrthancStone
     texture->SetOrigin(static_cast<double>(originX - 1) * texture->GetPixelSpacingX(),
                        static_cast<double>(originY - 1) * texture->GetPixelSpacingY());
 
+    std::vector<uint8_t> lut(4 * 256);
+    for (size_t i = 0; i < 256; i++)
+    {
+      if (i < 127)
+      {
+        // Black pixels are converted to transparent pixels
+        lut[4 * i] = 0;
+        lut[4 * i + 1] = 0;
+        lut[4 * i + 2] = 0;
+        lut[4 * i + 3] = 0;  // alpha
+      }
+      else
+      {
+        // White pixels are converted to opaque white
+        lut[4 * i] = 255;
+        lut[4 * i + 1] = 255;
+        lut[4 * i + 2] = 255;
+        lut[4 * i + 3] = 255;  // alpha
+      }
+    }
+
+    texture->SetLookupTable(lut);
+    
     return texture.release();
   }
 
@@ -706,16 +702,16 @@ namespace OrthancStone
 
   double DicomInstanceParameters::ApplyRescale(double value) const
   {
-    double factor = data_.doseGridScaling_;
+    double scaling = data_.doseGridScaling_;
     double offset = 0.0;
 
     if (data_.hasRescale_)
     {
-      factor *= data_.rescaleSlope_;
+      scaling *= data_.rescaleSlope_;
       offset = data_.rescaleIntercept_;
     }
 
-    return (value * factor + offset);
+    return (value * scaling + offset);
   }
 
 

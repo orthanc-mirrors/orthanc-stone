@@ -33,6 +33,11 @@ Known issues
 * When opening a CT with 700 slices, if you drop the thumbnail in the viewport
   before the studies/../metadata have been loaded, the series will never be displayed
 
+* Compatibility with Google Chrome browser on iPad Air 4:
+  https://groups.google.com/g/orthanc-users/c/7SgedbIiA2k/
+  https://groups.google.com/g/orthanc-users/c/RfQJFgkOUYY/m/za7rkcLNBQAJ
+
+
 -----------------
 Code refactorings
 -----------------

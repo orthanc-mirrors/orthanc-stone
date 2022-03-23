@@ -26,6 +26,7 @@
 #include "../Scene2D/PanSceneTracker.h"
 #include "../Scene2D/RotateSceneTracker.h"
 #include "../Scene2D/ZoomSceneTracker.h"
+#include "../Scene2DViewport/ViewportController.h"
 
 #include <OrthancException.h>
 
@@ -47,8 +48,28 @@ namespace OrthancStone
         return new RotateSceneTracker(viewport, event);
 
       case MouseAction_GrayscaleWindowing:
-        return new GrayscaleWindowingSceneTracker(
-          viewport, windowingLayer_, event, viewportWidth, viewportHeight);
+      {
+        boost::shared_ptr<IViewport> v(viewport.lock());
+        if (v == NULL)
+        {
+          return NULL;
+        }
+        else
+        {
+          std::unique_ptr<IViewport::ILock> lock(v->Lock());
+          if (lock->GetController().GetScene().HasLayer(windowingLayer_) &&
+              lock->GetController().GetScene().GetLayer(windowingLayer_).GetType() == ISceneLayer::Type_FloatTexture)
+          {
+            return new GrayscaleWindowingSceneTracker(
+              viewport, windowingLayer_, event, viewportWidth, viewportHeight);
+          }
+          else
+          {
+            // Don't create the tracker if the layer is not a float texture
+            return NULL;
+          }
+        }
+      }
 
       case MouseAction_Pan:
         return new PanSceneTracker(viewport, event);

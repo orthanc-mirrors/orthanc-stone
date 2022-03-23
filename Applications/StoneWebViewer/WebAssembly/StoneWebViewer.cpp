@@ -2447,6 +2447,7 @@ private:
         layer.SetFlipY(flipY_);
       }
 
+      if (lock->GetController().GetScene().HasLayer(LAYER_OVERLAY))
       {
         OrthancStone::TextureBaseSceneLayer& layer = 
           dynamic_cast<OrthancStone::TextureBaseSceneLayer&>(

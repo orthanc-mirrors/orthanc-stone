@@ -1,8 +1,12 @@
 Pending changes in the mainline
 ===============================
 
+
+Version 2.3 (2022-03-24)
+========================
+
 * Display of overlays
-* List of series: 
+* List of series:
   - Display the SeriesNumber tag in front of image count
   - Order series by SeriesNumber
   - Don't show non displayable series (see "SkipSeriesFromModalities")
@@ -10,8 +14,8 @@ Pending changes in the mainline
   available in the instance. If not, StudyDate is displayed (previous
   behavior).
 * New configuration options:
-  - "TimeFormat" to control the way Dicom Times are displayed
-  - "SkipSeriesFromModalities" to ignore series from given modality types
+  - "TimeFormat" to control the way DICOM times are displayed
+  - "SkipSeriesFromModalities" to ignore series with given modality types
 
 
 Version 2.2 (2021-08-31)

@@ -1,6 +1,8 @@
 Pending changes in the mainline
 ===============================
 
+* More tolerance wrt. bad values of the Pixel Spacing (0028,0030) tag
+
 
 Version 2.3 (2022-03-24)
 ========================

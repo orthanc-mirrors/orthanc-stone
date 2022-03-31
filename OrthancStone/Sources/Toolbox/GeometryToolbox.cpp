@@ -311,22 +311,15 @@ namespace OrthancStone
     {
       Vector v;
 
-      if (LinearAlgebra::ParseVector(v, dicom, Orthanc::DICOM_TAG_PIXEL_SPACING))
+      if (LinearAlgebra::ParseVector(v, dicom, Orthanc::DICOM_TAG_PIXEL_SPACING) &&
+          v.size() >= 2 &&
+          v[0] > 0 &&
+          v[1] > 0)
       {
-        if (v.size() != 2 ||
-            v[0] <= 0 ||
-            v[1] <= 0)
-        {
-          LOG(ERROR) << "Bad value for PixelSpacing tag";
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-        }
-        else
-        {
-          // WARNING: X/Y are swapped (Y comes first)
-          spacingX = v[1];
-          spacingY = v[0];
-          return true;
-        }
+        // WARNING: X/Y are swapped (Y comes first)
+        spacingX = v[1];
+        spacingY = v[0];
+        return true;
       }
       else
       {

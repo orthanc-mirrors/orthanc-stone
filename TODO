@@ -90,6 +90,9 @@ Wishlist
   (like the OsimisViewer).  Whatchout the known issues wrt dropping a series
   before the studies/../metadata have been loaded.
 
+* Create secondary capture DICOM images with the annotations burned in:
+  https://groups.google.com/g/orthanc-users/c/T3h-6dIjvww/m/sVtHxwT_AQAJ
+
 
 --------
 Won't do

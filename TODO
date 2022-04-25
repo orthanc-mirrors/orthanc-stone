@@ -93,6 +93,11 @@ Wishlist
 * Create secondary capture DICOM images with the annotations burned in:
   https://groups.google.com/g/orthanc-users/c/T3h-6dIjvww/m/sVtHxwT_AQAJ
 
+* Configure the default layout (e.g. 1x2 instead of 1x1) and the
+  default view of the left toolbox:
+  https://groups.google.com/g/orthanc-users/c/y2B_RIzegNc/m/H9MhY9y2AgAJ
+
+
 
 --------
 Won't do

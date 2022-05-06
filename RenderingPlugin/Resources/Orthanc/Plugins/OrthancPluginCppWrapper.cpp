@@ -1546,24 +1546,18 @@ namespace OrthancPlugins
              " is required)");
   }
 
-
-  bool CheckMinimalOrthancVersion(unsigned int major,
-                                  unsigned int minor,
-                                  unsigned int revision)
+  bool CheckMinimalVersion(const char* version,
+                           unsigned int major,
+                           unsigned int minor,
+                           unsigned int revision)
   {
-    if (!HasGlobalContext())
-    {
-      LogError("Bad Orthanc context in the plugin");
-      return false;
-    }
-
-    if (!strcmp(GetGlobalContext()->orthancVersion, "mainline"))
+    if (!strcmp(version, "mainline"))
     {
       // Assume compatibility with the mainline
       return true;
     }
 
-    // Parse the version of the Orthanc core
+    // Parse the version
     int aa, bb, cc;
     if (
 #ifdef _MSC_VER
@@ -1571,7 +1565,7 @@ namespace OrthancPlugins
 #else
       sscanf
 #endif
-      (GetGlobalContext()->orthancVersion, "%4d.%4d.%4d", &aa, &bb, &cc) != 3 ||
+      (version, "%4d.%4d.%4d", &aa, &bb, &cc) != 3 ||
       aa < 0 ||
       bb < 0 ||
       cc < 0)
@@ -1594,7 +1588,6 @@ namespace OrthancPlugins
     {
       return false;
     }
-
 
     // Check the minor version number
     assert(a == major);
@@ -1620,6 +1613,21 @@ namespace OrthancPlugins
     {
       return false;
     }
+  }
+
+
+  bool CheckMinimalOrthancVersion(unsigned int major,
+                                  unsigned int minor,
+                                  unsigned int revision)
+  {
+    if (!HasGlobalContext())
+    {
+      LogError("Bad Orthanc context in the plugin");
+      return false;
+    }
+
+    return CheckMinimalVersion(GetGlobalContext()->orthancVersion,
+                               major, minor, revision);
   }
 
 
@@ -3703,7 +3711,13 @@ namespace OrthancPlugins
 
     try
     {
-      *isReadOnly = (that.StoreFile(WebDavConvertPath(pathSize, pathItems), data, size) ? 1 : 0);
+      if (static_cast<uint64_t>(static_cast<size_t>(size)) != size)
+      {
+        ORTHANC_PLUGINS_THROW_EXCEPTION(NotEnoughMemory);
+      }
+      
+      *isReadOnly = (that.StoreFile(WebDavConvertPath(pathSize, pathItems), data,
+                                    static_cast<size_t>(size)) ? 1 : 0);
       return OrthancPluginErrorCode_Success;
     }
     catch (ORTHANC_PLUGINS_EXCEPTION_CLASS& e)

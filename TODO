@@ -56,6 +56,9 @@ Code refactorings
 * Replace "ParsedDicomCache" by "Orthanc::ParsedDicomCache" (new in
   Orthanc framework 1.9.0)
 
+* Replace calls to /studies/.../series/.../metadata by calls to
+  /instances?StudyInstanceUID=...&SeriesInstanceUID=...&includefield=...&includefield=...
+  to benefit from ExtraMainDicomTags stored in DB and avoid reading from disk
 
 --------
 Wishlist

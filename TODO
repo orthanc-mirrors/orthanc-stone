@@ -49,6 +49,9 @@ Known issues
   https://groups.google.com/g/orthanc-users/c/7SgedbIiA2k/
   https://groups.google.com/g/orthanc-users/c/RfQJFgkOUYY/m/za7rkcLNBQAJ
 
+* the authorization header ('token' query arg) is not included in the HTTP headers.
+  Tested with https://bitbucket.org/osimis/orthanc-setup-samples/src/master/docker/authorization-plugin-viewer-query-args/.
+
 
 -----------------
 Code refactorings

@@ -27,11 +27,9 @@
 #include "../../OrthancStone/Sources/Toolbox/DicomInstanceParameters.h"
 #include "../../OrthancStone/Sources/Toolbox/DicomStructureSet.h"
 
-#include <EmbeddedResources.h>
-
+#include <Cache/MemoryObjectCache.h>
 #include <Images/Image.h>
 #include <Images/ImageProcessing.h>
-#include <Images/PngWriter.h>
 #include <Images/NumpyWriter.h>
 #include <Logging.h>
 #include <SerializationToolbox.h>
@@ -49,9 +47,33 @@ static const char* const STRUCTURES = "Structures";
 class DicomStructureCache : public boost::noncopyable
 {
 private:
-  boost::mutex   mutex_;
-  std::string    instanceId_;
-  std::unique_ptr<OrthancStone::DicomStructureSet> rtstruct_;
+  class Item : public Orthanc::ICacheable
+  {
+  private:
+    std::unique_ptr<OrthancStone::DicomStructureSet> rtstruct_;
+
+  public:
+    Item(OrthancStone::DicomStructureSet* rtstruct) :
+      rtstruct_(rtstruct)
+    {
+      if (rtstruct == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+    }
+    
+    virtual size_t GetMemoryUsage() const
+    {
+      return 1;
+    }
+
+    OrthancStone::DicomStructureSet& GetRtStruct() const
+    {
+      return *rtstruct_;
+    }
+  };
+
+  Orthanc::MemoryObjectCache   cache_;
 
   DicomStructureCache()  // Singleton design pattern
   {
@@ -60,12 +82,12 @@ private:
 public:
   void Invalidate(const std::string& instanceId)
   {
-    boost::mutex::scoped_lock lock(mutex_);
+    cache_.Invalidate(instanceId);
+  }
 
-    if (instanceId_ == instanceId)
-    {
-      rtstruct_.reset(NULL);
-    }
+  void SetMaximumNumberOfItems(size_t items)
+  {
+    cache_.SetMaximumSize(items);
   }
 
   static DicomStructureCache& GetSingleton()
@@ -77,34 +99,39 @@ public:
   class Accessor : public boost::noncopyable
   {
   private:
-    boost::mutex::scoped_lock         lock_;
-    std::string                       instanceId_;
-    OrthancStone::DicomStructureSet*  rtstruct_;
+    DicomStructureCache& that_;
+    std::string instanceId_;
+    Orthanc::MemoryObjectCache::Accessor  lock_;
+    std::unique_ptr<OrthancStone::DicomStructureSet>  notCached_;
 
   public:
     Accessor(DicomStructureCache& that,
              const std::string& instanceId) :
-      lock_(that.mutex_),
+      that_(that),
       instanceId_(instanceId),
-      rtstruct_(NULL)
+      lock_(that.cache_, instanceId, true /* unique, as "GetRtStruct()" is mutable */)
     {
-      if (that.instanceId_ == instanceId &&
-          that.rtstruct_.get() != NULL)
+      if (!lock_.IsValid())
       {
-        rtstruct_ = that.rtstruct_.get();
+        OrthancStone::OrthancPluginConnection connection;
+        OrthancStone::FullOrthancDataset dataset(connection, "/instances/" + instanceId + "/tags?ignore-length=3006-0050");
+        notCached_.reset(new OrthancStone::DicomStructureSet(dataset));
       }
-      else
+    }
+
+    ~Accessor()
+    {
+      if (!lock_.IsValid())
       {
+        assert(notCached_.get() != NULL);
+      
         try
         {
-          OrthancStone::OrthancPluginConnection connection;
-          OrthancStone::FullOrthancDataset dataset(connection, "/instances/" + instanceId + "/tags?ignore-length=3006-0050");
-          that.rtstruct_.reset(new OrthancStone::DicomStructureSet(dataset));
-          that.instanceId_ = instanceId;
-          rtstruct_ = that.rtstruct_.get();
+          that_.cache_.Acquire(instanceId_, new Item(notCached_.release()));
         }
-        catch (Orthanc::OrthancException&)
+        catch (Orthanc::OrthancException& e)
         {
+          LOG(ERROR) << "Cannot insert RT-STRUCT into cache: " << e.What();
         }
       }
     }
@@ -114,20 +141,16 @@ public:
       return instanceId_;
     }
 
-    bool IsValid() const
-    {
-      return rtstruct_ != NULL;
-    }
-
     OrthancStone::DicomStructureSet& GetRtStruct() const
     {
-      if (IsValid())
+      if (lock_.IsValid())
       {
-        return *rtstruct_;
+        return dynamic_cast<Item&>(lock_.GetValue()).GetRtStruct();
       }
       else
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+        assert(notCached_.get() != NULL);
+        return *notCached_;
       }
     }
   };
@@ -298,6 +321,7 @@ public:
     targetWidth_ = 0;
     targetHeight_ = 0;
     hasInterpolation_ = false;
+    interpolation_ = OrthancStone::ImageInterpolation_Nearest;
   }
 
   
@@ -635,11 +659,6 @@ static void GetRtStruct(OrthancPluginRestOutput* output,
 {
   DicomStructureCache::Accessor accessor(DicomStructureCache::GetSingleton(), request->groups[0]);
 
-  if (!accessor.IsValid())
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
-  }
-
   Json::Value answer;
   answer[STRUCTURES] = Json::arrayValue;
 
@@ -671,7 +690,7 @@ static void GetRtStruct(OrthancPluginRestOutput* output,
     s.ToString(t);
 
     answer[INSTANCES].append(t);
-  }  
+  }
 
   std::string s = answer.toStyledString();
   OrthancPluginAnswerBuffer(OrthancPlugins::GetGlobalContext(), output, s.c_str(), s.size(), "application/json");
@@ -772,11 +791,6 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
 
   {
     DicomStructureCache::Accessor accessor(DicomStructureCache::GetSingleton(), request->groups[0]);
-
-    if (!accessor.IsValid())
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
-    }
 
     size_t structureIndex;
     bool found = false;
@@ -889,6 +903,8 @@ extern "C"
 
     try
     {
+      DicomStructureCache::GetSingleton().SetMaximumNumberOfItems(1024);  // Cache up to 1024 RT-STRUCT instances
+      
       OrthancPlugins::RegisterRestCallback<RenderNumpyFrame>("/stone/instances/([^/]+)/frames/([0-9]+)/numpy", true);
       OrthancPlugins::RegisterRestCallback<ListRtStruct>("/stone/rt-struct", true);
       OrthancPlugins::RegisterRestCallback<GetRtStruct>("/stone/rt-struct/([^/]+)/info", true);

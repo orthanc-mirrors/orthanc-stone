@@ -148,12 +148,15 @@ namespace OrthancStone
       uint8_t       blue_;
     };
 
-    typedef std::vector<Structure>  Structures;
+    typedef std::vector<Structure>         Structures;
+    typedef std::map<std::string, size_t>  StructureNamesIndex;
 
     Structures        structures_;
     ReferencedSlices  referencedSlices_;
     Vector            estimatedNormal_;
     double            estimatedSliceThickness_;
+    StructureNamesIndex  structureNamesIndex_;
+    
 
     void Setup(const IDicomDataset& dataset);
     
@@ -235,5 +238,8 @@ namespace OrthancStone
     {
       return estimatedSliceThickness_;
     }
+
+    bool LookupStructureName(size_t& structureIndex /* out */,
+                             const std::string& name) const;
   };
 }

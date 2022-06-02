@@ -401,6 +401,8 @@ namespace OrthancStone
     }
 
     structures_.resize(count);
+    structureNamesIndex_.clear();
+    
     for (size_t i = 0; i < count; i++)
     {
       structures_[i].interpretation_ = reader.GetStringValue
@@ -412,6 +414,16 @@ namespace OrthancStone
         (Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
                             DICOM_TAG_ROI_NAME),
          "No name");
+
+      if (structureNamesIndex_.find(structures_[i].name_) == structureNamesIndex_.end())
+      {
+        structureNamesIndex_[structures_[i].name_] = i;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                        "RT-STRUCT with twice the same name for a structure: " + structures_[i].name_);
+      }
 
       Vector color;
       if (FastParseVector(color, tags, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
@@ -1016,6 +1028,23 @@ namespace OrthancStone
     else
     {
       estimatedSliceThickness_ = LinearAlgebra::ComputeMedian(deltas);
+    }
+  }
+
+
+  bool DicomStructureSet::LookupStructureName(size_t& structureIndex /* out */,
+                                              const std::string& name) const
+  {
+    StructureNamesIndex::const_iterator found = structureNamesIndex_.find(name);
+
+    if (found == structureNamesIndex_.end())
+    {
+      return false;
+    }
+    else
+    {
+      structureIndex = found->second;
+      return true;
     }
   }
 }

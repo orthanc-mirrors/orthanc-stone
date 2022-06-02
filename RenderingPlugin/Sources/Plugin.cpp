@@ -743,7 +743,7 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
   };
   
   DataAugmentationParameters dataAugmentation;
-  std::string structureName;
+  std::vector<std::string> structureNames;
   std::string instanceId;
   bool compress = false;
 
@@ -756,7 +756,7 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
     {
       if (key == "structure")
       {
-        structureName = value;
+        Orthanc::Toolbox::TokenizeString(structureNames, value, ',');
       }
       else if (key == "instance")
       {
@@ -773,10 +773,10 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
     }
   }
 
-  if (structureName.empty())
+  if (structureNames.empty())
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol,
-                                    "Missing option \"structure\" to provide the structure name");
+                                    "Missing option \"structure\" to provide the names of the structures of interest");
   }
 
   if (instanceId.empty())
@@ -787,30 +787,28 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
   
   std::unique_ptr<OrthancStone::DicomInstanceParameters> parameters(GetInstanceParameters(instanceId));
 
-  std::list< std::vector<OrthancStone::Vector> > polygons;
+  typedef std::list< std::vector<OrthancStone::Vector> > Polygons;
+
+  Polygons polygons;
 
   {
     DicomStructureCache::Accessor accessor(DicomStructureCache::GetSingleton(), request->groups[0]);
 
-    size_t structureIndex;
-    bool found = false;
-    for (size_t i = 0; i < accessor.GetRtStruct().GetStructuresCount(); i++)
+    for (size_t i = 0; i < structureNames.size(); i++)
     {
-      if (accessor.GetRtStruct().GetStructureName(i) == structureName)
+      size_t structureIndex;
+      if (accessor.GetRtStruct().LookupStructureName(structureIndex, structureNames[i]))
       {
-        structureIndex = i;
-        found = true;
-        break;
+        Polygons p;
+        accessor.GetRtStruct().GetStructurePoints(p, structureIndex, parameters->GetSopInstanceUid());
+        polygons.splice(polygons.begin(), p);
+      }
+      else
+      {
+        LOG(WARNING) << "Missing structure name \"" << structureNames[i]
+                     << "\" in RT-STRUCT: " << parameters->GetSopInstanceUid();
       }
     }
-
-    if (!found)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem,
-                                      "Unknown structure name: " + structureName);
-    }
-
-    accessor.GetRtStruct().GetStructurePoints(polygons, structureIndex, parameters->GetSopInstanceUid());
   }
 
   // We use a "XOR" filler for the polygons in order to deal with holes in the RT-STRUCT

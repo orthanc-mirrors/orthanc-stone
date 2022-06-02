@@ -715,7 +715,7 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
       Orthanc::ImageProcessing::Set(image_, 0);
     }
 
-    const Orthanc::ImageAccessor& GetImage() const
+    Orthanc::ImageAccessor& GetImage()
     {
       return image_;
     }
@@ -737,11 +737,65 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
         for (int i = x1; i <= x2; i++, p++)
         {
           *p = (*p ^ 0xff);
-        }        
+        }
       }
     }
   };
+
   
+  class HorizontalSegment
+  {
+  private:
+    int  y_;
+    int  x1_;
+    int  x2_;
+    
+  public:
+    HorizontalSegment(int y,
+                      int x1,
+                      int x2) :
+      y_(y),
+      x1_(std::min(x1, x2)),
+      x2_(std::max(x1, x2))
+    {
+    }
+    
+    int GetY() const
+    {
+      return y_;
+    }
+    
+    int GetX1() const
+    {
+      return x1_;
+    }
+    
+    int GetX2() const
+    {
+      return x2_;
+    }
+
+    void Fill(Orthanc::ImageAccessor& image) const
+    {
+      assert(x1_ <= x2_);
+
+      if (y_ >= 0 &&
+          y_ < static_cast<int>(image.GetHeight()))
+      {
+        int a = std::max(x1_, 0);
+        int b = std::min(x2_, static_cast<int>(image.GetWidth()) - 1);
+
+        uint8_t* p = reinterpret_cast<uint8_t*>(image.GetRow(y_)) + a;
+
+        for (int i = a; i <= b; i++, p++)
+        {
+          *p = 0xff;
+        }
+      }
+    }
+  };
+
+
   DataAugmentationParameters dataAugmentation;
   std::vector<std::string> structureNames;
   std::string instanceId;
@@ -815,6 +869,8 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
   XorFiller filler(parameters->GetWidth(), parameters->GetHeight());
   OrthancStone::AffineTransform2D transform = dataAugmentation.ComputeTransform(parameters->GetWidth(), parameters->GetHeight());
   
+  std::list<HorizontalSegment> horizontalSegments;
+  
   for (std::list< std::vector<OrthancStone::Vector> >::const_iterator
          it = polygons.begin(); it != polygons.end(); ++it)
   {
@@ -833,12 +889,35 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
       
       transform.Apply(x, y);
 
-      points.push_back(Orthanc::ImageProcessing::ImagePoint(x, y));
+      points.push_back(Orthanc::ImageProcessing::ImagePoint(std::floor(x), std::floor(y)));
     }
-
+    
     Orthanc::ImageProcessing::FillPolygon(filler, points);
+
+    for (size_t i = 0; i < points.size(); i++)
+    {
+      size_t next = (i + 1) % points.size();
+      if (points[i].GetY() == points[next].GetY())
+      {
+        horizontalSegments.push_back(HorizontalSegment(points[i].GetY(), points[i].GetX(), points[next].GetX()));
+      }
+    }
   }
 
+  /**
+   * We repeat the filling of the horizontal segments. This is
+   * important to deal with horizontal edges that are seen in one
+   * direction, then in the reverse direction within the same polygon,
+   * which can typically be seen in RT-STRUCT with holes. If this step
+   * is not done, only the starting point and the ending point of the
+   * segments are drawn.
+   **/
+  for (std::list<HorizontalSegment>::const_iterator it = horizontalSegments.begin();
+       it != horizontalSegments.end(); ++it)
+  {
+    it->Fill(filler.GetImage());
+  }
+  
   AnswerNumpyImage(output, filler.GetImage(), compress);
 }
 

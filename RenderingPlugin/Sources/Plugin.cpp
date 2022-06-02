@@ -220,6 +220,8 @@ private:
   bool         hasResize_;
   unsigned int targetWidth_;
   unsigned int targetHeight_;
+  bool         hasInterpolation_;
+  OrthancStone::ImageInterpolation  interpolation_;
 
   void ApplyInternal(Orthanc::ImageAccessor& target,
                      const Orthanc::ImageAccessor& source)
@@ -239,10 +241,14 @@ private:
       OrthancStone::AffineTransform2D transform = ComputeTransform(source.GetWidth(), source.GetHeight());
       
       OrthancStone::ImageInterpolation interpolation;
-      
-      if (source.GetFormat() == Orthanc::PixelFormat_RGB24)
+
+      if (hasInterpolation_)
       {
-        LOG(WARNING) << "Bilinear interpolation for color images is not implemented yet";
+        interpolation = interpolation_;
+      }
+      else if (source.GetFormat() == Orthanc::PixelFormat_RGB24)
+      {
+        // Bilinear interpolation for color images is not implemented yet
         interpolation = OrthancStone::ImageInterpolation_Nearest;
       }
       else
@@ -291,6 +297,7 @@ public:
     hasResize_ = false;
     targetWidth_ = 0;
     targetHeight_ = 0;
+    hasInterpolation_ = false;
   }
 
   
@@ -379,6 +386,25 @@ public:
         hasResize_ = true;
         return true;
       }
+    }
+    else if (key == "interpolation")
+    {
+      if (value == "nearest")
+      {
+        interpolation_ = OrthancStone::ImageInterpolation_Nearest;
+      }
+      else if (value == "bilinear")
+      {
+        interpolation_ = OrthancStone::ImageInterpolation_Bilinear;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange,
+                                        "Unknown interpolation (must be \"nearest\" or \"bilinear\"): " + value);
+      }
+
+      hasInterpolation_ = true;
+      return true;
     }
     else
     {
@@ -679,17 +705,20 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
                       int x1,
                       int x2) ORTHANC_OVERRIDE
     {
-      assert(x1 > 0 &&
-             x1 <= x2 &&
-             x2 < static_cast<int>(image_.GetWidth()) &&
-             y > 0 &&
-             y < static_cast<int>(image_.GetHeight()));
-      
-      uint8_t* p = reinterpret_cast<uint8_t*>(image_.GetRow(y)) + x1;
+      assert(x1 <= x2);
 
-      for (int i = x1; i <= x2; i++, p++)
+      if (y >= 0 &&
+          y < static_cast<int>(image_.GetHeight()))
       {
-        *p = (*p ^ 0xff);
+        x1 = std::max(x1, 0);
+        x2 = std::min(x2, static_cast<int>(image_.GetWidth()) - 1);
+
+        uint8_t* p = reinterpret_cast<uint8_t*>(image_.GetRow(y)) + x1;
+
+        for (int i = x1; i <= x2; i++, p++)
+        {
+          *p = (*p ^ 0xff);
+        }        
       }
     }
   };
@@ -782,10 +811,13 @@ static void RenderRtStruct(OrthancPluginRestOutput* output,
 
     for (size_t i = 0; i < it->size(); i++)
     {
+      // The (0.5, 0.5) offset is due to the fact that DICOM
+      // coordinates are expressed wrt. the CENTER of the voxels
+      
       double x, y;
       parameters->GetGeometry().ProjectPoint(x, y, (*it) [i]);
-      x /= parameters->GetPixelSpacingX();
-      y /= parameters->GetPixelSpacingY();
+      x = x / parameters->GetPixelSpacingX() + 0.5;
+      y = y / parameters->GetPixelSpacingY() + 0.5;
       
       transform.Apply(x, y);
 

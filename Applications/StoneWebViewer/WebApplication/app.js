@@ -568,7 +568,15 @@ var app = new Vue({
       }
     },
 
-    SetResources: function(sourceStudies, sourceSeries) {     
+    SetResources: function(sourceStudies, sourceSeries) {
+      // Here one can fix input studies/series for missing DICOM tags
+      // that are needed for the Stone Web viewer (e.g. "hand.dcm")
+      for (var i = 0; i < sourceStudies.length; i++) {
+        if (!(STUDY_DATE in sourceStudies[i])) {
+          sourceStudies[i][STUDY_DATE] = '';
+        }
+      }
+
       var indexStudies = {};
 
       var studies = [];

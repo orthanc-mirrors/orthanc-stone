@@ -2,6 +2,7 @@ Pending changes in the mainline
 ===============================
 
 * More tolerance wrt. bad values of the Pixel Spacing (0028,0030) tag
+* Support of DICOM images without the Study Date (0008,0020) tag
 
 
 Version 2.3 (2022-03-24)

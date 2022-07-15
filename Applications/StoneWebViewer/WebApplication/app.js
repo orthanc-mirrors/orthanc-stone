@@ -262,7 +262,7 @@ Vue.component('viewport', {
 
     window.addEventListener('FrameUpdated', function(args) {
       if (args.detail.canvasId == that.canvasId) {
-        that.currentFrame = (args.detail.currentFrame + 1);
+        that.currentFrame = args.detail.currentFrame;
         that.numberOfFrames = args.detail.numberOfFrames;
         that.quality = args.detail.quality;
         that.instanceNumber = args.detail.instanceNumber;

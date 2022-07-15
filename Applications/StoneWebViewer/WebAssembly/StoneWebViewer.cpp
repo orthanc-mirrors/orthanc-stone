@@ -2860,6 +2860,18 @@ public:
   }
 
 
+  void SetFrame(unsigned int frameNumber)
+  {
+    if (cursor_.get() != NULL &&
+        frameNumber < cursor_->GetFramesCount() &&
+        frameNumber != cursor_->GetCurrentIndex())
+    {
+      cursor_->SetCurrentIndex(frameNumber);
+      Redraw();
+    }
+  }
+
+
   void GoToFirstFrame()
   {
     if (cursor_.get() != NULL &&
@@ -4005,6 +4017,21 @@ extern "C"
     EXTERN_CATCH_EXCEPTIONS;
     return 0;
   }  
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void SetFrame(const char* canvas,
+                int frameNumber)
+  {
+    try
+    {
+      if (frameNumber >= 0)
+      {
+        GetViewport(canvas)->SetFrame(static_cast<unsigned int>(frameNumber));
+      }
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
 
 
   EMSCRIPTEN_KEEPALIVE

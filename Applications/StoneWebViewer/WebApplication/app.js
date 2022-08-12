@@ -1372,6 +1372,11 @@ window.addEventListener('DeepLearningInitialized', function() {
   stone.LoadDeepLearningModel('model.message');
 });
 
-window.addEventListener('DeepLearningReady', function() {
+window.addEventListener('DeepLearningModelReady', function() {
   app.deepLearningReady = true;
+  app.deepLearningProgress = 0;
+});
+
+window.addEventListener('DeepLearningStep', function(args) {
+  app.deepLearningProgress = args.detail.progress;
 });

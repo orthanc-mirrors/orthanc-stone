@@ -3668,6 +3668,8 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
 #include <emscripten/fetch.h>
 #include "deep-learning/WebAssembly/Worker.pb.h"
 
+static void SendRequestToWebWorker(const OrthancStone::Messages::Request& request);
+
 static void DeepLearningCallback(char* data,
                                  int size,
                                  void* payload)
@@ -3683,8 +3685,44 @@ static void DeepLearningCallback(char* data,
 
       case OrthancStone::Messages::ResponseType::PARSED_MODEL:
         LOG(WARNING) << "Number of steps in the model: " << response.parse_model().number_of_steps();
-        DISPATCH_JAVASCRIPT_EVENT("DeepLearningReady");
+        DISPATCH_JAVASCRIPT_EVENT("DeepLearningModelReady");
         break;
+
+      case OrthancStone::Messages::ResponseType::LOADED_IMAGE:
+      {
+        OrthancStone::Messages::Request request;
+        request.set_type(OrthancStone::Messages::RequestType::EXECUTE_STEP);
+        SendRequestToWebWorker(request);
+        break;
+      }
+
+      case OrthancStone::Messages::ResponseType::STEP_DONE:
+      {
+        EM_ASM({
+            const customEvent = document.createEvent("CustomEvent");
+            customEvent.initCustomEvent("DeepLearningStep", false, false,
+                                        { "progress" : $0 });
+            window.dispatchEvent(customEvent);
+          },
+          response.step().progress()
+          );
+
+        if (response.step().done())
+        {
+          LOG(WARNING) << "SUCCESS! Mask: " << response.step().output().width() << "x"
+                       << response.step().output().height() << " for frame "
+                       << response.step().output().sop_instance_uid() << " / "
+                       << response.step().output().frame_number();
+        }
+        else
+        {
+          OrthancStone::Messages::Request request;
+          request.set_type(OrthancStone::Messages::RequestType::EXECUTE_STEP);
+          SendRequestToWebWorker(request);
+        }
+        
+        break;
+      }
 
       default:
         LOG(ERROR) << "Unsupported response type from the deep learning worker";

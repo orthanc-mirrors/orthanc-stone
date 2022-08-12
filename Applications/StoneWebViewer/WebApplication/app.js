@@ -463,7 +463,10 @@ var app = new Vue({
       series: [],
       studies: [],
       seriesIndex: {},  // Maps "SeriesInstanceUID" to "index in this.series"
-      virtualSeriesThumbnails: {}
+      virtualSeriesThumbnails: {},
+
+      deepLearningReady: false,
+      deepLearningProgress: 0  // Floating-point number in the range [0..1]
     }
   },
   computed: {
@@ -1102,6 +1105,11 @@ var app = new Vue({
           alert('Cannot find the study in Orthanc');
         });
       
+    },
+
+    ApplyDeepLearning: function()
+    {
+      stone.ApplyDeepLearningModel(this.GetActiveCanvas());
     }
   },
   
@@ -1357,4 +1365,13 @@ window.addEventListener('message', function(e) {
       console.log('Unknown type of dynamic action in the Stone Web viewer: ' + e.data.type);
     }
   }
+});
+
+
+window.addEventListener('DeepLearningInitialized', function() {
+  stone.LoadDeepLearningModel('model.message');
+});
+
+window.addEventListener('DeepLearningReady', function() {
+  app.deepLearningReady = true;
 });

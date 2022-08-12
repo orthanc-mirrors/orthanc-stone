@@ -2281,7 +2281,7 @@ private:
     {
       const size_t cursorIndex = cursor_->GetCurrentIndex();
       const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
-      const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+      const unsigned int frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
       // Only change the scene if the loaded frame still corresponds to the current cursor
       if (instance.GetSopInstanceUid() == loadedSopInstanceUid &&
@@ -2605,7 +2605,7 @@ private:
       {
         const size_t cursorIndex = cursor_->GetCurrentIndex();
         const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
-        const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+        const unsigned int frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
         StoneAnnotationsRegistry::GetInstance().Save(instance.GetSopInstanceUid(), frameNumber, *stoneAnnotations_);
 
@@ -2800,7 +2800,7 @@ public:
       const size_t cursorIndex = cursor_->GetCurrentIndex();
 
       const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
-      const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+      const unsigned int frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
       FramesCache::Accessor accessor(*framesCache_, instance.GetSopInstanceUid(), frameNumber);
       if (accessor.IsValid())
@@ -3302,7 +3302,7 @@ public:
     {
       const size_t cursorIndex = cursor_->GetCurrentIndex();
       const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
-      const size_t frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+      const unsigned int frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
 
       if (instance.GetSopInstanceUid() == sopInstanceUid &&
           frameNumber == frame)
@@ -3316,6 +3316,25 @@ public:
         }
       }
     }    
+  }
+
+
+  bool GetCurrentFrame(std::string& sopInstanceUid,
+                       unsigned int& frameNumber) const
+  {
+    if (cursor_.get() != NULL &&
+        frames_.get() != NULL)
+    {
+      const size_t cursorIndex = cursor_->GetCurrentIndex();
+      const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
+      sopInstanceUid = instance.GetSopInstanceUid();
+      frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+      return true;
+    }
+    else
+    {
+      return false;
+    }
   }
 };
 
@@ -3646,6 +3665,70 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
 }
 
 
+#include <emscripten/fetch.h>
+#include "deep-learning/WebAssembly/Worker.pb.h"
+
+static void DeepLearningCallback(char* data,
+                                 int size,
+                                 void* payload)
+{
+  OrthancStone::Messages::Response response;
+  if (response.ParseFromArray(data, size))
+  {
+    switch (response.type())
+    {
+      case OrthancStone::Messages::ResponseType::INITIALIZED:
+        DISPATCH_JAVASCRIPT_EVENT("DeepLearningInitialized");
+        break;
+
+      case OrthancStone::Messages::ResponseType::PARSED_MODEL:
+        LOG(WARNING) << "Number of steps in the model: " << response.parse_model().number_of_steps();
+        DISPATCH_JAVASCRIPT_EVENT("DeepLearningReady");
+        break;
+
+      default:
+        LOG(ERROR) << "Unsupported response type from the deep learning worker";
+    }
+  }
+  else
+  {
+    LOG(ERROR) << "Bad response received from the deep learning worker";
+  }
+}
+
+static worker_handle deepLearningWorker_;
+
+static void SendRequestToWebWorker(const OrthancStone::Messages::Request& request)
+{
+  std::string s;
+  if (request.SerializeToString(&s) &&
+      !s.empty())
+  {
+    emscripten_call_worker(deepLearningWorker_, "Execute", &s[0], s.size(), DeepLearningCallback, NULL);
+  }
+  else
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                    "Cannot send command to the Web worker");
+  }
+}
+
+static void DeepLearningModelLoaded(emscripten_fetch_t *fetch)
+{
+  try
+  {
+    LOG(WARNING) << "Deep learning model loaded: " << fetch->numBytes;
+
+    OrthancStone::Messages::Request request;
+    request.set_type(OrthancStone::Messages::RequestType::PARSE_MODEL);
+    request.mutable_parse_model()->mutable_content()->assign(fetch->data, fetch->numBytes);
+    
+    emscripten_fetch_close(fetch);  // Don't use "fetch" below
+    SendRequestToWebWorker(request);
+  }
+  EXTERN_CATCH_EXCEPTIONS;
+}
+
 extern "C"
 {
   int main(int argc, char const *argv[]) 
@@ -3661,7 +3744,82 @@ extern "C"
     framesCache_.reset(new FramesCache);
     osiriXAnnotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
 
+    deepLearningWorker_ = emscripten_create_worker("DeepLearningWorker.js");
+    emscripten_call_worker(deepLearningWorker_, "Initialize", NULL, 0, DeepLearningCallback, NULL);
+
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void LoadDeepLearningModel(const char* uri)
+  {
+    try
+    {
+      LOG(WARNING) << "Loading deep learning model: " << uri;
+
+      emscripten_fetch_attr_t attr;
+      emscripten_fetch_attr_init(&attr);
+      strcpy(attr.requestMethod, "GET");
+      attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
+      attr.onsuccess = DeepLearningModelLoaded;
+      attr.onerror = NULL;
+      emscripten_fetch(&attr, uri);
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void ApplyDeepLearningModel(const char* canvas)
+  {
+    try
+    {
+      boost::shared_ptr<ViewerViewport> viewport = GetViewport(canvas);
+
+      std::string sopInstanceUid;
+      unsigned int frameNumber;
+      if (viewport->GetCurrentFrame(sopInstanceUid, frameNumber))
+      {
+        LOG(ERROR) << "OK: " << sopInstanceUid << " / " << frameNumber;
+        
+        FramesCache::Accessor accessor(*framesCache_, sopInstanceUid, frameNumber);
+        if (accessor.IsValid() &&
+            accessor.GetImage().GetFormat() == Orthanc::PixelFormat_Float32)
+        {
+          const Orthanc::ImageAccessor& image = accessor.GetImage();
+          
+          OrthancStone::Messages::Request request;
+          request.set_type(OrthancStone::Messages::RequestType::LOAD_IMAGE);
+          request.mutable_load_image()->set_sop_instance_uid(sopInstanceUid);
+          request.mutable_load_image()->set_frame_number(frameNumber);
+          request.mutable_load_image()->set_width(image.GetWidth());
+          request.mutable_load_image()->set_height(image.GetHeight());
+
+          const unsigned int height = image.GetHeight();
+          const unsigned int width = image.GetWidth();
+          for (unsigned int y = 0; y < height; y++)
+          {
+            const float* p = reinterpret_cast<const float*>(image.GetConstRow(y));
+            for (unsigned int x = 0; x < width; x++, p++)
+            {
+              request.mutable_load_image()->mutable_values()->Add(*p);
+            }
+          }
+          
+          SendRequestToWebWorker(request);
+        }
+        else
+        {
+          LOG(WARNING) << "Cannot access graylevel frame";
+        }
+      }
+      else
+      {
+        LOG(WARNING) << "No active frame";
+      }
+    }
+    EXTERN_CATCH_EXCEPTIONS;
   }
 
 

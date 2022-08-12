@@ -303,11 +303,23 @@
 
             </div>        
             <div class="wvLayoutLeft__contentBottom">
+              <div v-if="deepLearningReady">
+                <div style="width:100%;padding:10px;text-align:center;">
+                  <button class="btn btn-primary" @click="ApplyDeepLearning()">Apply deep learning</button>
+                </div>
+                
+                <div style="padding: 10px; position: relative; width:100%;">
+                  <div style="background-color: #007000; position: relative; height: 10px;">    
+                    <div v-bind:style="{ 'background-color': '#00ff00', position: 'absolute', height: '100%', width: (deepLearningProgress*100) + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+                
               <div style="width:100%;padding:10px;text-align:center;"
                    v-if="globalConfiguration.InstitutionLogo != ''">
                 <img style="max-width:100%" v-bind:src="globalConfiguration.InstitutionLogo" />
               </div>
-            </div>        
+            </div>
           </div>
         </div>
         <div class="wvLayout__main"

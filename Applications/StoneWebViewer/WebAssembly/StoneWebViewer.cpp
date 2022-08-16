@@ -3668,73 +3668,22 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
 #include <emscripten/fetch.h>
 #include "deep-learning/WebAssembly/Worker.pb.h"
 
-static void SendRequestToWebWorker(const OrthancStone::Messages::Request& request);
+enum DeepLearningState
+{
+  DeepLearningState_Waiting,
+  DeepLearningState_Pending,
+  DeepLearningState_Running
+};
 
+static DeepLearningState deepLearningState_ = DeepLearningState_Waiting;
+static worker_handle deepLearningWorker_;
+static std::string deepLearningPendingSopInstanceUid_;
+static unsigned int deepLearningPendingFrameNumber_;
+
+// Forward declaration
 static void DeepLearningCallback(char* data,
                                  int size,
-                                 void* payload)
-{
-  OrthancStone::Messages::Response response;
-  if (response.ParseFromArray(data, size))
-  {
-    switch (response.type())
-    {
-      case OrthancStone::Messages::ResponseType::INITIALIZED:
-        DISPATCH_JAVASCRIPT_EVENT("DeepLearningInitialized");
-        break;
-
-      case OrthancStone::Messages::ResponseType::PARSED_MODEL:
-        LOG(WARNING) << "Number of steps in the model: " << response.parse_model().number_of_steps();
-        DISPATCH_JAVASCRIPT_EVENT("DeepLearningModelReady");
-        break;
-
-      case OrthancStone::Messages::ResponseType::LOADED_IMAGE:
-      {
-        OrthancStone::Messages::Request request;
-        request.set_type(OrthancStone::Messages::RequestType::EXECUTE_STEP);
-        SendRequestToWebWorker(request);
-        break;
-      }
-
-      case OrthancStone::Messages::ResponseType::STEP_DONE:
-      {
-        EM_ASM({
-            const customEvent = document.createEvent("CustomEvent");
-            customEvent.initCustomEvent("DeepLearningStep", false, false,
-                                        { "progress" : $0 });
-            window.dispatchEvent(customEvent);
-          },
-          response.step().progress()
-          );
-
-        if (response.step().done())
-        {
-          LOG(WARNING) << "SUCCESS! Mask: " << response.step().output().width() << "x"
-                       << response.step().output().height() << " for frame "
-                       << response.step().output().sop_instance_uid() << " / "
-                       << response.step().output().frame_number();
-        }
-        else
-        {
-          OrthancStone::Messages::Request request;
-          request.set_type(OrthancStone::Messages::RequestType::EXECUTE_STEP);
-          SendRequestToWebWorker(request);
-        }
-        
-        break;
-      }
-
-      default:
-        LOG(ERROR) << "Unsupported response type from the deep learning worker";
-    }
-  }
-  else
-  {
-    LOG(ERROR) << "Bad response received from the deep learning worker";
-  }
-}
-
-static worker_handle deepLearningWorker_;
+                                 void* payload);
 
 static void SendRequestToWebWorker(const OrthancStone::Messages::Request& request)
 {
@@ -3749,6 +3698,145 @@ static void SendRequestToWebWorker(const OrthancStone::Messages::Request& reques
     throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
                                     "Cannot send command to the Web worker");
   }
+}
+
+static void DeepLearningSchedule(const std::string& sopInstanceUid,
+                                 unsigned int frameNumber)
+{
+  if (deepLearningState_ == DeepLearningState_Waiting)
+  {
+    LOG(WARNING) << "Starting deep learning on: " << sopInstanceUid << " / " << frameNumber;
+
+    FramesCache::Accessor accessor(*framesCache_, sopInstanceUid, frameNumber);
+    if (accessor.IsValid() &&
+        accessor.GetImage().GetFormat() == Orthanc::PixelFormat_Float32)
+    {
+      const Orthanc::ImageAccessor& image = accessor.GetImage();
+
+      OrthancStone::Messages::Request request;
+      request.set_type(OrthancStone::Messages::RequestType::LOAD_IMAGE);
+      request.mutable_load_image()->set_sop_instance_uid(sopInstanceUid);
+      request.mutable_load_image()->set_frame_number(frameNumber);
+      request.mutable_load_image()->set_width(image.GetWidth());
+      request.mutable_load_image()->set_height(image.GetHeight());
+
+      const unsigned int height = image.GetHeight();
+      const unsigned int width = image.GetWidth();
+      for (unsigned int y = 0; y < height; y++)
+      {
+        const float* p = reinterpret_cast<const float*>(image.GetConstRow(y));
+        for (unsigned int x = 0; x < width; x++, p++)
+        {
+          request.mutable_load_image()->mutable_values()->Add(*p);
+        }
+      }
+
+      deepLearningState_ = DeepLearningState_Running;
+      SendRequestToWebWorker(request);
+    }
+    else
+    {
+      LOG(ERROR) << "Cannot access the frame content, maybe a color image?";
+
+      EM_ASM({
+          const customEvent = document.createEvent("CustomEvent");
+          customEvent.initCustomEvent("DeepLearningStep", false, false,
+                                      { "progress" : "0" });
+          window.dispatchEvent(customEvent);
+        });
+    }
+  }
+  else
+  {
+    deepLearningState_ = DeepLearningState_Pending;
+    deepLearningPendingSopInstanceUid_ = sopInstanceUid;
+    deepLearningPendingFrameNumber_ = frameNumber;
+  }
+}
+
+static void DeepLearningNextStep()
+{
+  switch (deepLearningState_)
+  {
+    case DeepLearningState_Pending:
+      deepLearningState_ = DeepLearningState_Waiting;
+      DeepLearningSchedule(deepLearningPendingSopInstanceUid_, deepLearningPendingFrameNumber_);
+      break;
+      
+    case DeepLearningState_Running:
+    {
+      OrthancStone::Messages::Request request;
+      request.set_type(OrthancStone::Messages::RequestType::EXECUTE_STEP);
+      SendRequestToWebWorker(request);
+      break;
+    }
+
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, "Bad state for deep learning");
+  }
+}
+
+static void DeepLearningCallback(char* data,
+                                 int size,
+                                 void* payload)
+{
+  try
+  {
+    OrthancStone::Messages::Response response;
+    if (response.ParseFromArray(data, size))
+    {
+      switch (response.type())
+      {
+        case OrthancStone::Messages::ResponseType::INITIALIZED:
+          DISPATCH_JAVASCRIPT_EVENT("DeepLearningInitialized");
+          break;
+
+        case OrthancStone::Messages::ResponseType::PARSED_MODEL:
+          LOG(WARNING) << "Number of steps in the model: " << response.parse_model().number_of_steps();
+          DISPATCH_JAVASCRIPT_EVENT("DeepLearningModelReady");
+          break;
+
+        case OrthancStone::Messages::ResponseType::LOADED_IMAGE:
+          DeepLearningNextStep();
+          break;
+
+        case OrthancStone::Messages::ResponseType::STEP_DONE:
+        {
+          EM_ASM({
+              const customEvent = document.createEvent("CustomEvent");
+              customEvent.initCustomEvent("DeepLearningStep", false, false,
+                                          { "progress" : $0 });
+              window.dispatchEvent(customEvent);
+            },
+            response.step().progress()
+            );
+
+          if (response.step().done())
+          {
+            deepLearningState_ = DeepLearningState_Waiting;
+            LOG(WARNING) << "SUCCESS! Mask: " << response.step().output().width() << "x"
+                         << response.step().output().height() << " for frame "
+                         << response.step().output().sop_instance_uid() << " / "
+                         << response.step().output().frame_number();
+          }
+          else
+          {
+            DeepLearningNextStep();
+          }
+        
+          break;
+        }
+
+        default:
+          LOG(ERROR) << "Unsupported response type from the deep learning worker";
+      }
+    }
+    else
+    {
+      LOG(ERROR) << "Bad response received from the deep learning worker";
+    }
+  }
+  EXTERN_CATCH_EXCEPTIONS;
 }
 
 static void DeepLearningModelLoaded(emscripten_fetch_t *fetch)
@@ -3819,38 +3907,7 @@ extern "C"
       unsigned int frameNumber;
       if (viewport->GetCurrentFrame(sopInstanceUid, frameNumber))
       {
-        LOG(ERROR) << "OK: " << sopInstanceUid << " / " << frameNumber;
-        
-        FramesCache::Accessor accessor(*framesCache_, sopInstanceUid, frameNumber);
-        if (accessor.IsValid() &&
-            accessor.GetImage().GetFormat() == Orthanc::PixelFormat_Float32)
-        {
-          const Orthanc::ImageAccessor& image = accessor.GetImage();
-          
-          OrthancStone::Messages::Request request;
-          request.set_type(OrthancStone::Messages::RequestType::LOAD_IMAGE);
-          request.mutable_load_image()->set_sop_instance_uid(sopInstanceUid);
-          request.mutable_load_image()->set_frame_number(frameNumber);
-          request.mutable_load_image()->set_width(image.GetWidth());
-          request.mutable_load_image()->set_height(image.GetHeight());
-
-          const unsigned int height = image.GetHeight();
-          const unsigned int width = image.GetWidth();
-          for (unsigned int y = 0; y < height; y++)
-          {
-            const float* p = reinterpret_cast<const float*>(image.GetConstRow(y));
-            for (unsigned int x = 0; x < width; x++, p++)
-            {
-              request.mutable_load_image()->mutable_values()->Add(*p);
-            }
-          }
-          
-          SendRequestToWebWorker(request);
-        }
-        else
-        {
-          LOG(WARNING) << "Cannot access graylevel frame";
-        }
+        DeepLearningSchedule(sopInstanceUid, frameNumber);
       }
       else
       {

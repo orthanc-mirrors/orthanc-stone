@@ -1585,10 +1585,11 @@ public:
 
 private:
   static const int LAYER_TEXTURE = 0;
-  static const int LAYER_OVERLAY = 1;
-  static const int LAYER_REFERENCE_LINES = 2;
-  static const int LAYER_ANNOTATIONS_OSIRIX = 3;
-  static const int LAYER_ANNOTATIONS_STONE = 4;
+  static const int LAYER_DEEP_LEARNING = 1;
+  static const int LAYER_OVERLAY = 2;
+  static const int LAYER_REFERENCE_LINES = 3;
+  static const int LAYER_ANNOTATIONS_OSIRIX = 4;
+  static const int LAYER_ANNOTATIONS_STONE = 5;
 
   
   class ICommand : public Orthanc::IDynamicObject
@@ -2007,6 +2008,10 @@ private:
   // the center of the top-left pixel
   boost::shared_ptr<OrthancStone::AnnotationsSceneLayer>  stoneAnnotations_;
 
+  boost::shared_ptr<Orthanc::ImageAccessor>  deepLearningMask_;
+  std::string deepLearningSopInstanceUid_;
+  unsigned int deepLearningFrameNumber_;
+  
 
   void ScheduleNextPrefetch()
   {
@@ -2228,6 +2233,28 @@ private:
       }
     }
 
+    std::unique_ptr<OrthancStone::LookupTableTextureSceneLayer> deepLearningLayer;
+
+    if (deepLearningMask_.get() != NULL &&
+        deepLearningSopInstanceUid_ == instance.GetSopInstanceUid() &&
+        deepLearningFrameNumber_ == frameIndex)
+    {
+      std::vector<uint8_t> lut(4 * 256);
+      for (unsigned int v = 128; v < 256; v++)
+      {
+        lut[4 * v] = 196;
+        lut[4 * v + 1] = 0;
+        lut[4 * v + 2] = 0;
+        lut[4 * v + 3] = 196;
+      }
+      
+      deepLearningLayer.reset(new OrthancStone::LookupTableTextureSceneLayer(*deepLearningMask_));
+      deepLearningLayer->SetLookupTable(lut);
+      deepLearningLayer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
+      deepLearningLayer->SetFlipX(flipX_);
+      deepLearningLayer->SetFlipY(flipY_);
+    }
+
     StoneAnnotationsRegistry::GetInstance().Load(*stoneAnnotations_, instance.GetSopInstanceUid(), frameIndex);
 
     {
@@ -2253,6 +2280,15 @@ private:
       else
       {
         scene.DeleteLayer(LAYER_ANNOTATIONS_OSIRIX);
+      }
+
+      if (deepLearningLayer.get() != NULL)
+      {
+        scene.SetLayer(LAYER_DEEP_LEARNING, deepLearningLayer.release());
+      }
+      else
+      {
+        scene.DeleteLayer(LAYER_DEEP_LEARNING);
       }
 
       stoneAnnotations_->Render(scene);  // Necessary for "FitContent()" to work
@@ -3319,8 +3355,8 @@ public:
   }
 
 
-  bool GetCurrentFrame(std::string& sopInstanceUid,
-                       unsigned int& frameNumber) const
+  bool GetCurrentFrame(std::string& sopInstanceUid /* out */,
+                       unsigned int& frameNumber /* out */) const
   {
     if (cursor_.get() != NULL &&
         frames_.get() != NULL)
@@ -3334,6 +3370,24 @@ public:
     else
     {
       return false;
+    }
+  }
+
+
+  void SetDeepLearningMask(const std::string& sopInstanceUid,
+                           unsigned int frameNumber,
+                           const Orthanc::ImageAccessor& mask)
+  {
+    std::string currentSopInstanceUid;
+    unsigned int currentFrameNumber;
+    if (GetCurrentFrame(currentSopInstanceUid, currentFrameNumber) &&
+        sopInstanceUid == currentSopInstanceUid &&
+        frameNumber == currentFrameNumber)
+    {
+      deepLearningSopInstanceUid_ = sopInstanceUid;
+      deepLearningFrameNumber_ = frameNumber;
+      deepLearningMask_.reset(Orthanc::Image::Clone(mask));
+      Redraw();
     }
   }
 };
@@ -3814,10 +3868,32 @@ static void DeepLearningCallback(char* data,
           if (response.step().done())
           {
             deepLearningState_ = DeepLearningState_Waiting;
-            LOG(WARNING) << "SUCCESS! Mask: " << response.step().output().width() << "x"
-                         << response.step().output().height() << " for frame "
-                         << response.step().output().sop_instance_uid() << " / "
-                         << response.step().output().frame_number();
+
+            const unsigned int height = response.step().mask().height();
+            const unsigned int width = response.step().mask().width();
+            
+            LOG(WARNING) << "SUCCESS! Mask: " << width << "x" << height << " for frame "
+                         << response.step().mask().sop_instance_uid() << " / "
+                         << response.step().mask().frame_number();
+
+            Orthanc::Image mask(Orthanc::PixelFormat_Grayscale8, width, height, false);
+
+            size_t pos = 0;
+            for (unsigned int y = 0; y < height; y++)
+            {
+              uint8_t* p = reinterpret_cast<uint8_t*>(mask.GetRow(y));
+              for (unsigned int x = 0; x < width; x++, p++, pos++)
+              {
+                *p = response.step().mask().values(pos) ? 255 : 0;
+              }
+            }
+
+            for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+            {
+              assert(it->second != NULL);
+              it->second->SetDeepLearningMask(response.step().mask().sop_instance_uid(),
+                                              response.step().mask().frame_number(), mask);
+            }
           }
           else
           {

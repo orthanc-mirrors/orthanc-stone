@@ -1147,6 +1147,11 @@ var app = new Vue({
 
 
 window.addEventListener('StoneInitialized', function() {
+  /**
+   * Do NOT modify the order of the calls to "stone.XXX()" in this
+   * section, otherwise the HTTP headers might not be properly set.
+   **/
+
   stone.Setup(Module);
   stone.SetDicomWebRoot(app.globalConfiguration.DicomWebRoot,
                         true /* assume "/rendered" is available in DICOMweb (could be a configuration option) */);
@@ -1156,6 +1161,23 @@ window.addEventListener('StoneInitialized', function() {
     stone.SetDicomCacheSize(app.globalConfiguration.DicomCacheSize);
   }
 
+  // Calls to "stone.AddHttpHeader()" must be after "stone.SetDicomWebRoot()",
+  // and before "stone.SetSkipSeriesFromModalities()"
+  for (var header in app.globalConfiguration.DicomWebHttpHeaders) {
+    stone.AddHttpHeader(header, app.globalConfiguration.DicomWebHttpHeaders[header]);
+  }
+  
+  // Bearer token is new in Stone Web viewer 2.0
+  var token = getParameterFromUrl('token');
+  if (token !== undefined) {
+    stone.AddHttpHeader('Authorization', 'Bearer ' + token);
+  }
+
+
+  /**
+   * Calls to "stone.XXX()" can be reordered after this point.
+   **/
+  
   if ('SkipSeriesFromModalities' in app.globalConfiguration) {
     stone.SetSkipSeriesFromModalities(JSON.stringify(app.globalConfiguration.SkipSeriesFromModalities));
   }
@@ -1170,12 +1192,6 @@ window.addEventListener('StoneInitialized', function() {
     alert('Bad value for option "ShowInfoPanelAtStartup": ' + app.globalConfiguration.ShowInfoPanelAtStartup);
   }
 
-  // Bearer token is new in Stone Web viewer 2.0
-  var token = getParameterFromUrl('token');
-  if (token !== undefined) {
-    stone.AddHttpHeader('Authorization', 'Bearer ' + token);
-  }
-  
   console.warn('Stone properly initialized');
 
   app.stoneWebViewerVersion = stone.GetStoneWebViewerVersion();

@@ -139,6 +139,15 @@
      * Display a "not for diagnostic usage" disclaimer above the list
      * of studies/series. (New in Stone Web viewer 2.4)
      **/
-    "ShowNotForDiagnosticUsageDisclaimer": true
+    "ShowNotForDiagnosticUsageDisclaimer": true,
+
+    /**
+     * HTTP headers to be set in each request to the DICOMweb server.
+     * Note that the value of the headers can be taken from the
+     * environment variables.
+     **/
+    "DicomWebHttpHeaders" : {
+      /* "Authorization" : "Bearer ${USER}" */
+    }
   }
 }

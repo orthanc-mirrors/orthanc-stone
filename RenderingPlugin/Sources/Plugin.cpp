@@ -53,7 +53,7 @@ private:
     std::unique_ptr<OrthancStone::DicomStructureSet> rtstruct_;
 
   public:
-    Item(OrthancStone::DicomStructureSet* rtstruct) :
+    explicit Item(OrthancStone::DicomStructureSet* rtstruct) :
       rtstruct_(rtstruct)
     {
       if (rtstruct == NULL)
@@ -62,7 +62,7 @@ private:
       }
     }
     
-    virtual size_t GetMemoryUsage() const
+    virtual size_t GetMemoryUsage() const ORTHANC_OVERRIDE
     {
       return 1;
     }

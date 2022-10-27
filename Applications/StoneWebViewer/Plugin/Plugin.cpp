@@ -65,7 +65,8 @@ OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
       {
         std::vector<std::string> tokens;
         Orthanc::Toolbox::TokenizeString(tokens, version, '.');
-        if (tokens.size() != 2)
+        if (tokens.size() != 2 &&
+            tokens.size() != 3)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
                                           "Bad version of the DICOMweb plugin: " + version);

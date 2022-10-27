@@ -40,11 +40,14 @@
             </p>
           </div>
           <div class="wvInfoPopupForm">
+            <div v-if="globalConfiguration.ShowInfoPanelAtStartup == 'User'">
+              <br>
+              <label>Show this information at startup
+                <input type="checkbox" style="margin-left: 20px" v-model="settingNotDiagnostic">
+              </label>
+              <br>
+            </div>
             <br>
-            <label>Show this information at startup
-              <input type="checkbox" style="margin-left: 20px" v-model="settingNotDiagnostic">
-            </label>
-            <br><br>
             <div style="text-align: center;">
               <button class="wvInfoPopupCloseButton" @click="modalNotDiagnostic = false">
                 Close
@@ -76,10 +79,12 @@
             <h3>User preferences</h3>
           </div>
           <div class="wvInfoPopupForm">
-            <label>Warn about the intended use at startup
-              <input type="checkbox" style="margin-left: 20px" v-model="settingNotDiagnostic">
-            </label>
-            <br>
+            <div v-if="globalConfiguration.ShowInfoPanelAtStartup == 'User'">
+              <label>Warn about the intended use at startup
+                <input type="checkbox" style="margin-left: 20px" v-model="settingNotDiagnostic">
+              </label>
+              <br>
+            </div>
             <label>Use software rendering (will reload the viewer)
               <input type="checkbox" style="margin-left: 20px" v-model="settingSoftwareRendering">
             </label>
@@ -172,7 +177,9 @@
                 <i class="fa fa-th"></i>
               </div>
 
-              <!--p class="clear disclaimer mbn">For patients, teachers and researchers.</p-->
+              <p v-if="globalConfiguration.ShowNotForDiagnosticUsageDisclaimer" class="clear disclaimer mbn">
+                For patients, researchers and quality assurance. Not for diagnostic usage.
+              </p>
             </div>        
             <div class="wvLayoutLeft__contentMiddle">
 
@@ -572,7 +579,7 @@
               </button>
             </div>
 
-            <div class="ng-scope inline-object">
+            <div class="ng-scope inline-object" v-if="globalConfiguration.ShowUserPreferencesButton">
               <button class="wvButton--underline text-center"
                       data-toggle="tooltip" data-title="User preferences"
                       v-on:click="modalPreferences = true">

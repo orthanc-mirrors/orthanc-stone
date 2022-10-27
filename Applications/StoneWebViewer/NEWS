@@ -1,6 +1,10 @@
 Pending changes in the mainline
 ===============================
 
+* New configuration options:
+  - "ShowInfoPanelAtStartup" to control the info panel at startup
+  - "ShowUserPreferencesButton" to show the button for setting preferences
+  - "ShowNotForDiagnosticUsageDisclaimer" to show disclaimer about diagnostic usage
 * More tolerance wrt. bad values of the Pixel Spacing (0028,0030) tag
 * Support of DICOM images without the Study Date (0008,0020) tag
 

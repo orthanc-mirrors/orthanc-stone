@@ -1115,8 +1115,6 @@ var app = new Vue({
     if (localStorage.settingSoftwareRendering) {
       this.settingSoftwareRendering = (localStorage.settingSoftwareRendering == '1');
     }
-    
-    this.modalNotDiagnostic = this.settingNotDiagnostic;
 
     var that = this;
     
@@ -1162,10 +1160,19 @@ window.addEventListener('StoneInitialized', function() {
     stone.SetSkipSeriesFromModalities(JSON.stringify(app.globalConfiguration.SkipSeriesFromModalities));
   }
   
+  if (app.globalConfiguration.ShowInfoPanelAtStartup == 'Always') {
+    app.modalNotDiagnostic = true;
+  } else if (app.globalConfiguration.ShowInfoPanelAtStartup == 'Never') {
+    app.modalNotDiagnostic = false;
+  } else if (app.globalConfiguration.ShowInfoPanelAtStartup == 'User') {
+    app.modalNotDiagnostic = app.settingNotDiagnostic;
+  } else {
+    alert('Bad value for option "ShowInfoPanelAtStartup": ' + app.globalConfiguration.ShowInfoPanelAtStartup);
+  }
+
   // Bearer token is new in Stone Web viewer 2.0
   var token = getParameterFromUrl('token');
-  if (token !== undefined)
-  {
+  if (token !== undefined) {
     stone.AddHttpHeader('Authorization', 'Bearer ' + token);
   }
   

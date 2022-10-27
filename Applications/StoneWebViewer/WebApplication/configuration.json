@@ -119,6 +119,26 @@
     /**
      * Define a list of modality type that the viewer will ignore.
      **/
-    "SkipSeriesFromModalities": ["SR", "SEG", "PR"]
+    "SkipSeriesFromModalities": ["SR", "SEG", "PR"],
+
+    /**
+     * Whether to display the info panel at startup. Allowed values:
+     * "Always", "Never", "User". With "User", the user can decide to
+     * show or not the info panel in the user preferences panel (this
+     * is implemented using a cookie). (New in Stone Web viewer 2.4)
+     **/
+    "ShowInfoPanelAtStartup": "User",
+
+    /**
+     * Whether to give access to the user preferences window. (New in
+     * Stone Web viewer 2.4)
+     **/
+    "ShowUserPreferencesButton" : true,
+
+    /**
+     * Display a "not for diagnostic usage" disclaimer above the list
+     * of studies/series. (New in Stone Web viewer 2.4)
+     **/
+    "ShowNotForDiagnosticUsageDisclaimer": true
   }
 }

@@ -381,4 +381,109 @@ namespace OrthancStone
 
     return CoordinateSystem3D(a, axisX, axisY);
   }
+
+
+  static std::string GetOrientationString(const Vector& v)
+  {
+    /**
+     * This function directly comes from David Clunie:
+     * https://sites.google.com/site/dicomnotes/
+     *
+     * It is also a C++ reimplementation of function
+     * "getOrientationString()" from Cornerstone:
+     * https://bitbucket.org/osimis/osimis-webviewer-plugin/src/master/frontend/local_dependencies/cornerstoneTools/cornerstoneTools.js
+     **/
+
+    const char orientationX = v[0] < 0 ? 'R' : 'L';
+    const char orientationY = v[1] < 0 ? 'A' : 'P';
+    const char orientationZ = v[2] < 0 ? 'F' : 'H';
+
+    double absX = abs(v[0]);
+    double absY = abs(v[1]);
+    double absZ = abs(v[2]);
+
+    std::string result;
+
+    static const double THRESHOLD = 0.0001;
+
+    for (unsigned int i = 0; i < 3; i++)
+    {
+      if (absX > THRESHOLD && absX > absY && absX > absZ)
+      {
+        result.push_back(orientationX);
+        absX = 0;
+      }
+      else if (absY > THRESHOLD && absY > absX && absY > absZ)
+      {
+        result.push_back(orientationY);
+        absY = 0;
+      }
+      else if (absZ > THRESHOLD && absZ > absX && absZ > absY)
+      {
+        result.push_back(orientationZ);
+        absZ = 0;
+      }
+      else
+      {
+        break;
+      }
+    }
+
+    return result;
+  }
+
+
+  static std::string InvertOrientationString(const std::string& source)
+  {
+    std::string target;
+    target.resize(source.length());
+
+    for (unsigned int i = 0; i < source.length(); i++)
+    {
+      switch (source[i])
+      {
+        case 'H': target[i] = 'F'; break;
+        case 'F': target[i] = 'H'; break;
+        case 'R': target[i] = 'L'; break;
+        case 'L': target[i] = 'R'; break;
+        case 'A': target[i] = 'P'; break;
+        case 'P': target[i] = 'A'; break;
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+    }
+
+    return target;
+  }
+
+
+  void CoordinateSystem3D::GetOrientationMarkers(std::string& top /* out */,
+                                                 std::string& bottom /* out */,
+                                                 std::string& left /* out */,
+                                                 std::string& right /* out */) const
+  {
+    if (IsValid())
+    {
+      /**
+       * This is a C++ reimplementation of function
+       * "getOrientationMarkers()" from Cornerstone:
+       * https://bitbucket.org/osimis/osimis-webviewer-plugin/src/master/frontend/local_dependencies/cornerstoneTools/cornerstoneTools.js
+       *
+       * ImageOrientationPatient is row cosines then column cosines
+       * (i.e. horizontal then vertical).
+       * https://dicom.nema.org/medical/dicom/current/output/html/part03.html#sect_C.7.6.2
+       **/
+      const Vector& rowCosines = axisX_;  // horizontal
+      const Vector& columnCosines = axisY_;  // vertical
+
+      bottom = GetOrientationString(columnCosines);
+      right = GetOrientationString(rowCosines);
+      top = InvertOrientationString(bottom);
+      left = InvertOrientationString(right);
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
 }

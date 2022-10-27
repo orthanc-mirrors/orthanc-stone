@@ -1091,3 +1091,86 @@ TEST(SlicesSorter, HFP)
     ASSERT_EQ(376u - 323u, slice);
   }
 }
+
+
+TEST(GeometryToolbox, OrientationMarkers)
+{
+  std::string top, bottom, left, right;
+
+  OrthancStone::CoordinateSystem3D s;
+  ASSERT_FALSE(s.IsValid());
+  ASSERT_THROW(s.GetOrientationMarkers(top, bottom, left, right), Orthanc::OrthancException);
+
+  {
+    // BRAINIX series: 3ca69615-fcd4a4fb-e5f2cc9d-9c7a49a5-add98bbf
+    s = OrthancStone::CoordinateSystem3D(
+      "0\\0\\0",
+      "0.99971222877502\\7.8810308973E-12\\0.02398800104856\\-0.0017278126906\\0.99740260839462\\0.07200747728347");
+    ASSERT_TRUE(s.IsValid());
+    s.GetOrientationMarkers(top, bottom, left, right);
+    ASSERT_EQ("AFL", top);
+    ASSERT_EQ("PHR", bottom);
+    ASSERT_EQ("RF", left);
+    ASSERT_EQ("LH", right);
+  }
+
+  {
+    // BRAINIX series: dc0216d2-a406a5ad-31ef7a78-113ae9d9-29939f9e
+    s = OrthancStone::CoordinateSystem3D(
+      "0\\0\\0",
+      "0.99971222877502\\7.8810308973E-12\\0.02398800104856\\0.02392569556832\\0.07202820479869\\-0.9971156120300");
+    s.GetOrientationMarkers(top, bottom, left, right);
+    ASSERT_EQ("HAR", top);
+    ASSERT_EQ("FPL", bottom);
+    ASSERT_EQ("RF", left);
+    ASSERT_EQ("LH", right);
+  }
+
+  {
+    // ASSURANCETOURIX series: 1de00990-03680ef4-0be6bd5b-73a7d350-fb46abfa
+    s = OrthancStone::CoordinateSystem3D(
+      "0\\0\\0",
+      "1\\0\\0\\0\\1\\0");
+    s.GetOrientationMarkers(top, bottom, left, right);
+    ASSERT_EQ("A", top);
+    ASSERT_EQ("P", bottom);
+    ASSERT_EQ("R", left);
+    ASSERT_EQ("L", right);
+  }
+
+  {
+    // KNEE series: 4d04593b-953ced51-87e93f11-ae4cf03c-25defdcd
+    s = OrthancStone::CoordinateSystem3D(
+      "0\\0\\0",
+      "-0\\1\\0\\-0\\-0\\-1");
+    s.GetOrientationMarkers(top, bottom, left, right);
+    ASSERT_EQ("H", top);
+    ASSERT_EQ("F", bottom);
+    ASSERT_EQ("A", left);
+    ASSERT_EQ("P", right);
+  }
+
+  {
+    // KNEE series: 20b9d0c2-97d85e07-f4dbf4d2-f09e7e6a-0c19062e
+    s = OrthancStone::CoordinateSystem3D(
+      "0\\0\\0",
+      "0.999993\\-0.0036927\\0\\-0\\-0\\-1");
+    s.GetOrientationMarkers(top, bottom, left, right);
+    ASSERT_EQ("H", top);
+    ASSERT_EQ("F", bottom);
+    ASSERT_EQ("RP", left);
+    ASSERT_EQ("LA", right);
+  }
+
+  {
+    // KNEE series: f2635388-f01d497a-15f7c06b-ad7dba06-c4c599fe
+    s = OrthancStone::CoordinateSystem3D(
+      "0\\0\\0",
+      "0.999841\\0.000366209\\0.0178227\\-0.000427244\\0.999995\\0.00326546");
+    s.GetOrientationMarkers(top, bottom, left, right);
+    ASSERT_EQ("AFL", top);
+    ASSERT_EQ("PHR", bottom);
+    ASSERT_EQ("RFA", left);
+    ASSERT_EQ("LHP", right);
+  }
+}

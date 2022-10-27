@@ -160,5 +160,10 @@ namespace OrthancStone
     static CoordinateSystem3D CreateFromThreePoints(const Vector& a,
                                                     const Vector& b,
                                                     const Vector& c);
+
+    void GetOrientationMarkers(std::string& top /* out */,
+                               std::string& bottom /* out */,
+                               std::string& left /* out */,
+                               std::string& right /* out */) const;
   };
 }

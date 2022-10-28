@@ -41,7 +41,7 @@ static const char* FRAGMENT_SHADER =
   "void main()                                       \n"
   "{                                                 \n"
   "  vec4 t = texture2D(u_texture, v_texcoord);      \n"
-  "  float v = (t.r * 256.0 + t.g) * 256.0;          \n"
+  "  float v = (t.r * 256.0 + t.g) * 255.0;          \n"
   "  v = v * u_slope + u_offset;                     \n"  // (*)
   "  float a = u_windowCenter - u_windowWidth / 2.0; \n"
   "  float dy = 1.0 / u_windowWidth;                 \n"

@@ -31,9 +31,9 @@ DownloadPackage(
   "${CMAKE_CURRENT_BINARY_DIR}/bootstrap-3.4.1-dist")
 
 DownloadPackage(
-  "8242afdc5bd44105d9dc9e6535315484"
-  "${BASE_URL}/dicom-web/vuejs-2.6.10.tar.gz"
-  "${CMAKE_CURRENT_BINARY_DIR}/vue-2.6.10")
+  "ca84d906dcaecd4c66553bf49b547f65"
+  "${BASE_URL}/dicom-web/vue-2.6.14.tar.gz"
+  "${CMAKE_CURRENT_BINARY_DIR}/vue-2.6.14")
 
 DownloadPackage(
   "3e2b4e1522661f7fcf8ad49cb933296c"
@@ -69,7 +69,7 @@ install(
   FILES
   ${CMAKE_CURRENT_BINARY_DIR}/bootstrap-3.4.1-dist/js/bootstrap.min.js
   ${CMAKE_SOURCE_DIR}/ThirdPartyDownloads/jquery-3.4.1.min.js
-  ${CMAKE_CURRENT_BINARY_DIR}/vue-2.6.10/dist/vue.min.js
+  ${CMAKE_CURRENT_BINARY_DIR}/vue-2.6.14/dist/vue.min.js
   ${CMAKE_CURRENT_BINARY_DIR}/axios-0.19.0/dist/axios.min.js
   ${CMAKE_CURRENT_BINARY_DIR}/axios-0.19.0/dist/axios.min.map
   ${CMAKE_CURRENT_BINARY_DIR}/pdfjs/pdf.js

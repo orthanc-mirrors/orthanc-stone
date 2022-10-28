@@ -662,7 +662,8 @@
                            'wvSplitpane__cellBorder--yellow' : content.series.color == 'yellow', 
                            'wvSplitpane__cellBorder--violet' : content.series.color == 'violet'
                            }" 
-             ondragover="event.preventDefault()"
+             v-on:dragenter="$event.preventDefault()"
+             v-on:dragover="$event.preventDefault()"
              v-on:drop="DragDrop($event)"
              style="width:100%;height:100%">
           <div class="wvSplitpane__cell" 

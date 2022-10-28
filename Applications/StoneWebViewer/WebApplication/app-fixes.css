@@ -43,3 +43,25 @@ box-sizing: border-box;
     border-radius: 5px;
     padding: 7px;
 }
+
+
+.wvVerticalScrollbar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    background-color: #1b663e;
+}
+
+.wvInfoRightMargin {
+    right: 10px !important;  /* must match the "width" of "wvVerticalScrollbar" */
+}
+
+.wvVerticalScrollbarHighlight {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 5%;
+    background-color: #00ff00;
+}

@@ -158,12 +158,16 @@ Vue.component('viewport', {
   },
   watch: {
     currentFrame: function(newVal, oldVal) {
-      /**
-       * The "FrameUpdated" event has been received, which indicates
-       * that the schedule frame has been displayed: The cine loop can
-       * proceed to the next frame (check out "CineCallback()").
-       **/
-      this.cineLoadingFrame = false;
+      if (this.cineLoadingFrame) {
+        /**
+         * The "FrameUpdated" event has been received, which indicates
+         * that the schedule frame has been displayed: The cine loop can
+         * proceed to the next frame (check out "CineCallback()").
+         **/
+        this.cineLoadingFrame = false;
+      } else {
+        stone.SetFrame(this.canvasId, newVal);
+      }
     },
     content: function(newVal, oldVal) {
       this.status = 'loading';

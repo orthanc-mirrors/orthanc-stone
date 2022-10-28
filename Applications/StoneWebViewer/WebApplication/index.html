@@ -676,13 +676,21 @@
                       oncontextmenu="return false"></canvas>
 
               <div v-show="showInfo">
+                <div v-if="numberOfFrames > 1" class="wvVerticalScrollbar"
+                       v-on:click="var offset = $event.currentTarget.getClientRects()[0]; var y = $event.clientY - offset.top; var height = $event.currentTarget.offsetHeight; currentFrame = Math.min(numberOfFrames - 1, Math.floor(y * numberOfFrames / (height - 1)));">
+                  <div class="wvVerticalScrollbarHighlight"
+                       v-bind:style="{ top: (currentFrame / (numberOfFrames - 1) * 95.0) + '%' }">
+                  </div>
+                </div>
+                
                 <div class="wv-overlay">
                   <div v-if="'tags' in content.series" class="wv-overlay-topleft">
                     {{ content.series.tags[PATIENT_NAME] }}<br/>
                     {{ content.series.tags[PATIENT_ID] }}<br/>
                     {{ app.FormatDate(content.series.tags[PATIENT_BIRTH_DATE]) }}
                   </div>
-                  <div v-if="'tags' in content.series" class="wv-overlay-topright">
+                  <div v-if="'tags' in content.series" class="wv-overlay-topright"
+                       v-bind:class="{ 'wvInfoRightMargin' : numberOfFrames > 1 }">
                     {{ content.series.tags[STUDY_DESCRIPTION] }}<br/>
                     <span v-if="contentDate !== undefined && contentDate != ''">{{ app.FormatDate(contentDate) }} <span v-show="contentTime != ''">{{ app.FormatTime(contentTime) }}</span><br/></span>
                     <span v-else="contentDate === undefined || contentDate == ''">{{ app.FormatDate(content.series.tags[STUDY_DATE]) }}<br/></span>
@@ -735,7 +743,8 @@
                       </div>
                     </span>
                   </div>
-                  <div class="wv-overlay-bottomright wvPrintExclude" style="bottom: 0px">
+                  <div class="wv-overlay-bottomright wvPrintExclude" style="bottom: 0px"
+                       v-bind:class="{ 'wvInfoRightMargin' : numberOfFrames > 1 }">
                     <div v-if="windowingWidth != 0">
                       ww/wc: {{ windowingWidth }} / {{ windowingCenter }}
                     </div>

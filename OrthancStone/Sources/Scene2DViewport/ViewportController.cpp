@@ -222,7 +222,7 @@ namespace OrthancStone
     {
       // We are dealing with a multi-stage tracker (that is made of several 
       // interactions)
-      activeTracker_->PointerDown(event);
+      activeTracker_->PointerDown(event, GetScene());
 
       if (!activeTracker_->IsAlive())
       {
@@ -253,7 +253,7 @@ namespace OrthancStone
   {
     if (activeTracker_)
     {
-      activeTracker_->PointerMove(event);
+      activeTracker_->PointerMove(event, GetScene());
       return true;
     }
     else
@@ -266,7 +266,7 @@ namespace OrthancStone
   {
     if (activeTracker_)
     {
-      activeTracker_->PointerUp(event);
+      activeTracker_->PointerUp(event, GetScene());
 
       if (!activeTracker_->IsAlive())
       {

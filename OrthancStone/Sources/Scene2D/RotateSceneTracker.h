@@ -32,17 +32,20 @@ namespace OrthancStone
   class RotateSceneTracker : public OneGesturePointerTracker
   {
   private:
+    boost::weak_ptr<IViewport>   viewport_;
     ScenePoint2D                 click_;
-    Internals::FixedPointAligner aligner_;
     double                       referenceAngle_;
     bool                         isFirst_;
     AffineTransform2D            originalSceneToCanvas_;
 
+    std::unique_ptr<Internals::FixedPointAligner>  aligner_;
+    
   public:
     RotateSceneTracker(boost::weak_ptr<IViewport> viewport,
                        const PointerEvent& event);
 
-    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;
+    virtual void PointerMove(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE;
     
     virtual void Cancel() ORTHANC_OVERRIDE;
   };

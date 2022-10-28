@@ -50,15 +50,16 @@ namespace OrthancStone
 
   }
 
-  void EditAngleMeasureTracker::PointerMove(const PointerEvent& e)
+  void EditAngleMeasureTracker::PointerMove(const PointerEvent& e,
+                                            const Scene2D& scene)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     
     ViewportController& controller = lock->GetController();
-    const Scene2D& scene = controller.GetScene();
+    const Scene2D& scene2 = controller.GetScene();
 
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      scene.GetCanvasToSceneTransform());
+      scene2.GetCanvasToSceneTransform());
 
     ScenePoint2D delta = scenePos - GetOriginalClickPosition();
 
@@ -106,12 +107,14 @@ namespace OrthancStone
     }
   }
 
-  void EditAngleMeasureTracker::PointerUp(const PointerEvent& e)
+  void EditAngleMeasureTracker::PointerUp(const PointerEvent& e,
+                                          const Scene2D& scene)
   {
     alive_ = false;
   }
 
-  void EditAngleMeasureTracker::PointerDown(const PointerEvent& e)
+  void EditAngleMeasureTracker::PointerDown(const PointerEvent& e,
+                                            const Scene2D& scene)
   {
     LOG(WARNING) << "Additional touches (fingers, pen, mouse buttons...) "
       "are ignored when the edit angle tracker is active";

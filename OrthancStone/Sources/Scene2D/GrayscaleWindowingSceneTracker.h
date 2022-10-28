@@ -23,10 +23,8 @@
 
 #pragma once
 
-
 #include "../Scene2DViewport/OneGesturePointerTracker.h"
 #include "../Viewport/IViewport.h"
-#include "Internals/FixedPointAligner.h"
 
 #include <boost/weak_ptr.hpp>
 
@@ -35,6 +33,8 @@ namespace OrthancStone
   class GrayscaleWindowingSceneTracker : public OneGesturePointerTracker
   {
   private:
+    boost::weak_ptr<IViewport> viewport_;
+    
     bool    active_;
     int     layerIndex_;
     double  normalization_;
@@ -53,7 +53,8 @@ namespace OrthancStone
                                    unsigned int canvasWidth,
                                    unsigned int canvasHeight);
 
-    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;
+    virtual void PointerMove(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE;
     
     virtual void Cancel() ORTHANC_OVERRIDE;
   };

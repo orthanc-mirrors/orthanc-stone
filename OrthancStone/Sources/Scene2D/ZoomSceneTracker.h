@@ -34,20 +34,22 @@ namespace OrthancStone
 {
   class ZoomSceneTracker : public OneGesturePointerTracker
   {
+  private:
+    boost::weak_ptr<IViewport>    viewport_;
+    double                        clickY_;
+    double                        normalization_;
+    AffineTransform2D             originalSceneToCanvas_;
+
+    std::unique_ptr<Internals::FixedPointAligner>  aligner_;
+    
   public:
     ZoomSceneTracker(boost::weak_ptr<IViewport> viewport,
                      const PointerEvent& event,
                      unsigned int canvasHeight);
 
-    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE;
+    virtual void PointerMove(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE;
+    
     virtual void Cancel() ORTHANC_OVERRIDE;
-  
-  private:
-    double                        clickY_;
-    bool                          active_;
-    double                        normalization_;
-    Internals::FixedPointAligner  aligner_;
-    AffineTransform2D             originalSceneToCanvas_;
-
   };
 }

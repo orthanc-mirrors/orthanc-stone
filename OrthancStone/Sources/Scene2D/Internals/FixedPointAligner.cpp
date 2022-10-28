@@ -20,43 +20,31 @@
  * <http://www.gnu.org/licenses/>.
  **/
 
-#include "../../Scene2DViewport/ViewportController.h"
+
 #include "FixedPointAligner.h"
+
+#include <OrthancException.h>
 
 namespace OrthancStone
 {
   namespace Internals
   {
-    FixedPointAligner::FixedPointAligner(boost::weak_ptr<IViewport> viewport,
-                                         const ScenePoint2D& p) 
-      : viewport_(viewport)
-      , canvas_(p)
+    FixedPointAligner::FixedPointAligner(ViewportController& controller,
+                                         const ScenePoint2D& p) :
+      canvas_(p)
     {
-      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-      pivot_ = canvas_.Apply(lock->GetController().GetCanvasToSceneTransform());
+      pivot_ = canvas_.Apply(controller.GetCanvasToSceneTransform());
     }
 
-    IViewport::ILock* FixedPointAligner::GetViewportLock()
+    void FixedPointAligner::Apply(ViewportController& controller)
     {
-      boost::shared_ptr<IViewport> viewport = viewport_.lock();
-      if (viewport)
-        return viewport->Lock();
-      else
-        return NULL;
-    }
-    
-    void FixedPointAligner::Apply()
-    {
-      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-      ScenePoint2D p = canvas_.Apply(
-        lock->GetController().GetCanvasToSceneTransform());
+      ScenePoint2D p = canvas_.Apply(controller.GetCanvasToSceneTransform());
 
-      lock->GetController().SetSceneToCanvasTransform(
+      controller.SetSceneToCanvasTransform(
         AffineTransform2D::Combine(
-          lock->GetController().GetSceneToCanvasTransform(),
+          controller.GetSceneToCanvasTransform(),
           AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
                                           p.GetY() - pivot_.GetY())));
-      lock->Invalidate();
     }
   }
 }

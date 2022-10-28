@@ -445,8 +445,9 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/UnionOfRectangles.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/UnionOfRectangles.h
   
-  ${ORTHANC_STONE_ROOT}/Viewport/IViewport.h
   ${ORTHANC_STONE_ROOT}/Viewport/DefaultViewportInteractor.cpp
+  ${ORTHANC_STONE_ROOT}/Viewport/IViewport.h
+  ${ORTHANC_STONE_ROOT}/Viewport/ViewportLocker.cpp
   
   ${ORTHANC_STONE_ROOT}/Volumes/IGeometryProvider.h
   ${ORTHANC_STONE_ROOT}/Volumes/IVolumeSlicer.cpp

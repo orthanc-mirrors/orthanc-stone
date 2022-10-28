@@ -22,11 +22,7 @@
 
 #pragma once
 
-#include "../../Scene2DViewport/PredeclaredTypes.h"
-#include "../../Scene2D/ScenePoint2D.h"
-#include "../../Viewport/IViewport.h"
-
-#include <boost/weak_ptr.hpp>
+#include "../../Scene2DViewport/ViewportController.h"
 
 namespace OrthancStone
 {
@@ -37,21 +33,14 @@ namespace OrthancStone
     class FixedPointAligner : public boost::noncopyable
     {
     private:
-      boost::weak_ptr<IViewport> viewport_;
-      ScenePoint2D               pivot_;
-      ScenePoint2D               canvas_;
-
-      /**
-      This will return a scoped lock to the viewport.
-      If the viewport does not exist anymore, then nullptr is returned.
-      */
-      IViewport::ILock* GetViewportLock();
+      ScenePoint2D  pivot_;
+      ScenePoint2D  canvas_;
 
     public:
-      FixedPointAligner(boost::weak_ptr<IViewport> viewport,
+      FixedPointAligner(ViewportController& controller,
                         const ScenePoint2D& p);
 
-      void Apply();
+      void Apply(ViewportController& controller);
     };
   }
 }

@@ -21,57 +21,73 @@
  **/
 
 #include "RotateSceneTracker.h"
+
 #include "../Scene2DViewport/ViewportController.h"
+#include "../Viewport/ViewportLocker.h"
 
 namespace OrthancStone
 {
   RotateSceneTracker::RotateSceneTracker(boost::weak_ptr<IViewport> viewport,
                                          const PointerEvent& event) :
-    OneGesturePointerTracker(viewport),
+    viewport_(viewport),
     click_(event.GetMainPosition()),
-    aligner_(viewport, click_),
     referenceAngle_(0),
     isFirst_(true)
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    originalSceneToCanvas_ = lock->GetController().GetSceneToCanvasTransform();
+    ViewportLocker locker(viewport_);
+    
+    if (locker.IsValid())
+    {
+      aligner_.reset(new Internals::FixedPointAligner(locker.GetController(), click_));
+      originalSceneToCanvas_ = locker.GetController().GetSceneToCanvasTransform();
+    }
   }
 
   
-  void RotateSceneTracker::PointerMove(const PointerEvent& event)
+  void RotateSceneTracker::PointerMove(const PointerEvent& event,
+                                       const Scene2D& scene)
   {
-    ScenePoint2D p = event.GetMainPosition();
-    double dx = p.GetX() - click_.GetX();
-    double dy = p.GetY() - click_.GetY();
-
-    if (std::abs(dx) > 5.0 ||
-        std::abs(dy) > 5.0)
+    if (aligner_.get() != NULL)
     {
-      double a = atan2(dy, dx);
+      ScenePoint2D p = event.GetMainPosition();
+      double dx = p.GetX() - click_.GetX();
+      double dy = p.GetY() - click_.GetY();
 
-      if (isFirst_)
+      if (std::abs(dx) > 5.0 ||
+          std::abs(dy) > 5.0)
       {
-        referenceAngle_ = a;
-        isFirst_ = false;
+        double a = atan2(dy, dx);
+
+        if (isFirst_)
+        {
+          referenceAngle_ = a;
+          isFirst_ = false;
+        }
+
+        ViewportLocker locker(viewport_);
+    
+        if (locker.IsValid())
+        {
+          locker.GetController().SetSceneToCanvasTransform(
+            AffineTransform2D::Combine(
+              AffineTransform2D::CreateRotation(a - referenceAngle_),
+              originalSceneToCanvas_));
+          aligner_->Apply(locker.GetController());
+          locker.Invalidate();
+        }
       }
-
-      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-
-      lock->GetController().SetSceneToCanvasTransform(
-        AffineTransform2D::Combine(
-          AffineTransform2D::CreateRotation(a - referenceAngle_),
-          originalSceneToCanvas_));
-      aligner_.Apply();
-      lock->Invalidate();
     }
   }
 
   
   void RotateSceneTracker::Cancel()
   {
-    // See remark above
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    lock->GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
-    lock->Invalidate();
+    ViewportLocker locker(viewport_);
+    
+    if (locker.IsValid())
+    {
+      locker.GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
+      locker.Invalidate();
+    }
   }
 }

@@ -736,20 +736,23 @@ namespace OrthancStone
     {
     }
 
-    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerMove(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE
     {
       primitive_.MovePreview(event.GetMainPosition().Apply(canvasToScene_) - sceneClick_);
       that_.BroadcastMessage(AnnotationChangedMessage(that_));
     }
       
-    virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerUp(const PointerEvent& event,
+                           const Scene2D& scene) ORTHANC_OVERRIDE
     {
       primitive_.MoveDone(event.GetMainPosition().Apply(canvasToScene_) - sceneClick_);
       alive_ = false;
       that_.BroadcastMessage(AnnotationChangedMessage(that_));
     }
 
-    virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerDown(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
@@ -1221,7 +1224,8 @@ namespace OrthancStone
              handle2_ != NULL);
     }
 
-    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerMove(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE
     {
       if (annotation_ != NULL)
       {
@@ -1233,14 +1237,16 @@ namespace OrthancStone
       }
     }
       
-    virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerUp(const PointerEvent& event,
+                           const Scene2D& scene) ORTHANC_OVERRIDE
     {
       annotation_ = NULL;  // IsAlive() becomes false
 
       that_.BroadcastMessage(AnnotationAddedMessage(that_));
     }
 
-    virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerDown(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
@@ -1281,7 +1287,8 @@ namespace OrthancStone
       segment_ = new SegmentAnnotation(that, units, false /* no length label */, sceneClick, sceneClick);
     }
 
-    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerMove(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE
     {
       if (segment_ != NULL)
       {
@@ -1298,7 +1305,8 @@ namespace OrthancStone
       }
     }
       
-    virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerUp(const PointerEvent& event,
+                           const Scene2D& scene) ORTHANC_OVERRIDE
     {
       if (segment_ != NULL)
       {
@@ -1321,7 +1329,8 @@ namespace OrthancStone
       }
     }
 
-    virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerDown(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
@@ -1357,15 +1366,18 @@ namespace OrthancStone
     {
     }
 
-    virtual void PointerMove(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerMove(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
       
-    virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerUp(const PointerEvent& event,
+                           const Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
-    virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE
+    virtual void PointerDown(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
@@ -1566,6 +1578,10 @@ namespace OrthancStone
   IFlexiblePointerTracker* AnnotationsSceneLayer::CreateTracker(const ScenePoint2D& p,
                                                                 const Scene2D& scene)
   {
+    /**
+     * WARNING: The created trackers must NOT keep a reference to "scene"!
+     **/
+
     if (activeTool_ == Tool_None)
     {
       return NULL;

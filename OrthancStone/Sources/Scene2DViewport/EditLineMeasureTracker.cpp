@@ -46,14 +46,15 @@ namespace OrthancStone
     command_.reset(new EditLineMeasureCommand(measureTool, viewport));
   }
 
-  void EditLineMeasureTracker::PointerMove(const PointerEvent& e)
+  void EditLineMeasureTracker::PointerMove(const PointerEvent& e,
+                                           const Scene2D& scene)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     ViewportController& controller = lock->GetController();
-    const Scene2D& scene = controller.GetScene();
+    const Scene2D& scene2 = controller.GetScene();
 
     ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      scene.GetCanvasToSceneTransform());
+      scene2.GetCanvasToSceneTransform());
 
     ScenePoint2D delta = scenePos - GetOriginalClickPosition();
 
@@ -91,12 +92,14 @@ namespace OrthancStone
     }
   }
 
-  void EditLineMeasureTracker::PointerUp(const PointerEvent& e)
+  void EditLineMeasureTracker::PointerUp(const PointerEvent& e,
+                                         const Scene2D& scene)
   {
     alive_ = false;
   }
 
-  void EditLineMeasureTracker::PointerDown(const PointerEvent& e)
+  void EditLineMeasureTracker::PointerDown(const PointerEvent& e,
+                                           const Scene2D& scene)
   {
     LOG(WARNING) << "Additional touches (fingers, pen, mouse buttons...) "
       "are ignored when the edit line tracker is active";

@@ -48,10 +48,13 @@ namespace OrthancStone
       boost::weak_ptr<IViewport>      viewport,
       const PointerEvent&             e);
 
-    virtual void PointerMove(const PointerEvent& e) ORTHANC_OVERRIDE;
+    virtual void PointerMove(const PointerEvent& e,
+                             const Scene2D& scene) ORTHANC_OVERRIDE;
     
-    virtual void PointerUp(const PointerEvent& e) ORTHANC_OVERRIDE;
+    virtual void PointerUp(const PointerEvent& e,
+                           const Scene2D& scene) ORTHANC_OVERRIDE;
     
-    virtual void PointerDown(const PointerEvent& e) ORTHANC_OVERRIDE;
+    virtual void PointerDown(const PointerEvent& e,
+                             const Scene2D& scene) ORTHANC_OVERRIDE;
   };
 }

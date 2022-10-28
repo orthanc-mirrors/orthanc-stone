@@ -29,23 +29,14 @@
 
 namespace OrthancStone
 {
-  OneGesturePointerTracker::OneGesturePointerTracker(boost::weak_ptr<IViewport> viewport) :
+  OneGesturePointerTracker::OneGesturePointerTracker() :
     alive_(true),
-    currentTouchCount_(1),
-    viewport_(viewport)
+    currentTouchCount_(1)
   {
   }
 
-  IViewport::ILock* OneGesturePointerTracker::GetViewportLock()
-  {
-    boost::shared_ptr<IViewport> viewport = viewport_.lock();
-    if (viewport)
-      return viewport->Lock();
-    else
-      return NULL;
-  }
-
-  void OneGesturePointerTracker::PointerUp(const PointerEvent& event)
+  void OneGesturePointerTracker::PointerUp(const PointerEvent& event,
+                                           const Scene2D& scene)
   {
     // pointer up is only called for the LAST up event in case of a multi-touch
     // gesture
@@ -59,7 +50,8 @@ namespace OrthancStone
     }
   }
 
-  void OneGesturePointerTracker::PointerDown(const PointerEvent& event)
+  void OneGesturePointerTracker::PointerDown(const PointerEvent& event,
+                                             const Scene2D& scene)
   {
     // additional touches are not taken into account but we need to count 
     // the number of active touches

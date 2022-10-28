@@ -22,44 +22,52 @@
 
 
 #include "PanSceneTracker.h"
-#include "../Viewport/IViewport.h"
-#include "../Scene2DViewport/ViewportController.h"
 
-#include <memory>
+#include "../Scene2DViewport/ViewportController.h"
+#include "../Viewport/ViewportLocker.h"
 
 namespace OrthancStone
 {
   PanSceneTracker::PanSceneTracker(boost::weak_ptr<IViewport> viewport,
-                                   const PointerEvent& event)
-    : OneGesturePointerTracker(viewport)
+                                   const PointerEvent& event) :
+    viewport_(viewport)
   {
+    ViewportLocker locker(viewport_);
     
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-
-    originalSceneToCanvas_ = lock->GetController().GetSceneToCanvasTransform();
-    originalCanvasToScene_ = lock->GetController().GetCanvasToSceneTransform();
-
-    pivot_ = event.GetMainPosition().Apply(originalCanvasToScene_);
+    if (locker.IsValid())
+    {
+      originalSceneToCanvas_ = locker.GetController().GetSceneToCanvasTransform();
+      originalCanvasToScene_ = locker.GetController().GetCanvasToSceneTransform();
+      pivot_ = event.GetMainPosition().Apply(originalCanvasToScene_);
+    }
   }
 
 
-  void PanSceneTracker::PointerMove(const PointerEvent& event)
+  void PanSceneTracker::PointerMove(const PointerEvent& event,
+                                    const Scene2D& scene)
   {
     ScenePoint2D p = event.GetMainPosition().Apply(originalCanvasToScene_);
 
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-
-    lock->GetController().SetSceneToCanvasTransform(
-      AffineTransform2D::Combine(
-        originalSceneToCanvas_,
-        AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
-                                        p.GetY() - pivot_.GetY())));
-    lock->Invalidate();
+    ViewportLocker locker(viewport_);
+    
+    if (locker.IsValid())
+    {
+      locker.GetController().SetSceneToCanvasTransform(
+        AffineTransform2D::Combine(
+          originalSceneToCanvas_,
+          AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
+                                          p.GetY() - pivot_.GetY())));
+      locker.Invalidate();
+    }
   }
 
   void PanSceneTracker::Cancel()
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    lock->GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
+    ViewportLocker locker(viewport_);
+    
+    if (locker.IsValid())
+    {
+      locker.GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
+    }
   }
 }

@@ -15,6 +15,7 @@ Maintenance
 
 * Fix issues with drag-and-drop
 * Fix handling of "token": The authorization header was not set in QIDO-RS requests
+* Start at the first frame for series presumably not containing 3D images (e.g. US)
 * More tolerance wrt. bad values of the Pixel Spacing (0028,0030) tag
 * Support of DICOM images without the Study Date (0008,0020) tag
 * Upgraded Vue.js to 2.6.4

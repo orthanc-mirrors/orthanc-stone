@@ -38,7 +38,7 @@ Improvements
   
 * add a button (and/or a keyboard shortcut) to select the next series in the main viewport
   https://groups.google.com/g/orthanc-users/c/u_lH9aqKsdw/m/KQ7U9CkiAAAJ.  In Osimis viewer,
-  this was implemented by up/down arrow keys (prev/next series).
+  this was implemented by up/down arrow keys (prev/next series)
 
 ------------
 Known issues
@@ -55,6 +55,8 @@ Known issues
 * the authorization header ('token' query arg) is not included in the HTTP headers.
   Tested with https://bitbucket.org/osimis/orthanc-setup-samples/src/master/docker/authorization-plugin-viewer-query-args/.
 
+* the plugin does not work with DicomWeb plugin version 1.10.1 -> only 2 numbers are allowed:
+  https://groups.google.com/g/orthanc-users/c/xMcicKAldpM/m/b5Gz3wnyAQAJ
 
 -----------------
 Code refactorings

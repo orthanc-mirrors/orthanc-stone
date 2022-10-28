@@ -195,7 +195,7 @@ namespace OrthancStone
 
       for (size_t x = 0; x < mapperX_.GetSize(); x++)
       {
-        fprintf(fp, "%7ld ", GetBucketContentSize(x, y));
+        fprintf(fp, "%7ld ", static_cast<long>(GetBucketContentSize(x, y)));
       }
 
       fprintf(fp, "\n");

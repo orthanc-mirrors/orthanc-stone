@@ -1,8 +1,15 @@
 Pending changes in the mainline
 ===============================
 
+* Display of orientation markers
+* New configuration options:
+  - "ShowInfoPanelAtStartup" to control the info panel at startup
+  - "ShowUserPreferencesButton" to show the button for setting preferences
+  - "ShowNotForDiagnosticUsageDisclaimer" to show disclaimer about diagnostic usage
+  - "DicomWebHttpHeaders" to set HTTP headers in DICOMweb requests
 * More tolerance wrt. bad values of the Pixel Spacing (0028,0030) tag
 * Support of DICOM images without the Study Date (0008,0020) tag
+* Fix handling of "token": The authorization header was not set in QIDO-RS requests
 
 
 Version 2.3 (2022-03-24)

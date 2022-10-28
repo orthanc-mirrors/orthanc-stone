@@ -1585,11 +1585,12 @@ public:
 
 private:
   static const int LAYER_TEXTURE = 0;
-  static const int LAYER_DEEP_LEARNING = 1;
-  static const int LAYER_OVERLAY = 2;
+  static const int LAYER_OVERLAY = 1;
+  static const int LAYER_ORIENTATION_MARKERS = 2;
   static const int LAYER_REFERENCE_LINES = 3;
   static const int LAYER_ANNOTATIONS_OSIRIX = 4;
   static const int LAYER_ANNOTATIONS_STONE = 5;
+  static const int LAYER_DEEP_LEARNING = 6;
 
   
   class ICommand : public Orthanc::IDynamicObject
@@ -2257,6 +2258,46 @@ private:
 
     StoneAnnotationsRegistry::GetInstance().Load(*stoneAnnotations_, instance.GetSopInstanceUid(), frameIndex);
 
+    // Orientation markers, new in Stone Web viewer 2.4
+    std::unique_ptr<OrthancStone::MacroSceneLayer>  orientationMarkers;
+
+    if (instance.GetGeometry().IsValid())
+    {
+      orientationMarkers.reset(new OrthancStone::MacroSceneLayer);
+
+      std::string top, bottom, left, right;
+      instance.GetGeometry().GetOrientationMarkers(top, bottom, left, right);
+
+      std::unique_ptr<OrthancStone::TextSceneLayer> text;
+
+      text.reset(new OrthancStone::TextSceneLayer);
+      text->SetText(top);
+      text->SetPosition(pixelSpacingX * static_cast<double>(frame.GetWidth()) / 2.0, 0);
+      text->SetAnchor(OrthancStone::BitmapAnchor_TopCenter);
+      orientationMarkers->AddLayer(text.release());
+
+      text.reset(new OrthancStone::TextSceneLayer);
+      text->SetText(bottom);
+      text->SetPosition(pixelSpacingX * static_cast<double>(frame.GetWidth()) / 2.0,
+                        pixelSpacingY * static_cast<double>(frame.GetHeight()));
+      text->SetAnchor(OrthancStone::BitmapAnchor_BottomCenter);
+      orientationMarkers->AddLayer(text.release());
+
+      text.reset(new OrthancStone::TextSceneLayer);
+      text->SetText(left);
+      text->SetPosition(0, pixelSpacingY * static_cast<double>(frame.GetHeight()) / 2.0);
+      text->SetAnchor(OrthancStone::BitmapAnchor_CenterLeft);
+      orientationMarkers->AddLayer(text.release());
+
+      text.reset(new OrthancStone::TextSceneLayer);
+      text->SetText(right);
+      text->SetPosition(pixelSpacingX * static_cast<double>(frame.GetWidth()),
+                        pixelSpacingY * static_cast<double>(frame.GetHeight()) / 2.0);
+      text->SetAnchor(OrthancStone::BitmapAnchor_CenterRight);
+      orientationMarkers->AddLayer(text.release());
+    }
+
+
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
 
@@ -2280,6 +2321,15 @@ private:
       else
       {
         scene.DeleteLayer(LAYER_ANNOTATIONS_OSIRIX);
+      }
+
+      if (orientationMarkers.get() != NULL)
+      {
+        scene.SetLayer(LAYER_ORIENTATION_MARKERS, orientationMarkers.release());
+      }
+      else
+      {
+        scene.DeleteLayer(LAYER_ORIENTATION_MARKERS);
       }
 
       if (deepLearningLayer.get() != NULL)

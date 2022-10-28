@@ -92,6 +92,22 @@ Differences with Osimis Web viewer
   displayed at the startup.
 
 
+Minor changes
+-------------
+
+- Option "ShowInfoPanelButtonEnabled" in the Osimis Web viewer is
+  named "ShowUserPreferencesButton" in the Stone Web viewer.
+
+- Option "AlwaysShowNotForDiagnosticUsageDisclaimer" in the Osimis Web
+  viewer is named "ShowNotForDiagnosticUsageDisclaimer" in the Stone
+  Web viewer.
+
+- The allowed values for option "ShowInfoPanelAtStartup" are "Always",
+  "Never" of "User" (note the first character in upper case). In the
+  Osimis Web viewer, these options were in lower case.
+
+
+
 Authorization to the DICOMweb server (new in 2.0)
 ====================================
 

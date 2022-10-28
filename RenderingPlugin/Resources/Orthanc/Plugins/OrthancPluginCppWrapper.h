@@ -115,6 +115,12 @@
 #  define HAS_ORTHANC_PLUGIN_STORAGE_COMMITMENT_SCP  0
 #endif
 
+#if ORTHANC_PLUGINS_VERSION_IS_ABOVE(1, 9, 2)
+#  define HAS_ORTHANC_PLUGIN_GENERIC_CALL_REST_API  1
+#else
+#  define HAS_ORTHANC_PLUGIN_GENERIC_CALL_REST_API  0
+#endif
+
 #if ORTHANC_PLUGINS_VERSION_IS_ABOVE(1, 10, 1)
 #  define HAS_ORTHANC_PLUGIN_WEBDAV  1
 #else
@@ -223,6 +229,19 @@ namespace OrthancPlugins
     bool RestApiPost(const std::string& uri,
                      const Json::Value& body,
                      bool applyPlugins);
+
+#if HAS_ORTHANC_PLUGIN_GENERIC_CALL_REST_API == 1
+    bool RestApiPost(const std::string& uri,
+                     const Json::Value& body,
+                     const std::map<std::string, std::string>& httpHeaders,
+                     bool applyPlugins);
+
+    bool RestApiPost(const std::string& uri,
+                     const void* body,
+                     size_t bodySize,
+                     const std::map<std::string, std::string>& httpHeaders,
+                     bool applyPlugins);
+#endif
 
     bool RestApiPut(const std::string& uri,
                     const Json::Value& body,
@@ -535,6 +554,14 @@ namespace OrthancPlugins
                    size_t bodySize,
                    bool applyPlugins);
 
+#if HAS_ORTHANC_PLUGIN_GENERIC_CALL_REST_API == 1
+  bool RestApiPost(Json::Value& result,
+                   const std::string& uri,
+                   const Json::Value& body,
+                   const std::map<std::string, std::string>& httpHeaders,
+                   bool applyPlugins);
+#endif
+
   bool RestApiPost(Json::Value& result,
                    const std::string& uri,
                    const Json::Value& body,
@@ -728,53 +755,65 @@ namespace OrthancPlugins
 
     bool DoGet(MemoryBuffer& target,
                size_t index,
-               const std::string& uri) const;
+               const std::string& uri,
+               const std::map<std::string, std::string>& headers) const;
 
     bool DoGet(MemoryBuffer& target,
                const std::string& name,
-               const std::string& uri) const;
+               const std::string& uri,
+               const std::map<std::string, std::string>& headers) const;
 
     bool DoGet(Json::Value& target,
                size_t index,
-               const std::string& uri) const;
+               const std::string& uri,
+               const std::map<std::string, std::string>& headers) const;
 
     bool DoGet(Json::Value& target,
                const std::string& name,
-               const std::string& uri) const;
+               const std::string& uri,
+               const std::map<std::string, std::string>& headers) const;
 
     bool DoPost(MemoryBuffer& target,
                 size_t index,
                 const std::string& uri,
-                const std::string& body) const;
+                const std::string& body,
+                const std::map<std::string, std::string>& headers) const;
 
     bool DoPost(MemoryBuffer& target,
                 const std::string& name,
                 const std::string& uri,
-                const std::string& body) const;
+                const std::string& body,
+                const std::map<std::string, std::string>& headers) const;
 
     bool DoPost(Json::Value& target,
                 size_t index,
                 const std::string& uri,
-                const std::string& body) const;
+                const std::string& body,
+                const std::map<std::string, std::string>& headers) const;
 
     bool DoPost(Json::Value& target,
                 const std::string& name,
                 const std::string& uri,
-                const std::string& body) const;
+                const std::string& body,
+                const std::map<std::string, std::string>& headers) const;
 
     bool DoPut(size_t index,
                const std::string& uri,
-               const std::string& body) const;
+               const std::string& body,
+               const std::map<std::string, std::string>& headers) const;
 
     bool DoPut(const std::string& name,
                const std::string& uri,
-               const std::string& body) const;
+               const std::string& body,
+               const std::map<std::string, std::string>& headers) const;
 
     bool DoDelete(size_t index,
-                  const std::string& uri) const;
+                  const std::string& uri,
+                  const std::map<std::string, std::string>& headers) const;
 
     bool DoDelete(const std::string& name,
-                  const std::string& uri) const;
+                  const std::string& uri,
+                  const std::map<std::string, std::string>& headers) const;
   };
 #endif
 
@@ -1264,7 +1303,8 @@ namespace OrthancPlugins
 #endif
   };
 
-
+// helper method to convert Http headers from the plugin SDK to a std::map
+void GetHttpHeaders(std::map<std::string, std::string>& result, const OrthancPluginHttpRequest* request);
 
 #if HAS_ORTHANC_PLUGIN_WEBDAV == 1
   class IWebDavCollection : public boost::noncopyable

@@ -1198,9 +1198,10 @@ private:
   }
   
 public:
-  explicit SeriesCursor(size_t framesCount) :
+  explicit SeriesCursor(size_t framesCount,
+                        bool startAtMiddle /* Whether to start at the middle frame */) :
     framesCount_(framesCount),
-    currentFrame_(framesCount / 2),  // Start at the middle frame    
+    currentFrame_(startAtMiddle ? framesCount / 2 : 0),
     isCircularPrefetch_(false),
     lastAction_(Action_None)
   {
@@ -2763,7 +2764,28 @@ public:
     OrthancStone::LinearAlgebra::AssignVector(synchronizationOffset_, 0, 0, 0);
 
     frames_.reset(frames);
-    cursor_.reset(new SeriesCursor(frames_->GetFramesCount()));
+    cursor_.reset(new SeriesCursor(frames_->GetFramesCount(), false));
+    
+    if (frames_->GetFramesCount() != 0)
+    {
+      const OrthancStone::DicomInstanceParameters& firstInstance = frames_->GetInstanceOfFrame(0);
+      std::string modality;
+      if (firstInstance.GetTags().LookupStringValue(modality, Orthanc::DICOM_TAG_MODALITY, false))
+      {
+        if (modality == "MR" ||
+            modality == "CT" ||
+            modality == "NM" ||
+            modality == "OPT" ||
+            modality == "PT" ||
+            modality == "RTDOSE" ||
+            modality == "XA")
+        {
+          // For series that might correspond to 3D images, use their
+          // central frame as the first frame to be displayed
+          cursor_.reset(new SeriesCursor(frames_->GetFramesCount(), true));
+        }
+      }
+    }
 
     LOG(INFO) << "Number of frames in series: " << frames_->GetFramesCount();
 

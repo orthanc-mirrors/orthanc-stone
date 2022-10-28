@@ -720,7 +720,9 @@
                         </button>
                       </div>
                       <span data-toggle="tooltip" data-title="Current frame number">
-                        &nbsp;&nbsp;{{ currentFrame + 1 }} / {{ numberOfFrames }}&nbsp;&nbsp;
+                        &nbsp;&nbsp;
+                        <input type="text" v-model="currentFrameFromUser" class="wvInputInstanceNumber"> / {{ numberOfFrames }}
+                        &nbsp;&nbsp;
                       </span>
                       <div class="btn-group btn-group-sm" role="group">                        
                         <button class="btn btn-primary" @click="IncrementFrame()">

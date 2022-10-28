@@ -141,6 +141,7 @@ Vue.component('viewport', {
       stone: stone,  // To access global object "stone" from "index.html"
       status: 'waiting',
       currentFrame: 0,
+      currentFrameFromUser: 0,
       numberOfFrames: 0,
       quality: '',
       cineControls: false,
@@ -158,6 +159,7 @@ Vue.component('viewport', {
   },
   watch: {
     currentFrame: function(newVal, oldVal) {
+      this.currentFrameFromUser = newVal + 1;
       if (this.cineLoadingFrame) {
         /**
          * The "FrameUpdated" event has been received, which indicates
@@ -167,6 +169,13 @@ Vue.component('viewport', {
         this.cineLoadingFrame = false;
       } else {
         stone.SetFrame(this.canvasId, newVal);
+      }
+    },
+    currentFrameFromUser: function(newVal, oldVal) {
+      if (parseInt(newVal, 10) !== NaN &&
+          newVal >= 1 &&
+          newVal <= this.numberOfFrames) {
+        this.currentFrame = this.currentFrameFromUser - 1;
       }
     },
     content: function(newVal, oldVal) {

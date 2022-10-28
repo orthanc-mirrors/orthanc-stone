@@ -3,6 +3,7 @@ Pending changes in the mainline
 
 * Added vertical slider showing position of the current frame inside the series
 * Display of orientation markers
+* The text field with the instance number is editable to go to a specific instance
 * New configuration options:
   - "ShowInfoPanelAtStartup" to control the info panel at startup
   - "ShowUserPreferencesButton" to show the button for setting preferences

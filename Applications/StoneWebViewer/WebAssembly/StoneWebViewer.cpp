@@ -1586,10 +1586,10 @@ public:
 private:
   static const int LAYER_TEXTURE = 0;
   static const int LAYER_OVERLAY = 1;
-  static const int LAYER_REFERENCE_LINES = 2;
-  static const int LAYER_ANNOTATIONS_OSIRIX = 3;
-  static const int LAYER_ANNOTATIONS_STONE = 4;
-  static const int LAYER_ORIENTATION_MARKERS = 5;
+  static const int LAYER_ORIENTATION_MARKERS = 2;
+  static const int LAYER_REFERENCE_LINES = 3;
+  static const int LAYER_ANNOTATIONS_OSIRIX = 4;
+  static const int LAYER_ANNOTATIONS_STONE = 5;
 
   
   class ICommand : public Orthanc::IDynamicObject

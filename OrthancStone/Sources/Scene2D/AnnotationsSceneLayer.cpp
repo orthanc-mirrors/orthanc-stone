@@ -28,6 +28,7 @@
 #include "TextSceneLayer.h"
 #include "TextureBaseSceneLayer.h"  // TODO REMOVE
 
+#include <Images/ImageTraits.h>
 #include <OrthancException.h>
 
 #include <boost/math/constants/constants.hpp>
@@ -955,20 +956,113 @@ namespace OrthancStone
   };
 
 
-  class AnnotationsSceneLayer::PixelProbeAnnotation : public Annotation
+  // Use this class to avoid unnecessary probing if neither the scene,
+  // nor the probe, has changed
+  class AnnotationsSceneLayer::ProbingAnnotation : public Annotation
   {
   private:
     int       probedLayer_;
+    bool      probeChanged_;
+    uint64_t  lastLayerRevision_;
+
+  protected:
+    virtual void UpdateProbeForLayer(const ISceneLayer& layer) = 0;
+
+    void TagProbeAsChanged()
+    {
+      probeChanged_ = true;
+    }
+
+  public:
+    ProbingAnnotation(AnnotationsSceneLayer& that,
+                      Units units,
+                      int probedLayer) :
+      Annotation(that, units),
+      probedLayer_(probedLayer),
+      probeChanged_(true),
+      lastLayerRevision_(0)
+    {
+    }
+
+    virtual void UpdateProbe(const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+      if (scene.HasLayer(probedLayer_))
+      {
+        const ISceneLayer& layer = scene.GetLayer(probedLayer_);
+        if (probeChanged_ ||
+            layer.GetRevision() != lastLayerRevision_)
+        {
+          UpdateProbeForLayer(layer);
+          probeChanged_ = false;
+          lastLayerRevision_ = layer.GetRevision();
+        }
+      }
+    }
+  };
+
+    
+  class AnnotationsSceneLayer::PixelProbeAnnotation : public ProbingAnnotation
+  {
+  private:
     Handle&   handle_;
     Text&     label_;
+
+  protected:
+    virtual void UpdateProbeForLayer(const ISceneLayer& layer) ORTHANC_OVERRIDE
+    {
+      if (layer.GetType() == ISceneLayer::Type_FloatTexture ||
+          layer.GetType() == ISceneLayer::Type_ColorTexture)
+      {
+        const TextureBaseSceneLayer& texture = dynamic_cast<const TextureBaseSceneLayer&>(layer);
+        const AffineTransform2D sceneToTexture = AffineTransform2D::Invert(texture.GetTransform());
+
+        double sceneX = handle_.GetCenter().GetX();
+        double sceneY = handle_.GetCenter().GetY();
+        sceneToTexture.Apply(sceneX, sceneY);
+          
+        int x = static_cast<int>(std::floor(sceneX));
+        int y = static_cast<int>(std::floor(sceneY));
+
+        const Orthanc::ImageAccessor& image = texture.GetTexture();
+        
+        if (x >= 0 &&
+            y >= 0 &&
+            x < static_cast<int>(image.GetWidth()) &&
+            y < static_cast<int>(image.GetHeight()))
+        {
+          char buf[64];
+
+          switch (image.GetFormat())
+          {
+            case Orthanc::PixelFormat_Float32:
+              sprintf(buf, "%.01f\n", Orthanc::ImageTraits<Orthanc::PixelFormat_Float32>::GetFloatPixel(
+                        image, static_cast<unsigned int>(x), static_cast<unsigned int>(y)));
+              break;
+
+            case Orthanc::PixelFormat_RGB24:
+            {
+              Orthanc::PixelTraits<Orthanc::PixelFormat_RGB24>::PixelType pixel;
+              Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(
+                pixel, image, static_cast<unsigned int>(x), static_cast<unsigned int>(y));
+              sprintf(buf, "(%d,%d,%d)\n", pixel.red_, pixel.green_, pixel.blue_);
+              break;
+            }
+
+            default:
+              break;
+          }
+          
+          label_.SetText(buf);
+        }            
+      }
+    }
 
   public:
     PixelProbeAnnotation(AnnotationsSceneLayer& that,
                          Units units,
                          const ScenePoint2D& p,
                          int probedLayer) :
-      Annotation(that, units),
-      probedLayer_(probedLayer),
+      ProbingAnnotation(that, units, probedLayer),
       handle_(AddTypedPrimitive<Handle>(new Handle(*this, p))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
@@ -991,32 +1085,7 @@ namespace OrthancStone
                             const Scene2D& scene) ORTHANC_OVERRIDE
     {
       label_.SetPosition(handle_.GetCenter().GetX(), handle_.GetCenter().GetY());
-    }
-
-    virtual void UpdateProbe(const Scene2D& scene) ORTHANC_OVERRIDE
-    {
-      if (scene.HasLayer(probedLayer_))
-      {
-        const ISceneLayer& layer = scene.GetLayer(probedLayer_);
-        if (layer.GetType() == ISceneLayer::Type_FloatTexture ||
-            layer.GetType() == ISceneLayer::Type_ColorTexture)
-        {
-          const TextureBaseSceneLayer& texture = dynamic_cast<TextureBaseSceneLayer&>(scene.GetLayer(probedLayer_));
-          const AffineTransform2D sceneToTexture = AffineTransform2D::Invert(texture.GetTransform());
-
-          double x = handle_.GetCenter().GetX();
-          double y = handle_.GetCenter().GetY();
-          sceneToTexture.Apply(x, y);
-          
-          int textureX = static_cast<int>(std::floor(x));
-          int textureY = static_cast<int>(std::floor(y));
-          
-          char buf[64];
-          sprintf(buf, "Hello %d x %d / (%d,%d)\n", texture.GetTexture().GetWidth(), texture.GetTexture().GetHeight(),
-                  textureX, textureY);
-          label_.SetText(buf);
-        }
-      }
+      TagProbeAsChanged();
     }
 
     virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
@@ -1515,19 +1584,16 @@ namespace OrthancStone
 
   class AnnotationsSceneLayer::CreatePixelProbeTracker : public IFlexiblePointerTracker
   {
-  private:
-    AnnotationsSceneLayer&  that_;
-
   public:
     CreatePixelProbeTracker(AnnotationsSceneLayer& that,
                             Units units,
                             const ScenePoint2D& sceneClick,
                             const Scene2D& scene,
-                            int probedLayer) :
-      that_(that)
+                            int probedLayer)
     {
       PixelProbeAnnotation* annotation = new PixelProbeAnnotation(that, units, sceneClick, probedLayer);
       annotation->UpdateProbe(scene);
+      that.BroadcastMessage(AnnotationAddedMessage(that));
     }
 
     virtual void PointerMove(const PointerEvent& event,
@@ -1538,7 +1604,6 @@ namespace OrthancStone
     virtual void PointerUp(const PointerEvent& event,
                            const Scene2D& scene) ORTHANC_OVERRIDE
     {
-      that_.BroadcastMessage(AnnotationAddedMessage(that_));
     }
 
     virtual void PointerDown(const PointerEvent& event,

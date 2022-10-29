@@ -54,6 +54,7 @@ namespace OrthancStone
     class Text;
 
     class Annotation;
+    class ProbingAnnotation;
     class PixelProbeAnnotation;
     class SegmentAnnotation;
     class AngleAnnotation;

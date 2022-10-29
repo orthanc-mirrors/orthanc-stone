@@ -3213,7 +3213,7 @@ public:
               break;
               
             case WebViewerAction_CreateSegment:
-              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_PixelProbe);
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Segment);
               break;
 
             case WebViewerAction_RemoveMeasure:

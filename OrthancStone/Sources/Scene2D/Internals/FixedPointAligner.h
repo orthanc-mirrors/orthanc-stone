@@ -37,7 +37,7 @@ namespace OrthancStone
       ScenePoint2D  canvas_;
 
     public:
-      FixedPointAligner(ViewportController& controller,
+      FixedPointAligner(const ViewportController& controller,
                         const ScenePoint2D& p);
 
       void Apply(ViewportController& controller);

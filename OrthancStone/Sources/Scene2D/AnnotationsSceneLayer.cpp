@@ -1053,7 +1053,11 @@ namespace OrthancStone
           }
           
           label_.SetText(buf);
-        }            
+        }
+        else
+        {
+          label_.SetText("?");
+        }
       }
     }
 

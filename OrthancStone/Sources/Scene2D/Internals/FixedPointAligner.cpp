@@ -29,7 +29,7 @@ namespace OrthancStone
 {
   namespace Internals
   {
-    FixedPointAligner::FixedPointAligner(ViewportController& controller,
+    FixedPointAligner::FixedPointAligner(const ViewportController& controller,
                                          const ScenePoint2D& p) :
       canvas_(p)
     {

@@ -36,12 +36,12 @@ namespace OrthancStone
     IViewport::ILock& GetLock() const;
 
   public:
-    ViewportLocker(IViewport& viewport) :
+    explicit ViewportLocker(IViewport& viewport) :
       lock2_(viewport.Lock())
     {
     }
 
-    ViewportLocker(boost::weak_ptr<IViewport> viewport);
+    explicit ViewportLocker(boost::weak_ptr<IViewport> viewport);
 
     bool IsValid() const
     {

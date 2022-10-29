@@ -40,9 +40,9 @@ namespace OrthancStone
   }
   
 
-  ViewportLocker::ViewportLocker(boost::weak_ptr<IViewport> viewport)
+  ViewportLocker::ViewportLocker(boost::weak_ptr<IViewport> viewport) :
+    lock1_(viewport.lock())
   {
-    lock1_ = viewport.lock();
     if (lock1_)
     {
       lock2_.reset(lock1_->Lock());

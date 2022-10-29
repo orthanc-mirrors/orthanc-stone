@@ -225,6 +225,8 @@ namespace OrthancStone
     virtual void SignalMove(GeometricPrimitive& primitive,
                             const Scene2D& scene) = 0;
 
+    virtual void UpdateProbe(const Scene2D& scene) = 0;
+
     virtual void Serialize(Json::Value& target) = 0;
   };
 
@@ -887,6 +889,10 @@ namespace OrthancStone
       UpdateLabel();
     }
 
+    virtual void UpdateProbe(const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+    }
+
     virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
     {
       target = Json::objectValue;
@@ -929,7 +935,31 @@ namespace OrthancStone
     Handle&   handle_;
     Text&     label_;
 
-    void UpdateLabel(const Scene2D& scene)
+  public:
+    PixelProbeAnnotation(AnnotationsSceneLayer& that,
+                         Units units,
+                         const ScenePoint2D& p,
+                         int probedLayer) :
+      Annotation(that, units),
+      probedLayer_(probedLayer),
+      handle_(AddTypedPrimitive<Handle>(new Handle(*this, p))),
+      label_(AddTypedPrimitive<Text>(new Text(that, *this)))
+    {
+      label_.SetColor(COLOR_TEXT);
+    }
+
+    Handle& GetHandle() const
+    {
+      return handle_;
+    }
+
+    virtual void SignalMove(GeometricPrimitive& primitive,
+                            const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+      UpdateProbe(scene);
+    }
+
+    virtual void UpdateProbe(const Scene2D& scene) ORTHANC_OVERRIDE
     {
       TextSceneLayer content;
 
@@ -962,32 +992,6 @@ namespace OrthancStone
       label_.SetContent(content);
     }
 
-  public:
-    PixelProbeAnnotation(AnnotationsSceneLayer& that,
-                         Units units,
-                         const ScenePoint2D& p,
-                         const Scene2D& scene,
-                         int probedLayer) :
-      Annotation(that, units),
-      probedLayer_(probedLayer),
-      handle_(AddTypedPrimitive<Handle>(new Handle(*this, p))),
-      label_(AddTypedPrimitive<Text>(new Text(that, *this)))
-    {
-      label_.SetColor(COLOR_TEXT);
-      UpdateLabel(scene);
-    }
-
-    Handle& GetHandle() const
-    {
-      return handle_;
-    }
-
-    virtual void SignalMove(GeometricPrimitive& primitive,
-                            const Scene2D& scene) ORTHANC_OVERRIDE
-    {
-      UpdateLabel(scene);
-    }
-
     virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
     {
       target = Json::objectValue;
@@ -1006,10 +1010,9 @@ namespace OrthancStone
           source[KEY_X].isNumeric() &&
           source[KEY_Y].isNumeric())
       {
-        Scene2D dummyScene;  // TODO
         new PixelProbeAnnotation(target, units,
                                  ScenePoint2D(source[KEY_X].asDouble(), source[KEY_Y].asDouble()),
-                                 dummyScene, probedLayer);
+                                 probedLayer);
       }
       else
       {
@@ -1123,6 +1126,10 @@ namespace OrthancStone
       UpdateLabel();
     }
 
+    virtual void UpdateProbe(const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+    }
+    
     virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
     {
       target = Json::objectValue;
@@ -1271,6 +1278,10 @@ namespace OrthancStone
       }
         
       UpdateLabel();
+    }
+
+    virtual void UpdateProbe(const Scene2D& scene) ORTHANC_OVERRIDE
+    {
     }
 
     virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
@@ -1488,7 +1499,8 @@ namespace OrthancStone
                             int probedLayer) :
       that_(that)
     {
-      new PixelProbeAnnotation(that, units, sceneClick, scene, probedLayer);
+      PixelProbeAnnotation* annotation = new PixelProbeAnnotation(that, units, sceneClick, probedLayer);
+      annotation->UpdateProbe(scene);
     }
 
     virtual void PointerMove(const PointerEvent& event,
@@ -1897,6 +1909,16 @@ namespace OrthancStone
       {
         LOG(ERROR) << "Cannot unserialize unknown type of annotation: " << type;
       }
+    }
+  }
+
+
+  void AnnotationsSceneLayer::UpdateProbes(const Scene2D& scene)
+  {
+    for (Annotations::const_iterator it = annotations_.begin(); it != annotations_.end(); ++it)
+    {
+      assert(*it != NULL);
+      (*it)->UpdateProbe(scene);
     }
   }
 }

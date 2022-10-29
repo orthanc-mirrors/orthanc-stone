@@ -685,7 +685,34 @@ namespace OrthancStone
     {
       SetModified(true);
       content_.reset(dynamic_cast<TextSceneLayer*>(content.Clone()));
-    }        
+    }
+
+    void SetText(const std::string& text)
+    {
+      if (content_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        SetModified(true);
+        content_->SetText(text);
+      }
+    }
+
+    void SetPosition(double x,
+                     double y)
+    {
+      if (content_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        SetModified(true);
+        content_->SetPosition(x, y);
+      }
+    }
 
     virtual bool IsHit(const ScenePoint2D& p,
                        const Scene2D& scene) const ORTHANC_OVERRIDE
@@ -927,7 +954,7 @@ namespace OrthancStone
     }
   };
 
-    
+
   class AnnotationsSceneLayer::PixelProbeAnnotation : public Annotation
   {
   private:
@@ -945,6 +972,13 @@ namespace OrthancStone
       handle_(AddTypedPrimitive<Handle>(new Handle(*this, p))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
+      TextSceneLayer content;
+      content.SetPosition(handle_.GetCenter().GetX(), handle_.GetCenter().GetY());
+      content.SetAnchor(BitmapAnchor_CenterLeft);
+      content.SetBorder(10);
+      content.SetText("?");
+
+      label_.SetContent(content);      
       label_.SetColor(COLOR_TEXT);
     }
 
@@ -956,40 +990,33 @@ namespace OrthancStone
     virtual void SignalMove(GeometricPrimitive& primitive,
                             const Scene2D& scene) ORTHANC_OVERRIDE
     {
-      UpdateProbe(scene);
+      label_.SetPosition(handle_.GetCenter().GetX(), handle_.GetCenter().GetY());
     }
 
     virtual void UpdateProbe(const Scene2D& scene) ORTHANC_OVERRIDE
     {
-      TextSceneLayer content;
-
-      content.SetPosition(handle_.GetCenter().GetX(), handle_.GetCenter().GetY());
-      content.SetAnchor(BitmapAnchor_CenterLeft);
-      content.SetBorder(10);
-
       if (scene.HasLayer(probedLayer_))
       {
-        const TextureBaseSceneLayer& layer = dynamic_cast<TextureBaseSceneLayer&>(scene.GetLayer(probedLayer_));
-        const AffineTransform2D sceneToTexture = AffineTransform2D::Invert(layer.GetTransform());
+        const ISceneLayer& layer = scene.GetLayer(probedLayer_);
+        if (layer.GetType() == ISceneLayer::Type_FloatTexture ||
+            layer.GetType() == ISceneLayer::Type_ColorTexture)
+        {
+          const TextureBaseSceneLayer& texture = dynamic_cast<TextureBaseSceneLayer&>(scene.GetLayer(probedLayer_));
+          const AffineTransform2D sceneToTexture = AffineTransform2D::Invert(texture.GetTransform());
 
-        double x = handle_.GetCenter().GetX();
-        double y = handle_.GetCenter().GetY();
-        sceneToTexture.Apply(x, y);
-        
-        int textureX = static_cast<int>(std::floor(x));
-        int textureY = static_cast<int>(std::floor(y));
-        
-        char buf[64];
-        sprintf(buf, "Hello %d x %d / (%d,%d)\n", layer.GetTexture().GetWidth(), layer.GetTexture().GetHeight(),
-                textureX, textureY);
-        content.SetText(buf);
+          double x = handle_.GetCenter().GetX();
+          double y = handle_.GetCenter().GetY();
+          sceneToTexture.Apply(x, y);
+          
+          int textureX = static_cast<int>(std::floor(x));
+          int textureY = static_cast<int>(std::floor(y));
+          
+          char buf[64];
+          sprintf(buf, "Hello %d x %d / (%d,%d)\n", texture.GetTexture().GetWidth(), texture.GetTexture().GetHeight(),
+                  textureX, textureY);
+          label_.SetText(buf);
+        }
       }
-      else
-      {
-        content.SetText("????");
-      }
-
-      label_.SetContent(content);
     }
 
     virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
@@ -1660,6 +1687,13 @@ namespace OrthancStone
 
   void AnnotationsSceneLayer::Render(Scene2D& scene)
   {
+    // First, update the probes
+    for (Annotations::const_iterator it = annotations_.begin(); it != annotations_.end(); ++it)
+    {
+      assert(*it != NULL);
+      (*it)->UpdateProbe(scene);
+    }
+
     MacroSceneLayer* macro = NULL;
 
     if (scene.HasLayer(macroLayerIndex_))
@@ -1909,16 +1943,6 @@ namespace OrthancStone
       {
         LOG(ERROR) << "Cannot unserialize unknown type of annotation: " << type;
       }
-    }
-  }
-
-
-  void AnnotationsSceneLayer::UpdateProbes(const Scene2D& scene)
-  {
-    for (Annotations::const_iterator it = annotations_.begin(); it != annotations_.end(); ++it)
-    {
-      assert(*it != NULL);
-      (*it)->UpdateProbe(scene);
     }
   }
 }

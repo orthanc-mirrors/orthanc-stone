@@ -2307,7 +2307,6 @@ private:
         scene.DeleteLayer(LAYER_ORIENTATION_MARKERS);
       }
 
-      stoneAnnotations_->UpdateProbes(scene);
       stoneAnnotations_->Render(scene);  // Necessary for "FitContent()" to work
 
       if (fitNextContent_)

@@ -146,7 +146,5 @@ namespace OrthancStone
     {
       return probedLayer_;
     }
-
-    void UpdateProbes(const Scene2D& scene);
   };
 }

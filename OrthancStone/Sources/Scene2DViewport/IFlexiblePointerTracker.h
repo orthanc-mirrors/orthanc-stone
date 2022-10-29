@@ -80,6 +80,6 @@ namespace OrthancStone
     its changes to the underlying model. If the model has been modified during
     tracker lifetime, it must be restored to its initial value
     */
-    virtual void Cancel() = 0;
+    virtual void Cancel(const Scene2D& scene) = 0;
   };
 }

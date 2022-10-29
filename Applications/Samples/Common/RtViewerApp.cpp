@@ -99,7 +99,12 @@ namespace OrthancStone
   {
     if (activeTracker_)
     {
-      activeTracker_->Cancel();
+      // Creating "dummyScene" is a HACK: It won't work with trackers
+      // that probe the values of the textures. For such trackers, the
+      // actual underlying scene should be provided.
+      Scene2D dummyScene;
+      activeTracker_->Cancel(dummyScene);
+      
       activeTracker_.reset();
     }
   }

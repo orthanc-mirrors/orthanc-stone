@@ -142,7 +142,8 @@ enum STONE_WEB_VIEWER_EXPORT WebViewerAction
     WebViewerAction_CreateAngle,
     WebViewerAction_CreateCircle,
     WebViewerAction_CreateSegment,
-    WebViewerAction_RemoveMeasure
+    WebViewerAction_RemoveMeasure,
+    WebViewerAction_CreatePixelProbe
     };
   
 
@@ -2561,6 +2562,7 @@ private:
     SetWindowingPreset();
 
     stoneAnnotations_.reset(new OrthancStone::AnnotationsSceneLayer(LAYER_ANNOTATIONS_STONE));
+    stoneAnnotations_->SetProbedLayer(LAYER_TEXTURE);
   }
 
 
@@ -3211,11 +3213,15 @@ public:
               break;
               
             case WebViewerAction_CreateSegment:
-              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Segment);
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_PixelProbe);
               break;
 
             case WebViewerAction_RemoveMeasure:
               viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Remove);
+              break;
+
+            case WebViewerAction_CreatePixelProbe:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_PixelProbe);
               break;
 
             default:

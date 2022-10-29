@@ -130,7 +130,8 @@ private:
 
     std::unique_ptr<TextureBaseSceneLayer> layer(
       message.GetInstanceParameters().CreateTexture(message.GetImage()));
-    layer->SetLinearInterpolation(true);
+    //layer->SetLinearInterpolation(true);
+    layer->SetLinearInterpolation(false);
 
     {
       std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());

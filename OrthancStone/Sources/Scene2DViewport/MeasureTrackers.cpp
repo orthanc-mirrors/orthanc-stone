@@ -42,7 +42,7 @@ namespace OrthancStone
       return NULL;
   }
 
-  void CreateMeasureTracker::Cancel()
+  void CreateMeasureTracker::Cancel(const Scene2D& scene)
   {
     commitResult_ = false;
     alive_ = false;
@@ -93,7 +93,7 @@ namespace OrthancStone
       return NULL;
   }
 
-  void EditMeasureTracker::Cancel()
+  void EditMeasureTracker::Cancel(const Scene2D& scene)
   {
     commitResult_ = false;
     alive_ = false;

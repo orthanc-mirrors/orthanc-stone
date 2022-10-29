@@ -57,7 +57,7 @@ namespace OrthancStone
     virtual ~CreateMeasureTracker();
     
   public:
-    virtual void Cancel() ORTHANC_OVERRIDE;
+    virtual void Cancel(const Scene2D& scene) ORTHANC_OVERRIDE;
     
     virtual bool IsAlive() const ORTHANC_OVERRIDE;
   };
@@ -91,7 +91,7 @@ namespace OrthancStone
     }
 
   public:
-    virtual void Cancel() ORTHANC_OVERRIDE;
+    virtual void Cancel(const Scene2D& scene) ORTHANC_OVERRIDE;
     
     virtual bool IsAlive() const ORTHANC_OVERRIDE;
   };

@@ -41,7 +41,8 @@ namespace OrthancStone
       Tool_Segment,
       Tool_Angle,
       Tool_Circle,
-      Tool_Remove
+      Tool_Remove,
+      Tool_PixelProbe
     };
 
   private:
@@ -53,6 +54,7 @@ namespace OrthancStone
     class Text;
 
     class Annotation;
+    class PixelProbeAnnotation;
     class SegmentAnnotation;
     class AngleAnnotation;
     class CircleAnnotation;
@@ -60,6 +62,7 @@ namespace OrthancStone
     class EditPrimitiveTracker;
     class CreateSegmentOrCircleTracker;
     class CreateAngleTracker;
+    class CreatePixelProbeTracker;
     class RemoveTracker;
 
     typedef std::set<GeometricPrimitive*>  GeometricPrimitives;
@@ -73,6 +76,7 @@ namespace OrthancStone
     Annotations          annotations_;
     SubLayers            subLayersToRemove_;
     Units                units_;
+    int                  probedLayer_;
 
     void AddAnnotation(Annotation* annotation);
     
@@ -132,5 +136,15 @@ namespace OrthancStone
     void Serialize(Json::Value& target) const;
     
     void Unserialize(const Json::Value& serialized);
+
+    void SetProbedLayer(int layer)
+    {
+      probedLayer_ = layer;
+    }
+
+    int GetProbedLayer() const
+    {
+      return probedLayer_;
+    }
   };
 }

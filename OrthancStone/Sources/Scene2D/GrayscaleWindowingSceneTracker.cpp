@@ -174,7 +174,7 @@ namespace OrthancStone
     }
   }
 
-  void GrayscaleWindowingSceneTracker::Cancel()
+  void GrayscaleWindowingSceneTracker::Cancel(const Scene2D& scene)
   {
     SetWindowing(originalCenter_, originalWidth_);
   }

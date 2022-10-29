@@ -80,7 +80,7 @@ namespace OrthancStone
   }
 
   
-  void RotateSceneTracker::Cancel()
+  void RotateSceneTracker::Cancel(const Scene2D& scene)
   {
     ViewportLocker locker(viewport_);
     

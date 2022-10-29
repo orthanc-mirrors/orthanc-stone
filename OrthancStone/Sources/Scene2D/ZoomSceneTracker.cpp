@@ -93,7 +93,7 @@ namespace OrthancStone
     }
   }
 
-  void ZoomSceneTracker::Cancel()
+  void ZoomSceneTracker::Cancel(const Scene2D& scene)
   {
     ViewportLocker locker(viewport_);
     

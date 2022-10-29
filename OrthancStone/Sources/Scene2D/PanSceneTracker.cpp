@@ -61,7 +61,7 @@ namespace OrthancStone
     }
   }
 
-  void PanSceneTracker::Cancel()
+  void PanSceneTracker::Cancel(const Scene2D& scene)
   {
     ViewportLocker locker(viewport_);
     

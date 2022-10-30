@@ -170,6 +170,7 @@ static OrthancStone::MouseAction ConvertWebViewerAction(int action)
     case WebViewerAction_CreateCircle:
     case WebViewerAction_CreateSegment:
     case WebViewerAction_RemoveMeasure:
+    case WebViewerAction_CreatePixelProbe:
       return OrthancStone::MouseAction_None;
 
     default:

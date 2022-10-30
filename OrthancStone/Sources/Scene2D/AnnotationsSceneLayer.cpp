@@ -234,14 +234,72 @@ namespace OrthancStone
 
   class AnnotationsSceneLayer::Handle : public GeometricPrimitive
   {
+  public:
+    enum Shape {
+      Shape_Square,
+      Shape_CrossedSquare
+    };
+    
   private:
+    Shape         shape_;
     ScenePoint2D  center_;
     ScenePoint2D  delta_;
 
+    void AddChain(PolylineSceneLayer& polyline,
+                  const PolylineSceneLayer::Chain& chain) const
+    {
+      if (IsHover())
+      {
+        polyline.AddChain(chain, true /* closed */, GetHoverColor());
+      }
+      else
+      {
+        polyline.AddChain(chain, true /* closed */, GetColor());
+      }
+    }
+
+    void AddRectangle(PolylineSceneLayer& polyline,
+                      double x1,
+                      double y1,
+                      double x2,
+                      double y2)
+    {
+      PolylineSceneLayer::Chain chain;
+      chain.resize(4);
+      chain[0] = ScenePoint2D(x1, y1);
+      chain[1] = ScenePoint2D(x2, y1);
+      chain[2] = ScenePoint2D(x2, y2);
+      chain[3] = ScenePoint2D(x1, y2);
+      AddChain(polyline, chain);
+    }
+
+    void AddCross(PolylineSceneLayer& polyline,
+                  double x1,
+                  double y1,
+                  double x2,
+                  double y2)
+    {
+      const double halfX = (x1 + x2) / 2.0;
+      const double halfY = (y1 + y2) / 2.0;
+      
+      PolylineSceneLayer::Chain chain;
+      chain.resize(2);
+      
+      chain[0] = ScenePoint2D(x1, halfY);
+      chain[1] = ScenePoint2D(x2, halfY);
+      AddChain(polyline, chain);
+          
+      chain[0] = ScenePoint2D(halfX, y1);
+      chain[1] = ScenePoint2D(halfX, y2);
+      AddChain(polyline, chain);
+    }
+
   public:
     explicit Handle(Annotation& parentAnnotation,
+                    Shape shape,
                     const ScenePoint2D& center) :
       GeometricPrimitive(parentAnnotation, 0),  // Highest priority
+      shape_(shape),
       center_(center),
       delta_(0, 0)
     {
@@ -272,8 +330,16 @@ namespace OrthancStone
       double dx = (center_.GetX() + delta_.GetX() - p.GetX()) * zoom;
       double dy = (center_.GetY() + delta_.GetY() - p.GetY()) * zoom;
 
-      return (std::abs(dx) <= HANDLE_SIZE / 2.0 &&
-              std::abs(dy) <= HANDLE_SIZE / 2.0);
+      switch (shape_)
+      {
+        case Shape_Square:
+        case Shape_CrossedSquare:
+          return (std::abs(dx) <= HANDLE_SIZE / 2.0 &&
+                  std::abs(dy) <= HANDLE_SIZE / 2.0);
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
     }
 
     virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
@@ -287,20 +353,19 @@ namespace OrthancStone
       double x2 = center_.GetX() + delta_.GetX() + (HANDLE_SIZE / 2.0) / zoom;
       double y2 = center_.GetY() + delta_.GetY() + (HANDLE_SIZE / 2.0) / zoom;
 
-      PolylineSceneLayer::Chain chain;
-      chain.reserve(4);
-      chain.push_back(ScenePoint2D(x1, y1));
-      chain.push_back(ScenePoint2D(x2, y1));
-      chain.push_back(ScenePoint2D(x2, y2));
-      chain.push_back(ScenePoint2D(x1, y2));
+      switch (shape_)
+      {
+        case Shape_Square:
+          AddRectangle(polyline, x1, y1, x2, y2);
+          break;
+          
+        case Shape_CrossedSquare:
+          AddRectangle(polyline, x1, y1, x2, y2);
+          AddCross(polyline, x1, y1, x2, y2);
+          break;
 
-      if (IsHover())
-      {
-        polyline.AddChain(chain, true /* closed */, GetHoverColor());
-      }
-      else
-      {
-        polyline.AddChain(chain, true /* closed */, GetColor());
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
     }
       
@@ -377,9 +442,9 @@ namespace OrthancStone
                                      const Scene2D& scene) ORTHANC_OVERRIDE
     {
       PolylineSceneLayer::Chain chain;
-      chain.reserve(2);
-      chain.push_back(p1_ + delta_);
-      chain.push_back(p2_ + delta_);
+      chain.resize(2);
+      chain[0] = p1_ + delta_;
+      chain[1] = p2_ + delta_;
 
       if (IsHover())
       {
@@ -480,13 +545,13 @@ namespace OrthancStone
       double increment = 2.0 * PI / static_cast<double>(NUM_SEGMENTS - 1);
 
       PolylineSceneLayer::Chain chain;
-      chain.reserve(NUM_SEGMENTS);
+      chain.resize(NUM_SEGMENTS);
 
       double theta = 0;
       for (unsigned int i = 0; i < NUM_SEGMENTS; i++)
       {
-        chain.push_back(ScenePoint2D(delta_.GetX() + middle.GetX() + radius * cos(theta),
-                                     delta_.GetY() + middle.GetY() + radius * sin(theta)));
+        chain[i] = ScenePoint2D(delta_.GetX() + middle.GetX() + radius * cos(theta),
+                                delta_.GetY() + middle.GetY() + radius * sin(theta));
         theta += increment;
       }
         
@@ -617,13 +682,13 @@ namespace OrthancStone
       double increment = fullAngle / static_cast<double>(NUM_SEGMENTS - 1);
 
       PolylineSceneLayer::Chain chain;
-      chain.reserve(NUM_SEGMENTS);
+      chain.resize(NUM_SEGMENTS);
 
       double theta = startAngle;
       for (unsigned int i = 0; i < NUM_SEGMENTS; i++)
       {
-        chain.push_back(ScenePoint2D(middle_.GetX() + radius * cos(theta),
-                                     middle_.GetY() + radius * sin(theta)));
+        chain[i] = ScenePoint2D(middle_.GetX() + radius * cos(theta),
+                                middle_.GetY() + radius * sin(theta));
         theta += increment;
       }
         
@@ -881,8 +946,8 @@ namespace OrthancStone
                       const ScenePoint2D& p2) :
       Annotation(that, units),
       showLabel_(showLabel),
-      handle1_(AddTypedPrimitive<Handle>(new Handle(*this, p1))),
-      handle2_(AddTypedPrimitive<Handle>(new Handle(*this, p2))),
+      handle1_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p1))),
+      handle2_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p2))),
       segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
@@ -1035,7 +1100,7 @@ namespace OrthancStone
           switch (image.GetFormat())
           {
             case Orthanc::PixelFormat_Float32:
-              sprintf(buf, "%.01f\n", Orthanc::ImageTraits<Orthanc::PixelFormat_Float32>::GetFloatPixel(
+              sprintf(buf, "(%d,%d): %.01f", x, y, Orthanc::ImageTraits<Orthanc::PixelFormat_Float32>::GetFloatPixel(
                         image, static_cast<unsigned int>(x), static_cast<unsigned int>(y)));
               break;
 
@@ -1044,7 +1109,7 @@ namespace OrthancStone
               Orthanc::PixelTraits<Orthanc::PixelFormat_RGB24>::PixelType pixel;
               Orthanc::ImageTraits<Orthanc::PixelFormat_RGB24>::GetPixel(
                 pixel, image, static_cast<unsigned int>(x), static_cast<unsigned int>(y));
-              sprintf(buf, "(%d,%d,%d)\n", pixel.red_, pixel.green_, pixel.blue_);
+              sprintf(buf, "(%d,%d): (%d,%d,%d)", x, y, pixel.red_, pixel.green_, pixel.blue_);
               break;
             }
 
@@ -1067,7 +1132,7 @@ namespace OrthancStone
                          const ScenePoint2D& p,
                          int probedLayer) :
       ProbingAnnotation(that, units, probedLayer),
-      handle_(AddTypedPrimitive<Handle>(new Handle(*this, p))),
+      handle_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_CrossedSquare, p))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
       TextSceneLayer content;
@@ -1170,9 +1235,9 @@ namespace OrthancStone
                     const ScenePoint2D& middle,
                     const ScenePoint2D& end) :
       Annotation(that, units),
-      startHandle_(AddTypedPrimitive<Handle>(new Handle(*this, start))),
-      middleHandle_(AddTypedPrimitive<Handle>(new Handle(*this, middle))),
-      endHandle_(AddTypedPrimitive<Handle>(new Handle(*this, end))),
+      startHandle_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, start))),
+      middleHandle_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, middle))),
+      endHandle_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, end))),
       segment1_(AddTypedPrimitive<Segment>(new Segment(*this, start, middle))),
       segment2_(AddTypedPrimitive<Segment>(new Segment(*this, middle, end))),
       arc_(AddTypedPrimitive<Arc>(new Arc(*this, start, middle, end))),
@@ -1340,8 +1405,8 @@ namespace OrthancStone
                      const ScenePoint2D& p1,
                      const ScenePoint2D& p2) :
       Annotation(that, units),
-      handle1_(AddTypedPrimitive<Handle>(new Handle(*this, p1))),
-      handle2_(AddTypedPrimitive<Handle>(new Handle(*this, p2))),
+      handle1_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p1))),
+      handle2_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p2))),
       segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
       circle_(AddTypedPrimitive<Circle>(new Circle(*this, p1, p2))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))

@@ -528,6 +528,15 @@
 
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
+                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_PIXEL_PROBE }"
+                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_PIXEL_PROBE, stone.WebViewerAction.CREATE_PIXEL_PROBE)"
+                      data-toggle="tooltip" data-title="Pixel probe">
+                <i class="far fa-dot-circle"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
                       v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_REMOVE_MEASURE }"
                       v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_REMOVE_MEASURE, stone.WebViewerAction.REMOVE_MEASURE)"
                       data-toggle="tooltip" data-title="Delete measurement">

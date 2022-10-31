@@ -141,6 +141,7 @@ enum STONE_WEB_VIEWER_EXPORT WebViewerAction
     WebViewerAction_Pan,
     WebViewerAction_Rotate,
     WebViewerAction_Crosshair,
+    WebViewerAction_MagnifyingGlass,       // New in 2.4
     
     WebViewerAction_CreateAngle,
     WebViewerAction_CreateCircle,
@@ -169,6 +170,9 @@ static OrthancStone::MouseAction ConvertWebViewerAction(int action)
       
     case WebViewerAction_Rotate:
       return OrthancStone::MouseAction_Rotate;
+      
+    case WebViewerAction_MagnifyingGlass:
+      return OrthancStone::MouseAction_MagnifyingGlass;
       
     case WebViewerAction_None:
     case WebViewerAction_Crosshair:

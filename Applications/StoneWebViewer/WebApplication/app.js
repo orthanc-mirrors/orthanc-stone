@@ -50,6 +50,7 @@ var MOUSE_TOOL_CREATE_PIXEL_PROBE = 9;       // New in 2.4
 var MOUSE_TOOL_CREATE_ELLIPSE_PROBE = 10;    // New in 2.4
 var MOUSE_TOOL_CREATE_RECTANGLE_PROBE = 11;  // New in 2.4
 var MOUSE_TOOL_CREATE_TEXT_ANNOTATION = 12;  // New in 2.4
+var MOUSE_TOOL_MAGNIFYING_GLASS = 13;        // New in 2.4
 
 
 function getParameterFromUrl(key) {
@@ -112,6 +113,9 @@ function ConvertMouseAction(config, defaultAction)
   }
   else if (config == "Crosshair") {
     return stone.WebViewerAction.CROSSHAIR;
+  }
+  else if (config == "MagnifyingGlass") {
+    return stone.WebViewerAction.MAGNIFYING_GLASS;
   }
   else {
     alert('Unsupported mouse action in the configuration file: ' + config);

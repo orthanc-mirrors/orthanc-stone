@@ -6,6 +6,7 @@ Pending changes in the mainline
   - Rectangle probe
   - Ellipse probe
 * Added left/right rotation buttons
+* Added magnifying glass
 * Added vertical slider showing position of the current frame inside the series
 * Display of orientation markers
 * The text field with the instance number is editable to go to a specific instance

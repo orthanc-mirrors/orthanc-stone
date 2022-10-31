@@ -485,6 +485,15 @@
 
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Magnifying glass"
+                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_MAGNIFYING_GLASS }"
+                      v-on:click="SetMouseButtonActions(MOUSE_TOOL_MAGNIFYING_GLASS, stone.WebViewerAction.MAGNIFYING_GLASS, stone.WebViewerAction.PAN, stone.WebViewerAction.ZOOM)">
+                <i class="fas fa-search-plus"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
                       data-toggle="tooltip" data-title="Rotate to the left"
                       v-on:click="RotateLeft()">
                 <i class="fas fa-undo"></i>

@@ -37,7 +37,8 @@
      * windowing, zoom and pan from a single mouse configuration. The
      * behaviour of the combined tool is defined in
      * CombinedToolBehaviour. The available mouse actions are
-     * "Crosshair", "Windowing", "Pan", "Rotate" and "Zoom".
+     * "Crosshair", "Windowing", "Pan", "Rotate", "Zoom" and
+     * "MagnifyingGlass".
      **/
     "CombinedToolEnabled" : true,
     "CombinedToolBehaviour" : {

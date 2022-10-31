@@ -156,6 +156,7 @@ namespace OrthancStone
     MouseAction_Zoom,
     MouseAction_Rotate,
     MouseAction_GrayscaleWindowing,
+    MouseAction_MagnifyingGlass,
     MouseAction_None
   };
 

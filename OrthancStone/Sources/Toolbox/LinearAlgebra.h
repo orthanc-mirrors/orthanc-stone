@@ -46,6 +46,35 @@ namespace OrthancStone
 
   namespace LinearAlgebra
   {
+    class OnlineVarianceEstimator
+    {
+    private:
+      unsigned int  count_;
+      double        sum_;
+      double        sumOfSquares_;
+
+    public:
+      OnlineVarianceEstimator()
+      {
+        Clear();
+      }
+
+      unsigned int GetCount() const
+      {
+        return count_;
+      }
+
+      void AddSample(double value);
+
+      void Clear();
+
+      double GetMean() const;  // Same as "mean()" in Matlab/Octave
+
+      double GetVariance() const;  // Same as "var()" in Matlab/Octave
+
+      double GetStandardDeviation() const;  // Same as "std()" in Matlab/Octave
+    };
+    
     void Print(const Vector& v);
 
     void Print(const Matrix& m);
@@ -301,5 +330,5 @@ namespace OrthancStone
     double ComputeMedian(std::vector<double>& v);
 
     float ComputeMedian(std::vector<float>& v);
-  };
+  }
 }

@@ -1524,60 +1524,91 @@ namespace OrthancStone
     Segment&  segment4_;
     Text&     label_;
 
-    void UpdateLabel()
+  protected:
+    virtual void UpdateProbeForLayer(const ISceneLayer& layer) ORTHANC_OVERRIDE
     {
-      TextSceneLayer content;
-
-      const double x1 = handle1_.GetCenter().GetX();
-      const double y1 = handle1_.GetCenter().GetY();
-      const double x2 = handle2_.GetCenter().GetX();
-      const double y2 = handle2_.GetCenter().GetY();
+      double x1 = handle1_.GetCenter().GetX();
+      double y1 = handle1_.GetCenter().GetY();
+      double x2 = handle2_.GetCenter().GetX();
+      double y2 = handle2_.GetCenter().GetY();
         
       // Put the label to the right of the right-most handle
       //const double y = std::min(y1, y2);
       const double y = (y1 + y2) / 2.0;
       if (x1 < x2)
       {
-        content.SetPosition(x2, y);
+        label_.SetPosition(x2, y);
       }
       else
       {
-        content.SetPosition(x1, y);
+        label_.SetPosition(x1, y);
       }
 
-      content.SetAnchor(BitmapAnchor_CenterLeft);
-      content.SetBorder(10);
-
-      const double area = std::abs(x1 - x2) * std::abs(y1 - y2);
-        
+      std::string text;
+      
       char buf[32];
 
-      switch (GetUnits())
+      if (GetUnits() == Units_Millimeters)
       {
-        case Units_Millimeters:
-          sprintf(buf, "%0.2f cm%c%c",
-                  area / 100.0,
-                  0xc2, 0xb2 /* two bytes corresponding to two power in UTF-8 */);
-          break;
+        const double area = std::abs(x1 - x2) * std::abs(y1 - y2);
 
-        case Units_Pixels:
-          // Don't report area (pixel-times-pixel is a strange unit)
-          sprintf(buf, "hello");
-          break;
-          
-        default:
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        sprintf(buf, "%0.2f cm%c%c",
+                area / 100.0,
+                0xc2, 0xb2 /* two bytes corresponding to two power in UTF-8 */);
+        text = buf;
       }
 
-      content.SetText(buf);
+      if (layer.GetType() == ISceneLayer::Type_FloatTexture)
+      {
+        const TextureBaseSceneLayer& texture = dynamic_cast<const TextureBaseSceneLayer&>(layer);
+        const AffineTransform2D sceneToTexture = AffineTransform2D::Invert(texture.GetTransform());
 
-      label_.SetContent(content);
-    }
-    
-  protected:
-    virtual void UpdateProbeForLayer(const ISceneLayer& layer) ORTHANC_OVERRIDE
-    {
-      // TODO
+        const Orthanc::ImageAccessor& image = texture.GetTexture();
+        assert(image.GetFormat() == Orthanc::PixelFormat_Float32);
+
+        sceneToTexture.Apply(x1, y1);
+        sceneToTexture.Apply(x2, y2);
+        int ix1 = static_cast<int>(std::floor(x1));
+        int iy1 = static_cast<int>(std::floor(y1));
+        int ix2 = static_cast<int>(std::floor(x2));
+        int iy2 = static_cast<int>(std::floor(y2));
+
+        if (ix1 > ix2)
+        {
+          std::swap(ix1, ix2);
+        }
+
+        if (iy1 > iy2)
+        {
+          std::swap(iy1, iy2);
+        }
+
+        LinearAlgebra::OnlineVarianceEstimator estimator;
+
+        for (int y = std::max(0, iy1); y <= std::min(static_cast<int>(image.GetHeight()) - 1, iy2); y++)
+        {
+          int x = std::max(0, ix1);
+          
+          const float* p = reinterpret_cast<const float*>(image.GetConstRow(y)) + x;
+
+          for (; x <= std::min(static_cast<int>(image.GetWidth()) - 1, ix2); x++, p++)
+          {
+            estimator.AddSample(*p);
+          }
+        }
+
+        if (estimator.GetCount() > 0)
+        {
+          if (!text.empty())
+          {
+            text += "\n";
+          }
+          sprintf(buf, "Mean: %0.1f\nStdDev: %0.1f", estimator.GetMean(), estimator.GetStandardDeviation());
+          text += buf;
+        }
+      }
+      
+      label_.SetText(text);
     }
     
   public:
@@ -1594,8 +1625,13 @@ namespace OrthancStone
       segment4_(AddTypedPrimitive<Segment>(new Segment(*this, p1.GetX(), p2.GetY(), p1.GetX(), p1.GetY()))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
+      TextSceneLayer content;
+      content.SetAnchor(BitmapAnchor_CenterLeft);
+      content.SetBorder(10);
+      content.SetText("?");
+
+      label_.SetContent(content);
       label_.SetColor(COLOR_TEXT);
-      UpdateLabel();
     }
 
     virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
@@ -1686,11 +1722,7 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
       
-      UpdateLabel();
-    }
-
-    virtual void UpdateProbe(const Scene2D& scene) ORTHANC_OVERRIDE
-    {
+      TagProbeAsChanged();
     }
 
     virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE

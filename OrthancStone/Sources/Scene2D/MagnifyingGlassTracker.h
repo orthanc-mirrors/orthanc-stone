@@ -38,7 +38,7 @@ namespace OrthancStone
     AffineTransform2D           originalSceneToCanvas_;
     AffineTransform2D           originalCanvasToScene_;
 
-    void Update(ViewportLocker& locker,
+    void Update(const ViewportLocker& locker,
                 const PointerEvent& event);
     
   public:

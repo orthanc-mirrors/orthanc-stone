@@ -28,7 +28,7 @@
 
 namespace OrthancStone
 {
-  void MagnifyingGlassTracker::Update(ViewportLocker& locker,
+  void MagnifyingGlassTracker::Update(const ViewportLocker& locker,
                                       const PointerEvent& event)
   {
     ScenePoint2D p = event.GetMainPosition().Apply(originalCanvasToScene_);

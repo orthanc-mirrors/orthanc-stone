@@ -1621,8 +1621,8 @@ namespace OrthancStone
       handle2_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p2))),
       segment1_(AddTypedPrimitive<Segment>(new Segment(*this, p1.GetX(), p1.GetY(), p2.GetX(), p1.GetY()))),
       segment2_(AddTypedPrimitive<Segment>(new Segment(*this, p2.GetX(), p1.GetY(), p2.GetX(), p2.GetY()))),
-      segment3_(AddTypedPrimitive<Segment>(new Segment(*this, p2.GetX(), p2.GetY(), p1.GetX(), p2.GetY()))),
-      segment4_(AddTypedPrimitive<Segment>(new Segment(*this, p1.GetX(), p2.GetY(), p1.GetX(), p1.GetY()))),
+      segment3_(AddTypedPrimitive<Segment>(new Segment(*this, p1.GetX(), p2.GetY(), p2.GetX(), p2.GetY()))),
+      segment4_(AddTypedPrimitive<Segment>(new Segment(*this, p1.GetX(), p1.GetY(), p1.GetX(), p2.GetY()))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
       TextSceneLayer content;
@@ -1660,74 +1660,70 @@ namespace OrthancStone
       if (&primitive == &handle1_ ||
           &primitive == &handle2_)
       {
-        const double x1 = handle1_.GetCenter().GetX();
-        const double y1 = handle1_.GetCenter().GetY();
-        const double x2 = handle2_.GetCenter().GetX();
-        const double y2 = handle2_.GetCenter().GetY();
+        double x1 = handle1_.GetCenter().GetX();
+        double y1 = handle1_.GetCenter().GetY();
+        double x2 = handle2_.GetCenter().GetX();
+        double y2 = handle2_.GetCenter().GetY();
+        
         segment1_.SetPosition(x1, y1, x2, y1);
         segment2_.SetPosition(x2, y1, x2, y2);
-        segment3_.SetPosition(x2, y2, x1, y2);
-        segment4_.SetPosition(x1, y2, x1, y1);
+        segment3_.SetPosition(x1, y2, x2, y2);
+        segment4_.SetPosition(x1, y1, x1, y2);
       }
-      else if (&primitive == &segment1_)
+      else if (&primitive == &segment1_ ||
+               &primitive == &segment2_ ||
+               &primitive == &segment3_ ||
+               &primitive == &segment4_)
       {
-        const double x1 = segment1_.GetPosition1().GetX();
-        const double y1 = segment1_.GetPosition1().GetY();
-        const double x2 = segment1_.GetPosition2().GetX();
+        const Segment& segment = dynamic_cast<const Segment&>(primitive);
+        double x1 = segment.GetPosition1().GetX();
+        double y1 = segment.GetPosition1().GetY();
+        double x2 = segment.GetPosition2().GetX();
+        double y2 = segment.GetPosition2().GetY();
 
-        const double y2 = y1 + handle2_.GetCenter().GetY() - handle1_.GetCenter().GetY();
-        //const double y2 = handle2_.GetCenter().GetY();
+        if (&primitive == &segment1_)
+        {        
+          y2 = y1 + handle2_.GetCenter().GetY() - handle1_.GetCenter().GetY();
+        }
+        else if (&primitive == &segment2_)
+        {
+          x1 = x2 + handle1_.GetCenter().GetX() - handle2_.GetCenter().GetX();
+        }
+        else if (&primitive == &segment3_)
+        {
+          y1 = y2 + handle1_.GetCenter().GetY() - handle2_.GetCenter().GetY();
+        }
+        else if (&primitive == &segment4_)
+        {
+          x2 = x1 + handle2_.GetCenter().GetX() - handle1_.GetCenter().GetX();
+        }
+        else
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        }
 
         handle1_.SetCenter(x1, y1);
         handle2_.SetCenter(x2, y2);
-        segment2_.SetPosition(x2, y1, x2, y2);
-        segment3_.SetPosition(x2, y2, x1, y2);
-        segment4_.SetPosition(x1, y2, x1, y1);
-      }
-      else if (&primitive == &segment2_)
-      {
-        const double y1 = segment2_.GetPosition1().GetY();
-        const double x2 = segment2_.GetPosition2().GetX();
-        const double y2 = segment2_.GetPosition2().GetY();
 
-        const double x1 = x2 + handle1_.GetCenter().GetX() - handle2_.GetCenter().GetX();
-        //const double x1 = handle1_.GetCenter().GetX();
+        if (&primitive != &segment1_)
+        {
+          segment1_.SetPosition(x1, y1, x2, y1);
+        }
+        
+        if (&primitive != &segment2_)
+        {
+          segment2_.SetPosition(x2, y1, x2, y2);
+        }
 
-        handle1_.SetCenter(x1, y1);
-        handle2_.SetCenter(x2, y2);
-        segment1_.SetPosition(x1, y1, x2, y1);
-        segment3_.SetPosition(x2, y2, x1, y2);
-        segment4_.SetPosition(x1, y2, x1, y1);
-      }
-      else if (&primitive == &segment3_)
-      {
-        const double x1 = segment3_.GetPosition2().GetX();
-        const double x2 = segment3_.GetPosition1().GetX();
-        const double y2 = segment3_.GetPosition2().GetY();
+        if (&primitive != &segment3_)
+        {
+          segment3_.SetPosition(x1, y2, x2, y2);
+        }
 
-        const double y1 = y2 + handle1_.GetCenter().GetY() - handle2_.GetCenter().GetY();
-        //const double y1 = handle1_.GetCenter().GetY();
-
-        handle1_.SetCenter(x1, y1);
-        handle2_.SetCenter(x2, y2);
-        segment1_.SetPosition(x1, y1, x2, y1);
-        segment2_.SetPosition(x2, y1, x2, y2);
-        segment4_.SetPosition(x1, y2, x1, y1);
-      }
-      else if (&primitive == &segment4_)
-      {
-        const double x1 = segment4_.GetPosition2().GetX();
-        const double y1 = segment4_.GetPosition2().GetY();
-        const double y2 = segment4_.GetPosition1().GetY();
-
-        const double x2 = x1 + handle2_.GetCenter().GetX() - handle1_.GetCenter().GetX();
-        //const double x2 = handle2_.GetCenter().GetX();
-
-        handle1_.SetCenter(x1, y1);
-        handle2_.SetCenter(x2, y2);
-        segment1_.SetPosition(x1, y1, x2, y1);
-        segment2_.SetPosition(x2, y1, x2, y2);
-        segment3_.SetPosition(x2, y2, x1, y2);
+        if (&primitive != &segment4_)
+        {
+          segment4_.SetPosition(x1, y1, x1, y2);
+        }
       }
       else
       {

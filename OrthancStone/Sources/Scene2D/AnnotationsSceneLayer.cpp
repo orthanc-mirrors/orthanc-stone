@@ -1680,17 +1680,19 @@ namespace OrthancStone
       double y1 = handle1_.GetCenter().GetY();
       double x2 = handle2_.GetCenter().GetX();
       double y2 = handle2_.GetCenter().GetY();
-        
-      // Put the label to the right of the right-most handle
-      //const double y = std::min(y1, y2);
-      const double y = (y1 + y2) / 2.0;
-      if (x1 < x2)
+
       {
-        label_.SetPosition(x2, y);
-      }
-      else
-      {
-        label_.SetPosition(x1, y);
+        // Put the label to the right of the right-most handle
+        //const double y = std::min(y1, y2);
+        const double y = (y1 + y2) / 2.0;
+        if (x1 < x2)
+        {
+          label_.SetPosition(x2, y);
+        }
+        else
+        {
+          label_.SetPosition(x1, y);
+        }
       }
 
       std::string text;
@@ -1932,17 +1934,19 @@ namespace OrthancStone
       double y1 = handle1_.GetCenter().GetY();
       double x2 = handle2_.GetCenter().GetX();
       double y2 = handle2_.GetCenter().GetY();
-        
-      // Put the label to the right of the right-most handle
-      //const double y = std::min(y1, y2);
-      const double y = (y1 + y2) / 2.0;
-      if (x1 < x2)
+
       {
-        label_.SetPosition(x2, y);
-      }
-      else
-      {
-        label_.SetPosition(x1, y);
+        // Put the label to the right of the right-most handle
+        //const double y = std::min(y1, y2);
+        const double y = (y1 + y2) / 2.0;
+        if (x1 < x2)
+        {
+          label_.SetPosition(x2, y);
+        }
+        else
+        {
+          label_.SetPosition(x1, y);
+        }
       }
 
       std::string text;

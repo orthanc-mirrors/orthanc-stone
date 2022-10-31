@@ -30,12 +30,12 @@ fi
 
 cat <<EOF > /tmp/cppcheck-suppressions.txt
 stlFindInsert:../../Applications/Samples/WebAssembly/SingleFrameViewer/SingleFrameViewerApplication.h
-stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:516
-stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1159
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:519
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1162
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/Internals/CairoFloatTextureRenderer.cpp
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/LookupTableTextureSceneLayer.cpp
-unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:143
-unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:197
+unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:159
+unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:213
 unusedFunction
 EOF
 

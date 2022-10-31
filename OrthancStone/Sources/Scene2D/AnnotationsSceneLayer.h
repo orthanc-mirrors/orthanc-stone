@@ -55,6 +55,7 @@ namespace OrthancStone
     class Circle;    
     class Arc;
     class Text;
+    class Ellipse;
 
     class Annotation;
     class ProbingAnnotation;
@@ -63,12 +64,12 @@ namespace OrthancStone
     class AngleAnnotation;
     class CircleAnnotation;
     class RectangleProbeAnnotation;
+    class EllipseProbeAnnotation;
     
     class EditPrimitiveTracker;
     class CreateTwoHandlesTracker;
     class CreateAngleTracker;
     class CreatePixelProbeTracker;
-    class CreateRectangleProbeTracker;
     class RemoveTracker;
 
     typedef std::set<GeometricPrimitive*>  GeometricPrimitives;

@@ -26,7 +26,7 @@
 #include "MacroSceneLayer.h"
 #include "PolylineSceneLayer.h"
 #include "TextSceneLayer.h"
-#include "TextureBaseSceneLayer.h"  // TODO REMOVE
+#include "TextureBaseSceneLayer.h"
 
 #include <Images/ImageTraits.h>
 #include <OrthancException.h>
@@ -56,6 +56,7 @@ static const char* const VALUE_MILLIMETERS = "millimeters";
 static const char* const VALUE_PIXELS = "pixels";
 static const char* const VALUE_PIXEL_PROBE = "pixel-probe";
 static const char* const VALUE_RECTANGLE_PROBE = "rectangle-probe";
+static const char* const VALUE_ELLIPSE_PROBE = "ellipse-probe";
 
 #if 0
 static OrthancStone::Color COLOR_PRIMITIVES(192, 192, 192);
@@ -792,6 +793,154 @@ namespace OrthancStone
   };
 
 
+  class AnnotationsSceneLayer::Ellipse : public GeometricPrimitive
+  {
+  private:
+    ScenePoint2D  p1_;
+    ScenePoint2D  p2_;
+    ScenePoint2D  delta_;
+
+    double GetCenterX() const
+    {
+      return (p1_.GetX() + p2_.GetX()) / 2.0 + delta_.GetX();
+    }
+
+    double GetCenterY() const
+    {
+      return (p1_.GetY() + p2_.GetY()) / 2.0 + delta_.GetY();
+    }
+
+    double GetRadiusX() const
+    {
+      return std::abs(p1_.GetX() - p2_.GetX()) / 2.0;
+    }
+
+    double GetRadiusY() const
+    {
+      return std::abs(p1_.GetY() - p2_.GetY()) / 2.0;
+    }
+    
+  public:
+    Ellipse(Annotation& parentAnnotation,
+            const ScenePoint2D& p1,
+            const ScenePoint2D& p2) :
+      GeometricPrimitive(parentAnnotation, 2),
+      p1_(p1),
+      p2_(p2),
+      delta_(0, 0)
+    {
+    }
+
+    void SetPosition(const ScenePoint2D& p1,
+                     const ScenePoint2D& p2)
+    {
+      SetModified(true);
+      p1_ = p1;
+      p2_ = p2;
+      delta_ = ScenePoint2D(0, 0);
+    }
+
+    ScenePoint2D GetPosition1() const
+    {
+      return p1_ + delta_;
+    }
+
+    ScenePoint2D GetPosition2() const
+    {
+      return p2_ + delta_;
+    }
+
+    double GetArea() const
+    {
+      return PI * GetRadiusX() * GetRadiusY();
+    }
+
+    bool IsPointInside(const ScenePoint2D& p) const
+    {
+      const double radiusX = GetRadiusX();
+      const double radiusY = GetRadiusY();
+
+      double a, b, x, y;
+      
+      if (radiusX > radiusY)
+      {
+        // The ellipse is horizontal => we are in the case described
+        // on Wikipedia:
+        // https://en.wikipedia.org/wiki/Ellipse#Standard_equation
+
+        a = radiusX;
+        b = radiusY;
+        x = p.GetX() - GetCenterX();
+        y = p.GetY() - GetCenterY();
+      }
+      else
+      {
+        a = radiusY;
+        b = radiusX;
+        x = p.GetY() - GetCenterY();
+        y = p.GetX() - GetCenterX();
+      }
+      
+      const double c = sqrt(a * a - b * b);
+
+      return (sqrt((x - c) * (x - c) + y * y) +
+              sqrt((x + c) * (x + c) + y * y)) <= 2.0 * a;
+    }
+    
+    virtual bool IsHit(const ScenePoint2D& p,
+                       const Scene2D& scene) const ORTHANC_OVERRIDE
+    {
+      const double zoom = scene.GetSceneToCanvasTransform().ComputeZoom();
+
+      const double radiusX = GetRadiusX();
+      const double radiusY = GetRadiusY();
+
+      // Warning: This is only an approximation of the
+      // point-to-ellipse distance, as explained here:
+      // https://blog.chatfield.io/simple-method-for-distance-to-ellipse/
+      
+      const double x = (p.GetX() - GetCenterX()) / radiusX;
+      const double y = (p.GetY() - GetCenterY()) / radiusY;
+      const double t = atan2(y, x);
+      const double xx = cos(t) - x;
+      const double yy = sin(t) - y;
+
+      const double approximateDistance = sqrt(xx * xx + yy * yy) * (radiusX + radiusY) / 2.0;
+      return std::abs(approximateDistance) * zoom <= HANDLE_SIZE / 2.0;
+    }
+
+    virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
+                                     const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+      static unsigned int NUM_SEGMENTS = 128;
+      polyline.AddArc(GetCenterX(), GetCenterY(), GetRadiusX(), GetRadiusY(), 0, 2.0 * PI, GetActiveColor(), NUM_SEGMENTS);
+    }
+      
+    virtual void RenderOtherLayers(MacroSceneLayer& macro,
+                                   const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+    }
+
+    virtual void MovePreview(const ScenePoint2D& delta,
+                             const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+      SetModified(true);
+      delta_ = delta;
+      GetParentAnnotation().SignalMove(*this, scene);
+    }
+
+    virtual void MoveDone(const ScenePoint2D& delta,
+                          const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+      SetModified(true);
+      p1_ = p1_ + delta;
+      p2_ = p2_ + delta;
+      delta_ = ScenePoint2D(0, 0);
+      GetParentAnnotation().SignalMove(*this, scene);
+    }
+  };
+
+    
   class AnnotationsSceneLayer::EditPrimitiveTracker : public IFlexiblePointerTracker
   {
   private:
@@ -1552,7 +1701,7 @@ namespace OrthancStone
       {
         const double area = std::abs(x1 - x2) * std::abs(y1 - y2);
 
-        sprintf(buf, "%0.2f cm%c%c",
+        sprintf(buf, "Area: %0.2f cm%c%c",
                 area / 100.0,
                 0xc2, 0xb2 /* two bytes corresponding to two power in UTF-8 */);
         text = buf;
@@ -1763,6 +1912,201 @@ namespace OrthancStone
       else
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize a rectangle probe annotation");
+      }
+    }
+  };
+
+  
+  class AnnotationsSceneLayer::EllipseProbeAnnotation : public ProbingAnnotation
+  {
+  private:
+    Handle&   handle1_;
+    Handle&   handle2_;
+    Ellipse&  ellipse_;
+    Text&     label_;
+
+  protected:
+    virtual void UpdateProbeForLayer(const ISceneLayer& layer) ORTHANC_OVERRIDE
+    {
+      double x1 = handle1_.GetCenter().GetX();
+      double y1 = handle1_.GetCenter().GetY();
+      double x2 = handle2_.GetCenter().GetX();
+      double y2 = handle2_.GetCenter().GetY();
+        
+      // Put the label to the right of the right-most handle
+      //const double y = std::min(y1, y2);
+      const double y = (y1 + y2) / 2.0;
+      if (x1 < x2)
+      {
+        label_.SetPosition(x2, y);
+      }
+      else
+      {
+        label_.SetPosition(x1, y);
+      }
+
+      std::string text;
+      
+      char buf[32];
+
+      if (GetUnits() == Units_Millimeters)
+      {
+        sprintf(buf, "Area: %0.2f cm%c%c",
+                ellipse_.GetArea() / 100.0,
+                0xc2, 0xb2 /* two bytes corresponding to two power in UTF-8 */);
+        text = buf;
+      }
+
+      if (layer.GetType() == ISceneLayer::Type_FloatTexture)
+      {
+        const TextureBaseSceneLayer& texture = dynamic_cast<const TextureBaseSceneLayer&>(layer);
+        const AffineTransform2D& textureToScene = texture.GetTransform();
+        const AffineTransform2D sceneToTexture = AffineTransform2D::Invert(textureToScene);
+
+        const Orthanc::ImageAccessor& image = texture.GetTexture();
+        assert(image.GetFormat() == Orthanc::PixelFormat_Float32);
+
+        sceneToTexture.Apply(x1, y1);
+        sceneToTexture.Apply(x2, y2);
+        int ix1 = static_cast<int>(std::floor(x1));
+        int iy1 = static_cast<int>(std::floor(y1));
+        int ix2 = static_cast<int>(std::floor(x2));
+        int iy2 = static_cast<int>(std::floor(y2));
+
+        if (ix1 > ix2)
+        {
+          std::swap(ix1, ix2);
+        }
+
+        if (iy1 > iy2)
+        {
+          std::swap(iy1, iy2);
+        }
+
+        LinearAlgebra::OnlineVarianceEstimator estimator;
+
+        for (int y = std::max(0, iy1); y <= std::min(static_cast<int>(image.GetHeight()) - 1, iy2); y++)
+        {
+          int x = std::max(0, ix1);
+          const float* p = reinterpret_cast<const float*>(image.GetConstRow(y)) + x;
+
+          for (; x <= std::min(static_cast<int>(image.GetWidth()) - 1, ix2); x++, p++)
+          {
+            double yy = static_cast<double>(y) + 0.5;
+            double xx = static_cast<double>(x) + 0.5;
+            textureToScene.Apply(xx, yy);
+            if (ellipse_.IsPointInside(ScenePoint2D(xx, yy)))
+            {
+              estimator.AddSample(*p);
+            }
+          }
+        }
+
+        if (estimator.GetCount() > 0)
+        {
+          if (!text.empty())
+          {
+            text += "\n";
+          }
+          sprintf(buf, "Mean: %0.1f\nStdDev: %0.1f", estimator.GetMean(), estimator.GetStandardDeviation());
+          text += buf;
+        }
+      }
+      
+      label_.SetText(text);
+    }
+    
+  public:
+    EllipseProbeAnnotation(AnnotationsSceneLayer& that,
+                           Units units,
+                           const ScenePoint2D& p1,
+                           const ScenePoint2D& p2) :
+      ProbingAnnotation(that, units),
+      handle1_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p1))),
+      handle2_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p2))),
+      ellipse_(AddTypedPrimitive<Ellipse>(new Ellipse(*this, p1, p2))),
+      label_(AddTypedPrimitive<Text>(new Text(that, *this)))
+    {
+      TextSceneLayer content;
+      content.SetAnchor(BitmapAnchor_CenterLeft);
+      content.SetBorder(10);
+      content.SetText("?");
+
+      label_.SetContent(content);
+      label_.SetColor(COLOR_TEXT);
+    }
+
+    virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
+    {
+      return 2;
+    }
+
+    virtual Handle& GetHandle(unsigned int index) const ORTHANC_OVERRIDE
+    {
+      switch (index)
+      {
+        case 0:
+          return handle1_;
+
+        case 1:
+          return handle2_;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+    }
+
+    virtual void SignalMove(GeometricPrimitive& primitive,
+                            const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+      if (&primitive == &handle1_ ||
+          &primitive == &handle2_)
+      {
+        ellipse_.SetPosition(handle1_.GetCenter(), handle2_.GetCenter());
+      }
+      else if (&primitive == &ellipse_)
+      {
+        handle1_.SetCenter(ellipse_.GetPosition1());
+        handle2_.SetCenter(ellipse_.GetPosition2());
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+      
+      TagProbeAsChanged();
+    }
+
+    virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
+    {
+      target = Json::objectValue;
+      target[KEY_TYPE] = VALUE_ELLIPSE_PROBE;
+      target[KEY_X1] = handle1_.GetCenter().GetX();
+      target[KEY_Y1] = handle1_.GetCenter().GetY();
+      target[KEY_X2] = handle2_.GetCenter().GetX();
+      target[KEY_Y2] = handle2_.GetCenter().GetY();
+    }
+
+    static void Unserialize(AnnotationsSceneLayer& target,
+                            Units units,
+                            const Json::Value& source)
+    {
+      if (source.isMember(KEY_X1) &&
+          source.isMember(KEY_Y1) &&
+          source.isMember(KEY_X2) &&
+          source.isMember(KEY_Y2) &&
+          source[KEY_X1].isNumeric() &&
+          source[KEY_Y1].isNumeric() &&
+          source[KEY_X2].isNumeric() &&
+          source[KEY_Y2].isNumeric())
+      {
+        new EllipseProbeAnnotation(target, units,
+                                     ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
+                                     ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()));
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize an ellipse probe annotation");
       }
     }
   };
@@ -2254,6 +2598,12 @@ namespace OrthancStone
             return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
           }
 
+          case Tool_EllipseProbe:
+          {
+            Annotation* annotation = new EllipseProbeAnnotation(*this, units_, s, s);
+            return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
+          }
+
           default:
             return NULL;
         }
@@ -2354,6 +2704,10 @@ namespace OrthancStone
       else if (type == VALUE_RECTANGLE_PROBE)
       {
         RectangleProbeAnnotation::Unserialize(*this, units_, annotations[i]);
+      }
+      else if (type == VALUE_ELLIPSE_PROBE)
+      {
+        EllipseProbeAnnotation::Unserialize(*this, units_, annotations[i]);
       }
       else
       {

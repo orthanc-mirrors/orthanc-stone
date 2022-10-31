@@ -34,8 +34,8 @@ stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:5
 stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1162
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/Internals/CairoFloatTextureRenderer.cpp
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/LookupTableTextureSceneLayer.cpp
-unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:159
-unreadVariable:../../OrthancStone/Sources/Viewport/SdlViewport.cpp:213
+unreadVariable:../../OrthancStone/Sources/Platforms/Sdl/SdlViewport.cpp:159
+unreadVariable:../../OrthancStone/Sources/Platforms/Sdl/SdlViewport.cpp:213
 unusedFunction
 EOF
 

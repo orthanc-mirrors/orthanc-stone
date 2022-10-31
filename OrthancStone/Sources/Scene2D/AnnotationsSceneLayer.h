@@ -42,7 +42,10 @@ namespace OrthancStone
       Tool_Angle,
       Tool_Circle,
       Tool_Remove,
-      Tool_PixelProbe
+      Tool_PixelProbe,
+      Tool_RectangleProbe,
+      Tool_EllipseProbe,
+      Tool_TextAnnotation
     };
 
   private:

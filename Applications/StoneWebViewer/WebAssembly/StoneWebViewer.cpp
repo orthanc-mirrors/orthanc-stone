@@ -143,7 +143,10 @@ enum STONE_WEB_VIEWER_EXPORT WebViewerAction
     WebViewerAction_CreateCircle,
     WebViewerAction_CreateSegment,
     WebViewerAction_RemoveMeasure,
-    WebViewerAction_CreatePixelProbe
+    WebViewerAction_CreatePixelProbe,      // New in 2.4
+    WebViewerAction_CreateEllipseProbe,    // New in 2.4
+    WebViewerAction_CreateRectangleProbe,  // New in 2.4
+    WebViewerAction_CreateTextAnnotation   // New in 2.4
     };
   
 
@@ -171,6 +174,9 @@ static OrthancStone::MouseAction ConvertWebViewerAction(int action)
     case WebViewerAction_CreateSegment:
     case WebViewerAction_RemoveMeasure:
     case WebViewerAction_CreatePixelProbe:
+    case WebViewerAction_CreateEllipseProbe:
+    case WebViewerAction_CreateRectangleProbe:
+    case WebViewerAction_CreateTextAnnotation:
       return OrthancStone::MouseAction_None;
 
     default:
@@ -3223,6 +3229,18 @@ public:
 
             case WebViewerAction_CreatePixelProbe:
               viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_PixelProbe);
+              break;
+
+            case WebViewerAction_CreateEllipseProbe:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_EllipseProbe);
+              break;
+
+            case WebViewerAction_CreateRectangleProbe:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_RectangleProbe);
+              break;
+
+            case WebViewerAction_CreateTextAnnotation:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_TextAnnotation);
               break;
 
             default:

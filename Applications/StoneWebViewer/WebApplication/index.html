@@ -504,7 +504,7 @@
                       v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_SEGMENT }"
                       v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_SEGMENT, stone.WebViewerAction.CREATE_SEGMENT)"
                       data-toggle="tooltip" data-title="Measure length">
-                <i class="fas fa-arrows-alt-h"></i>
+                <i class="fas fa-ruler"></i>
               </button>
             </div>
 
@@ -513,7 +513,7 @@
                       v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_ANGLE }"
                       v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_ANGLE, stone.WebViewerAction.CREATE_ANGLE)"
                       data-toggle="tooltip" data-title="Measure angle">
-                <i class="fas fa-angle-left fa-lg"></i>
+                <i class="fas fa-drafting-compass"></i>
               </button>
             </div>
 
@@ -531,7 +531,34 @@
                       v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_PIXEL_PROBE }"
                       v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_PIXEL_PROBE, stone.WebViewerAction.CREATE_PIXEL_PROBE)"
                       data-toggle="tooltip" data-title="Pixel probe">
-                <i class="far fa-dot-circle"></i>
+                <i class="fas fa-microscope"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_RECTANGLE_PROBE }"
+                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_RECTANGLE_PROBE, stone.WebViewerAction.CREATE_RECTANGLE_PROBE)"
+                      data-toggle="tooltip" data-title="Rectangle probe">
+                <i class="fas fa-plus-square"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_ELLIPSE_PROBE }"
+                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_ELLIPSE_PROBE, stone.WebViewerAction.CREATE_ELLIPSE_PROBE)"
+                      data-toggle="tooltip" data-title="Ellipse probe">
+                <i class="fas fa-plus-circle"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_TEXT_ANNOTATION }"
+                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_TEXT_ANNOTATION, stone.WebViewerAction.CREATE_TEXT_ANNOTATION)"
+                      data-toggle="tooltip" data-title="Add text annotation">
+                <i class="fas fa-comment-dots"></i>
               </button>
             </div>
 
@@ -539,7 +566,7 @@
               <button class="wvButton--underline text-center"
                       v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_REMOVE_MEASURE }"
                       v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_REMOVE_MEASURE, stone.WebViewerAction.REMOVE_MEASURE)"
-                      data-toggle="tooltip" data-title="Delete measurement">
+                      data-toggle="tooltip" data-title="Delete annotation">
                 <i class="fas fa-trash"></i>
               </button>
             </div>

@@ -62,11 +62,13 @@ namespace OrthancStone
     class SegmentAnnotation;
     class AngleAnnotation;
     class CircleAnnotation;
+    class RectangleProbeAnnotation;
     
     class EditPrimitiveTracker;
-    class CreateSegmentOrCircleTracker;
+    class CreateTwoHandlesTracker;
     class CreateAngleTracker;
     class CreatePixelProbeTracker;
+    class CreateRectangleProbeTracker;
     class RemoveTracker;
 
     typedef std::set<GeometricPrimitive*>  GeometricPrimitives;

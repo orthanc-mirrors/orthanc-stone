@@ -55,6 +55,7 @@ static const char* const VALUE_SEGMENT = "segment";
 static const char* const VALUE_MILLIMETERS = "millimeters";
 static const char* const VALUE_PIXELS = "pixels";
 static const char* const VALUE_PIXEL_PROBE = "pixel-probe";
+static const char* const VALUE_RECTANGLE_PROBE = "rectangle-probe";
 
 #if 0
 static OrthancStone::Color COLOR_PRIMITIVES(192, 192, 192);
@@ -201,6 +202,11 @@ namespace OrthancStone
       }
     }
 
+    AnnotationsSceneLayer& GetParentLayer() const
+    {
+      return that_;
+    }
+
     Units GetUnits() const
     {
       return units_;
@@ -227,6 +233,10 @@ namespace OrthancStone
       AddPrimitive(primitive);
       return *primitive;
     }
+
+    virtual unsigned int GetHandlesCount() const = 0;
+
+    virtual Handle& GetHandle(unsigned int index) const = 0;
 
     virtual void SignalMove(GeometricPrimitive& primitive,
                             const Scene2D& scene) = 0;
@@ -284,6 +294,14 @@ namespace OrthancStone
     {
       SetModified(true);
       center_ = center;
+      delta_ = ScenePoint2D(0, 0);
+    }
+
+    void SetCenter(double x,
+                   double y)
+    {
+      SetModified(true);
+      center_ = ScenePoint2D(x, y);
       delta_ = ScenePoint2D(0, 0);
     }
 
@@ -387,12 +405,35 @@ namespace OrthancStone
     {
     }
 
+    Segment(Annotation& parentAnnotation,
+            double x1,
+            double y1,
+            double x2,
+            double y2) :
+      GeometricPrimitive(parentAnnotation, 1),  // Can only be selected if no handle matches
+      p1_(x1, y1),
+      p2_(x2, y2),
+      delta_(0, 0)
+    {
+    }
+
     void SetPosition(const ScenePoint2D& p1,
                      const ScenePoint2D& p2)
     {
       SetModified(true);
       p1_ = p1;
       p2_ = p2;
+      delta_ = ScenePoint2D(0, 0);
+    }
+
+    void SetPosition(double x1,
+                     double y1,
+                     double x2,
+                     double y2)
+    {
+      SetModified(true);
+      p1_ = ScenePoint2D(x1, y1);
+      p2_ = ScenePoint2D(x2, y2);
       delta_ = ScenePoint2D(0, 0);
     }
 
@@ -506,7 +547,8 @@ namespace OrthancStone
         
       const double radius = ScenePoint2D::DistancePtPt(center, p1_);
 
-      polyline.AddCircle(center, radius, GetActiveColor(), NUM_SEGMENTS);
+      polyline.AddCircle(center.GetX() + delta_.GetX(), center.GetY() + delta_.GetY(),
+                         radius, GetActiveColor(), NUM_SEGMENTS);
     }
       
     virtual void RenderOtherLayers(MacroSceneLayer& macro,
@@ -879,14 +921,24 @@ namespace OrthancStone
       UpdateLabel();
     }
 
-    Handle& GetHandle1() const
+    virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
     {
-      return handle1_;
+      return 2;
     }
 
-    Handle& GetHandle2() const
+    virtual Handle& GetHandle(unsigned int index) const ORTHANC_OVERRIDE
     {
-      return handle2_;
+      switch (index)
+      {
+        case 0:
+          return handle1_;
+
+        case 1:
+          return handle2_;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
     }
 
     virtual void SignalMove(GeometricPrimitive& primitive,
@@ -901,6 +953,10 @@ namespace OrthancStone
       {
         handle1_.SetCenter(segment_.GetPosition1());
         handle2_.SetCenter(segment_.GetPosition2());
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
         
       UpdateLabel();
@@ -964,10 +1020,9 @@ namespace OrthancStone
 
   public:
     ProbingAnnotation(AnnotationsSceneLayer& that,
-                      Units units,
-                      int probedLayer) :
+                      Units units) :
       Annotation(that, units),
-      probedLayer_(probedLayer),
+      probedLayer_(that.GetProbedLayer()),
       probeChanged_(true),
       lastLayerRevision_(0)
     {
@@ -1053,9 +1108,8 @@ namespace OrthancStone
   public:
     PixelProbeAnnotation(AnnotationsSceneLayer& that,
                          Units units,
-                         const ScenePoint2D& p,
-                         int probedLayer) :
-      ProbingAnnotation(that, units, probedLayer),
+                         const ScenePoint2D& p) :
+      ProbingAnnotation(that, units),
       handle_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_CrossedSquare, p))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
@@ -1069,9 +1123,21 @@ namespace OrthancStone
       label_.SetColor(COLOR_TEXT);
     }
 
-    Handle& GetHandle() const
+    virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
     {
-      return handle_;
+      return 1;
+    }
+
+    virtual Handle& GetHandle(unsigned int index) const ORTHANC_OVERRIDE
+    {
+      if (index == 0)
+      {
+        return handle_;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
     }
 
     virtual void SignalMove(GeometricPrimitive& primitive,
@@ -1091,7 +1157,6 @@ namespace OrthancStone
 
     static void Unserialize(AnnotationsSceneLayer& target,
                             Units units,
-                            int probedLayer,
                             const Json::Value& source)
     {
       if (source.isMember(KEY_X) &&
@@ -1100,8 +1165,7 @@ namespace OrthancStone
           source[KEY_Y].isNumeric())
       {
         new PixelProbeAnnotation(target, units,
-                                 ScenePoint2D(source[KEY_X].asDouble(), source[KEY_Y].asDouble()),
-                                 probedLayer);
+                                 ScenePoint2D(source[KEY_X].asDouble(), source[KEY_Y].asDouble()));
       }
       else
       {
@@ -1171,9 +1235,27 @@ namespace OrthancStone
       UpdateLabel();
     }
 
-    Handle& GetEndHandle() const
+    virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
     {
-      return endHandle_;
+      return 3;
+    }
+
+    virtual Handle& GetHandle(unsigned int index) const ORTHANC_OVERRIDE
+    {
+      switch (index)
+      {
+        case 0:
+          return startHandle_;
+
+        case 1:
+          return middleHandle_;
+
+        case 2:
+          return endHandle_;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
     }
 
     virtual void SignalMove(GeometricPrimitive& primitive,
@@ -1210,6 +1292,10 @@ namespace OrthancStone
         segment1_.SetPosition(segment1_.GetPosition1(), segment2_.GetPosition1());
         arc_.SetMiddle(segment2_.GetPosition1());
         arc_.SetEnd(segment2_.GetPosition2());
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
 
       UpdateLabel();
@@ -1339,9 +1425,24 @@ namespace OrthancStone
       UpdateLabel();
     }
 
-    Handle& GetHandle2() const
+    virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
     {
-      return handle2_;
+      return 2;
+    }
+
+    virtual Handle& GetHandle(unsigned int index) const ORTHANC_OVERRIDE
+    {
+      switch (index)
+      {
+        case 0:
+          return handle1_;
+
+        case 1:
+          return handle2_;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
     }
 
     virtual void SignalMove(GeometricPrimitive& primitive,
@@ -1364,6 +1465,10 @@ namespace OrthancStone
         handle1_.SetCenter(circle_.GetPosition1());
         handle2_.SetCenter(circle_.GetPosition2());
         segment_.SetPosition(circle_.GetPosition1(), circle_.GetPosition2());
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
         
       UpdateLabel();
@@ -1408,38 +1513,237 @@ namespace OrthancStone
   };
 
     
-  class AnnotationsSceneLayer::CreateSegmentOrCircleTracker : public IFlexiblePointerTracker
+  class AnnotationsSceneLayer::RectangleProbeAnnotation : public ProbingAnnotation
   {
   private:
-    AnnotationsSceneLayer&  that_;
-    Annotation*             annotation_;
-    AffineTransform2D       canvasToScene_;
-    Handle*                 handle2_;
-      
-  public:
-    CreateSegmentOrCircleTracker(AnnotationsSceneLayer& that,
-                                 Units units,
-                                 bool isCircle,
-                                 const ScenePoint2D& sceneClick,
-                                 const AffineTransform2D& canvasToScene) :
-      that_(that),
-      annotation_(NULL),
-      canvasToScene_(canvasToScene),
-      handle2_(NULL)
+    Handle&   handle1_;
+    Handle&   handle2_;
+    Segment&  segment1_;
+    Segment&  segment2_;
+    Segment&  segment3_;
+    Segment&  segment4_;
+    Text&     label_;
+
+    void UpdateLabel()
     {
-      if (isCircle)
+      TextSceneLayer content;
+
+      const double x1 = handle1_.GetCenter().GetX();
+      const double y1 = handle1_.GetCenter().GetY();
+      const double x2 = handle2_.GetCenter().GetX();
+      const double y2 = handle2_.GetCenter().GetY();
+        
+      // Put the label to the right of the right-most handle
+      //const double y = std::min(y1, y2);
+      const double y = (y1 + y2) / 2.0;
+      if (x1 < x2)
       {
-        annotation_ = new CircleAnnotation(that, units, sceneClick, sceneClick);
-        handle2_ = &dynamic_cast<CircleAnnotation*>(annotation_)->GetHandle2();
+        content.SetPosition(x2, y);
       }
       else
       {
-        annotation_ = new SegmentAnnotation(that, units, true /* show label */, sceneClick, sceneClick);
-        handle2_ = &dynamic_cast<SegmentAnnotation*>(annotation_)->GetHandle2();
+        content.SetPosition(x1, y);
       }
+
+      content.SetAnchor(BitmapAnchor_CenterLeft);
+      content.SetBorder(10);
+
+      const double area = std::abs(x1 - x2) * std::abs(y1 - y2);
         
+      char buf[32];
+
+      switch (GetUnits())
+      {
+        case Units_Millimeters:
+          sprintf(buf, "%0.2f cm%c%c",
+                  area / 100.0,
+                  0xc2, 0xb2 /* two bytes corresponding to two power in UTF-8 */);
+          break;
+
+        case Units_Pixels:
+          // Don't report area (pixel-times-pixel is a strange unit)
+          sprintf(buf, "hello");
+          break;
+          
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+
+      content.SetText(buf);
+
+      label_.SetContent(content);
+    }
+    
+  protected:
+    virtual void UpdateProbeForLayer(const ISceneLayer& layer) ORTHANC_OVERRIDE
+    {
+      // TODO
+    }
+    
+  public:
+    RectangleProbeAnnotation(AnnotationsSceneLayer& that,
+                             Units units,
+                             const ScenePoint2D& p1,
+                             const ScenePoint2D& p2) :
+      ProbingAnnotation(that, units),
+      handle1_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p1))),
+      handle2_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p2))),
+      segment1_(AddTypedPrimitive<Segment>(new Segment(*this, p1.GetX(), p1.GetY(), p2.GetX(), p1.GetY()))),
+      segment2_(AddTypedPrimitive<Segment>(new Segment(*this, p2.GetX(), p1.GetY(), p2.GetX(), p2.GetY()))),
+      segment3_(AddTypedPrimitive<Segment>(new Segment(*this, p2.GetX(), p2.GetY(), p1.GetX(), p2.GetY()))),
+      segment4_(AddTypedPrimitive<Segment>(new Segment(*this, p1.GetX(), p2.GetY(), p1.GetX(), p1.GetY()))),
+      label_(AddTypedPrimitive<Text>(new Text(that, *this)))
+    {
+      label_.SetColor(COLOR_TEXT);
+      UpdateLabel();
+    }
+
+    virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
+    {
+      return 2;
+    }
+
+    virtual Handle& GetHandle(unsigned int index) const ORTHANC_OVERRIDE
+    {
+      switch (index)
+      {
+        case 0:
+          return handle1_;
+
+        case 1:
+          return handle2_;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+    }
+
+    virtual void SignalMove(GeometricPrimitive& primitive,
+                            const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+      if (&primitive == &handle1_ ||
+          &primitive == &handle2_)
+      {
+        const double x1 = handle1_.GetCenter().GetX();
+        const double y1 = handle1_.GetCenter().GetY();
+        const double x2 = handle2_.GetCenter().GetX();
+        const double y2 = handle2_.GetCenter().GetY();
+        segment1_.SetPosition(x1, y1, x2, y1);
+        segment2_.SetPosition(x2, y1, x2, y2);
+        segment3_.SetPosition(x2, y2, x1, y2);
+        segment4_.SetPosition(x1, y2, x1, y1);
+      }
+      else if (&primitive == &segment1_)
+      {
+        const double x1 = segment1_.GetPosition1().GetX();
+        const double y1 = segment1_.GetPosition1().GetY();
+        const double x2 = segment1_.GetPosition2().GetX();
+        const double y2 = handle2_.GetCenter().GetY();
+        handle1_.SetCenter(x1, y1);
+        handle2_.SetCenter(x2, y2);
+        segment2_.SetPosition(x2, y1, x2, y2);
+        segment3_.SetPosition(x2, y2, x1, y2);
+        segment4_.SetPosition(x1, y2, x1, y1);
+      }
+      else if (&primitive == &segment2_)
+      {
+        const double x1 = handle1_.GetCenter().GetX();
+        const double y1 = segment2_.GetPosition1().GetY();
+        const double x2 = segment2_.GetPosition2().GetX();
+        const double y2 = segment2_.GetPosition2().GetY();
+        handle1_.SetCenter(x1, y1);
+        handle2_.SetCenter(x2, y2);
+        segment1_.SetPosition(x1, y1, x2, y1);
+        segment3_.SetPosition(x2, y2, x1, y2);
+        segment4_.SetPosition(x1, y2, x1, y1);
+      }
+      else if (&primitive == &segment3_)
+      {
+        const double x1 = segment3_.GetPosition2().GetX();
+        const double y1 = handle1_.GetCenter().GetY();
+        const double x2 = segment3_.GetPosition1().GetX();
+        const double y2 = segment3_.GetPosition2().GetY();
+        handle1_.SetCenter(x1, y1);
+        handle2_.SetCenter(x2, y2);
+        segment1_.SetPosition(x1, y1, x2, y1);
+        segment2_.SetPosition(x2, y1, x2, y2);
+        segment4_.SetPosition(x1, y2, x1, y1);
+      }
+      else if (&primitive == &segment4_)
+      {
+        const double x1 = segment4_.GetPosition2().GetX();
+        const double y1 = segment4_.GetPosition2().GetY();
+        const double x2 = handle2_.GetCenter().GetX();
+        const double y2 = segment4_.GetPosition1().GetY();
+        handle1_.SetCenter(x1, y1);
+        handle2_.SetCenter(x2, y2);
+        segment1_.SetPosition(x1, y1, x2, y1);
+        segment2_.SetPosition(x2, y1, x2, y2);
+        segment3_.SetPosition(x2, y2, x1, y2);
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+      
+      UpdateLabel();
+    }
+
+    virtual void UpdateProbe(const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+    }
+
+    virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
+    {
+      target = Json::objectValue;
+      target[KEY_TYPE] = VALUE_RECTANGLE_PROBE;
+      target[KEY_X1] = handle1_.GetCenter().GetX();
+      target[KEY_Y1] = handle1_.GetCenter().GetY();
+      target[KEY_X2] = handle2_.GetCenter().GetX();
+      target[KEY_Y2] = handle2_.GetCenter().GetY();
+    }
+
+    static void Unserialize(AnnotationsSceneLayer& target,
+                            Units units,
+                            const Json::Value& source)
+    {
+      if (source.isMember(KEY_X1) &&
+          source.isMember(KEY_Y1) &&
+          source.isMember(KEY_X2) &&
+          source.isMember(KEY_Y2) &&
+          source[KEY_X1].isNumeric() &&
+          source[KEY_Y1].isNumeric() &&
+          source[KEY_X2].isNumeric() &&
+          source[KEY_Y2].isNumeric())
+      {
+        new RectangleProbeAnnotation(target, units,
+                                     ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
+                                     ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()));
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize a rectangle probe annotation");
+      }
+    }
+  };
+
+  
+  class AnnotationsSceneLayer::CreateTwoHandlesTracker : public IFlexiblePointerTracker
+  {
+  private:
+    AnnotationsSceneLayer&  layer_;
+    Annotation*             annotation_;
+    AffineTransform2D       canvasToScene_;
+      
+  public:
+    CreateTwoHandlesTracker(Annotation& annotation,
+                            const AffineTransform2D& canvasToScene) :
+      layer_(annotation.GetParentLayer()),
+      annotation_(&annotation),
+      canvasToScene_(canvasToScene)
+    {
       assert(annotation_ != NULL &&
-             handle2_ != NULL);
+             annotation_->GetHandlesCount() >= 2);
     }
 
     virtual void PointerMove(const PointerEvent& event,
@@ -1447,11 +1751,10 @@ namespace OrthancStone
     {
       if (annotation_ != NULL)
       {
-        assert(handle2_ != NULL);
-        handle2_->SetCenter(event.GetMainPosition().Apply(canvasToScene_));
-        annotation_->SignalMove(*handle2_, scene);
+        annotation_->GetHandle(1).SetCenter(event.GetMainPosition().Apply(canvasToScene_));
+        annotation_->SignalMove(annotation_->GetHandle(1), scene);
 
-        that_.BroadcastMessage(AnnotationChangedMessage(that_));
+        layer_.BroadcastMessage(AnnotationChangedMessage(layer_));
       }
     }
       
@@ -1460,7 +1763,7 @@ namespace OrthancStone
     {
       annotation_ = NULL;  // IsAlive() becomes false
 
-      that_.BroadcastMessage(AnnotationAddedMessage(that_));
+      layer_.BroadcastMessage(AnnotationAddedMessage(layer_));
     }
 
     virtual void PointerDown(const PointerEvent& event,
@@ -1477,7 +1780,7 @@ namespace OrthancStone
     {
       if (annotation_ != NULL)
       {
-        that_.DeleteAnnotation(annotation_);
+        layer_.DeleteAnnotation(annotation_);
         annotation_ = NULL;
       }
     }
@@ -1510,15 +1813,15 @@ namespace OrthancStone
     {
       if (segment_ != NULL)
       {
-        segment_->GetHandle2().SetCenter(event.GetMainPosition().Apply(canvasToScene_));
-        segment_->SignalMove(segment_->GetHandle2(), scene);
+        segment_->GetHandle(1).SetCenter(event.GetMainPosition().Apply(canvasToScene_));
+        segment_->SignalMove(segment_->GetHandle(1), scene);
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
       }
 
       if (angle_ != NULL)
       {
-        angle_->GetEndHandle().SetCenter(event.GetMainPosition().Apply(canvasToScene_));
-        angle_->SignalMove(angle_->GetEndHandle(), scene);
+        angle_->GetHandle(2).SetCenter(event.GetMainPosition().Apply(canvasToScene_));
+        angle_->SignalMove(angle_->GetHandle(2), scene);
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
       }
     }
@@ -1530,9 +1833,9 @@ namespace OrthancStone
       {
         // End of first step: The first segment is available, now create the angle
 
-        angle_ = new AngleAnnotation(that_, segment_->GetUnits(), segment_->GetHandle1().GetCenter(),
-                                     segment_->GetHandle2().GetCenter(),
-                                     segment_->GetHandle2().GetCenter());
+        angle_ = new AngleAnnotation(that_, segment_->GetUnits(), segment_->GetHandle(0).GetCenter(),
+                                     segment_->GetHandle(1).GetCenter(),
+                                     segment_->GetHandle(1).GetCenter());
           
         that_.DeleteAnnotation(segment_);
         segment_ = NULL;
@@ -1581,10 +1884,9 @@ namespace OrthancStone
     CreatePixelProbeTracker(AnnotationsSceneLayer& that,
                             Units units,
                             const ScenePoint2D& sceneClick,
-                            const Scene2D& scene,
-                            int probedLayer)
+                            const Scene2D& scene)
     {
-      PixelProbeAnnotation* annotation = new PixelProbeAnnotation(that, units, sceneClick, probedLayer);
+      PixelProbeAnnotation* annotation = new PixelProbeAnnotation(that, units, sceneClick);
       annotation->UpdateProbe(scene);
       that.BroadcastMessage(AnnotationAddedMessage(that));
     }
@@ -1889,16 +2191,28 @@ namespace OrthancStone
         switch (activeTool_)
         {
           case Tool_Segment:
-            return new CreateSegmentOrCircleTracker(*this, units_, false /* segment */, s, scene.GetCanvasToSceneTransform());
+          {
+            Annotation* annotation = new SegmentAnnotation(*this, units_, true /* show label */, s, s);
+            return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
+          }
 
           case Tool_Circle:
-            return new CreateSegmentOrCircleTracker(*this, units_, true /* circle */, s, scene.GetCanvasToSceneTransform());
+          {
+            Annotation* annotation = new CircleAnnotation(*this, units_, s, s);
+            return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
+          }
 
           case Tool_Angle:
             return new CreateAngleTracker(*this, units_, s, scene.GetCanvasToSceneTransform());
 
           case Tool_PixelProbe:
-            return new CreatePixelProbeTracker(*this, units_, s, scene, probedLayer_);
+            return new CreatePixelProbeTracker(*this, units_, s, scene);
+
+          case Tool_RectangleProbe:
+          {
+            Annotation* annotation = new RectangleProbeAnnotation(*this, units_, s, s);
+            return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
+          }
 
           default:
             return NULL;
@@ -1995,7 +2309,11 @@ namespace OrthancStone
       }
       else if (type == VALUE_PIXEL_PROBE)
       {
-        PixelProbeAnnotation::Unserialize(*this, units_, probedLayer_, annotations[i]);
+        PixelProbeAnnotation::Unserialize(*this, units_, annotations[i]);
+      }
+      else if (type == VALUE_RECTANGLE_PROBE)
+      {
+        RectangleProbeAnnotation::Unserialize(*this, units_, annotations[i]);
       }
       else
       {

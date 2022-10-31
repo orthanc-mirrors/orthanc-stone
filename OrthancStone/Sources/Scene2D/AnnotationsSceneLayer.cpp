@@ -1674,7 +1674,10 @@ namespace OrthancStone
         const double x1 = segment1_.GetPosition1().GetX();
         const double y1 = segment1_.GetPosition1().GetY();
         const double x2 = segment1_.GetPosition2().GetX();
-        const double y2 = handle2_.GetCenter().GetY();
+
+        const double y2 = y1 + handle2_.GetCenter().GetY() - handle1_.GetCenter().GetY();
+        //const double y2 = handle2_.GetCenter().GetY();
+
         handle1_.SetCenter(x1, y1);
         handle2_.SetCenter(x2, y2);
         segment2_.SetPosition(x2, y1, x2, y2);
@@ -1683,10 +1686,13 @@ namespace OrthancStone
       }
       else if (&primitive == &segment2_)
       {
-        const double x1 = handle1_.GetCenter().GetX();
         const double y1 = segment2_.GetPosition1().GetY();
         const double x2 = segment2_.GetPosition2().GetX();
         const double y2 = segment2_.GetPosition2().GetY();
+
+        const double x1 = x2 + handle1_.GetCenter().GetX() - handle2_.GetCenter().GetX();
+        //const double x1 = handle1_.GetCenter().GetX();
+
         handle1_.SetCenter(x1, y1);
         handle2_.SetCenter(x2, y2);
         segment1_.SetPosition(x1, y1, x2, y1);
@@ -1696,9 +1702,12 @@ namespace OrthancStone
       else if (&primitive == &segment3_)
       {
         const double x1 = segment3_.GetPosition2().GetX();
-        const double y1 = handle1_.GetCenter().GetY();
         const double x2 = segment3_.GetPosition1().GetX();
         const double y2 = segment3_.GetPosition2().GetY();
+
+        const double y1 = y2 + handle1_.GetCenter().GetY() - handle2_.GetCenter().GetY();
+        //const double y1 = handle1_.GetCenter().GetY();
+
         handle1_.SetCenter(x1, y1);
         handle2_.SetCenter(x2, y2);
         segment1_.SetPosition(x1, y1, x2, y1);
@@ -1709,8 +1718,11 @@ namespace OrthancStone
       {
         const double x1 = segment4_.GetPosition2().GetX();
         const double y1 = segment4_.GetPosition2().GetY();
-        const double x2 = handle2_.GetCenter().GetX();
         const double y2 = segment4_.GetPosition1().GetY();
+
+        const double x2 = x1 + handle2_.GetCenter().GetX() - handle1_.GetCenter().GetX();
+        //const double x2 = handle2_.GetCenter().GetX();
+
         handle1_.SetCenter(x1, y1);
         handle2_.SetCenter(x2, y2);
         segment1_.SetPosition(x1, y1, x2, y1);

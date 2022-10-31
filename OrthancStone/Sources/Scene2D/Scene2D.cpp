@@ -241,17 +241,34 @@ namespace OrthancStone
     }
   }
 
-  void Scene2D::FitContent(unsigned int canvasWidth,
+  
+  static void AddTransformedPoint(Extent2D& extent,
+                                  const AffineTransform2D& forcedTransform,
+                                  double x,
+                                  double y)
+  {
+    forcedTransform.Apply(x, y);
+    extent.AddPoint(x, y);
+  }
+
+  
+  void Scene2D::FitContent(const AffineTransform2D& forcedTransform,
+                           unsigned int canvasWidth,
                            unsigned int canvasHeight)
   {
     Extent2D extent;
-
     GetBoundingBox(extent);
 
     if (!extent.IsEmpty())
     {
-      double zoomX = static_cast<double>(canvasWidth) / extent.GetWidth();
-      double zoomY = static_cast<double>(canvasHeight) / extent.GetHeight();
+      Extent2D extent2;
+      AddTransformedPoint(extent2, forcedTransform, extent.GetX1(), extent.GetY1());
+      AddTransformedPoint(extent2, forcedTransform, extent.GetX1(), extent.GetY2());
+      AddTransformedPoint(extent2, forcedTransform, extent.GetX2(), extent.GetY2());
+      AddTransformedPoint(extent2, forcedTransform, extent.GetX2(), extent.GetY1());
+
+      double zoomX = static_cast<double>(canvasWidth) / extent2.GetWidth();
+      double zoomY = static_cast<double>(canvasHeight) / extent2.GetHeight();
 
       double zoom = std::min(zoomX, zoomY);
       if (LinearAlgebra::IsCloseToZero(zoom))
@@ -259,8 +276,8 @@ namespace OrthancStone
         zoom = 1;
       }
 
-      double panX = extent.GetCenterX();
-      double panY = extent.GetCenterY();
+      double panX = extent2.GetCenterX();
+      double panY = extent2.GetCenterY();
 
       // Bring the center of the scene to (0,0)
       AffineTransform2D t1 = AffineTransform2D::CreateOffset(-panX, -panY);
@@ -268,7 +285,45 @@ namespace OrthancStone
       // Scale the scene
       AffineTransform2D t2 = AffineTransform2D::CreateScaling(zoom, zoom);
 
-      SetSceneToCanvasTransform(AffineTransform2D::Combine(t2, t1));
+      SetSceneToCanvasTransform(AffineTransform2D::Combine(t2, t1, forcedTransform));
     }
+  }
+
+
+  void Scene2D::FitContent(unsigned int canvasWidth,
+                           unsigned int canvasHeight)
+  {
+    FitContent(AffineTransform2D() /* identity transform */, canvasWidth, canvasHeight);
+  }
+
+
+  void Scene2D::RotateViewport(double angle,
+                               unsigned int canvasWidth,
+                               unsigned int canvasHeight)
+  {
+    AffineTransform2D transform = AffineTransform2D::Combine(
+      AffineTransform2D::CreateRotation(angle),
+      GetSceneToCanvasTransform());
+    FitContent(transform, canvasWidth, canvasHeight);
+  }
+
+
+  void Scene2D::FlipViewportX(unsigned int canvasWidth,
+                              unsigned int canvasHeight)
+  {
+    AffineTransform2D transform = AffineTransform2D::Combine(
+      AffineTransform2D::CreateFlipX(),
+      GetSceneToCanvasTransform());
+    FitContent(transform, canvasWidth, canvasHeight);
+  }
+
+
+  void Scene2D::FlipViewportY(unsigned int canvasWidth,
+                              unsigned int canvasHeight)
+  {
+    AffineTransform2D transform = AffineTransform2D::Combine(
+      AffineTransform2D::CreateFlipY(),
+      GetSceneToCanvasTransform());
+    FitContent(transform, canvasWidth, canvasHeight);
   }
 }

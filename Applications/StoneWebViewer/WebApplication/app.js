@@ -899,6 +899,20 @@ var app = new Vue({
       }
     },
 
+    RotateLeft: function() {
+      var canvas = this.GetActiveCanvas();
+      if (canvas != '') {
+        stone.RotateLeft(canvas);
+      }
+    },
+
+    RotateRight: function() {
+      var canvas = this.GetActiveCanvas();
+      if (canvas != '') {
+        stone.RotateRight(canvas);
+      }
+    },
+
     ApplyPreferences: function() {
       this.modalPreferences = false;
 

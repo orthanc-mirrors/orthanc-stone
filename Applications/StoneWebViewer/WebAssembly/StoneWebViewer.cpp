@@ -96,10 +96,13 @@
 #include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
 
 
-#include <boost/math/special_functions/round.hpp>
-#include <boost/make_shared.hpp>
-#include <stdio.h>
 #include <algorithm>
+#include <boost/make_shared.hpp>
+#include <boost/math/constants/constants.hpp>
+#include <boost/math/special_functions/round.hpp>
+#include <stdio.h>
+
+static const double PI = boost::math::constants::pi<double>();
 
 #if !defined(STONE_WEB_VIEWER_EXPORT)
 // We are not running ParseWebAssemblyExports.py, but we're compiling the wasm
@@ -1993,8 +1996,6 @@ private:
   std::vector<float>                           windowingPresetWidths_;
   unsigned int                                 cineRate_;
   bool                                         inverted_;
-  bool                                         flipX_;
-  bool                                         flipY_;
   bool                                         fitNextContent_;
   std::list<PrefetchItem>                      prefetchQueue_;
   bool                                         serverSideTranscoding_;
@@ -2155,8 +2156,6 @@ private:
     assert(layer.get() != NULL);
 
     layer->SetLinearInterpolation(true);
-    layer->SetFlipX(flipX_);
-    layer->SetFlipY(flipY_);
 
     double pixelSpacingX, pixelSpacingY;
 
@@ -2210,8 +2209,6 @@ private:
       if (accessor.IsValid())
       {
         overlay.reset(accessor.CreateTexture());
-        overlay->SetFlipX(flipX_);
-        overlay->SetFlipY(flipY_);
       }
     }
 
@@ -2496,25 +2493,6 @@ private:
           lock->GetController().GetScene().GetLayer(LAYER_TEXTURE)).
           SetCustomWindowing(windowingCenter_, windowingWidth_);
       }
-
-      {
-        OrthancStone::TextureBaseSceneLayer& layer = 
-          dynamic_cast<OrthancStone::TextureBaseSceneLayer&>(
-            lock->GetController().GetScene().GetLayer(LAYER_TEXTURE));
-
-        layer.SetFlipX(flipX_);
-        layer.SetFlipY(flipY_);
-      }
-
-      if (lock->GetController().GetScene().HasLayer(LAYER_OVERLAY))
-      {
-        OrthancStone::TextureBaseSceneLayer& layer = 
-          dynamic_cast<OrthancStone::TextureBaseSceneLayer&>(
-            lock->GetController().GetScene().GetLayer(LAYER_OVERLAY));
-
-        layer.SetFlipX(flipX_);
-        layer.SetFlipY(flipY_);
-      }
         
       lock->Invalidate();
     }
@@ -2530,8 +2508,6 @@ private:
     source_(source),
     framesCache_(cache),
     fitNextContent_(true),
-    flipX_(false),
-    flipY_(false),
     hasFocusOnInstance_(false),
     focusFrameNumber_(0),
     synchronizationOffset_(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0)),
@@ -2764,8 +2740,6 @@ public:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
 
-    flipX_ = false;
-    flipY_ = false;
     fitNextContent_ = true;
     cineRate_ = DEFAULT_CINE_RATE;
     inverted_ = false;
@@ -3097,14 +3071,42 @@ public:
 
   void FlipX()
   {
-    flipX_ = !flipX_;
-    UpdateCurrentTextureParameters();
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+      lock->GetController().GetScene().FlipViewportX(
+        lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
+      lock->Invalidate();
+    }    
   }
 
   void FlipY()
   {
-    flipY_ = !flipY_;
-    UpdateCurrentTextureParameters();
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+      lock->GetController().GetScene().FlipViewportY(
+        lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
+      lock->Invalidate();
+    }
+  }
+
+  void RotateLeft()
+  {
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+      lock->GetController().GetScene().RotateViewport(
+        -PI / 2.0, lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
+      lock->Invalidate();
+    }    
+  }
+
+  void RotateRight()
+  {
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+      lock->GetController().GetScene().RotateViewport(
+        PI / 2.0, lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
+      lock->Invalidate();
+    }
   }
 
   void Invert()
@@ -4206,6 +4208,28 @@ extern "C"
     try
     {
       GetViewport(canvas)->FlipY();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }  
+  
+
+  EMSCRIPTEN_KEEPALIVE
+  void RotateLeft(const char* canvas)
+  {
+    try
+    {
+      GetViewport(canvas)->RotateLeft();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }  
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void RotateRight(const char* canvas)
+  {
+    try
+    {
+      GetViewport(canvas)->RotateRight();
     }
     EXTERN_CATCH_EXCEPTIONS;
   }  

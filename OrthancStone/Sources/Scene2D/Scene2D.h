@@ -60,6 +60,10 @@ namespace OrthancStone
 
     Scene2D(const Scene2D& other);
     
+    void FitContent(const AffineTransform2D& forcedTransform,
+                    unsigned int canvasWidth,
+                    unsigned int canvasHeight);
+
   public:
     Scene2D() : layerCounter_(0)
     {
@@ -118,5 +122,15 @@ namespace OrthancStone
                     unsigned int canvasHeight);
 
     void GetBoundingBox(Extent2D& target) const;
+
+    void RotateViewport(double angle,
+                        unsigned int canvasWidth,
+                        unsigned int canvasHeight);
+
+    void FlipViewportX(unsigned int canvasWidth,
+                       unsigned int canvasHeight);
+
+    void FlipViewportY(unsigned int canvasWidth,
+                       unsigned int canvasHeight);
   };
 }

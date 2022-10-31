@@ -293,4 +293,22 @@ namespace OrthancStone
       return t;
     }
   }
+
+  
+  AffineTransform2D AffineTransform2D::CreateFlipX()
+  {
+    AffineTransform2D t;
+    t.matrix_(0, 0) = -1;
+    t.matrix_(1, 1) = 1;
+    return t;
+  }
+
+  
+  AffineTransform2D AffineTransform2D::CreateFlipY()
+  {
+    AffineTransform2D t;
+    t.matrix_(0, 0) = 1;
+    t.matrix_(1, 1) = -1;
+    return t;
+  }
 }

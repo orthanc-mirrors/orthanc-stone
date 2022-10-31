@@ -485,6 +485,22 @@
 
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Rotate to the left"
+                      v-on:click="RotateLeft()">
+                <i class="fas fa-undo"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Rotate to the right"
+                      v-on:click="RotateRight()">
+                <i class="fas fa-undo fa-flip-horizontal"></i>
+              </button>
+            </div>
+            
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
                       data-toggle="tooltip" data-title="Flip horizontally"
                       v-on:click="FlipX()">
                 <i class="fas fa-exchange-alt"></i>

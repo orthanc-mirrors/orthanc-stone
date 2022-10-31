@@ -25,6 +25,10 @@
 
 #include <OrthancException.h>
 
+#include <boost/math/constants/constants.hpp>
+
+static const double PI = boost::math::constants::pi<double>();
+
 namespace OrthancStone
 {
   void PolylineSceneLayer::Copy(const PolylineSceneLayer& other)
@@ -106,5 +110,76 @@ namespace OrthancStone
         target.AddPoint(p.GetX(), p.GetY());
       }
     }
+  }
+
+
+  void PolylineSceneLayer::AddArc(double centerX,
+                                  double centerY,
+                                  double radiusX,
+                                  double radiusY,
+                                  double startAngle,
+                                  double endAngle,
+                                  Color color,
+                                  unsigned int countSegments)
+  {
+    assert(countSegments != 0);
+
+    if (endAngle >= startAngle)
+    {
+      double increment = (endAngle - startAngle) / static_cast<double>(countSegments - 1);
+
+      Chain chain;
+      chain.resize(countSegments);
+        
+      double theta = startAngle;
+      for (unsigned int i = 0; i < countSegments; i++)
+      {
+        chain[i] = ScenePoint2D(centerX + radiusX * cos(theta),
+                                centerY + radiusY * sin(theta));
+        theta += increment;
+      }
+        
+      AddChain(chain, false, color);
+    }
+  }
+
+
+  void PolylineSceneLayer::AddCircle(double centerX,
+                                     double centerY,
+                                     double radius,
+                                     Color color,
+                                     unsigned int countSegments)
+  {
+    AddArc(centerX, centerY, radius, radius, 0, 2.0 * PI, color, countSegments);
+  }
+  
+
+  void PolylineSceneLayer::AddRectangle(double x1,
+                                        double y1,
+                                        double x2,
+                                        double y2,
+                                        Color color)
+  {
+    Chain chain;
+    chain.resize(4);
+    chain[0] = ScenePoint2D(x1, y1);
+    chain[1] = ScenePoint2D(x2, y1);
+    chain[2] = ScenePoint2D(x2, y2);
+    chain[3] = ScenePoint2D(x1, y2);
+    AddChain(chain, true, color);
+  }
+
+
+  void PolylineSceneLayer::AddSegment(double x1,
+                                      double y1,
+                                      double x2,
+                                      double y2,
+                                      Color color)
+  {
+    Chain chain;
+    chain.resize(2);
+    chain[0] = ScenePoint2D(x1, y1);
+    chain[1] = ScenePoint2D(x2, y2);
+    AddChain(chain, false, color);
   }
 }

@@ -150,6 +150,11 @@ namespace OrthancStone
     {
       return hoverColor_;
     }
+    
+    Color GetActiveColor() const
+    {
+      return (IsHover() ? GetHoverColor() : GetColor());
+    }
 
     virtual bool IsHit(const ScenePoint2D& p,
                        const Scene2D& scene) const = 0;
@@ -237,41 +242,15 @@ namespace OrthancStone
   public:
     enum Shape {
       Shape_Square,
-      Shape_CrossedSquare
+      Shape_CrossedSquare,
+      Shape_Circle,
+      Shape_CrossedCircle
     };
     
   private:
     Shape         shape_;
     ScenePoint2D  center_;
     ScenePoint2D  delta_;
-
-    void AddChain(PolylineSceneLayer& polyline,
-                  const PolylineSceneLayer::Chain& chain) const
-    {
-      if (IsHover())
-      {
-        polyline.AddChain(chain, true /* closed */, GetHoverColor());
-      }
-      else
-      {
-        polyline.AddChain(chain, true /* closed */, GetColor());
-      }
-    }
-
-    void AddRectangle(PolylineSceneLayer& polyline,
-                      double x1,
-                      double y1,
-                      double x2,
-                      double y2)
-    {
-      PolylineSceneLayer::Chain chain;
-      chain.resize(4);
-      chain[0] = ScenePoint2D(x1, y1);
-      chain[1] = ScenePoint2D(x2, y1);
-      chain[2] = ScenePoint2D(x2, y2);
-      chain[3] = ScenePoint2D(x1, y2);
-      AddChain(polyline, chain);
-    }
 
     void AddCross(PolylineSceneLayer& polyline,
                   double x1,
@@ -281,17 +260,8 @@ namespace OrthancStone
     {
       const double halfX = (x1 + x2) / 2.0;
       const double halfY = (y1 + y2) / 2.0;
-      
-      PolylineSceneLayer::Chain chain;
-      chain.resize(2);
-      
-      chain[0] = ScenePoint2D(x1, halfY);
-      chain[1] = ScenePoint2D(x2, halfY);
-      AddChain(polyline, chain);
-          
-      chain[0] = ScenePoint2D(halfX, y1);
-      chain[1] = ScenePoint2D(halfX, y2);
-      AddChain(polyline, chain);
+      polyline.AddSegment(x1, halfY, x2, halfY, GetActiveColor());
+      polyline.AddSegment(halfX, y1, halfX, y2, GetActiveColor());
     }
 
   public:
@@ -330,37 +300,43 @@ namespace OrthancStone
       double dx = (center_.GetX() + delta_.GetX() - p.GetX()) * zoom;
       double dy = (center_.GetY() + delta_.GetY() - p.GetY()) * zoom;
 
-      switch (shape_)
-      {
-        case Shape_Square:
-        case Shape_CrossedSquare:
-          return (std::abs(dx) <= HANDLE_SIZE / 2.0 &&
-                  std::abs(dy) <= HANDLE_SIZE / 2.0);
-
-        default:
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-      }
+      return (std::abs(dx) <= HANDLE_SIZE / 2.0 &&
+              std::abs(dy) <= HANDLE_SIZE / 2.0);
     }
 
     virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
                                      const Scene2D& scene) ORTHANC_OVERRIDE
     {
+      static unsigned int NUM_SEGMENTS = 16;
+
       const double zoom = scene.GetSceneToCanvasTransform().ComputeZoom();
 
-      // TODO: take DPI into account 
-      double x1 = center_.GetX() + delta_.GetX() - (HANDLE_SIZE / 2.0) / zoom;
-      double y1 = center_.GetY() + delta_.GetY() - (HANDLE_SIZE / 2.0) / zoom;
-      double x2 = center_.GetX() + delta_.GetX() + (HANDLE_SIZE / 2.0) / zoom;
-      double y2 = center_.GetY() + delta_.GetY() + (HANDLE_SIZE / 2.0) / zoom;
+      // TODO: take DPI into account
+      const double unzoomedHandleSize = (HANDLE_SIZE / 2.0) / zoom;
+      const double x = center_.GetX() + delta_.GetX();
+      const double y = center_.GetY() + delta_.GetY();
+      const double x1 = x - unzoomedHandleSize;
+      const double y1 = y - unzoomedHandleSize;
+      const double x2 = x + unzoomedHandleSize;
+      const double y2 = y + unzoomedHandleSize;
 
       switch (shape_)
       {
         case Shape_Square:
-          AddRectangle(polyline, x1, y1, x2, y2);
+          polyline.AddRectangle(x1, y1, x2, y2, GetActiveColor());
           break;
           
         case Shape_CrossedSquare:
-          AddRectangle(polyline, x1, y1, x2, y2);
+          polyline.AddRectangle(x1, y1, x2, y2, GetActiveColor());
+          AddCross(polyline, x1, y1, x2, y2);
+          break;
+
+        case Shape_Circle:
+          polyline.AddCircle(x, y, unzoomedHandleSize, GetActiveColor(), NUM_SEGMENTS);
+          break;
+          
+        case Shape_CrossedCircle:
+          polyline.AddCircle(x, y, unzoomedHandleSize, GetActiveColor(), NUM_SEGMENTS);
           AddCross(polyline, x1, y1, x2, y2);
           break;
 
@@ -441,19 +417,7 @@ namespace OrthancStone
     virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
                                      const Scene2D& scene) ORTHANC_OVERRIDE
     {
-      PolylineSceneLayer::Chain chain;
-      chain.resize(2);
-      chain[0] = p1_ + delta_;
-      chain[1] = p2_ + delta_;
-
-      if (IsHover())
-      {
-        polyline.AddChain(chain, false /* closed */, GetHoverColor());
-      }
-      else
-      {
-        polyline.AddChain(chain, false /* closed */, GetColor());
-      }
+      polyline.AddSegment(p1_ + delta_, p2_ + delta_, GetActiveColor());
     }
       
     virtual void RenderOtherLayers(MacroSceneLayer& macro,
@@ -537,32 +501,12 @@ namespace OrthancStone
     {
       static unsigned int NUM_SEGMENTS = 128;
 
-      ScenePoint2D middle((p1_.GetX() + p2_.GetX()) / 2.0,
+      ScenePoint2D center((p1_.GetX() + p2_.GetX()) / 2.0,
                           (p1_.GetY() + p2_.GetY()) / 2.0);
         
-      const double radius = ScenePoint2D::DistancePtPt(middle, p1_);
+      const double radius = ScenePoint2D::DistancePtPt(center, p1_);
 
-      double increment = 2.0 * PI / static_cast<double>(NUM_SEGMENTS - 1);
-
-      PolylineSceneLayer::Chain chain;
-      chain.resize(NUM_SEGMENTS);
-
-      double theta = 0;
-      for (unsigned int i = 0; i < NUM_SEGMENTS; i++)
-      {
-        chain[i] = ScenePoint2D(delta_.GetX() + middle.GetX() + radius * cos(theta),
-                                delta_.GetY() + middle.GetY() + radius * sin(theta));
-        theta += increment;
-      }
-        
-      if (IsHover())
-      {
-        polyline.AddChain(chain, false /* closed */, GetHoverColor());
-      }
-      else
-      {
-        polyline.AddChain(chain, false /* closed */, GetColor());
-      }
+      polyline.AddCircle(center, radius, GetActiveColor(), NUM_SEGMENTS);
     }
       
     virtual void RenderOtherLayers(MacroSceneLayer& macro,
@@ -679,27 +623,7 @@ namespace OrthancStone
       double fullAngle, startAngle, endAngle;
       ComputeAngles(fullAngle, startAngle, endAngle);
 
-      double increment = fullAngle / static_cast<double>(NUM_SEGMENTS - 1);
-
-      PolylineSceneLayer::Chain chain;
-      chain.resize(NUM_SEGMENTS);
-
-      double theta = startAngle;
-      for (unsigned int i = 0; i < NUM_SEGMENTS; i++)
-      {
-        chain[i] = ScenePoint2D(middle_.GetX() + radius * cos(theta),
-                                middle_.GetY() + radius * sin(theta));
-        theta += increment;
-      }
-        
-      if (IsHover())
-      {
-        polyline.AddChain(chain, false /* closed */, GetHoverColor());
-      }
-      else
-      {
-        polyline.AddChain(chain, false /* closed */, GetColor());
-      }
+      polyline.AddArc(middle_, radius, radius, startAngle, endAngle, GetActiveColor(), NUM_SEGMENTS);
     }
       
     virtual void RenderOtherLayers(MacroSceneLayer& macro,
@@ -798,7 +722,7 @@ namespace OrthancStone
       {
         std::unique_ptr<TextSceneLayer> layer(reinterpret_cast<TextSceneLayer*>(content_->Clone()));
 
-        layer->SetColor(IsHover() ? GetHoverColor() : GetColor());
+        layer->SetColor(GetActiveColor());
           
         if (first_)
         {

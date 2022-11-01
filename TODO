@@ -17,10 +17,6 @@ Improvements
 * Configurable keyboard shortcuts. See Osimis Web viewer:
   https://bitbucket.org/osimis/osimis-webviewer-plugin/src/master/doc/default-configuration.json
 
-* Flip X/Y : Should change the affine transformation of the 2D scene,
-  not the texture. Flipping the texture makes the reference lines and
-  crosshair invalid.
-
 * Handle mobile gestures.
 
 * Display GSPS layers (Grayscale Softcopy Presentation State).
@@ -36,9 +32,10 @@ Improvements
 
   https://groups.google.com/g/orthanc-users/c/_kDp_ieYTgI/m/KHBxpSSOCQAJ
   
-* add a button (and/or a keyboard shortcut) to select the next series in the main viewport
-  https://groups.google.com/g/orthanc-users/c/u_lH9aqKsdw/m/KQ7U9CkiAAAJ.  In Osimis viewer,
-  this was implemented by up/down arrow keys (prev/next series)
+* Add a button (and/or a keyboard shortcut) to select the next series
+  in the main viewport. In Osimis viewer, this was implemented by
+  up/down arrow keys (prev/next series).
+  https://groups.google.com/g/orthanc-users/c/u_lH9aqKsdw/m/KQ7U9CkiAAAJ.
 
 ------------
 Known issues
@@ -67,12 +64,6 @@ Code refactorings
 Wishlist
 --------
 
-* Vertical "timeline" to see the position of the current frame in the
-  series, and to change the current frame by clicking on the timeline.
-
-* Display a pixel probe with the Hounsfield Unit.
-  https://groups.google.com/g/orthanc-users/c/m7S0wbYYW5s/m/MBaxIQ_IAAAJ
-
 * Display video files even if the Orthanc REST API is not available
   (using pure DICOMweb). This could possible be done using the
   DICOMweb Bulk Data URI, and/or a dedicated JavaScript video player.
@@ -92,9 +83,10 @@ Wishlist
   type of modality to be displayed):
   https://groups.google.com/g/orthanc-users/c/bGtK3q9ZUmg/m/gr8kCcVWCAAJ
 
-* When opening the viewer, directly load the first series in the viewport 
-  (like the OsimisViewer).  Whatchout the known issues wrt dropping a series
-  before the studies/../metadata have been loaded.
+* When opening the viewer, directly load the first series in the
+  viewport (like the OsimisViewer). Whatch out the known issue
+  wrt. dropping a series before the studies/../metadata have been
+  loaded.
 
 * Create secondary capture DICOM images with the annotations burned in:
   https://groups.google.com/g/orthanc-users/c/T3h-6dIjvww/m/sVtHxwT_AQAJ
@@ -102,7 +94,6 @@ Wishlist
 * Configure the default layout (e.g. 1x2 instead of 1x1) and the
   default view of the left toolbox:
   https://groups.google.com/g/orthanc-users/c/y2B_RIzegNc/m/H9MhY9y2AgAJ
-
 
 * Display the PatientName & ID in the page title such that it appears 
   in the browser tab name
@@ -125,13 +116,11 @@ Won't do
 == Stone of Orthanc C++ library ==
 ==================================
 
-
 -------
 General
 -------
 
 * Documentation
-
 
 -------------
 Optimizations
@@ -140,7 +129,6 @@ Optimizations
 * Speedup RT-STRUCT projection in sagittal + coronal views
 * Speedup RT-STRUCT loading
 * "ParseDicomFromOrthanc": new command
-
 
 -----------------
 Platform-specific
@@ -152,4 +140,4 @@ Platform-specific
   long as the Oracle singleton is never destroyed. A cleaner solution
   would be similar to "WebAssemblyViewport::CreateObjectCookie()".
 
-* Add precompiled headers for Microsoft Visual Studio
+* Add precompiled headers for Microsoft Visual Studio.

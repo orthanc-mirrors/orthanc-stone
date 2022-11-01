@@ -25,7 +25,7 @@ Maintenance
 * Start at the first frame for series presumably not containing 3D images (e.g. US)
 * More tolerance wrt. bad values of the Pixel Spacing (0028,0030) tag
 * Support of DICOM images without the Study Date (0008,0020) tag
-* Upgraded Vue.js to 2.6.4
+* Upgraded Vue.js to 2.6.14
 
 
 Version 2.3 (2022-03-24)

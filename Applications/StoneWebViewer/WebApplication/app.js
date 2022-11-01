@@ -445,6 +445,7 @@ var app = new Vue({
       // User preferences (stored in the local storage)
       settingNotDiagnostic: true,
       settingSoftwareRendering: false,
+      settingLinearInterpolation: true,
 
       layoutCountX: 1,
       layoutCountY: 1,
@@ -523,6 +524,9 @@ var app = new Vue({
     },
     settingSoftwareRendering: function(newVal, oldVal) {
       localStorage.settingSoftwareRendering = (newVal ? '1' : '0');
+    },
+    settingLinearInterpolation: function(newVal, oldVal) {
+      localStorage.settingLinearInterpolation = (newVal ? '1' : '0');
     }
   },
   methods: {
@@ -920,6 +924,8 @@ var app = new Vue({
     ApplyPreferences: function() {
       this.modalPreferences = false;
 
+      stone.SetLinearInterpolation(localStorage.settingLinearInterpolation);
+
       if ((stone.IsSoftwareRendering() != 0) != this.settingSoftwareRendering) {
         document.location.reload();
       }
@@ -1141,6 +1147,8 @@ var app = new Vue({
   },
   
   mounted: function() {
+    // Warning: In this function, the "stone" global object is not initialized yet!
+    
     this.SetViewportLayout('1x1');
 
     if (localStorage.settingNotDiagnostic) {
@@ -1149,6 +1157,10 @@ var app = new Vue({
     
     if (localStorage.settingSoftwareRendering) {
       this.settingSoftwareRendering = (localStorage.settingSoftwareRendering == '1');
+    }
+
+    if (localStorage.settingLinearInterpolation) {
+      this.settingLinearInterpolation = (localStorage.settingLinearInterpolation == '1');
     }
 
     var that = this;
@@ -1190,7 +1202,8 @@ window.addEventListener('StoneInitialized', function() {
   stone.Setup(Module);
   stone.SetDicomWebRoot(app.globalConfiguration.DicomWebRoot,
                         true /* assume "/rendered" is available in DICOMweb (could be a configuration option) */);
-  stone.SetSoftwareRendering(localStorage.settingSoftwareRendering == '1');
+  stone.SetSoftwareRendering(app.settingSoftwareRendering);
+  stone.SetLinearInterpolation(app.settingLinearInterpolation);
 
   if ('DicomCacheSize' in app.globalConfiguration) {
     stone.SetDicomCacheSize(app.globalConfiguration.DicomCacheSize);

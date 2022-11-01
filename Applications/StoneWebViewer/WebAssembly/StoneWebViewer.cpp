@@ -2022,6 +2022,8 @@ private:
   // the center of the top-left pixel
   boost::shared_ptr<OrthancStone::AnnotationsSceneLayer>  stoneAnnotations_;
 
+  bool linearInterpolation_;
+
 
   void ScheduleNextPrefetch()
   {
@@ -2159,7 +2161,7 @@ private:
 
     assert(layer.get() != NULL);
 
-    layer->SetLinearInterpolation(true);
+    layer->SetLinearInterpolation(linearInterpolation_);
 
     double pixelSpacingX, pixelSpacingY;
 
@@ -2213,6 +2215,7 @@ private:
       if (accessor.IsValid())
       {
         overlay.reset(accessor.CreateTexture());
+        overlay->SetLinearInterpolation(false);
       }
     }
 
@@ -2507,7 +2510,8 @@ private:
                  const OrthancStone::DicomSource& source,
                  const std::string& canvas,
                  boost::shared_ptr<FramesCache> cache,
-                 bool softwareRendering) :
+                 bool softwareRendering,
+                 bool linearInterpolation) :
     context_(context),
     source_(source),
     framesCache_(cache),
@@ -2519,7 +2523,8 @@ private:
     centralPhysicalWidth_(1),
     centralPhysicalHeight_(1),
     centralPixelSpacingX_(1),
-    centralPixelSpacingY_(1)
+    centralPixelSpacingY_(1),
+    linearInterpolation_(linearInterpolation)
   {
     if (!framesCache_)
     {
@@ -2700,10 +2705,11 @@ public:
                                                   const OrthancStone::DicomSource& source,
                                                   const std::string& canvas,
                                                   boost::shared_ptr<FramesCache> cache,
-                                                  bool softwareRendering)
+                                                  bool softwareRendering,
+                                                  bool linearInterpolation)
   {
     boost::shared_ptr<ViewerViewport> viewport(
-      new ViewerViewport(context, source, canvas, cache, softwareRendering));
+      new ViewerViewport(context, source, canvas, cache, softwareRendering, linearInterpolation));
 
     {
       std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context.Lock());
@@ -3420,6 +3426,15 @@ public:
       }
     }    
   }
+
+  void SetLinearInterpolation(bool linearInterpolation)
+  {
+    if (linearInterpolation_ != linearInterpolation)
+    {
+      linearInterpolation_ = linearInterpolation;
+      Redraw();
+    }
+  }
 };
 
 
@@ -3689,6 +3704,7 @@ static boost::shared_ptr<FramesCache> framesCache_;
 static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
 static bool softwareRendering_ = false;
+static bool linearInterpolation_ = true;
 static WebViewerAction leftButtonAction_ = WebViewerAction_Windowing;
 static WebViewerAction middleButtonAction_ = WebViewerAction_Pan;
 static WebViewerAction rightButtonAction_ = WebViewerAction_Zoom;
@@ -3735,7 +3751,7 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
   if (found == allViewports_.end())
   {
     boost::shared_ptr<ViewerViewport> viewport(
-      ViewerViewport::Create(*context_, source_, canvas, framesCache_, softwareRendering_));
+      ViewerViewport::Create(*context_, source_, canvas, framesCache_, softwareRendering_, linearInterpolation_));
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
     viewport->SetOsiriXAnnotations(osiriXAnnotations_);
@@ -4250,6 +4266,23 @@ extern "C"
   int IsSoftwareRendering()
   {
     return softwareRendering_;
+  }  
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void SetLinearInterpolation(int linearInterpolation)
+  {
+    linearInterpolation_ = linearInterpolation;
+
+    try
+    {
+      for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+      {
+        assert(it->second != NULL);
+        it->second->SetLinearInterpolation(linearInterpolation);
+      }
+    }
+    EXTERN_CATCH_EXCEPTIONS;
   }  
 
 

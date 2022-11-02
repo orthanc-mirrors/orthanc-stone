@@ -42,7 +42,6 @@ static const double ARROW_ANGLE = 20.0 * PI / 180.0;
 
 static const char* const KEY_ANNOTATIONS = "annotations";
 static const char* const KEY_TYPE = "type";
-static const char* const KEY_TEXT = "text";
 static const char* const KEY_X = "x";
 static const char* const KEY_Y = "y";
 static const char* const KEY_X1 = "x1";
@@ -52,6 +51,7 @@ static const char* const KEY_Y2 = "y2";
 static const char* const KEY_X3 = "x3";
 static const char* const KEY_Y3 = "y3";
 static const char* const KEY_UNITS = "units";
+static const char* const KEY_LABEL = "label";
 
 static const char* const VALUE_ANGLE = "angle";
 static const char* const VALUE_CIRCLE = "circle";
@@ -260,7 +260,8 @@ namespace OrthancStone
       Shape_Square,
       Shape_CrossedSquare,
       Shape_Circle,
-      Shape_CrossedCircle
+      Shape_CrossedCircle,
+      Shape_Invisible  /* to use in conjunction with arrows */
     };
     
   private:
@@ -362,6 +363,9 @@ namespace OrthancStone
           AddCross(polyline, x1, y1, x2, y2);
           break;
 
+        case Shape_Invisible:
+          break;
+          
         default:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
@@ -795,6 +799,11 @@ namespace OrthancStone
       }
     }
 
+    std::string GetText() const
+    {
+      return content_->GetText();
+    }
+
     void SetPosition(double x,
                      double y)
     {
@@ -1058,78 +1067,59 @@ namespace OrthancStone
   };
 
 
-  class AnnotationsSceneLayer::LengthAnnotation : public Annotation
+  class AnnotationsSceneLayer::SegmentAnnotation : public Annotation
   {
   private:
-    bool      showLabel_;
     Handle&   handle1_;
     Handle&   handle2_;
     Segment&  segment_;
     Text&     label_;
 
-    void UpdateLabel()
+  protected:
+    void SetLabelContent(const TextSceneLayer& content)
     {
-      if (showLabel_)
-      {
-        TextSceneLayer content;
+      label_.SetContent(content);
+    }
 
-        double x1 = handle1_.GetCenter().GetX();
-        double y1 = handle1_.GetCenter().GetY();
-        double x2 = handle2_.GetCenter().GetX();
-        double y2 = handle2_.GetCenter().GetY();
-        
-        // Put the label to the right of the right-most handle
-        if (x1 < x2)
-        {
-          content.SetPosition(x2, y2);
-        }
-        else
-        {
-          content.SetPosition(x1, y1);
-        }
+    std::string GetCurrentLabel() const
+    {
+      return label_.GetText();
+    } 
 
-        content.SetAnchor(BitmapAnchor_CenterLeft);
-        content.SetBorder(10);
+    const Handle& GetHandle1() const
+    {
+      return handle1_;
+    }
 
-        double dx = x1 - x2;
-        double dy = y1 - y2;
-        char buf[32];
+    const Handle& GetHandle2() const
+    {
+      return handle2_;
+    }
 
-        switch (GetUnits())
-        {
-          case Units_Millimeters:
-            sprintf(buf, "%0.2f cm", sqrt(dx * dx + dy * dy) / 10.0);
-            break;
+    void SetStartArrow(bool enabled)
+    {
+      segment_.SetStartArrow(enabled);
+    }
 
-          case Units_Pixels:
-            sprintf(buf, "%0.1f px", sqrt(dx * dx + dy * dy));
-            break;
-
-          default:
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-        }
-            
-        content.SetText(buf);
-
-        label_.SetContent(content);
-      }
+    void SetEndArrow(bool enabled)
+    {
+      segment_.SetEndArrow(enabled);
     }
 
   public:
-    LengthAnnotation(AnnotationsSceneLayer& that,
-                     Units units,
-                     bool showLabel,
-                     const ScenePoint2D& p1,
-                     const ScenePoint2D& p2) :
+    SegmentAnnotation(AnnotationsSceneLayer& that,
+                      Units units,
+                      Handle::Shape shape1,
+                      const ScenePoint2D& p1,
+                      Handle::Shape shape2,
+                      const ScenePoint2D& p2) :
       Annotation(that, units),
-      showLabel_(showLabel),
-      handle1_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p1))),
-      handle2_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p2))),
+      handle1_(AddTypedPrimitive<Handle>(new Handle(*this, shape1, p1))),
+      handle2_(AddTypedPrimitive<Handle>(new Handle(*this, shape2, p2))),
       segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
       label_.SetColor(COLOR_TEXT);
-      UpdateLabel();
     }
 
     virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
@@ -1169,22 +1159,94 @@ namespace OrthancStone
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
-        
-      UpdateLabel();
     }
 
     virtual void UpdateProbe(const Scene2D& scene) ORTHANC_OVERRIDE
     {
+    }
+  };
+
+
+  class AnnotationsSceneLayer::LengthAnnotation : public SegmentAnnotation
+  {
+  private:
+    bool      showLabel_;
+
+    void UpdateLabel()
+    {
+      if (showLabel_)
+      {
+        TextSceneLayer content;
+
+        double x1 = GetHandle1().GetCenter().GetX();
+        double y1 = GetHandle1().GetCenter().GetY();
+        double x2 = GetHandle2().GetCenter().GetX();
+        double y2 = GetHandle2().GetCenter().GetY();
+        
+        // Put the label to the right of the right-most handle
+        if (x1 < x2)
+        {
+          content.SetPosition(x2, y2);
+        }
+        else
+        {
+          content.SetPosition(x1, y1);
+        }
+
+        content.SetAnchor(BitmapAnchor_CenterLeft);
+        content.SetBorder(10);
+
+        double dx = x1 - x2;
+        double dy = y1 - y2;
+        char buf[32];
+
+        switch (GetUnits())
+        {
+          case Units_Millimeters:
+            sprintf(buf, "%0.2f cm", sqrt(dx * dx + dy * dy) / 10.0);
+            break;
+
+          case Units_Pixels:
+            sprintf(buf, "%0.1f px", sqrt(dx * dx + dy * dy));
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        }
+            
+        content.SetText(buf);
+
+        SetLabelContent(content);
+      }
+    }
+
+  public:
+    LengthAnnotation(AnnotationsSceneLayer& that,
+                     Units units,
+                     bool showLabel,
+                     const ScenePoint2D& p1,
+                     const ScenePoint2D& p2) :
+      SegmentAnnotation(that, units, Handle::Shape_Square, p1, Handle::Shape_Square, p2),
+      showLabel_(showLabel)
+    {
+      UpdateLabel();
+    }
+
+    virtual void SignalMove(GeometricPrimitive& primitive,
+                            const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+      SegmentAnnotation::SignalMove(primitive, scene);
+      UpdateLabel();
     }
 
     virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
     {
       target = Json::objectValue;
       target[KEY_TYPE] = VALUE_LENGTH;
-      target[KEY_X1] = handle1_.GetCenter().GetX();
-      target[KEY_Y1] = handle1_.GetCenter().GetY();
-      target[KEY_X2] = handle2_.GetCenter().GetX();
-      target[KEY_Y2] = handle2_.GetCenter().GetY();
+      target[KEY_X1] = GetHandle1().GetCenter().GetX();
+      target[KEY_Y1] = GetHandle1().GetCenter().GetY();
+      target[KEY_X2] = GetHandle2().GetCenter().GetX();
+      target[KEY_Y2] = GetHandle2().GetCenter().GetY();
     }
 
     static void Unserialize(AnnotationsSceneLayer& target,
@@ -1207,6 +1269,94 @@ namespace OrthancStone
       else
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize a length annotation");
+      }
+    }
+  };
+
+
+  class AnnotationsSceneLayer::TextAnnotation : public SegmentAnnotation
+  {
+  public:
+    TextAnnotation(AnnotationsSceneLayer& that,
+                   Units units,
+                   const std::string& label,
+                   const ScenePoint2D& p1,
+                   const ScenePoint2D& p2) :
+      SegmentAnnotation(that, units, Handle::Shape_Invisible, p1, Handle::Shape_Square, p2)
+    {
+      SetStartArrow(true);
+      UpdateLabel(label);
+    }
+
+    void UpdateLabel(const std::string& label)
+    {
+      TextSceneLayer content;
+
+      double x1 = GetHandle1().GetCenter().GetX();
+      double x2 = GetHandle2().GetCenter().GetX();
+      double y2 = GetHandle2().GetCenter().GetY();
+        
+      if (x1 < x2)
+      {
+        content.SetAnchor(BitmapAnchor_CenterLeft);
+      }
+      else
+      {
+        content.SetAnchor(BitmapAnchor_CenterRight);
+      }
+
+      content.SetPosition(x2, y2);
+      content.SetBorder(10);
+      content.SetText(label);
+
+      SetLabelContent(content);
+    }
+
+    void UpdateLabel()
+    {
+      UpdateLabel(GetCurrentLabel());
+    }
+    
+    virtual void SignalMove(GeometricPrimitive& primitive,
+                            const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+      SegmentAnnotation::SignalMove(primitive, scene);
+      UpdateLabel();
+    }
+
+    virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
+    {
+      target = Json::objectValue;
+      target[KEY_TYPE] = VALUE_TEXT_ANNOTATION;
+      target[KEY_X1] = GetHandle1().GetCenter().GetX();
+      target[KEY_Y1] = GetHandle1().GetCenter().GetY();
+      target[KEY_X2] = GetHandle2().GetCenter().GetX();
+      target[KEY_Y2] = GetHandle2().GetCenter().GetY();
+      target[KEY_LABEL] = GetCurrentLabel();
+    }
+
+    static void Unserialize(AnnotationsSceneLayer& target,
+                            Units units,
+                            const Json::Value& source)
+    {
+      if (source.isMember(KEY_X1) &&
+          source.isMember(KEY_Y1) &&
+          source.isMember(KEY_X2) &&
+          source.isMember(KEY_Y2) &&
+          source.isMember(KEY_LABEL) &&
+          source[KEY_X1].isNumeric() &&
+          source[KEY_Y1].isNumeric() &&
+          source[KEY_X2].isNumeric() &&
+          source[KEY_Y2].isNumeric() &&
+          source[KEY_LABEL].isString())
+      {
+        new TextAnnotation(target, units, source[KEY_LABEL].asString(),
+                           ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
+                           ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()));
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize a text annotation");
       }
     }
   };
@@ -2670,11 +2820,11 @@ namespace OrthancStone
             return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
           }
 
-          /*case Tool_TextAnnotation:
+          case Tool_TextAnnotation:
           {
-            Annotation* annotation = new TextAnnotation(*this, units_, true show label, s, s);
+            Annotation* annotation = new TextAnnotation(*this, units_, "" /* empty label */, s, s);
             return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
-          }*/
+          }
 
           default:
             return NULL;
@@ -2781,10 +2931,10 @@ namespace OrthancStone
       {
         EllipseProbeAnnotation::Unserialize(*this, units_, annotations[i]);
       }
-      /*else if (type == VALUE_TEXT_ANNOTATION)
+      else if (type == VALUE_TEXT_ANNOTATION)
       {
         TextAnnotation::Unserialize(*this, units_, annotations[i]);
-        }*/
+      }
       else
       {
         LOG(ERROR) << "Cannot unserialize unknown type of annotation: " << type;

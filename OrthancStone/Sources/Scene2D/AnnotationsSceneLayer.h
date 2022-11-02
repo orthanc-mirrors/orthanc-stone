@@ -62,11 +62,11 @@ namespace OrthancStone
     class PixelProbeAnnotation;
     class SegmentAnnotation;
     class LengthAnnotation;
+    class TextAnnotation;
     class AngleAnnotation;
     class CircleAnnotation;
     class RectangleProbeAnnotation;
     class EllipseProbeAnnotation;
-    class TextAnnotation;
     
     class EditPrimitiveTracker;
     class CreateTwoHandlesTracker;

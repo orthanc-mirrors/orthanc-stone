@@ -34,11 +34,15 @@
 #include <boost/math/constants/constants.hpp>
 #include <list>
 
-static const double HANDLE_SIZE = 10.0;
 static const double PI = boost::math::constants::pi<double>();
+
+static const double HANDLE_SIZE = 10.0;
+static const double ARROW_LENGTH = 1.5 * HANDLE_SIZE;
+static const double ARROW_ANGLE = 20.0 * PI / 180.0;
 
 static const char* const KEY_ANNOTATIONS = "annotations";
 static const char* const KEY_TYPE = "type";
+static const char* const KEY_TEXT = "text";
 static const char* const KEY_X = "x";
 static const char* const KEY_Y = "y";
 static const char* const KEY_X1 = "x1";
@@ -51,12 +55,13 @@ static const char* const KEY_UNITS = "units";
 
 static const char* const VALUE_ANGLE = "angle";
 static const char* const VALUE_CIRCLE = "circle";
-static const char* const VALUE_SEGMENT = "segment";
+static const char* const VALUE_LENGTH = "length";
 static const char* const VALUE_MILLIMETERS = "millimeters";
 static const char* const VALUE_PIXELS = "pixels";
 static const char* const VALUE_PIXEL_PROBE = "pixel-probe";
 static const char* const VALUE_RECTANGLE_PROBE = "rectangle-probe";
 static const char* const VALUE_ELLIPSE_PROBE = "ellipse-probe";
+static const char* const VALUE_TEXT_ANNOTATION = "text";
 
 #if 0
 static OrthancStone::Color COLOR_PRIMITIVES(192, 192, 192);
@@ -301,9 +306,7 @@ namespace OrthancStone
     void SetCenter(double x,
                    double y)
     {
-      SetModified(true);
-      center_ = ScenePoint2D(x, y);
-      delta_ = ScenePoint2D(0, 0);
+      SetCenter(ScenePoint2D(x, y));
     }
 
     ScenePoint2D GetCenter() const
@@ -394,6 +397,8 @@ namespace OrthancStone
     ScenePoint2D  p1_;
     ScenePoint2D  p2_;
     ScenePoint2D  delta_;
+    bool          hasStartArrow_;
+    bool          hasEndArrow_;
       
   public:
     Segment(Annotation& parentAnnotation,
@@ -402,7 +407,9 @@ namespace OrthancStone
       GeometricPrimitive(parentAnnotation, 1),  // Can only be selected if no handle matches
       p1_(p1),
       p2_(p2),
-      delta_(0, 0)
+      delta_(0, 0),
+      hasStartArrow_(false),
+      hasEndArrow_(false)
     {
     }
 
@@ -414,7 +421,9 @@ namespace OrthancStone
       GeometricPrimitive(parentAnnotation, 1),  // Can only be selected if no handle matches
       p1_(x1, y1),
       p2_(x2, y2),
-      delta_(0, 0)
+      delta_(0, 0),
+      hasStartArrow_(false),
+      hasEndArrow_(false)
     {
     }
 
@@ -448,6 +457,28 @@ namespace OrthancStone
       return p2_ + delta_;
     }
 
+    void SetStartArrow(bool enabled)
+    {
+      SetModified(true);
+      hasStartArrow_ = enabled;
+    }
+
+    bool HasStartArrow() const
+    {
+      return hasStartArrow_;
+    }
+
+    void SetEndArrow(bool enabled)
+    {
+      SetModified(true);
+      hasEndArrow_ = enabled;
+    }
+
+    bool HasEndArrow() const
+    {
+      return hasEndArrow_;
+    }
+
     virtual bool IsHit(const ScenePoint2D& p,
                        const Scene2D& scene) const ORTHANC_OVERRIDE
     {
@@ -459,7 +490,38 @@ namespace OrthancStone
     virtual void RenderPolylineLayer(PolylineSceneLayer& polyline,
                                      const Scene2D& scene) ORTHANC_OVERRIDE
     {
-      polyline.AddSegment(p1_ + delta_, p2_ + delta_, GetActiveColor());
+      const Color color = GetActiveColor();
+      const ScenePoint2D a(p1_ + delta_);
+      const ScenePoint2D b(p2_ + delta_);
+      
+      polyline.AddSegment(a, b, color);
+      
+      if (hasStartArrow_ ||
+          hasEndArrow_)
+      {
+        const double length = ARROW_LENGTH / scene.GetSceneToCanvasTransform().ComputeZoom();
+        const double angle = atan2(b.GetY() - a.GetY(), b.GetX() - a.GetX());
+
+        if (hasStartArrow_)
+        {
+          polyline.AddSegment(a, a + ScenePoint2D(
+                                length * cos(angle + ARROW_ANGLE),
+                              length * sin(angle + ARROW_ANGLE)), color);
+          polyline.AddSegment(a, a + ScenePoint2D(
+                                length * cos(angle - ARROW_ANGLE),
+                                length * sin(angle - ARROW_ANGLE)), color);
+        }
+
+        if (hasEndArrow_)
+        {
+          polyline.AddSegment(b, b + ScenePoint2D(
+                                length * cos(angle + ARROW_ANGLE + PI),
+                                length * sin(angle + ARROW_ANGLE + PI)), color);
+          polyline.AddSegment(b, b + ScenePoint2D(
+                                length * cos(angle - ARROW_ANGLE + PI),
+                                length * sin(angle - ARROW_ANGLE + PI)), color);
+        }
+      }
     }
       
     virtual void RenderOtherLayers(MacroSceneLayer& macro,
@@ -996,7 +1058,7 @@ namespace OrthancStone
   };
 
 
-  class AnnotationsSceneLayer::SegmentAnnotation : public Annotation
+  class AnnotationsSceneLayer::LengthAnnotation : public Annotation
   {
   private:
     bool      showLabel_;
@@ -1054,11 +1116,11 @@ namespace OrthancStone
     }
 
   public:
-    SegmentAnnotation(AnnotationsSceneLayer& that,
-                      Units units,
-                      bool showLabel,
-                      const ScenePoint2D& p1,
-                      const ScenePoint2D& p2) :
+    LengthAnnotation(AnnotationsSceneLayer& that,
+                     Units units,
+                     bool showLabel,
+                     const ScenePoint2D& p1,
+                     const ScenePoint2D& p2) :
       Annotation(that, units),
       showLabel_(showLabel),
       handle1_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p1))),
@@ -1118,7 +1180,7 @@ namespace OrthancStone
     virtual void Serialize(Json::Value& target) ORTHANC_OVERRIDE
     {
       target = Json::objectValue;
-      target[KEY_TYPE] = VALUE_SEGMENT;
+      target[KEY_TYPE] = VALUE_LENGTH;
       target[KEY_X1] = handle1_.GetCenter().GetX();
       target[KEY_Y1] = handle1_.GetCenter().GetY();
       target[KEY_X2] = handle2_.GetCenter().GetX();
@@ -1138,13 +1200,13 @@ namespace OrthancStone
           source[KEY_X2].isNumeric() &&
           source[KEY_Y2].isNumeric())
       {
-        new SegmentAnnotation(target, units, true,
-                              ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
-                              ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()));
+        new LengthAnnotation(target, units, true,
+                             ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
+                             ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()));
       }
       else
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize an segment annotation");
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat, "Cannot unserialize a length annotation");
       }
     }
   };
@@ -2179,7 +2241,7 @@ namespace OrthancStone
   {
   private:
     AnnotationsSceneLayer&  that_;
-    SegmentAnnotation*      segment_;
+    LengthAnnotation*       length_;
     AngleAnnotation*        angle_;
     AffineTransform2D       canvasToScene_;
       
@@ -2189,20 +2251,20 @@ namespace OrthancStone
                        const ScenePoint2D& sceneClick,
                        const AffineTransform2D& canvasToScene) :
       that_(that),
-      segment_(NULL),
+      length_(NULL),
       angle_(NULL),
       canvasToScene_(canvasToScene)
     {
-      segment_ = new SegmentAnnotation(that, units, false /* no length label */, sceneClick, sceneClick);
+      length_ = new LengthAnnotation(that, units, false /* no length label */, sceneClick, sceneClick);
     }
 
     virtual void PointerMove(const PointerEvent& event,
                              const Scene2D& scene) ORTHANC_OVERRIDE
     {
-      if (segment_ != NULL)
+      if (length_ != NULL)
       {
-        segment_->GetHandle(1).SetCenter(event.GetMainPosition().Apply(canvasToScene_));
-        segment_->SignalMove(segment_->GetHandle(1), scene);
+        length_->GetHandle(1).SetCenter(event.GetMainPosition().Apply(canvasToScene_));
+        length_->SignalMove(length_->GetHandle(1), scene);
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
       }
 
@@ -2217,16 +2279,16 @@ namespace OrthancStone
     virtual void PointerUp(const PointerEvent& event,
                            const Scene2D& scene) ORTHANC_OVERRIDE
     {
-      if (segment_ != NULL)
+      if (length_ != NULL)
       {
         // End of first step: The first segment is available, now create the angle
 
-        angle_ = new AngleAnnotation(that_, segment_->GetUnits(), segment_->GetHandle(0).GetCenter(),
-                                     segment_->GetHandle(1).GetCenter(),
-                                     segment_->GetHandle(1).GetCenter());
+        angle_ = new AngleAnnotation(that_, length_->GetUnits(), length_->GetHandle(0).GetCenter(),
+                                     length_->GetHandle(1).GetCenter(),
+                                     length_->GetHandle(1).GetCenter());
           
-        that_.DeleteAnnotation(segment_);
-        segment_ = NULL;
+        that_.DeleteAnnotation(length_);
+        length_ = NULL;
 
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
       }
@@ -2245,16 +2307,16 @@ namespace OrthancStone
 
     virtual bool IsAlive() const ORTHANC_OVERRIDE
     {
-      return (segment_ != NULL ||
+      return (length_ != NULL ||
               angle_ != NULL);
     }
 
     virtual void Cancel(const Scene2D& scene) ORTHANC_OVERRIDE
     {
-      if (segment_ != NULL)
+      if (length_ != NULL)
       {
-        that_.DeleteAnnotation(segment_);
-        segment_ = NULL;
+        that_.DeleteAnnotation(length_);
+        length_ = NULL;
       }
 
       if (angle_ != NULL)
@@ -2411,10 +2473,10 @@ namespace OrthancStone
   }
 
 
-  void AnnotationsSceneLayer::AddSegmentAnnotation(const ScenePoint2D& p1,
-                                                   const ScenePoint2D& p2)
+  void AnnotationsSceneLayer::AddLengthAnnotation(const ScenePoint2D& p1,
+                                                  const ScenePoint2D& p2)
   {
-    annotations_.insert(new SegmentAnnotation(*this, units_, true /* show label */, p1, p2));
+    annotations_.insert(new LengthAnnotation(*this, units_, true /* show label */, p1, p2));
   }
   
 
@@ -2578,9 +2640,9 @@ namespace OrthancStone
       {
         switch (activeTool_)
         {
-          case Tool_Segment:
+          case Tool_Length:
           {
-            Annotation* annotation = new SegmentAnnotation(*this, units_, true /* show label */, s, s);
+            Annotation* annotation = new LengthAnnotation(*this, units_, true /* show label */, s, s);
             return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
           }
 
@@ -2607,6 +2669,12 @@ namespace OrthancStone
             Annotation* annotation = new EllipseProbeAnnotation(*this, units_, s, s);
             return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
           }
+
+          /*case Tool_TextAnnotation:
+          {
+            Annotation* annotation = new TextAnnotation(*this, units_, true show label, s, s);
+            return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
+          }*/
 
           default:
             return NULL;
@@ -2697,9 +2765,9 @@ namespace OrthancStone
       {
         CircleAnnotation::Unserialize(*this, units_, annotations[i]);
       }
-      else if (type == VALUE_SEGMENT)
+      else if (type == VALUE_LENGTH)
       {
-        SegmentAnnotation::Unserialize(*this, units_, annotations[i]);
+        LengthAnnotation::Unserialize(*this, units_, annotations[i]);
       }
       else if (type == VALUE_PIXEL_PROBE)
       {
@@ -2713,6 +2781,10 @@ namespace OrthancStone
       {
         EllipseProbeAnnotation::Unserialize(*this, units_, annotations[i]);
       }
+      /*else if (type == VALUE_TEXT_ANNOTATION)
+      {
+        TextAnnotation::Unserialize(*this, units_, annotations[i]);
+        }*/
       else
       {
         LOG(ERROR) << "Cannot unserialize unknown type of annotation: " << type;

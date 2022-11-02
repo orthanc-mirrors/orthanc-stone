@@ -38,7 +38,7 @@ namespace OrthancStone
     {
       Tool_Edit,
       Tool_None,
-      Tool_Segment,
+      Tool_Length,
       Tool_Angle,
       Tool_Circle,
       Tool_Remove,
@@ -61,10 +61,12 @@ namespace OrthancStone
     class ProbingAnnotation;
     class PixelProbeAnnotation;
     class SegmentAnnotation;
+    class LengthAnnotation;
     class AngleAnnotation;
     class CircleAnnotation;
     class RectangleProbeAnnotation;
     class EllipseProbeAnnotation;
+    class TextAnnotation;
     
     class EditPrimitiveTracker;
     class CreateTwoHandlesTracker;
@@ -120,8 +122,8 @@ namespace OrthancStone
       return units_;
     }
 
-    void AddSegmentAnnotation(const ScenePoint2D& p1,
-                              const ScenePoint2D& p2);
+    void AddLengthAnnotation(const ScenePoint2D& p1,
+                             const ScenePoint2D& p2);
 
     void AddCircleAnnotation(const ScenePoint2D& p1,
                              const ScenePoint2D& p2);

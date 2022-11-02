@@ -145,7 +145,7 @@ enum STONE_WEB_VIEWER_EXPORT WebViewerAction
     
     WebViewerAction_CreateAngle,
     WebViewerAction_CreateCircle,
-    WebViewerAction_CreateSegment,
+    WebViewerAction_CreateLength,
     WebViewerAction_RemoveMeasure,
     WebViewerAction_CreatePixelProbe,      // New in 2.4
     WebViewerAction_CreateEllipseProbe,    // New in 2.4
@@ -178,7 +178,7 @@ static OrthancStone::MouseAction ConvertWebViewerAction(int action)
     case WebViewerAction_Crosshair:
     case WebViewerAction_CreateAngle:
     case WebViewerAction_CreateCircle:
-    case WebViewerAction_CreateSegment:
+    case WebViewerAction_CreateLength:
     case WebViewerAction_RemoveMeasure:
     case WebViewerAction_CreatePixelProbe:
     case WebViewerAction_CreateEllipseProbe:
@@ -3231,8 +3231,8 @@ public:
               viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Circle);
               break;
               
-            case WebViewerAction_CreateSegment:
-              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Segment);
+            case WebViewerAction_CreateLength:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Length);
               break;
 
             case WebViewerAction_RemoveMeasure:

@@ -81,7 +81,7 @@ static void ProcessOptions(int argc, char* argv[])
             << "  c\tCreate circle annotations" << std::endl
             << "  d\tDelete mode for annotations" << std::endl
             << "  e\tCreate ellipse probe" << std::endl
-            << "  l\tCreate line annotations" << std::endl
+            << "  l\tCreate length annotations" << std::endl
             << "  m\tModification/edit mode, don't create annotation (default)" << std::endl
             << "  p\tCreate pixel probe" << std::endl
             << "  r\tCreate rectangle probe" << std::endl
@@ -317,7 +317,7 @@ int main(int argc, char* argv[])
 
                   case SDLK_l:
 #if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Segment);
+                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Length);
 #else
                     if (activeTool == ActiveTool_Line)
                     {

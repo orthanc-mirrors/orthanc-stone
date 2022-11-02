@@ -1382,7 +1382,7 @@ namespace OrthancStone
     }
 
   public:
-    ProbingAnnotation(AnnotationsSceneLayer& that) :
+    explicit ProbingAnnotation(AnnotationsSceneLayer& that) :
       Annotation(that),
       probedLayer_(that.GetProbedLayer()),
       probeChanged_(true),

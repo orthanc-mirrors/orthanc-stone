@@ -1,6 +1,10 @@
 Pending changes in the mainline
 ===============================
 
+
+Version 2.4 (2022-11-02)
+========================
+
 * New types of annotations:
   - Text annotation
   - Pixel probe

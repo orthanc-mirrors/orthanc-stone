@@ -189,13 +189,10 @@ namespace OrthancStone
       
     AnnotationsSceneLayer&  that_;
     GeometricPrimitives     primitives_;
-    Units                   units_;
       
   public:
-    explicit Annotation(AnnotationsSceneLayer& that,
-                        Units units) :
-      that_(that),
-      units_(units)
+    explicit Annotation(AnnotationsSceneLayer& that) :
+      that_(that)
     {
       that.AddAnnotation(this);
     }
@@ -211,11 +208,6 @@ namespace OrthancStone
     AnnotationsSceneLayer& GetParentLayer() const
     {
       return that_;
-    }
-
-    Units GetUnits() const
-    {
-      return units_;
     }
 
     GeometricPrimitive* AddPrimitive(GeometricPrimitive* primitive)
@@ -1108,12 +1100,11 @@ namespace OrthancStone
 
   public:
     SegmentAnnotation(AnnotationsSceneLayer& that,
-                      Units units,
                       Handle::Shape shape1,
                       const ScenePoint2D& p1,
                       Handle::Shape shape2,
                       const ScenePoint2D& p2) :
-      Annotation(that, units),
+      Annotation(that),
       handle1_(AddTypedPrimitive<Handle>(new Handle(*this, shape1, p1))),
       handle2_(AddTypedPrimitive<Handle>(new Handle(*this, shape2, p2))),
       segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
@@ -1170,7 +1161,8 @@ namespace OrthancStone
   class AnnotationsSceneLayer::LengthAnnotation : public SegmentAnnotation
   {
   private:
-    bool      showLabel_;
+    Units  units_;
+    bool   showLabel_;
 
     void UpdateLabel()
     {
@@ -1200,7 +1192,7 @@ namespace OrthancStone
         double dy = y1 - y2;
         char buf[32];
 
-        switch (GetUnits())
+        switch (units_)
         {
           case Units_Millimeters:
             sprintf(buf, "%0.2f cm", sqrt(dx * dx + dy * dy) / 10.0);
@@ -1226,7 +1218,8 @@ namespace OrthancStone
                      bool showLabel,
                      const ScenePoint2D& p1,
                      const ScenePoint2D& p2) :
-      SegmentAnnotation(that, units, Handle::Shape_Square, p1, Handle::Shape_Square, p2),
+      SegmentAnnotation(that, Handle::Shape_Square, p1, Handle::Shape_Square, p2),
+      units_(units),
       showLabel_(showLabel)
     {
       UpdateLabel();
@@ -1278,11 +1271,10 @@ namespace OrthancStone
   {
   public:
     TextAnnotation(AnnotationsSceneLayer& that,
-                   Units units,
                    const std::string& label,
                    const ScenePoint2D& p1,
                    const ScenePoint2D& p2) :
-      SegmentAnnotation(that, units, Handle::Shape_Invisible, p1, Handle::Shape_Square, p2)
+      SegmentAnnotation(that, Handle::Shape_Invisible, p1, Handle::Shape_Square, p2)
     {
       SetStartArrow(true);
       UpdateLabel(label);
@@ -1336,7 +1328,6 @@ namespace OrthancStone
     }
 
     static void Unserialize(AnnotationsSceneLayer& target,
-                            Units units,
                             const Json::Value& source)
     {
       if (source.isMember(KEY_X1) &&
@@ -1350,7 +1341,7 @@ namespace OrthancStone
           source[KEY_Y2].isNumeric() &&
           source[KEY_LABEL].isString())
       {
-        new TextAnnotation(target, units, source[KEY_LABEL].asString(),
+        new TextAnnotation(target, source[KEY_LABEL].asString(),
                            ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
                            ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()));
       }
@@ -1380,9 +1371,8 @@ namespace OrthancStone
     }
 
   public:
-    ProbingAnnotation(AnnotationsSceneLayer& that,
-                      Units units) :
-      Annotation(that, units),
+    ProbingAnnotation(AnnotationsSceneLayer& that) :
+      Annotation(that),
       probedLayer_(that.GetProbedLayer()),
       probeChanged_(true),
       lastLayerRevision_(0)
@@ -1468,9 +1458,8 @@ namespace OrthancStone
 
   public:
     PixelProbeAnnotation(AnnotationsSceneLayer& that,
-                         Units units,
                          const ScenePoint2D& p) :
-      ProbingAnnotation(that, units),
+      ProbingAnnotation(that),
       handle_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_CrossedSquare, p))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
@@ -1517,7 +1506,6 @@ namespace OrthancStone
     }
 
     static void Unserialize(AnnotationsSceneLayer& target,
-                            Units units,
                             const Json::Value& source)
     {
       if (source.isMember(KEY_X) &&
@@ -1525,8 +1513,7 @@ namespace OrthancStone
           source[KEY_X].isNumeric() &&
           source[KEY_Y].isNumeric())
       {
-        new PixelProbeAnnotation(target, units,
-                                 ScenePoint2D(source[KEY_X].asDouble(), source[KEY_Y].asDouble()));
+        new PixelProbeAnnotation(target, ScenePoint2D(source[KEY_X].asDouble(), source[KEY_Y].asDouble()));
       }
       else
       {
@@ -1579,11 +1566,10 @@ namespace OrthancStone
 
   public:
     AngleAnnotation(AnnotationsSceneLayer& that,
-                    Units units,
                     const ScenePoint2D& start,
                     const ScenePoint2D& middle,
                     const ScenePoint2D& end) :
-      Annotation(that, units),
+      Annotation(that),
       startHandle_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, start))),
       middleHandle_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, middle))),
       endHandle_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, end))),
@@ -1679,7 +1665,6 @@ namespace OrthancStone
     }
 
     static void Unserialize(AnnotationsSceneLayer& target,
-                            Units units,
                             const Json::Value& source)
     {
       if (source.isMember(KEY_X1) &&
@@ -1695,7 +1680,7 @@ namespace OrthancStone
           source[KEY_X3].isNumeric() &&
           source[KEY_Y3].isNumeric())
       {
-        new AngleAnnotation(target, units,
+        new AngleAnnotation(target,
                             ScenePoint2D(source[KEY_X1].asDouble(), source[KEY_Y1].asDouble()),
                             ScenePoint2D(source[KEY_X2].asDouble(), source[KEY_Y2].asDouble()),
                             ScenePoint2D(source[KEY_X3].asDouble(), source[KEY_Y3].asDouble()));
@@ -1711,6 +1696,7 @@ namespace OrthancStone
   class AnnotationsSceneLayer::CircleAnnotation : public Annotation
   {
   private:
+    Units     units_;
     Handle&   handle1_;
     Handle&   handle2_;
     Segment&  segment_;
@@ -1747,7 +1733,7 @@ namespace OrthancStone
         
       char buf[32];
 
-      switch (GetUnits())
+      switch (units_)
       {
         case Units_Millimeters:
           sprintf(buf, "%0.2f cm\n%0.2f cm%c%c",
@@ -1775,7 +1761,8 @@ namespace OrthancStone
                      Units units,
                      const ScenePoint2D& p1,
                      const ScenePoint2D& p2) :
-      Annotation(that, units),
+      Annotation(that),
+      units_(units),
       handle1_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p1))),
       handle2_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p2))),
       segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
@@ -1877,6 +1864,7 @@ namespace OrthancStone
   class AnnotationsSceneLayer::RectangleProbeAnnotation : public ProbingAnnotation
   {
   private:
+    Units     units_;
     Handle&   handle1_;
     Handle&   handle2_;
     Segment&  segment1_;
@@ -1911,7 +1899,7 @@ namespace OrthancStone
       
       char buf[32];
 
-      if (GetUnits() == Units_Millimeters)
+      if (units_ == Units_Millimeters)
       {
         const double area = std::abs(x1 - x2) * std::abs(y1 - y2);
 
@@ -1979,7 +1967,8 @@ namespace OrthancStone
                              Units units,
                              const ScenePoint2D& p1,
                              const ScenePoint2D& p2) :
-      ProbingAnnotation(that, units),
+      ProbingAnnotation(that),
+      units_(units),
       handle1_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p1))),
       handle2_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p2))),
       segment1_(AddTypedPrimitive<Segment>(new Segment(*this, p1.GetX(), p1.GetY(), p2.GetX(), p1.GetY()))),
@@ -2134,6 +2123,7 @@ namespace OrthancStone
   class AnnotationsSceneLayer::EllipseProbeAnnotation : public ProbingAnnotation
   {
   private:
+    Units     units_;
     Handle&   handle1_;
     Handle&   handle2_;
     Ellipse&  ellipse_;
@@ -2165,7 +2155,7 @@ namespace OrthancStone
       
       char buf[32];
 
-      if (GetUnits() == Units_Millimeters)
+      if (units_ == Units_Millimeters)
       {
         sprintf(buf, "Area: %0.2f cm%c%c",
                 ellipse_.GetArea() / 100.0,
@@ -2237,7 +2227,8 @@ namespace OrthancStone
                            Units units,
                            const ScenePoint2D& p1,
                            const ScenePoint2D& p2) :
-      ProbingAnnotation(that, units),
+      ProbingAnnotation(that),
+      units_(units),
       handle1_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p1))),
       handle2_(AddTypedPrimitive<Handle>(new Handle(*this, Handle::Shape_Square, p2))),
       ellipse_(AddTypedPrimitive<Ellipse>(new Ellipse(*this, p1, p2))),
@@ -2397,7 +2388,6 @@ namespace OrthancStone
       
   public:
     CreateAngleTracker(AnnotationsSceneLayer& that,
-                       Units units,
                        const ScenePoint2D& sceneClick,
                        const AffineTransform2D& canvasToScene) :
       that_(that),
@@ -2405,7 +2395,7 @@ namespace OrthancStone
       angle_(NULL),
       canvasToScene_(canvasToScene)
     {
-      length_ = new LengthAnnotation(that, units, false /* no length label */, sceneClick, sceneClick);
+      length_ = new LengthAnnotation(that, that.GetUnits(), false /* no length label */, sceneClick, sceneClick);
     }
 
     virtual void PointerMove(const PointerEvent& event,
@@ -2433,7 +2423,7 @@ namespace OrthancStone
       {
         // End of first step: The first segment is available, now create the angle
 
-        angle_ = new AngleAnnotation(that_, length_->GetUnits(), length_->GetHandle(0).GetCenter(),
+        angle_ = new AngleAnnotation(that_, length_->GetHandle(0).GetCenter(),
                                      length_->GetHandle(1).GetCenter(),
                                      length_->GetHandle(1).GetCenter());
           
@@ -2482,11 +2472,10 @@ namespace OrthancStone
   {
   public:
     CreatePixelProbeTracker(AnnotationsSceneLayer& that,
-                            Units units,
                             const ScenePoint2D& sceneClick,
                             const Scene2D& scene)
     {
-      PixelProbeAnnotation* annotation = new PixelProbeAnnotation(that, units, sceneClick);
+      PixelProbeAnnotation* annotation = new PixelProbeAnnotation(that, sceneClick);
       annotation->UpdateProbe(scene);
       that.BroadcastMessage(AnnotationAddedMessage(that));
     }
@@ -2641,7 +2630,7 @@ namespace OrthancStone
                                                  const ScenePoint2D& p2,
                                                  const ScenePoint2D& p3)
   {
-    annotations_.insert(new AngleAnnotation(*this, units_, p1, p2, p3));
+    annotations_.insert(new AngleAnnotation(*this, p1, p2, p3));
   }
   
 
@@ -2803,10 +2792,10 @@ namespace OrthancStone
           }
 
           case Tool_Angle:
-            return new CreateAngleTracker(*this, units_, s, scene.GetCanvasToSceneTransform());
+            return new CreateAngleTracker(*this, s, scene.GetCanvasToSceneTransform());
 
           case Tool_PixelProbe:
-            return new CreatePixelProbeTracker(*this, units_, s, scene);
+            return new CreatePixelProbeTracker(*this, s, scene);
 
           case Tool_RectangleProbe:
           {
@@ -2822,7 +2811,7 @@ namespace OrthancStone
 
           case Tool_TextAnnotation:
           {
-            Annotation* annotation = new TextAnnotation(*this, units_, "" /* empty label */, s, s);
+            Annotation* annotation = new TextAnnotation(*this, "" /* empty label */, s, s);
             return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
           }
 
@@ -2909,7 +2898,7 @@ namespace OrthancStone
 
       if (type == VALUE_ANGLE)
       {
-        AngleAnnotation::Unserialize(*this, units_, annotations[i]);
+        AngleAnnotation::Unserialize(*this, annotations[i]);
       }
       else if (type == VALUE_CIRCLE)
       {
@@ -2921,7 +2910,7 @@ namespace OrthancStone
       }
       else if (type == VALUE_PIXEL_PROBE)
       {
-        PixelProbeAnnotation::Unserialize(*this, units_, annotations[i]);
+        PixelProbeAnnotation::Unserialize(*this, annotations[i]);
       }
       else if (type == VALUE_RECTANGLE_PROBE)
       {
@@ -2933,7 +2922,7 @@ namespace OrthancStone
       }
       else if (type == VALUE_TEXT_ANNOTATION)
       {
-        TextAnnotation::Unserialize(*this, units_, annotations[i]);
+        TextAnnotation::Unserialize(*this, annotations[i]);
       }
       else
       {

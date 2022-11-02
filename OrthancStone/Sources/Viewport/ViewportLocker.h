@@ -21,30 +21,41 @@
  **/
 
 
-#include "FixedPointAligner.h"
+#pragma once
 
-#include <OrthancException.h>
+#include "IViewport.h"
 
 namespace OrthancStone
 {
-  namespace Internals
+  class ViewportLocker : public boost::noncopyable
   {
-    FixedPointAligner::FixedPointAligner(const ViewportController& controller,
-                                         const ScenePoint2D& p) :
-      canvas_(p)
+  private:
+    boost::shared_ptr<IViewport>       lock1_;
+    std::unique_ptr<IViewport::ILock>  lock2_;
+
+    IViewport::ILock& GetLock() const;
+
+  public:
+    explicit ViewportLocker(IViewport& viewport) :
+      lock2_(viewport.Lock())
     {
-      pivot_ = canvas_.Apply(controller.GetCanvasToSceneTransform());
     }
 
-    void FixedPointAligner::Apply(ViewportController& controller)
-    {
-      ScenePoint2D p = canvas_.Apply(controller.GetCanvasToSceneTransform());
+    explicit ViewportLocker(boost::weak_ptr<IViewport> viewport);
 
-      controller.SetSceneToCanvasTransform(
-        AffineTransform2D::Combine(
-          controller.GetSceneToCanvasTransform(),
-          AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
-                                          p.GetY() - pivot_.GetY())));
+    bool IsValid() const
+    {
+      return (lock2_.get() != NULL);
     }
-  }
+
+    ViewportController& GetController() const
+    {
+      return GetLock().GetController();
+    }
+
+    void Invalidate() const
+    {
+      return GetLock().Invalidate();
+    }
+  };
 }

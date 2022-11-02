@@ -304,6 +304,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Scene2D/LookupTableTextureSceneLayer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/MacroSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/MacroSceneLayer.h
+  ${ORTHANC_STONE_ROOT}/Scene2D/MagnifyingGlassTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Scene2D/MagnifyingGlassTracker.h
   ${ORTHANC_STONE_ROOT}/Scene2D/NullLayer.h
   ${ORTHANC_STONE_ROOT}/Scene2D/PanSceneTracker.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/PanSceneTracker.h
@@ -445,8 +447,9 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/UnionOfRectangles.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/UnionOfRectangles.h
   
-  ${ORTHANC_STONE_ROOT}/Viewport/IViewport.h
   ${ORTHANC_STONE_ROOT}/Viewport/DefaultViewportInteractor.cpp
+  ${ORTHANC_STONE_ROOT}/Viewport/IViewport.h
+  ${ORTHANC_STONE_ROOT}/Viewport/ViewportLocker.cpp
   
   ${ORTHANC_STONE_ROOT}/Volumes/IGeometryProvider.h
   ${ORTHANC_STONE_ROOT}/Volumes/IVolumeSlicer.cpp

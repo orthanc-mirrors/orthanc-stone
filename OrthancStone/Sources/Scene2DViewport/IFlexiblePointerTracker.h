@@ -45,13 +45,15 @@ namespace OrthancStone
     /**
     This method will be repeatedly called during user interaction
     */
-    virtual void PointerMove(const PointerEvent& event) = 0;
+    virtual void PointerMove(const PointerEvent& event,
+                             const Scene2D& scene) = 0;
 
     /**
     This method will be called when a touch/pointer is removed (mouse up, 
     pen lift, finger removed...)
     */
-    virtual void PointerUp(const PointerEvent& event) = 0;
+    virtual void PointerUp(const PointerEvent& event,
+                           const Scene2D& scene) = 0;
 
     /**
     This method will be called when a touch/pointer is added (mouse down, 
@@ -63,7 +65,8 @@ namespace OrthancStone
     Thus, if you count the PointerDown vs PointerUp, there will be an extra
     PointerUp.
     */
-    virtual void PointerDown(const PointerEvent& event) = 0;
+    virtual void PointerDown(const PointerEvent& event,
+                             const Scene2D& scene) = 0;
 
     /**
     This method will be repeatedly called by the tracker owner (for instance,
@@ -77,6 +80,6 @@ namespace OrthancStone
     its changes to the underlying model. If the model has been modified during
     tracker lifetime, it must be restored to its initial value
     */
-    virtual void Cancel() = 0;
+    virtual void Cancel(const Scene2D& scene) = 0;
   };
 }

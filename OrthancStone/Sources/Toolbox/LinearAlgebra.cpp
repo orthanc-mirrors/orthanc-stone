@@ -41,6 +41,59 @@ namespace OrthancStone
 {
   namespace LinearAlgebra
   {
+    void OnlineVarianceEstimator::AddSample(double value)
+    {
+      count_++;
+      sum_ += value;
+      sumOfSquares_ += value * value;
+    }
+
+
+    void OnlineVarianceEstimator::Clear()
+    {
+      count_ = 0;
+      sum_ = 0;
+      sumOfSquares_ = 0;
+    }
+      
+
+    double OnlineVarianceEstimator::GetMean() const
+    {
+      if (count_ == 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        return sum_ / static_cast<double>(count_);
+      }
+    }
+      
+
+    double OnlineVarianceEstimator::GetVariance() const
+    {
+      if (count_ == 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }        
+      else if (count_ == 1)
+      {
+        return 0;
+      }
+      else
+      {
+        const double n = static_cast<double>(count_);
+        return (sumOfSquares_ * n - sum_ * sum_) / (n * (n - 1.0));
+      }
+    }
+
+      
+    double OnlineVarianceEstimator::GetStandardDeviation() const
+    {
+      return sqrt(GetVariance());
+    }
+    
+
     void Print(const Vector& v)
     {
       for (size_t i = 0; i < v.size(); i++)

@@ -21,30 +21,36 @@
  **/
 
 
-#include "FixedPointAligner.h"
+#pragma once
 
-#include <OrthancException.h>
+#include "../Scene2DViewport/OneGesturePointerTracker.h"
+#include "../Viewport/ViewportLocker.h"
+
+#include <boost/weak_ptr.hpp>
 
 namespace OrthancStone
 {
-  namespace Internals
+  class MagnifyingGlassTracker : public OneGesturePointerTracker
   {
-    FixedPointAligner::FixedPointAligner(const ViewportController& controller,
-                                         const ScenePoint2D& p) :
-      canvas_(p)
-    {
-      pivot_ = canvas_.Apply(controller.GetCanvasToSceneTransform());
-    }
+  private:
+    boost::weak_ptr<IViewport>  viewport_;
+    ScenePoint2D                pivot_;
+    AffineTransform2D           originalSceneToCanvas_;
+    AffineTransform2D           originalCanvasToScene_;
 
-    void FixedPointAligner::Apply(ViewportController& controller)
-    {
-      ScenePoint2D p = canvas_.Apply(controller.GetCanvasToSceneTransform());
-
-      controller.SetSceneToCanvasTransform(
-        AffineTransform2D::Combine(
-          controller.GetSceneToCanvasTransform(),
-          AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
-                                          p.GetY() - pivot_.GetY())));
-    }
-  }
+    void Update(const ViewportLocker& locker,
+                const PointerEvent& event);
+    
+  public:
+    MagnifyingGlassTracker(boost::weak_ptr<IViewport> viewport,
+                           const PointerEvent& event);
+    
+    virtual void PointerUp(const PointerEvent& event,
+                           const Scene2D& scene) ORTHANC_OVERRIDE;
+    
+    virtual void PointerMove(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE;
+    
+    virtual void Cancel(const Scene2D& scene) ORTHANC_OVERRIDE;
+  };
 }

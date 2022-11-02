@@ -96,10 +96,13 @@
 #include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
 
 
-#include <boost/math/special_functions/round.hpp>
-#include <boost/make_shared.hpp>
-#include <stdio.h>
 #include <algorithm>
+#include <boost/make_shared.hpp>
+#include <boost/math/constants/constants.hpp>
+#include <boost/math/special_functions/round.hpp>
+#include <stdio.h>
+
+static const double PI = boost::math::constants::pi<double>();
 
 #if !defined(STONE_WEB_VIEWER_EXPORT)
 // We are not running ParseWebAssemblyExports.py, but we're compiling the wasm
@@ -138,11 +141,16 @@ enum STONE_WEB_VIEWER_EXPORT WebViewerAction
     WebViewerAction_Pan,
     WebViewerAction_Rotate,
     WebViewerAction_Crosshair,
+    WebViewerAction_MagnifyingGlass,       // New in 2.4
     
     WebViewerAction_CreateAngle,
     WebViewerAction_CreateCircle,
-    WebViewerAction_CreateSegment,
-    WebViewerAction_RemoveMeasure
+    WebViewerAction_CreateLength,
+    WebViewerAction_RemoveMeasure,
+    WebViewerAction_CreatePixelProbe,      // New in 2.4
+    WebViewerAction_CreateEllipseProbe,    // New in 2.4
+    WebViewerAction_CreateRectangleProbe,  // New in 2.4
+    WebViewerAction_CreateTextAnnotation   // New in 2.4
     };
   
 
@@ -163,12 +171,19 @@ static OrthancStone::MouseAction ConvertWebViewerAction(int action)
     case WebViewerAction_Rotate:
       return OrthancStone::MouseAction_Rotate;
       
+    case WebViewerAction_MagnifyingGlass:
+      return OrthancStone::MouseAction_MagnifyingGlass;
+      
     case WebViewerAction_None:
     case WebViewerAction_Crosshair:
     case WebViewerAction_CreateAngle:
     case WebViewerAction_CreateCircle:
-    case WebViewerAction_CreateSegment:
+    case WebViewerAction_CreateLength:
     case WebViewerAction_RemoveMeasure:
+    case WebViewerAction_CreatePixelProbe:
+    case WebViewerAction_CreateEllipseProbe:
+    case WebViewerAction_CreateRectangleProbe:
+    case WebViewerAction_CreateTextAnnotation:
       return OrthancStone::MouseAction_None;
 
     default:
@@ -1198,9 +1213,10 @@ private:
   }
   
 public:
-  explicit SeriesCursor(size_t framesCount) :
+  explicit SeriesCursor(size_t framesCount,
+                        bool startAtMiddle /* Whether to start at the middle frame */) :
     framesCount_(framesCount),
-    currentFrame_(framesCount / 2),  // Start at the middle frame    
+    currentFrame_(startAtMiddle ? framesCount / 2 : 0),
     isCircularPrefetch_(false),
     lastAction_(Action_None)
   {
@@ -1581,16 +1597,20 @@ public:
     virtual void SignalStoneAnnotationAdded(const ViewerViewport& viewport) = 0;
 
     virtual void SignalStoneAnnotationRemoved(const ViewerViewport& viewport) = 0;
+
+    virtual void SignalStoneTextAnnotationRequired(const ViewerViewport& viewport,
+                                                   const OrthancStone::ScenePoint2D& pointedPosition,
+                                                   const OrthancStone::ScenePoint2D& labelPosition) = 0;
   };
 
 private:
   static const int LAYER_TEXTURE = 0;
   static const int LAYER_OVERLAY = 1;
-  static const int LAYER_ORIENTATION_MARKERS = 2;
-  static const int LAYER_REFERENCE_LINES = 3;
-  static const int LAYER_ANNOTATIONS_OSIRIX = 4;
-  static const int LAYER_ANNOTATIONS_STONE = 5;
-  static const int LAYER_DEEP_LEARNING = 6;
+  static const int LAYER_DEEP_LEARNING = 2;
+  static const int LAYER_ORIENTATION_MARKERS = 3;
+  static const int LAYER_REFERENCE_LINES = 4;
+  static const int LAYER_ANNOTATIONS_OSIRIX = 5;
+  static const int LAYER_ANNOTATIONS_STONE = 6;
 
   
   class ICommand : public Orthanc::IDynamicObject
@@ -1985,8 +2005,6 @@ private:
   std::vector<float>                           windowingPresetWidths_;
   unsigned int                                 cineRate_;
   bool                                         inverted_;
-  bool                                         flipX_;
-  bool                                         flipY_;
   bool                                         fitNextContent_;
   std::list<PrefetchItem>                      prefetchQueue_;
   bool                                         serverSideTranscoding_;
@@ -2008,11 +2026,12 @@ private:
   // coordinates of the current texture, with (0,0) corresponding to
   // the center of the top-left pixel
   boost::shared_ptr<OrthancStone::AnnotationsSceneLayer>  stoneAnnotations_;
+  
+  bool linearInterpolation_;
 
   boost::shared_ptr<Orthanc::ImageAccessor>  deepLearningMask_;
   std::string deepLearningSopInstanceUid_;
   unsigned int deepLearningFrameNumber_;
-  
 
   void ScheduleNextPrefetch()
   {
@@ -2150,9 +2169,7 @@ private:
 
     assert(layer.get() != NULL);
 
-    layer->SetLinearInterpolation(true);
-    layer->SetFlipX(flipX_);
-    layer->SetFlipY(flipY_);
+    layer->SetLinearInterpolation(linearInterpolation_);
 
     double pixelSpacingX, pixelSpacingY;
 
@@ -2206,8 +2223,7 @@ private:
       if (accessor.IsValid())
       {
         overlay.reset(accessor.CreateTexture());
-        overlay->SetFlipX(flipX_);
-        overlay->SetFlipY(flipY_);
+        overlay->SetLinearInterpolation(false);
       }
     }
 
@@ -2252,8 +2268,6 @@ private:
       deepLearningLayer.reset(new OrthancStone::LookupTableTextureSceneLayer(*deepLearningMask_));
       deepLearningLayer->SetLookupTable(lut);
       deepLearningLayer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
-      deepLearningLayer->SetFlipX(flipX_);
-      deepLearningLayer->SetFlipY(flipY_);
     }
 
     StoneAnnotationsRegistry::GetInstance().Load(*stoneAnnotations_, instance.GetSopInstanceUid(), frameIndex);
@@ -2523,25 +2537,6 @@ private:
           lock->GetController().GetScene().GetLayer(LAYER_TEXTURE)).
           SetCustomWindowing(windowingCenter_, windowingWidth_);
       }
-
-      {
-        OrthancStone::TextureBaseSceneLayer& layer = 
-          dynamic_cast<OrthancStone::TextureBaseSceneLayer&>(
-            lock->GetController().GetScene().GetLayer(LAYER_TEXTURE));
-
-        layer.SetFlipX(flipX_);
-        layer.SetFlipY(flipY_);
-      }
-
-      if (lock->GetController().GetScene().HasLayer(LAYER_OVERLAY))
-      {
-        OrthancStone::TextureBaseSceneLayer& layer = 
-          dynamic_cast<OrthancStone::TextureBaseSceneLayer&>(
-            lock->GetController().GetScene().GetLayer(LAYER_OVERLAY));
-
-        layer.SetFlipX(flipX_);
-        layer.SetFlipY(flipY_);
-      }
         
       lock->Invalidate();
     }
@@ -2552,13 +2547,12 @@ private:
                  const OrthancStone::DicomSource& source,
                  const std::string& canvas,
                  boost::shared_ptr<FramesCache> cache,
-                 bool softwareRendering) :
+                 bool softwareRendering,
+                 bool linearInterpolation) :
     context_(context),
     source_(source),
     framesCache_(cache),
     fitNextContent_(true),
-    flipX_(false),
-    flipY_(false),
     hasFocusOnInstance_(false),
     focusFrameNumber_(0),
     synchronizationOffset_(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0)),
@@ -2566,7 +2560,8 @@ private:
     centralPhysicalWidth_(1),
     centralPhysicalHeight_(1),
     centralPixelSpacingX_(1),
-    centralPixelSpacingY_(1)
+    centralPixelSpacingY_(1),
+    linearInterpolation_(linearInterpolation)
   {
     if (!framesCache_)
     {
@@ -2596,6 +2591,7 @@ private:
     SetWindowingPreset();
 
     stoneAnnotations_.reset(new OrthancStone::AnnotationsSceneLayer(LAYER_ANNOTATIONS_STONE));
+    stoneAnnotations_->SetProbedLayer(LAYER_TEXTURE);
   }
 
 
@@ -2733,6 +2729,14 @@ private:
     }
   }
 
+  void Handle(const OrthancStone::AnnotationsSceneLayer::TextAnnotationRequiredMessage& message)
+  {
+    if (observer_.get() != NULL)
+    {
+      observer_->SignalStoneTextAnnotationRequired(*this, message.GetPointedPosition(), message.GetLabelPosition());
+    }
+  }
+
 public:
   virtual ~ViewerViewport()
   {
@@ -2746,10 +2750,11 @@ public:
                                                   const OrthancStone::DicomSource& source,
                                                   const std::string& canvas,
                                                   boost::shared_ptr<FramesCache> cache,
-                                                  bool softwareRendering)
+                                                  bool softwareRendering,
+                                                  bool linearInterpolation)
   {
     boost::shared_ptr<ViewerViewport> viewport(
-      new ViewerViewport(context, source, canvas, cache, softwareRendering));
+      new ViewerViewport(context, source, canvas, cache, softwareRendering, linearInterpolation));
 
     {
       std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context.Lock());
@@ -2772,6 +2777,9 @@ public:
 
       viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationRemovedMessage>(
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
+
+      viewport->Register<OrthancStone::AnnotationsSceneLayer::TextAnnotationRequiredMessage>(
+        *viewport->stoneAnnotations_, &ViewerViewport::Handle);
     }
 
     {
@@ -2790,8 +2798,6 @@ public:
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
 
-    flipX_ = false;
-    flipY_ = false;
     fitNextContent_ = true;
     cineRate_ = DEFAULT_CINE_RATE;
     inverted_ = false;
@@ -2799,7 +2805,28 @@ public:
     OrthancStone::LinearAlgebra::AssignVector(synchronizationOffset_, 0, 0, 0);
 
     frames_.reset(frames);
-    cursor_.reset(new SeriesCursor(frames_->GetFramesCount()));
+    cursor_.reset(new SeriesCursor(frames_->GetFramesCount(), false));
+    
+    if (frames_->GetFramesCount() != 0)
+    {
+      const OrthancStone::DicomInstanceParameters& firstInstance = frames_->GetInstanceOfFrame(0);
+      std::string modality;
+      if (firstInstance.GetTags().LookupStringValue(modality, Orthanc::DICOM_TAG_MODALITY, false))
+      {
+        if (modality == "MR" ||
+            modality == "CT" ||
+            modality == "NM" ||
+            modality == "OPT" ||
+            modality == "PT" ||
+            modality == "RTDOSE" ||
+            modality == "XA")
+        {
+          // For series that might correspond to 3D images, use their
+          // central frame as the first frame to be displayed
+          cursor_.reset(new SeriesCursor(frames_->GetFramesCount(), true));
+        }
+      }
+    }
 
     LOG(INFO) << "Number of frames in series: " << frames_->GetFramesCount();
 
@@ -3102,14 +3129,42 @@ public:
 
   void FlipX()
   {
-    flipX_ = !flipX_;
-    UpdateCurrentTextureParameters();
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+      lock->GetController().GetScene().FlipViewportX(
+        lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
+      lock->Invalidate();
+    }    
   }
 
   void FlipY()
   {
-    flipY_ = !flipY_;
-    UpdateCurrentTextureParameters();
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+      lock->GetController().GetScene().FlipViewportY(
+        lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
+      lock->Invalidate();
+    }
+  }
+
+  void RotateLeft()
+  {
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+      lock->GetController().GetScene().RotateViewport(
+        -PI / 2.0, lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
+      lock->Invalidate();
+    }    
+  }
+
+  void RotateRight()
+  {
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+      lock->GetController().GetScene().RotateViewport(
+        PI / 2.0, lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
+      lock->Invalidate();
+    }
   }
 
   void Invert()
@@ -3224,12 +3279,28 @@ public:
               viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Circle);
               break;
               
-            case WebViewerAction_CreateSegment:
-              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Segment);
+            case WebViewerAction_CreateLength:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Length);
               break;
 
             case WebViewerAction_RemoveMeasure:
               viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Remove);
+              break;
+
+            case WebViewerAction_CreatePixelProbe:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_PixelProbe);
+              break;
+
+            case WebViewerAction_CreateEllipseProbe:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_EllipseProbe);
+              break;
+
+            case WebViewerAction_CreateRectangleProbe:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_RectangleProbe);
+              break;
+
+            case WebViewerAction_CreateTextAnnotation:
+              viewer_.stoneAnnotations_->SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_TextAnnotation);
               break;
 
             default:
@@ -3402,6 +3473,25 @@ public:
         }
       }
     }    
+  }
+
+
+  void SetLinearInterpolation(bool linearInterpolation)
+  {
+    if (linearInterpolation_ != linearInterpolation)
+    {
+      linearInterpolation_ = linearInterpolation;
+      Redraw();
+    }
+  }
+
+  
+  void AddTextAnnotation(const std::string& label,
+                         const OrthancStone::ScenePoint2D& pointedPosition,
+                         const OrthancStone::ScenePoint2D& labelPosition)
+  {
+    stoneAnnotations_->AddTextAnnotation(label, pointedPosition, labelPosition);
+    Redraw();
   }
 
 
@@ -3700,6 +3790,27 @@ public:
       },
       viewport.GetCanvasId().c_str());
   }
+
+  virtual void SignalStoneTextAnnotationRequired(const ViewerViewport& viewport,
+                                                 const OrthancStone::ScenePoint2D& pointedPosition,
+                                                 const OrthancStone::ScenePoint2D& labelPosition) ORTHANC_OVERRIDE
+  {
+    EM_ASM({
+        const customEvent = document.createEvent("CustomEvent");
+        customEvent.initCustomEvent("TextAnnotationRequired", false, false,
+                                    { "canvasId" : UTF8ToString($0),
+                                      "pointedX" : $1,
+                                      "pointedY" : $2,
+                                      "labelX" : $3,
+                                      "labelY" : $4 });
+        window.dispatchEvent(customEvent);
+      },
+      viewport.GetCanvasId().c_str(),
+      pointedPosition.GetX(),
+      pointedPosition.GetY(),
+      labelPosition.GetX(),
+      labelPosition.GetY() );
+  }
 };
 
 
@@ -3709,6 +3820,7 @@ static boost::shared_ptr<FramesCache> framesCache_;
 static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
 static bool softwareRendering_ = false;
+static bool linearInterpolation_ = true;
 static WebViewerAction leftButtonAction_ = WebViewerAction_Windowing;
 static WebViewerAction middleButtonAction_ = WebViewerAction_Pan;
 static WebViewerAction rightButtonAction_ = WebViewerAction_Zoom;
@@ -3755,7 +3867,7 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
   if (found == allViewports_.end())
   {
     boost::shared_ptr<ViewerViewport> viewport(
-      ViewerViewport::Create(*context_, source_, canvas, framesCache_, softwareRendering_));
+      ViewerViewport::Create(*context_, source_, canvas, framesCache_, softwareRendering_, linearInterpolation_));
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
     viewport->SetOsiriXAnnotations(osiriXAnnotations_);
@@ -4494,6 +4606,28 @@ extern "C"
   
 
   EMSCRIPTEN_KEEPALIVE
+  void RotateLeft(const char* canvas)
+  {
+    try
+    {
+      GetViewport(canvas)->RotateLeft();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }  
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void RotateRight(const char* canvas)
+  {
+    try
+    {
+      GetViewport(canvas)->RotateRight();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }  
+  
+
+  EMSCRIPTEN_KEEPALIVE
   void SetSoftwareRendering(int softwareRendering)
   {
     softwareRendering_ = softwareRendering;
@@ -4504,6 +4638,23 @@ extern "C"
   int IsSoftwareRendering()
   {
     return softwareRendering_;
+  }  
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void SetLinearInterpolation(int linearInterpolation)
+  {
+    linearInterpolation_ = linearInterpolation;
+
+    try
+    {
+      for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+      {
+        assert(it->second != NULL);
+        it->second->SetLinearInterpolation(linearInterpolation);
+      }
+    }
+    EXTERN_CATCH_EXCEPTIONS;
   }  
 
 
@@ -4717,5 +4868,22 @@ extern "C"
     }
     EXTERN_CATCH_EXCEPTIONS;
     return false;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void AddTextAnnotation(const char* canvas,
+                         const char* label,
+                         double pointedX,
+                         double pointedY,
+                         double labelX,
+                         double labelY)
+  {
+    try
+    {
+      GetViewport(canvas)->AddTextAnnotation(label, OrthancStone::ScenePoint2D(pointedX, pointedY),
+                                             OrthancStone::ScenePoint2D(labelX, labelY));
+    }
+    EXTERN_CATCH_EXCEPTIONS;
   }
 }

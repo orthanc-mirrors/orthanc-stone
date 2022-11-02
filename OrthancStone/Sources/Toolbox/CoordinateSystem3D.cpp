@@ -398,9 +398,9 @@ namespace OrthancStone
     const char orientationY = v[1] < 0 ? 'A' : 'P';
     const char orientationZ = v[2] < 0 ? 'F' : 'H';
 
-    double absX = abs(v[0]);
-    double absY = abs(v[1]);
-    double absZ = abs(v[2]);
+    double absX = std::abs(v[0]);
+    double absY = std::abs(v[1]);
+    double absZ = std::abs(v[2]);
 
     std::string result;
 

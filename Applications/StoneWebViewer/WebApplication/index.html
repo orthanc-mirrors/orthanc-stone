@@ -85,7 +85,11 @@
               </label>
               <br>
             </div>
-            <label>Use software rendering (will reload the viewer)
+            <label>Enable linear interpolation
+              <input type="checkbox" style="margin-left: 20px" v-model="settingLinearInterpolation">
+            </label>
+            <br>
+            <label>Use software rendering (slower, will reload the viewer)
               <input type="checkbox" style="margin-left: 20px" v-model="settingSoftwareRendering">
             </label>
             <br><br>
@@ -497,6 +501,31 @@
 
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Magnifying glass"
+                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_MAGNIFYING_GLASS }"
+                      v-on:click="SetMouseButtonActions(MOUSE_TOOL_MAGNIFYING_GLASS, stone.WebViewerAction.MAGNIFYING_GLASS, stone.WebViewerAction.PAN, stone.WebViewerAction.ZOOM)">
+                <i class="fas fa-search-plus"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Rotate to the left"
+                      v-on:click="RotateLeft()">
+                <i class="fas fa-undo"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      data-toggle="tooltip" data-title="Rotate to the right"
+                      v-on:click="RotateRight()">
+                <i class="fas fa-undo fa-flip-horizontal"></i>
+              </button>
+            </div>
+            
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
                       data-toggle="tooltip" data-title="Flip horizontally"
                       v-on:click="FlipX()">
                 <i class="fas fa-exchange-alt"></i>
@@ -513,10 +542,10 @@
             
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
-                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_SEGMENT }"
-                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_SEGMENT, stone.WebViewerAction.CREATE_SEGMENT)"
+                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_LENGTH }"
+                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_LENGTH, stone.WebViewerAction.CREATE_LENGTH)"
                       data-toggle="tooltip" data-title="Measure length">
-                <i class="fas fa-arrows-alt-h"></i>
+                <i class="fas fa-ruler"></i>
               </button>
             </div>
 
@@ -525,7 +554,7 @@
                       v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_ANGLE }"
                       v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_ANGLE, stone.WebViewerAction.CREATE_ANGLE)"
                       data-toggle="tooltip" data-title="Measure angle">
-                <i class="fas fa-angle-left fa-lg"></i>
+                <i class="fas fa-drafting-compass"></i>
               </button>
             </div>
 
@@ -540,9 +569,45 @@
 
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
+                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_PIXEL_PROBE }"
+                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_PIXEL_PROBE, stone.WebViewerAction.CREATE_PIXEL_PROBE)"
+                      data-toggle="tooltip" data-title="Pixel probe">
+                <i class="fas fa-microscope"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_RECTANGLE_PROBE }"
+                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_RECTANGLE_PROBE, stone.WebViewerAction.CREATE_RECTANGLE_PROBE)"
+                      data-toggle="tooltip" data-title="Rectangle probe">
+                <i class="fas fa-plus-square"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_ELLIPSE_PROBE }"
+                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_ELLIPSE_PROBE, stone.WebViewerAction.CREATE_ELLIPSE_PROBE)"
+                      data-toggle="tooltip" data-title="Ellipse probe">
+                <i class="fas fa-plus-circle"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
+                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_TEXT_ANNOTATION }"
+                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_TEXT_ANNOTATION, stone.WebViewerAction.CREATE_TEXT_ANNOTATION)"
+                      data-toggle="tooltip" data-title="Add text annotation">
+                <i class="fas fa-comment-dots"></i>
+              </button>
+            </div>
+
+            <div class="ng-scope inline-object">
+              <button class="wvButton--underline text-center"
                       v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_REMOVE_MEASURE }"
                       v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_REMOVE_MEASURE, stone.WebViewerAction.REMOVE_MEASURE)"
-                      data-toggle="tooltip" data-title="Delete measurement">
+                      data-toggle="tooltip" data-title="Delete annotation">
                 <i class="fas fa-trash"></i>
               </button>
             </div>
@@ -674,7 +739,8 @@
                            'wvSplitpane__cellBorder--yellow' : content.series.color == 'yellow', 
                            'wvSplitpane__cellBorder--violet' : content.series.color == 'violet'
                            }" 
-             ondragover="event.preventDefault()"
+             v-on:dragenter="$event.preventDefault()"
+             v-on:dragover="$event.preventDefault()"
              v-on:drop="DragDrop($event)"
              style="width:100%;height:100%">
           <div class="wvSplitpane__cell" 
@@ -687,13 +753,21 @@
                       oncontextmenu="return false"></canvas>
 
               <div v-show="showInfo">
+                <div v-if="numberOfFrames > 1" class="wvVerticalScrollbar"
+                       v-on:click="var offset = $event.currentTarget.getClientRects()[0]; var y = $event.clientY - offset.top; var height = $event.currentTarget.offsetHeight; currentFrame = Math.min(numberOfFrames - 1, Math.floor(y * numberOfFrames / (height - 1)));">
+                  <div class="wvVerticalScrollbarHighlight"
+                       v-bind:style="{ top: (currentFrame / (numberOfFrames - 1) * 95.0) + '%' }">
+                  </div>
+                </div>
+                
                 <div class="wv-overlay">
                   <div v-if="'tags' in content.series" class="wv-overlay-topleft">
                     {{ content.series.tags[PATIENT_NAME] }}<br/>
                     {{ content.series.tags[PATIENT_ID] }}<br/>
                     {{ app.FormatDate(content.series.tags[PATIENT_BIRTH_DATE]) }}
                   </div>
-                  <div v-if="'tags' in content.series" class="wv-overlay-topright">
+                  <div v-if="'tags' in content.series" class="wv-overlay-topright"
+                       v-bind:class="{ 'wvInfoRightMargin' : numberOfFrames > 1 }">
                     {{ content.series.tags[STUDY_DESCRIPTION] }}<br/>
                     <span v-if="contentDate !== undefined && contentDate != ''">{{ app.FormatDate(contentDate) }} <span v-show="contentTime != ''">{{ app.FormatTime(contentTime) }}</span><br/></span>
                     <span v-else="contentDate === undefined || contentDate == ''">{{ app.FormatDate(content.series.tags[STUDY_DATE]) }}<br/></span>
@@ -723,7 +797,9 @@
                         </button>
                       </div>
                       <span data-toggle="tooltip" data-title="Current frame number">
-                        &nbsp;&nbsp;{{ currentFrame + 1 }} / {{ numberOfFrames }}&nbsp;&nbsp;
+                        &nbsp;&nbsp;
+                        <input type="text" v-model="currentFrameFromUser" class="wvInputInstanceNumber"> / {{ numberOfFrames }}
+                        &nbsp;&nbsp;
                       </span>
                       <div class="btn-group btn-group-sm" role="group">                        
                         <button class="btn btn-primary" @click="IncrementFrame()">
@@ -746,7 +822,8 @@
                       </div>
                     </span>
                   </div>
-                  <div class="wv-overlay-bottomright wvPrintExclude" style="bottom: 0px">
+                  <div class="wv-overlay-bottomright wvPrintExclude" style="bottom: 0px"
+                       v-bind:class="{ 'wvInfoRightMargin' : numberOfFrames > 1 }">
                     <div v-if="windowingWidth != 0">
                       ww/wc: {{ windowingWidth }} / {{ windowingCenter }}
                     </div>

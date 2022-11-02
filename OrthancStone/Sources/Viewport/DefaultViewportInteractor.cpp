@@ -23,6 +23,7 @@
 #include "DefaultViewportInteractor.h"
 
 #include "../Scene2D/GrayscaleWindowingSceneTracker.h"
+#include "../Scene2D/MagnifyingGlassTracker.h"
 #include "../Scene2D/PanSceneTracker.h"
 #include "../Scene2D/RotateSceneTracker.h"
 #include "../Scene2D/ZoomSceneTracker.h"
@@ -77,6 +78,9 @@ namespace OrthancStone
       case MouseAction_Zoom:
         return new ZoomSceneTracker(viewport, event, viewportHeight);
       
+      case MouseAction_MagnifyingGlass:
+        return new MagnifyingGlassTracker(viewport, event);
+
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }

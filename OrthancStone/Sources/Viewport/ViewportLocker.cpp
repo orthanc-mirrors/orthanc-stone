@@ -21,30 +21,31 @@
  **/
 
 
-#include "FixedPointAligner.h"
+#include "ViewportLocker.h"
 
 #include <OrthancException.h>
 
 namespace OrthancStone
 {
-  namespace Internals
+  IViewport::ILock& ViewportLocker::GetLock() const
   {
-    FixedPointAligner::FixedPointAligner(const ViewportController& controller,
-                                         const ScenePoint2D& p) :
-      canvas_(p)
+    if (lock2_.get() == NULL)
     {
-      pivot_ = canvas_.Apply(controller.GetCanvasToSceneTransform());
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-
-    void FixedPointAligner::Apply(ViewportController& controller)
+    else
     {
-      ScenePoint2D p = canvas_.Apply(controller.GetCanvasToSceneTransform());
+      return *lock2_;
+    }
+  }
+  
 
-      controller.SetSceneToCanvasTransform(
-        AffineTransform2D::Combine(
-          controller.GetSceneToCanvasTransform(),
-          AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
-                                          p.GetY() - pivot_.GetY())));
+  ViewportLocker::ViewportLocker(boost::weak_ptr<IViewport> viewport) :
+    lock1_(viewport.lock())
+  {
+    if (lock1_)
+    {
+      lock2_.reset(lock1_->Lock());
     }
   }
 }

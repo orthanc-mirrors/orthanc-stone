@@ -34,14 +34,47 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationRemovedMessage, AnnotationsSceneLayer);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationChangedMessage, AnnotationsSceneLayer);
 
+    class TextAnnotationRequiredMessage : public OriginMessage<AnnotationsSceneLayer>
+    {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
+    private:
+      ScenePoint2D pointedPosition_;
+      ScenePoint2D labelPosition_;
+
+    public:
+      TextAnnotationRequiredMessage(const AnnotationsSceneLayer& origin,
+                                    ScenePoint2D pointedPosition,
+                                    ScenePoint2D labelPosition) :
+        OriginMessage(origin),
+        pointedPosition_(pointedPosition),
+        labelPosition_(labelPosition)
+      {
+      }
+      
+      const ScenePoint2D& GetPointedPosition() const
+      {
+        return pointedPosition_;
+      }
+      
+      const ScenePoint2D& GetLabelPosition() const
+      {
+        return labelPosition_;
+      }
+    };
+    
     enum Tool
     {
       Tool_Edit,
       Tool_None,
-      Tool_Segment,
+      Tool_Length,
       Tool_Angle,
       Tool_Circle,
-      Tool_Remove
+      Tool_Remove,
+      Tool_PixelProbe,
+      Tool_RectangleProbe,
+      Tool_EllipseProbe,
+      Tool_TextAnnotation
     };
 
   private:
@@ -51,16 +84,25 @@ namespace OrthancStone
     class Circle;    
     class Arc;
     class Text;
+    class Ellipse;
 
     class Annotation;
+    class ProbingAnnotation;
+    class PixelProbeAnnotation;
     class SegmentAnnotation;
+    class LengthAnnotation;
+    class TextAnnotation;
     class AngleAnnotation;
     class CircleAnnotation;
+    class RectangleProbeAnnotation;
+    class EllipseProbeAnnotation;
     
     class EditPrimitiveTracker;
-    class CreateSegmentOrCircleTracker;
+    class CreateTwoHandlesTracker;
     class CreateAngleTracker;
+    class CreatePixelProbeTracker;
     class RemoveTracker;
+    class CreateTextAnnotationTracker;
 
     typedef std::set<GeometricPrimitive*>  GeometricPrimitives;
     typedef std::set<Annotation*>          Annotations;
@@ -73,6 +115,7 @@ namespace OrthancStone
     Annotations          annotations_;
     SubLayers            subLayersToRemove_;
     Units                units_;
+    int                  probedLayer_;
 
     void AddAnnotation(Annotation* annotation);
     
@@ -109,8 +152,8 @@ namespace OrthancStone
       return units_;
     }
 
-    void AddSegmentAnnotation(const ScenePoint2D& p1,
-                              const ScenePoint2D& p2);
+    void AddLengthAnnotation(const ScenePoint2D& p1,
+                             const ScenePoint2D& p2);
 
     void AddCircleAnnotation(const ScenePoint2D& p1,
                              const ScenePoint2D& p2);
@@ -132,5 +175,19 @@ namespace OrthancStone
     void Serialize(Json::Value& target) const;
     
     void Unserialize(const Json::Value& serialized);
+
+    void SetProbedLayer(int layer)
+    {
+      probedLayer_ = layer;
+    }
+
+    int GetProbedLayer() const
+    {
+      return probedLayer_;
+    }
+
+    void AddTextAnnotation(const std::string& label,
+                           const ScenePoint2D& pointedPosition,
+                           const ScenePoint2D& labelPosition);
   };
 }

@@ -118,7 +118,7 @@ namespace OrthancStone
                                                                  const PointerEvent& event,
                                                                  unsigned int canvasWidth,
                                                                  unsigned int canvasHeight) :
-    OneGesturePointerTracker(viewport),
+    viewport_(viewport),
     layerIndex_(layerIndex),
     clickX_(event.GetMainPosition().GetX()),
     clickY_(event.GetMainPosition().GetY())
@@ -154,7 +154,8 @@ namespace OrthancStone
     }
   }
   
-  void GrayscaleWindowingSceneTracker::PointerMove(const PointerEvent& event)
+  void GrayscaleWindowingSceneTracker::PointerMove(const PointerEvent& event,
+                                                   const Scene2D& scene)
   {
     if (active_)
     {
@@ -173,7 +174,7 @@ namespace OrthancStone
     }
   }
 
-  void GrayscaleWindowingSceneTracker::Cancel()
+  void GrayscaleWindowingSceneTracker::Cancel(const Scene2D& scene)
   {
     SetWindowing(originalCenter_, originalWidth_);
   }

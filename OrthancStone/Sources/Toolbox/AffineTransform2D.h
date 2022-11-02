@@ -36,7 +36,7 @@ namespace OrthancStone
     Matrix  matrix_;
 
   public:
-    AffineTransform2D();
+    AffineTransform2D();  // Create the identity transform
 
     // The matrix must be 3x3, without perspective effects
     explicit AffineTransform2D(const Matrix& m);
@@ -106,5 +106,9 @@ namespace OrthancStone
                                         bool flipY,
                                         unsigned int width,
                                         unsigned int height);
+
+    static AffineTransform2D CreateFlipX();
+
+    static AffineTransform2D CreateFlipY();
   };
 }

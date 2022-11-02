@@ -4499,3 +4499,28 @@ TEST(GenericToolbox, FastParseTest_FastParseVector02)
   ASSERT_DOUBLE_EQ(9093     , v[10]);
   ASSERT_DOUBLE_EQ(0        , v[11]);
 }
+
+
+TEST(LinearAlgebra, OnlineVarianceEstimator)
+{
+  OrthancStone::LinearAlgebra::OnlineVarianceEstimator e;
+  ASSERT_EQ(0u, e.GetCount());
+  ASSERT_THROW(e.GetMean(), Orthanc::OrthancException);
+  ASSERT_THROW(e.GetVariance(), Orthanc::OrthancException);
+  ASSERT_THROW(e.GetStandardDeviation(), Orthanc::OrthancException);
+
+  e.AddSample(42);
+  ASSERT_EQ(1u, e.GetCount());
+  ASSERT_DOUBLE_EQ(42.0, e.GetMean());
+  ASSERT_DOUBLE_EQ(0.0, e.GetVariance());
+  ASSERT_DOUBLE_EQ(0.0, e.GetStandardDeviation());
+
+  e.Clear();
+  e.AddSample(87.9);
+  e.AddSample(-82.4);
+  e.AddSample(17.3);
+  ASSERT_EQ(3u, e.GetCount());
+  ASSERT_DOUBLE_EQ(7.6, e.GetMean());
+  ASSERT_DOUBLE_EQ(7321.09, e.GetVariance());
+  ASSERT_DOUBLE_EQ(85.5633683301447, e.GetStandardDeviation());  
+}

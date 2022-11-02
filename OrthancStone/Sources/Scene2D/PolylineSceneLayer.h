@@ -121,5 +121,58 @@ namespace OrthancStone
     }
 
     virtual void GetBoundingBox(Extent2D& target) const ORTHANC_OVERRIDE;
+
+    void AddArc(double centerX,
+                double centerY,
+                double radiusX,
+                double radiusY,
+                double startAngle,
+                double endAngle,
+                Color color,
+                unsigned int countSegments);
+    
+    void AddCircle(double centerX,
+                   double centerY,
+                   double radius,
+                   Color color,
+                   unsigned int countSegments);
+
+    void AddRectangle(double x1,
+                      double y1,
+                      double x2,
+                      double y2,
+                      Color color);
+
+    void AddSegment(double x1,
+                    double y1,
+                    double x2,
+                    double y2,
+                    Color color);
+
+    void AddArc(const ScenePoint2D& center,
+                double radiusX,
+                double radiusY,
+                double startAngle,
+                double endAngle,
+                Color color,
+                unsigned int countSegments)
+    {
+      AddArc(center.GetX(), center.GetY(), radiusX, radiusY, startAngle, endAngle, color, countSegments);
+    }
+    
+    void AddCircle(const ScenePoint2D& center,
+                   double radius,
+                   Color color,
+                   unsigned int countSegments)
+    {
+      AddCircle(center.GetX(), center.GetY(), radius, color, countSegments);
+    }
+
+    void AddSegment(const ScenePoint2D& p1,
+                    const ScenePoint2D& p2,
+                    Color color)
+    {
+      AddSegment(p1.GetX(), p1.GetY(), p2.GetX(), p2.GetY(), color);
+    }
   };
 }

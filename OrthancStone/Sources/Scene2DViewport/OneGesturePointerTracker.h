@@ -24,8 +24,6 @@
 
 #include "IFlexiblePointerTracker.h"
 
-#include "../Viewport/IViewport.h"
-
 #include <Compatibility.h>  // For ORTHANC_OVERRIDE
 
 #include <boost/shared_ptr.hpp>
@@ -51,21 +49,14 @@ namespace OrthancStone
     bool  alive_;
     int   currentTouchCount_;
 
-  protected:
-    boost::weak_ptr<IViewport> viewport_;
-
-    /**
-    This will return a scoped lock to the viewport.
-    If the viewport does not exist anymore, then nullptr is returned.
-    */
-    IViewport::ILock* GetViewportLock();
-
   public:
-    explicit OneGesturePointerTracker(boost::weak_ptr<IViewport> viewport);
+    explicit OneGesturePointerTracker();
     
-    virtual void PointerUp(const PointerEvent& event) ORTHANC_OVERRIDE;
+    virtual void PointerUp(const PointerEvent& event,
+                           const Scene2D& scene) ORTHANC_OVERRIDE;
     
-    virtual void PointerDown(const PointerEvent& event) ORTHANC_OVERRIDE;
+    virtual void PointerDown(const PointerEvent& event,
+                             const Scene2D& scene) ORTHANC_OVERRIDE;
     
     virtual bool IsAlive() const ORTHANC_OVERRIDE;
   };

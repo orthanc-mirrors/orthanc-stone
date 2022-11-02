@@ -29,7 +29,13 @@
 import multiprocessing
 import os
 import stat
-import urllib2
+import sys
+
+if sys.version_info[0] < 3:
+    from urllib import urlopen
+else:
+    from urllib.request import urlopen
+
 
 TARGET = os.path.join(os.path.dirname(__file__), 'Orthanc')
 REPOSITORY = 'https://hg.orthanc-server.com/orthanc/raw-file'
@@ -54,7 +60,7 @@ def Download(x):
     branch = x[0]
     source = x[1]
     target = os.path.join(TARGET, x[2])
-    print target
+    print(target)
 
     try:
         os.makedirs(os.path.dirname(target))
@@ -63,8 +69,8 @@ def Download(x):
 
     url = '%s/%s/%s' % (REPOSITORY, branch, source)
 
-    with open(target, 'w') as f:
-        f.write(urllib2.urlopen(url).read())
+    with open(target, 'wb') as f:
+        f.write(urlopen(url).read())
 
 
 commands = []

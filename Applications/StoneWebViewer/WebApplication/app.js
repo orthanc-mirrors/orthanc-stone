@@ -42,10 +42,15 @@ var MOUSE_TOOL_COMBINED = 1;
 var MOUSE_TOOL_ZOOM = 2;
 var MOUSE_TOOL_PAN = 3;
 var MOUSE_TOOL_CROSSHAIR = 4;
-var MOUSE_TOOL_CREATE_SEGMENT = 5;
+var MOUSE_TOOL_CREATE_LENGTH = 5;
 var MOUSE_TOOL_CREATE_ANGLE = 6;
 var MOUSE_TOOL_CREATE_CIRCLE = 7;
 var MOUSE_TOOL_REMOVE_MEASURE = 8;
+var MOUSE_TOOL_CREATE_PIXEL_PROBE = 9;       // New in 2.4
+var MOUSE_TOOL_CREATE_ELLIPSE_PROBE = 10;    // New in 2.4
+var MOUSE_TOOL_CREATE_RECTANGLE_PROBE = 11;  // New in 2.4
+var MOUSE_TOOL_CREATE_TEXT_ANNOTATION = 12;  // New in 2.4
+var MOUSE_TOOL_MAGNIFYING_GLASS = 13;        // New in 2.4
 
 
 function getParameterFromUrl(key) {
@@ -109,6 +114,9 @@ function ConvertMouseAction(config, defaultAction)
   else if (config == "Crosshair") {
     return stone.WebViewerAction.CROSSHAIR;
   }
+  else if (config == "MagnifyingGlass") {
+    return stone.WebViewerAction.MAGNIFYING_GLASS;
+  }
   else {
     alert('Unsupported mouse action in the configuration file: ' + config);
     return stone.WebViewerAction.PAN;
@@ -141,6 +149,7 @@ Vue.component('viewport', {
       stone: stone,  // To access global object "stone" from "index.html"
       status: 'waiting',
       currentFrame: 0,
+      currentFrameFromUser: 0,
       numberOfFrames: 0,
       quality: '',
       cineControls: false,
@@ -158,12 +167,24 @@ Vue.component('viewport', {
   },
   watch: {
     currentFrame: function(newVal, oldVal) {
-      /**
-       * The "FrameUpdated" event has been received, which indicates
-       * that the schedule frame has been displayed: The cine loop can
-       * proceed to the next frame (check out "CineCallback()").
-       **/
-      this.cineLoadingFrame = false;
+      this.currentFrameFromUser = newVal + 1;
+      if (this.cineLoadingFrame) {
+        /**
+         * The "FrameUpdated" event has been received, which indicates
+         * that the schedule frame has been displayed: The cine loop can
+         * proceed to the next frame (check out "CineCallback()").
+         **/
+        this.cineLoadingFrame = false;
+      } else {
+        stone.SetFrame(this.canvasId, newVal);
+      }
+    },
+    currentFrameFromUser: function(newVal, oldVal) {
+      if (parseInt(newVal, 10) !== NaN &&
+          newVal >= 1 &&
+          newVal <= this.numberOfFrames) {
+        this.currentFrame = this.currentFrameFromUser - 1;
+      }
     },
     content: function(newVal, oldVal) {
       this.status = 'loading';
@@ -424,6 +445,7 @@ var app = new Vue({
       // User preferences (stored in the local storage)
       settingNotDiagnostic: true,
       settingSoftwareRendering: false,
+      settingLinearInterpolation: true,
 
       layoutCountX: 1,
       layoutCountY: 1,
@@ -505,6 +527,9 @@ var app = new Vue({
     },
     settingSoftwareRendering: function(newVal, oldVal) {
       localStorage.settingSoftwareRendering = (newVal ? '1' : '0');
+    },
+    settingLinearInterpolation: function(newVal, oldVal) {
+      localStorage.settingLinearInterpolation = (newVal ? '1' : '0');
     }
   },
   methods: {
@@ -885,8 +910,24 @@ var app = new Vue({
       }
     },
 
+    RotateLeft: function() {
+      var canvas = this.GetActiveCanvas();
+      if (canvas != '') {
+        stone.RotateLeft(canvas);
+      }
+    },
+
+    RotateRight: function() {
+      var canvas = this.GetActiveCanvas();
+      if (canvas != '') {
+        stone.RotateRight(canvas);
+      }
+    },
+
     ApplyPreferences: function() {
       this.modalPreferences = false;
+
+      stone.SetLinearInterpolation(localStorage.settingLinearInterpolation);
 
       if ((stone.IsSoftwareRendering() != 0) != this.settingSoftwareRendering) {
         document.location.reload();
@@ -1114,6 +1155,8 @@ var app = new Vue({
   },
   
   mounted: function() {
+    // Warning: In this function, the "stone" global object is not initialized yet!
+    
     this.SetViewportLayout('1x1');
 
     if (localStorage.settingNotDiagnostic) {
@@ -1122,6 +1165,10 @@ var app = new Vue({
     
     if (localStorage.settingSoftwareRendering) {
       this.settingSoftwareRendering = (localStorage.settingSoftwareRendering == '1');
+    }
+
+    if (localStorage.settingLinearInterpolation) {
+      this.settingLinearInterpolation = (localStorage.settingLinearInterpolation == '1');
     }
 
     var that = this;
@@ -1149,6 +1196,15 @@ var app = new Vue({
     window.addEventListener('StoneAnnotationRemoved', function() {
       // Ignore
     });
+
+    window.addEventListener('TextAnnotationRequired', function(args) {
+      var label = prompt('Enter your annotation:', '');
+      if (label !== null) {
+        stone.AddTextAnnotation(args.detail.canvasId, label,
+                                args.detail.pointedX, args.detail.pointedY,
+                                args.detail.labelX, args.detail.labelY);
+      }
+    });
   }
 });
 
@@ -1163,7 +1219,8 @@ window.addEventListener('StoneInitialized', function() {
   stone.Setup(Module);
   stone.SetDicomWebRoot(app.globalConfiguration.DicomWebRoot,
                         true /* assume "/rendered" is available in DICOMweb (could be a configuration option) */);
-  stone.SetSoftwareRendering(localStorage.settingSoftwareRendering == '1');
+  stone.SetSoftwareRendering(app.settingSoftwareRendering);
+  stone.SetLinearInterpolation(app.settingLinearInterpolation);
 
   if ('DicomCacheSize' in app.globalConfiguration) {
     stone.SetDicomCacheSize(app.globalConfiguration.DicomCacheSize);

@@ -80,8 +80,11 @@ static void ProcessOptions(int argc, char* argv[])
             << "  a\tCreate angle annotations" << std::endl
             << "  c\tCreate circle annotations" << std::endl
             << "  d\tDelete mode for annotations" << std::endl
-            << "  e\tEdit mode, don't create annotation (default)" << std::endl
-            << "  l\tCreate line annotations" << std::endl
+            << "  e\tCreate ellipse probe" << std::endl
+            << "  l\tCreate length annotations" << std::endl
+            << "  m\tModification/edit mode, don't create annotation (default)" << std::endl
+            << "  p\tCreate pixel probe" << std::endl
+            << "  r\tCreate rectangle probe" << std::endl
 #else
             << "  a\tEnable/disable the angle annotation tool" << std::endl
             << "  l\tEnable/disable the line annotation tool" << std::endl
@@ -194,6 +197,7 @@ int main(int argc, char* argv[])
 #if SAMPLE_USE_ANNOTATIONS_LAYER == 1
         OrthancStone::AnnotationsSceneLayer annotations(10);
         annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
+        annotations.SetProbedLayer(0);
 
 #else
         ActiveTool activeTool = ActiveTool_None;
@@ -300,7 +304,7 @@ int main(int argc, char* argv[])
 #endif
 
 #if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                  case SDLK_e:
+                  case SDLK_m:
                     annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
                     break;
 #endif
@@ -313,7 +317,7 @@ int main(int argc, char* argv[])
 
                   case SDLK_l:
 #if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Segment);
+                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Length);
 #else
                     if (activeTool == ActiveTool_Line)
                     {
@@ -379,6 +383,24 @@ int main(int argc, char* argv[])
                     }
 #endif
                     break;
+
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
+                  case SDLK_p:
+                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_PixelProbe);
+                    break;
+#endif
+
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
+                  case SDLK_e:
+                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_EllipseProbe);
+                    break;
+#endif
+
+#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
+                  case SDLK_r:
+                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_RectangleProbe);
+                    break;
+#endif
 
                   default:
                     break;

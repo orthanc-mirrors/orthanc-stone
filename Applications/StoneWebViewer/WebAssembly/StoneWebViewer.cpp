@@ -3818,6 +3818,8 @@ extern "C"
     Orthanc::Logging::EnableInfoLevel(true);
     //Orthanc::Logging::EnableTraceLevel(true);
 
+    LOG(INFO) << "Using DCMTK version: " << DCMTK_VERSION_NUMBER;
+
     context_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
     context_->SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
     

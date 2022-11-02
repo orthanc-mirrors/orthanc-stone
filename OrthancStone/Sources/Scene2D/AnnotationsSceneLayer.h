@@ -34,6 +34,35 @@ namespace OrthancStone
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationRemovedMessage, AnnotationsSceneLayer);
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationChangedMessage, AnnotationsSceneLayer);
 
+    class TextAnnotationRequiredMessage : public OriginMessage<AnnotationsSceneLayer>
+    {
+      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
+    private:
+      ScenePoint2D pointedPosition_;
+      ScenePoint2D labelPosition_;
+
+    public:
+      TextAnnotationRequiredMessage(const AnnotationsSceneLayer& origin,
+                                    ScenePoint2D pointedPosition,
+                                    ScenePoint2D labelPosition) :
+        OriginMessage(origin),
+        pointedPosition_(pointedPosition),
+        labelPosition_(labelPosition)
+      {
+      }
+      
+      const ScenePoint2D& GetPointedPosition() const
+      {
+        return pointedPosition_;
+      }
+      
+      const ScenePoint2D& GetLabelPosition() const
+      {
+        return labelPosition_;
+      }
+    };
+    
     enum Tool
     {
       Tool_Edit,
@@ -73,6 +102,7 @@ namespace OrthancStone
     class CreateAngleTracker;
     class CreatePixelProbeTracker;
     class RemoveTracker;
+    class CreateTextAnnotationTracker;
 
     typedef std::set<GeometricPrimitive*>  GeometricPrimitives;
     typedef std::set<Annotation*>          Annotations;
@@ -155,5 +185,9 @@ namespace OrthancStone
     {
       return probedLayer_;
     }
+
+    void AddTextAnnotation(const std::string& label,
+                           const ScenePoint2D& pointedPosition,
+                           const ScenePoint2D& labelPosition);
   };
 }

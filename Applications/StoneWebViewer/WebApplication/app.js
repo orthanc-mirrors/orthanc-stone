@@ -1188,6 +1188,15 @@ var app = new Vue({
     window.addEventListener('StoneAnnotationRemoved', function() {
       // Ignore
     });
+
+    window.addEventListener('TextAnnotationRequired', function(args) {
+      var label = prompt('Enter your annotation:', '');
+      if (label !== null) {
+        stone.AddTextAnnotation(args.detail.canvasId, label,
+                                args.detail.pointedX, args.detail.pointedY,
+                                args.detail.labelX, args.detail.labelY);
+      }
+    });
   }
 });
 

@@ -1597,6 +1597,10 @@ public:
     virtual void SignalStoneAnnotationAdded(const ViewerViewport& viewport) = 0;
 
     virtual void SignalStoneAnnotationRemoved(const ViewerViewport& viewport) = 0;
+
+    virtual void SignalStoneTextAnnotationRequired(const ViewerViewport& viewport,
+                                                   const OrthancStone::ScenePoint2D& pointedPosition,
+                                                   const OrthancStone::ScenePoint2D& labelPosition) = 0;
   };
 
 private:
@@ -2692,6 +2696,14 @@ private:
     }
   }
 
+  void Handle(const OrthancStone::AnnotationsSceneLayer::TextAnnotationRequiredMessage& message)
+  {
+    if (observer_.get() != NULL)
+    {
+      observer_->SignalStoneTextAnnotationRequired(*this, message.GetPointedPosition(), message.GetLabelPosition());
+    }
+  }
+
 public:
   virtual ~ViewerViewport()
   {
@@ -2731,6 +2743,9 @@ public:
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
 
       viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationRemovedMessage>(
+        *viewport->stoneAnnotations_, &ViewerViewport::Handle);
+
+      viewport->Register<OrthancStone::AnnotationsSceneLayer::TextAnnotationRequiredMessage>(
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
     }
 
@@ -3435,6 +3450,14 @@ public:
       Redraw();
     }
   }
+
+  void AddTextAnnotation(const std::string& label,
+                         const OrthancStone::ScenePoint2D& pointedPosition,
+                         const OrthancStone::ScenePoint2D& labelPosition)
+  {
+    stoneAnnotations_->AddTextAnnotation(label, pointedPosition, labelPosition);
+    Redraw();
+  }
 };
 
 
@@ -3694,6 +3717,27 @@ public:
         window.dispatchEvent(customEvent);
       },
       viewport.GetCanvasId().c_str());
+  }
+
+  virtual void SignalStoneTextAnnotationRequired(const ViewerViewport& viewport,
+                                                 const OrthancStone::ScenePoint2D& pointedPosition,
+                                                 const OrthancStone::ScenePoint2D& labelPosition) ORTHANC_OVERRIDE
+  {
+    EM_ASM({
+        const customEvent = document.createEvent("CustomEvent");
+        customEvent.initCustomEvent("TextAnnotationRequired", false, false,
+                                    { "canvasId" : UTF8ToString($0),
+                                      "pointedX" : $1,
+                                      "pointedY" : $2,
+                                      "labelX" : $3,
+                                      "labelY" : $4 });
+        window.dispatchEvent(customEvent);
+      },
+      viewport.GetCanvasId().c_str(),
+      pointedPosition.GetX(),
+      pointedPosition.GetY(),
+      labelPosition.GetX(),
+      labelPosition.GetY() );
   }
 };
 
@@ -4496,5 +4540,22 @@ extern "C"
     }
     EXTERN_CATCH_EXCEPTIONS;
     return false;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void AddTextAnnotation(const char* canvas,
+                         const char* label,
+                         double pointedX,
+                         double pointedY,
+                         double labelX,
+                         double labelY)
+  {
+    try
+    {
+      GetViewport(canvas)->AddTextAnnotation(label, OrthancStone::ScenePoint2D(pointedX, pointedY),
+                                             OrthancStone::ScenePoint2D(labelX, labelY));
+    }
+    EXTERN_CATCH_EXCEPTIONS;
   }
 }

@@ -174,6 +174,8 @@ def Explore(node):
                         arg['type'] = "'int'"
                     elif argType == 'const char *':
                         arg['type'] = "'string'"
+                    elif argType == 'double':
+                        arg['type'] = "'double'"
                     else:
                         raise Exception('Unknown type for argument "%s" in function "%s()": %s' %
                                         (child.displayname, node.spelling, argType))

@@ -1272,12 +1272,23 @@ namespace OrthancStone
   public:
     TextAnnotation(AnnotationsSceneLayer& that,
                    const std::string& label,
-                   const ScenePoint2D& p1,
-                   const ScenePoint2D& p2) :
-      SegmentAnnotation(that, Handle::Shape_Invisible, p1, Handle::Shape_Square, p2)
+                   const ScenePoint2D& pointedPosition,
+                   const ScenePoint2D& labelPosition) :
+      SegmentAnnotation(that, Handle::Shape_Invisible, pointedPosition /* p1 */,
+                        Handle::Shape_Square, labelPosition /* p2 */)
     {
       SetStartArrow(true);
       UpdateLabel(label);
+    }
+
+    ScenePoint2D GetPointedPosition() const
+    {
+      return GetHandle1().GetCenter();
+    }
+
+    ScenePoint2D GetLabelPosition() const
+    {
+      return GetHandle2().GetCenter();
     }
 
     void UpdateLabel(const std::string& label)
@@ -2325,6 +2336,25 @@ namespace OrthancStone
     AnnotationsSceneLayer&  layer_;
     Annotation*             annotation_;
     AffineTransform2D       canvasToScene_;
+
+  protected:
+    AnnotationsSceneLayer& GetLayer() const
+    {
+      return layer_;
+    }
+    
+    const Annotation& GetAnnotation() const
+    {
+      if (IsAlive())
+      {
+        assert(annotation_ != NULL);
+        return *annotation_;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+    }
       
   public:
     CreateTwoHandlesTracker(Annotation& annotation,
@@ -2506,6 +2536,35 @@ namespace OrthancStone
   };
 
 
+  class AnnotationsSceneLayer::CreateTextAnnotationTracker : public CreateTwoHandlesTracker
+  {
+  public:
+    CreateTextAnnotationTracker(AnnotationsSceneLayer& that,
+                                const std::string& label,
+                                const ScenePoint2D& position,
+                                const AffineTransform2D& canvasToScene) :
+      CreateTwoHandlesTracker(*new TextAnnotation(that, label, position, position), canvasToScene)
+    {
+    }
+
+    virtual void PointerUp(const PointerEvent& event,
+                           const Scene2D& scene) ORTHANC_OVERRIDE
+    {
+      std::unique_ptr<TextAnnotationRequiredMessage> request;
+      
+      {
+        const TextAnnotation& annotation = dynamic_cast<const TextAnnotation&>(GetAnnotation());
+        request.reset(new TextAnnotationRequiredMessage(GetLayer(), annotation.GetPointedPosition(), annotation.GetLabelPosition()));
+      }
+      
+      Cancel(scene);  // Warning: "annotation_" is now invalid!
+      
+      GetLayer().BroadcastMessage(AnnotationChangedMessage(GetLayer()));
+      GetLayer().BroadcastMessage(*request);
+    }
+  };
+
+
   // Dummy tracker that is only used for deletion, in order to warn
   // the caller that the mouse action was taken into consideration
   class AnnotationsSceneLayer::RemoveTracker : public IFlexiblePointerTracker
@@ -2616,6 +2675,7 @@ namespace OrthancStone
                                                   const ScenePoint2D& p2)
   {
     annotations_.insert(new LengthAnnotation(*this, units_, true /* show label */, p1, p2));
+    BroadcastMessage(AnnotationChangedMessage(*this));
   }
   
 
@@ -2623,6 +2683,7 @@ namespace OrthancStone
                                                   const ScenePoint2D& p2)
   {
     annotations_.insert(new CircleAnnotation(*this, units_, p1, p2));
+    BroadcastMessage(AnnotationChangedMessage(*this));
   }
   
 
@@ -2631,6 +2692,7 @@ namespace OrthancStone
                                                  const ScenePoint2D& p3)
   {
     annotations_.insert(new AngleAnnotation(*this, p1, p2, p3));
+    BroadcastMessage(AnnotationChangedMessage(*this));
   }
   
 
@@ -2810,10 +2872,7 @@ namespace OrthancStone
           }
 
           case Tool_TextAnnotation:
-          {
-            Annotation* annotation = new TextAnnotation(*this, "" /* empty label */, s, s);
-            return new CreateTwoHandlesTracker(*annotation, scene.GetCanvasToSceneTransform());
-          }
+            return new CreateTextAnnotationTracker(*this, "" /* empty label */, s, scene.GetCanvasToSceneTransform());
 
           default:
             return NULL;
@@ -2929,5 +2988,14 @@ namespace OrthancStone
         LOG(ERROR) << "Cannot unserialize unknown type of annotation: " << type;
       }
     }
+  }
+
+
+  void AnnotationsSceneLayer::AddTextAnnotation(const std::string& label,
+                                                const ScenePoint2D& pointedPosition,
+                                                const ScenePoint2D& labelPosition)
+  {
+    annotations_.insert(new TextAnnotation(*this, label, pointedPosition, labelPosition));
+    BroadcastMessage(AnnotationChangedMessage(*this));
   }
 }

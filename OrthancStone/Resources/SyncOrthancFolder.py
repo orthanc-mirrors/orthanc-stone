@@ -32,7 +32,7 @@ import stat
 import sys
 
 if sys.version_info[0] < 3:
-    from urllib import urlopen
+    from urllib2 import urlopen
 else:
     from urllib.request import urlopen
 

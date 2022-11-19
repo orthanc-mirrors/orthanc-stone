@@ -12,14 +12,8 @@ Differences with Osimis Web viewer
   in the background.
 
 
-- Contrarily to the Osimis Web viewer, the Stone Web viewer does not
-  currently support annotations, and will not support Live Share.
-
-
-- The Stone Web viewer has no "timeline" bar to see the position of
-  the current frame in the series. However, pressing the "Ctrl" key
-  together with mouse wheel enables fast move, i.e. this changes the
-  current frame by skipping 1/20th of the frames in the series.
+- The Stone Web viewer does not support Live Share that was available
+  in old versions of the Osimis Web viewer.
 
 
 - The Stone Web viewer displays a color block at the bottom-right of

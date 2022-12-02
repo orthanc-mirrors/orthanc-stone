@@ -653,21 +653,34 @@ namespace OrthancStone
       const double yc = middle_.GetY();
       const double x2 = end_.GetX();
       const double y2 = end_.GetY();
-        
-      startAngle = atan2(y1 - yc, x1 - xc);
-      endAngle = atan2(y2 - yc, x2 - xc);
 
+      double referenceAngle = atan2(y1 - yc, x1 - xc);
+      double secondAngle = atan2(y2 - yc, x2 - xc);
+
+      secondAngle -= referenceAngle;
+
+      while (secondAngle >= PI)
+      {
+        secondAngle -= 2.0 * PI;
+      }
+
+      while (secondAngle <= -PI)
+      {
+        secondAngle += 2.0 * PI;
+      }
+
+      if (secondAngle < 0)
+      {
+        startAngle = referenceAngle + secondAngle;
+        endAngle = referenceAngle;
+      }
+      else
+      {
+        startAngle = referenceAngle;
+        endAngle = referenceAngle + secondAngle;
+      }
+      
       fullAngle = endAngle - startAngle;
-        
-      while (fullAngle < -PI)
-      {
-        fullAngle += 2.0 * PI;
-      }
-        
-      while (fullAngle >= PI)
-      {
-        fullAngle -= 2.0 * PI;
-      }
     }
       
   public:

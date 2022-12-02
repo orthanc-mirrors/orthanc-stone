@@ -411,6 +411,12 @@ Vue.component('viewport', {
       if (reschedule) {
         this.cineTimeoutId = setTimeout(this.CineCallback, 1000.0 / this.cineFramesPerSecond);
       }     
+    },
+    ClickVerticalScrollbar: function(event) {
+      var offset = event.currentTarget.getClientRects()[0];
+      var y = event.clientY - offset.top;
+      var height = event.currentTarget.offsetHeight;
+      this.currentFrame = Math.min(this.numberOfFrames - 1, Math.floor(y * this.numberOfFrames / (height - 1)));
     }
   }
 });

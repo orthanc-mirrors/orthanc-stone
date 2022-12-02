@@ -426,6 +426,7 @@ var app = new Vue({
       leftVisible: true,
       viewportLayoutButtonsVisible: false,
       mouseActionsVisible: false,
+      annotationActionsVisible: false,
       activeViewport: 0,
       showInfo: true,
       showReferenceLines: true,

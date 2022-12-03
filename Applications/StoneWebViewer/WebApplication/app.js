@@ -1339,6 +1339,21 @@ window.addEventListener('StoneInitialized', function() {
       alert('No study, nor patient was provided in the URL!');
     }
   }
+
+  // New in Stone Web viewer 2.5
+  var menu = getParameterFromUrl('menu');
+  if (menu !== undefined) {
+    if (menu == 'hidden') {
+      app.leftVisible = false;
+    } else if (menu == 'small' ||
+               menu == 'grid' ||
+               menu == 'full') {
+      app.leftVisible = true;
+      app.leftMode = menu;
+    } else {
+      alert('Bad value for the "menu" option in the URL (can be "hidden", "small", "grid", or "full"): ' + menu);
+    }
+  }
 });
 
 

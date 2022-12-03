@@ -124,6 +124,16 @@ Then each request to the DICOMweb server will contain the HTTP header:
 "Authorization: Bearer Hello"
 
 
+Additional options
+==================
+
+- If present in the URL, the "menu" argument can be used to set the
+  default layout of the left-hand list of studies/series. Its allowed
+  values are "hidden", "small", "grid" (default value at the study
+  level), or "full" (default value at the series level). (new in Stone
+  Web viewer 2.5)
+
+
 Dynamic actions using messages
 ==============================
 

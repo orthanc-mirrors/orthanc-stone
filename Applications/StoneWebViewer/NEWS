@@ -2,6 +2,11 @@ Pending changes in the mainline
 ===============================
 
 * Click-drag is available on the vertical slider
+* Added key bindings:
+  - Left/right arrows to change the active frame
+  - Up/down arrows to change the active series
+  - Page up/down to change the active study
+  - Space bar to play/pause videos
 * New URL argument "menu" to change the layout of the list of studies/series
 * The first series to be loaded is now automatically opened
 * Annotations are grouped into one submenu for narrow screens

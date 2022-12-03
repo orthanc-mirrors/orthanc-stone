@@ -125,6 +125,17 @@ function ConvertMouseAction(config, defaultAction)
 }
 
 
+function LookupIndexOfResource(array, tag, value) {
+  for (var i = 0; i < array.length; i++) {
+    if (array[i].tags[tag] == value) {
+      return i;
+    }
+  }
+  
+  return -1;
+}
+
+
 /**
  * Enable support for tooltips in Bootstrap. This function must be
  * called after each modification to the DOM that introduces new
@@ -351,9 +362,9 @@ Vue.component('viewport', {
       }
     });
 
-    window.addEventListener('CineSwitch', function(args) {
+    window.addEventListener('KeyCineSwitch', function(args) {
       if (that.active) {
-        that.CineSwitch();
+        that.KeyCineSwitch();
       }
     });
   },
@@ -395,7 +406,7 @@ Vue.component('viewport', {
       this.cineIncrement = 1;
       this.UpdateCine();
     },
-    CineSwitch: function() {
+    KeyCineSwitch: function() {
       if (this.cineIncrement != 0) {
         this.CinePause();
       } else {
@@ -589,8 +600,30 @@ var app = new Vue({
         });
       }
     },
+
+    GetActiveViewportSeriesTags: function() {
+      if (this.activeViewport == 1 &&
+          this.viewport1Content.virtualSeriesId === undefined) {
+        return this.viewport1Content.series.tags;
+      }
+      else if (this.activeViewport == 2 &&
+               this.viewport2Content.virtualSeriesId === undefined) {
+        return this.viewport2Content.series.tags;
+      }
+      else if (this.activeViewport == 3 &&
+               this.viewport3Content.virtualSeriesId === undefined) {
+        return this.viewport3Content.series.tags;
+      }
+      else if (this.activeViewport == 4 &&
+               this.viewport4Content.virtualSeriesId === undefined) {
+        return this.viewport4Content.series.tags;
+      }
+      else {
+        return null;
+      }
+    },
     
-    GetActiveSeries: function() {
+    GetActiveSeriesInstanceUid: function() {
       var s = [];
 
       if ('tags' in this.viewport1Content.series)
@@ -1196,7 +1229,48 @@ var app = new Vue({
         .catch(function (error) {
           alert('Cannot find the study in Orthanc');
         });
-      
+    },
+
+    ChangeActiveSeries: function(offset) {
+      var seriesTags = this.GetActiveViewportSeriesTags();
+      if (seriesTags !== null) {
+        var studyIndex = LookupIndexOfResource(this.studies, STUDY_INSTANCE_UID, seriesTags[STUDY_INSTANCE_UID]);
+        if (studyIndex != -1) {
+          var seriesInStudyIndices = this.studies[studyIndex].series;
+          for (var i = 0; i < seriesInStudyIndices.length; i++) {
+            if (this.series[seriesInStudyIndices[i]].tags[SERIES_INSTANCE_UID] == seriesTags[SERIES_INSTANCE_UID]) {
+              var next = i + offset;
+              if (next >= 0 &&
+                  next < seriesInStudyIndices.length) {
+                this.SetViewportSeriesInstanceUid(this.activeViewport, this.series[seriesInStudyIndices[next]].tags[SERIES_INSTANCE_UID]);
+              }
+              break;
+            }
+          }
+        }
+      }
+    },
+
+    ChangeActiveStudy: function(offset) {
+      var seriesTags = this.GetActiveViewportSeriesTags();
+      if (seriesTags !== null) {
+        var studyIndex = LookupIndexOfResource(this.studies, STUDY_INSTANCE_UID, seriesTags[STUDY_INSTANCE_UID]);
+        if (studyIndex != -1) {
+          var next = studyIndex + offset;
+          if (next >= 0 &&
+              next < this.studies.length) {
+            var nextStudy = this.studies[next];
+            if (nextStudy.series.length > 0) {
+              var seriesIndex = nextStudy.series[0];
+              if (this.series[seriesIndex].virtualSeries !== null) {
+                this.ClickVirtualSeries(seriesIndex, this.series[seriesIndex].virtualSeries);
+              } else {
+                this.ClickSeries(seriesIndex);
+              }
+            }
+          }
+        }
+      }
     }
   },
   
@@ -1276,15 +1350,25 @@ var app = new Vue({
 
         case 'Up':
         case 'ArrowUp':
-          break;
-
+          that.ChangeActiveSeries(-1);
+          break
+          
         case 'Down':
         case 'ArrowDown':
+          that.ChangeActiveSeries(1);
+          break;
+
+        case 'PageUp':
+          that.ChangeActiveStudy(-1);
+          break
+          
+        case 'PageDown':
+          that.ChangeActiveStudy(1);
           break;
 
         case ' ':
         case 'Space':
-          dispatchEvent(new CustomEvent('CineSwitch', { }));
+          dispatchEvent(new CustomEvent('KeyCineSwitch', { }));
           event.preventDefault();
           break;
 

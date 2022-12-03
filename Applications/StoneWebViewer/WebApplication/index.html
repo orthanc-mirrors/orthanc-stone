@@ -217,7 +217,7 @@
                         <!-- Series without multiple multiframe instances -->
                         <span v-for="seriesIndex in study.series">
                           <li class="wvSerieslist__seriesItem"
-                              v-bind:class="{ highlighted : GetActiveSeries().includes(series[seriesIndex].tags[SERIES_INSTANCE_UID]), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
+                              v-bind:class="{ highlighted : GetActiveSeriesInstanceUid().includes(series[seriesIndex].tags[SERIES_INSTANCE_UID]), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
                               v-on:dragstart="SeriesDragStart($event, seriesIndex)"
                               v-on:click="ClickSeries(seriesIndex)"
                               v-if="series[seriesIndex].virtualSeries === null">

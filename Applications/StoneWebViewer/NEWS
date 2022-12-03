@@ -1,6 +1,7 @@
 Pending changes in the mainline
 ===============================
 
+* Click-drag is available on the vertical slider
 * Annotations are grouped into one submenu for narrow screens
 * Fix measurement of arcs
 * Width of the vertical slider has doubled to ease user interactions

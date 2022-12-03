@@ -759,7 +759,7 @@
 
               <div v-show="showInfo">
                 <div v-if="numberOfFrames > 1" class="wvVerticalScrollbar"
-                       v-on:click="ClickVerticalScrollbar($event)">
+                     v-on:mousedown="ClickVerticalScrollbar($event)">
                   <div class="wvVerticalScrollbarHighlight"
                        v-bind:style="{ top: (currentFrame / (numberOfFrames - 1) * 95.0) + '%' }">
                   </div>

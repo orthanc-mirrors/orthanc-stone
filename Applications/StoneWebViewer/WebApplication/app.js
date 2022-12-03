@@ -139,6 +139,24 @@ function RefreshTooltips()
 }
 
 
+/**
+ * The "mousemove" and "mouseup" events were added in Stone Web viewer
+ * 2.5 to allow click/drag on the vertical scrollbar.
+ **/
+var activeVerticalScrollbarViewport = null;
+var activeVerticalScrollbarTarget = null;
+
+window.addEventListener('mousemove', function(event) {
+  if (activeVerticalScrollbarViewport !== null) {
+    activeVerticalScrollbarViewport.ClickVerticalScrollbar(event, activeVerticalScrollbarTarget);
+    event.preventDefault();
+  }
+});
+
+window.addEventListener('mouseup', function(event) {
+  activeVerticalScrollbarViewport = null;
+});
+
 
 Vue.component('viewport', {
   props: [ 'left', 'top', 'width', 'height', 'canvasId', 'active', 'content', 'viewportIndex',
@@ -412,11 +430,22 @@ Vue.component('viewport', {
         this.cineTimeoutId = setTimeout(this.CineCallback, 1000.0 / this.cineFramesPerSecond);
       }     
     },
-    ClickVerticalScrollbar: function(event) {
-      var offset = event.currentTarget.getClientRects()[0];
+    ClickVerticalScrollbar: function(event, target) {
+      if (target == undefined) {
+        target = event.currentTarget;
+        activeVerticalScrollbarViewport = this;
+        activeVerticalScrollbarTarget = target;
+      }
+      
+      var offset = target.getClientRects()[0];
       var y = event.clientY - offset.top;
-      var height = event.currentTarget.offsetHeight;
-      this.currentFrame = Math.min(this.numberOfFrames - 1, Math.floor(y * this.numberOfFrames / (height - 1)));
+      var height = target.offsetHeight;
+      var frame = Math.min(this.numberOfFrames - 1, Math.floor(y * this.numberOfFrames / (height - 1)));
+      
+      if (frame >= 0 &&
+          frame < this.numberOfFrames) {
+        this.currentFrame = frame;
+      }
     }
   }
 });

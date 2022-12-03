@@ -3458,6 +3458,23 @@ public:
     stoneAnnotations_->AddTextAnnotation(label, pointedPosition, labelPosition);
     Redraw();
   }
+
+
+  void SignalSynchronizedBrowsing()
+  {
+    if (synchronizationEnabled_ &&
+        frames_.get() != NULL &&
+        cursor_.get() != NULL)
+    {
+      const size_t currentCursorIndex = cursor_->GetCurrentIndex();
+
+      const OrthancStone::CoordinateSystem3D current =
+        frames_->GetFrameGeometry(currentCursorIndex);
+      
+      observer_->SignalSynchronizedBrowsing(
+        *this, current.GetOrigin() + synchronizationOffset_, current.GetNormal());
+    }
+  }
 };
 
 
@@ -4164,7 +4181,9 @@ extern "C"
   {
     try
     {
-      return GetViewport(canvas)->ChangeFrame(SeriesCursor::Action_Minus, isCircular) ? 1 : 0;
+      bool changed = GetViewport(canvas)->ChangeFrame(SeriesCursor::Action_Minus, isCircular);
+      GetViewport(canvas)->SignalSynchronizedBrowsing();
+      return changed ? 1 : 0;
     }
     EXTERN_CATCH_EXCEPTIONS;
     return 0;
@@ -4177,7 +4196,9 @@ extern "C"
   {
     try
     {
-      return GetViewport(canvas)->ChangeFrame(SeriesCursor::Action_Plus, isCircular) ? 1 : 0;
+      bool changed = GetViewport(canvas)->ChangeFrame(SeriesCursor::Action_Plus, isCircular);
+      GetViewport(canvas)->SignalSynchronizedBrowsing();
+      return changed ? 1 : 0;
     }
     EXTERN_CATCH_EXCEPTIONS;
     return 0;
@@ -4193,6 +4214,7 @@ extern "C"
       if (frameNumber >= 0)
       {
         GetViewport(canvas)->SetFrame(static_cast<unsigned int>(frameNumber));
+        GetViewport(canvas)->SignalSynchronizedBrowsing();
       }
     }
     EXTERN_CATCH_EXCEPTIONS;
@@ -4205,6 +4227,7 @@ extern "C"
     try
     {
       GetViewport(canvas)->GoToFirstFrame();
+      GetViewport(canvas)->SignalSynchronizedBrowsing();
     }
     EXTERN_CATCH_EXCEPTIONS;
   }
@@ -4216,6 +4239,7 @@ extern "C"
     try
     {
       GetViewport(canvas)->GoToLastFrame();
+      GetViewport(canvas)->SignalSynchronizedBrowsing();
     }
     EXTERN_CATCH_EXCEPTIONS;
   }

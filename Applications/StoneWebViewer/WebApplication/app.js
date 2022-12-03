@@ -602,20 +602,16 @@ var app = new Vue({
     },
 
     GetActiveViewportSeriesTags: function() {
-      if (this.activeViewport == 1 &&
-          this.viewport1Content.virtualSeriesId === undefined) {
+      if (this.activeViewport == 1) {
         return this.viewport1Content.series.tags;
       }
-      else if (this.activeViewport == 2 &&
-               this.viewport2Content.virtualSeriesId === undefined) {
+      else if (this.activeViewport == 2) {
         return this.viewport2Content.series.tags;
       }
-      else if (this.activeViewport == 3 &&
-               this.viewport3Content.virtualSeriesId === undefined) {
+      else if (this.activeViewport == 3) {
         return this.viewport3Content.series.tags;
       }
-      else if (this.activeViewport == 4 &&
-               this.viewport4Content.virtualSeriesId === undefined) {
+      else if (this.activeViewport == 4) {
         return this.viewport4Content.series.tags;
       }
       else {
@@ -766,6 +762,15 @@ var app = new Vue({
       if (seriesInstanceUid in this.seriesIndex) {
         this.SetViewportSeries(viewportIndex, {
           seriesIndex: this.seriesIndex[seriesInstanceUid]
+        });
+      }
+    },
+    
+    SetViewportVirtualSeries: function(viewportIndex, seriesInstanceUid, virtualSeriesId) {
+      if (seriesInstanceUid in this.seriesIndex) {
+        this.SetViewportSeries(viewportIndex, {
+          seriesIndex: this.seriesIndex[seriesInstanceUid],
+          virtualSeriesId: virtualSeriesId
         });
       }
     },
@@ -1236,15 +1241,37 @@ var app = new Vue({
       if (seriesTags !== null) {
         var studyIndex = LookupIndexOfResource(this.studies, STUDY_INSTANCE_UID, seriesTags[STUDY_INSTANCE_UID]);
         if (studyIndex != -1) {
+          var virtualSeriesId = this.GetActiveVirtualSeries();
+          if (virtualSeriesId.length > 0) {
+            virtualSeriesId = virtualSeriesId[0];
+          } else {
+            virtualSeriesId = '';
+          }
+          
           var seriesInStudyIndices = this.studies[studyIndex].series;
           for (var i = 0; i < seriesInStudyIndices.length; i++) {
+            var series = this.series[seriesInStudyIndices[i]];
             if (this.series[seriesInStudyIndices[i]].tags[SERIES_INSTANCE_UID] == seriesTags[SERIES_INSTANCE_UID]) {
-              var next = i + offset;
-              if (next >= 0 &&
-                  next < seriesInStudyIndices.length) {
-                this.SetViewportSeriesInstanceUid(this.activeViewport, this.series[seriesInStudyIndices[next]].tags[SERIES_INSTANCE_UID]);
+              if (series.virtualSeries !== null) {
+                for (var j = 0; j < series.virtualSeries.length; j++) {
+                  if (series.virtualSeries[j].ID == virtualSeriesId) {
+                    var next = j + offset;
+                    if (next >= 0 &&
+                        next < series.virtualSeries.length) {
+                      this.SetViewportVirtualSeries(this.activeViewport, seriesTags[SERIES_INSTANCE_UID], series.virtualSeries[next].ID);
+                    }
+                    return;
+                  }
+                }
               }
-              break;
+              else {              
+                var next = i + offset;
+                if (next >= 0 &&
+                    next < seriesInStudyIndices.length) {
+                  this.SetViewportSeriesInstanceUid(this.activeViewport, this.series[seriesInStudyIndices[next]].tags[SERIES_INSTANCE_UID]);
+                }
+                return;
+              }
             }
           }
         }
@@ -1263,7 +1290,7 @@ var app = new Vue({
             if (nextStudy.series.length > 0) {
               var seriesIndex = nextStudy.series[0];
               if (this.series[seriesIndex].virtualSeries !== null) {
-                this.ClickVirtualSeries(seriesIndex, this.series[seriesIndex].virtualSeries);
+                this.ClickVirtualSeries(seriesIndex, this.series[seriesIndex].virtualSeries[0].ID);
               } else {
                 this.ClickSeries(seriesIndex);
               }
@@ -1339,13 +1366,11 @@ var app = new Vue({
         case 'Left':
         case 'ArrowLeft':
           stone.DecrementFrame(canvas, false);
-          event.preventDefault();
           break;
 
         case 'Right':
         case 'ArrowRight':
           stone.IncrementFrame(canvas, false);
-          event.preventDefault();
           break;
 
         case 'Up':
@@ -1360,7 +1385,7 @@ var app = new Vue({
 
         case 'PageUp':
           that.ChangeActiveStudy(-1);
-          break
+          break;
           
         case 'PageDown':
           that.ChangeActiveStudy(1);
@@ -1369,7 +1394,6 @@ var app = new Vue({
         case ' ':
         case 'Space':
           dispatchEvent(new CustomEvent('KeyCineSwitch', { }));
-          event.preventDefault();
           break;
 
         default:

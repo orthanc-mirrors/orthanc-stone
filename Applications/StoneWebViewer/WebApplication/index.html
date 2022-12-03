@@ -36,6 +36,7 @@
             <h3>Versions</h3>
             <p>
               Stone Web viewer: {{ stoneWebViewerVersion }} <br/>
+              <span v-if="orthancSystem.Version">Orthanc: {{ orthancSystem.Version }} <br/></span>
               Emscripten compiler: {{ emscriptenVersion }}
             </p>
           </div>
@@ -74,6 +75,7 @@
             <h3>Versions</h3>
             <p>
               Stone Web viewer: {{ stoneWebViewerVersion }} <br/>
+              <span v-if="orthancSystem.Version">Orthanc: {{ orthancSystem.Version }} <br/></span>
               Emscripten compiler: {{ emscriptenVersion }}
             </p>
             <h3>User preferences</h3>

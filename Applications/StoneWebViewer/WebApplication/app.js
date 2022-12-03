@@ -53,6 +53,9 @@ var MOUSE_TOOL_CREATE_RECTANGLE_PROBE = 11;  // New in 2.4
 var MOUSE_TOOL_CREATE_TEXT_ANNOTATION = 12;  // New in 2.4
 var MOUSE_TOOL_MAGNIFYING_GLASS = 13;        // New in 2.4
 
+var hasAuthorizationToken = false;
+var axiosHeaders = {};
+
 
 function getParameterFromUrl(key) {
   var url = window.location.search.substring(1);
@@ -148,6 +151,45 @@ function RefreshTooltips()
     container: 'body',
     trigger: 'hover'
   });
+}
+
+
+function TriggerDownloadFromUri(uri, filename, mime)
+{
+  if (hasAuthorizationToken) {
+    axios.get(uri, {
+      headers: axiosHeaders,
+      responseType: 'arraybuffer'
+    })
+      .then(function(response) {
+        const blob = new Blob([ response.data ], { type: mime });
+        const url = URL.createObjectURL(blob);
+
+        //window.open(url, '_blank');
+
+        // https://stackoverflow.com/a/19328891
+        var a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        a.href = url;
+        a.download = filename;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      });
+
+  } else {
+    // This version was used in Stone Web viewer <= 2.4, but doesn't
+    // work with authorization headers
+    
+    /**
+     * The use of "window.open()" below might be blocked (depending on
+     * the browser criteria to block popup).  As a consequence, we
+     * prefer to set "window.location".
+     * https://www.nngroup.com/articles/the-top-ten-web-design-mistakes-of-1999/
+     **/
+    // window.open(uri, '_blank');
+    window.location.href = uri;
+  }
 }
 
 
@@ -280,19 +322,33 @@ Vue.component('viewport', {
         this.videoUri = '';
         if (this.globalConfiguration.OrthancApiRoot) {
           var that = this;
-          axios.post(that.globalConfiguration.OrthancApiRoot + '/tools/find',
-                     {
-                       Level : 'Instance',
-                       Query : {
-                         StudyInstanceUID: studyInstanceUid
-                       }
-                     })
+          axios.post(that.globalConfiguration.OrthancApiRoot + '/tools/find', {
+            Level : 'Instance',
+            Query : {
+              StudyInstanceUID: studyInstanceUid
+            }
+          }, {
+            headers: axiosHeaders
+          })
             .then(function(response) {
               if (response.data.length != 1) {
                 throw('');
               }
               else {
-                that.videoUri = that.globalConfiguration.OrthancApiRoot + '/instances/' + response.data[0] + '/frames/0/raw';
+                var uri = that.globalConfiguration.OrthancApiRoot + '/instances/' + response.data[0] + '/frames/0/raw';
+
+                if (hasAuthorizationToken) {
+                  axios.get(uri, {
+                    headers: axiosHeaders,
+                    responseType: 'arraybuffer'
+                  })
+                    .then(function(response) {
+                      const blob = new Blob([ response.data ]);
+                      that.videoUri = URL.createObjectURL(blob);
+                    });
+                } else {
+                  that.videoUri = uri;
+                }
               }
             })
             .catch(function(error) {
@@ -1160,22 +1216,16 @@ var app = new Vue({
           this.archiveJob.length > 0) {      
 
         var that = this;
-        axios.get(that.globalConfiguration.OrthancApiRoot + '/jobs/' + that.archiveJob)
+        axios.get(that.globalConfiguration.OrthancApiRoot + '/jobs/' + that.archiveJob, {
+          headers: axiosHeaders
+        })
           .then(function(response) {
             console.log('Progress of archive job ' + that.archiveJob + ': ' + response.data['Progress'] + '%');
             var state = response.data['State'];
             if (state == 'Success') {
               that.creatingArchive = false;
               var uri = that.globalConfiguration.OrthancApiRoot + '/jobs/' + that.archiveJob + '/archive';
-
-              /**
-               * The use of "window.open()" below might be blocked
-               * (depending on the browser criteria to block popup).
-               * As a consequence, we prefer to set "window.location".
-               * https://www.nngroup.com/articles/the-top-ten-web-design-mistakes-of-1999/
-               **/
-              // window.open(uri, '_blank');
-              window.location = uri;
+              TriggerDownloadFromUri(uri, that.archiveJob + '.zip', 'application/zip');
             }
             else if (state == 'Running') {
               setTimeout(that.CheckIsDownloadComplete, 1000);
@@ -1197,7 +1247,9 @@ var app = new Vue({
       console.log('Creating archive for study: ' + studyInstanceUid);
 
       var that = this;
-      axios.post(this.globalConfiguration.OrthancApiRoot + '/tools/lookup', studyInstanceUid)
+      axios.post(this.globalConfiguration.OrthancApiRoot + '/tools/lookup', studyInstanceUid, {
+        headers: axiosHeaders
+      })
         .then(function(response) {
           if (response.data.length != 1) {
             throw('');
@@ -1216,12 +1268,13 @@ var app = new Vue({
               // ZIP streaming is available (this is Orthanc >=
               // 1.9.4): Simply give the hand to Orthanc
               event.preventDefault();
-              window.location.href = uri;
-
+              TriggerDownloadFromUri(uri, orthancId + '.zip', 'application/zip');
             } else {
               // ZIP streaming is not available: Create a job to create the archive
               axios.post(uri, {
                 'Asynchronous' : true
+              }, {
+                headers: axiosHeaders
               })
                 .then(function(response) {
                   that.creatingArchive = true;
@@ -1431,9 +1484,20 @@ window.addEventListener('StoneInitialized', function() {
   // Bearer token is new in Stone Web viewer 2.0
   var token = getParameterFromUrl('token');
   if (token !== undefined) {
+    hasAuthorizationToken = true;
     stone.AddHttpHeader('Authorization', 'Bearer ' + token);
+    axiosHeaders['Authorization'] = 'Bearer ' + token;
   }
 
+  if (app.globalConfiguration.OrthancApiRoot) {
+    axios.get(app.globalConfiguration.OrthancApiRoot + '/system', {
+      headers: axiosHeaders
+    })
+      .then(function (response) {
+        app.orthancSystem = response.data;
+      });
+  }
+  
 
   /**
    * Calls to "stone.XXX()" can be reordered after this point.
@@ -1604,13 +1668,6 @@ $(document).ready(function() {
         .catch(function (error) {
           alert('Cannot load the WebAssembly framework');
         });
-
-      if (app.globalConfiguration.OrthancApiRoot) {
-        axios.get(app.globalConfiguration.OrthancApiRoot + '/system')
-          .then(function (response) {
-            app.orthancSystem = response.data;
-          });
-      }
     })
     .catch(function (error) {
       alert('Cannot load the configuration file');

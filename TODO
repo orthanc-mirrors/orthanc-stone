@@ -37,6 +37,9 @@ Improvements
   up/down arrow keys (prev/next series).
   https://groups.google.com/g/orthanc-users/c/u_lH9aqKsdw/m/KQ7U9CkiAAAJ.
 
+* Minor: Rotate the anchors of the text after rotation of the display.
+
+
 ------------
 Known issues
 ------------

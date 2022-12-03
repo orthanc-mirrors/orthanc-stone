@@ -769,7 +769,8 @@
                   <div v-if="'tags' in content.series" class="wv-overlay-topleft">
                     {{ content.series.tags[PATIENT_NAME] }}<br/>
                     {{ content.series.tags[PATIENT_ID] }}<br/>
-                    {{ app.FormatDate(content.series.tags[PATIENT_BIRTH_DATE]) }}
+                    {{ app.FormatDate(content.series.tags[PATIENT_BIRTH_DATE]) }} -
+                    {{ content.series.tags[PATIENT_SEX] }}
                   </div>
                   <div v-if="'tags' in content.series" class="wv-overlay-topright"
                        v-bind:class="{ 'wvInfoRightMargin' : numberOfFrames > 1 }">

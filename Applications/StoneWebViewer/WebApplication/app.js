@@ -474,6 +474,7 @@ var app = new Vue({
       orthancSystem: {},  // Only available if "OrthancApiRoot" configuration option is set
       stoneWebViewerVersion: '...',
       emscriptenVersion: '...',
+      isFirstSeries: true,
 
       modalWarning: false,
       modalNotDiagnostic: false,
@@ -1216,6 +1217,12 @@ var app = new Vue({
       var studyInstanceUid = args.detail.studyInstanceUid;
       var seriesInstanceUid = args.detail.seriesInstanceUid;
       that.UpdateIsSeriesComplete(studyInstanceUid, seriesInstanceUid);
+
+      // Automatically open the first series to be loaded (new in Stone Web viewer 2.5)
+      if (that.isFirstSeries) {
+        that.SetViewportSeriesInstanceUid(1, seriesInstanceUid);
+        that.isFirstSeries = false;
+      }
     });
 
     window.addEventListener('StoneAnnotationAdded', function() {

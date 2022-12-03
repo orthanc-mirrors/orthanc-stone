@@ -3,6 +3,7 @@ Pending changes in the mainline
 
 * Click-drag is available on the vertical slider
 * New URL argument "menu" to change the layout of the list of studies/series
+* The first series to be loaded is now automatically opened
 * Annotations are grouped into one submenu for narrow screens
 * Fix measurement of arcs
 * Width of the vertical slider has doubled to ease user interactions

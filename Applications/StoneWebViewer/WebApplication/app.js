@@ -350,6 +350,12 @@ Vue.component('viewport', {
         that.windowingWidth = args.detail.windowingWidth;
       }
     });
+
+    window.addEventListener('CineSwitch', function(args) {
+      if (that.active) {
+        that.CineSwitch();
+      }
+    });
   },
   methods: {
     DragDrop: function(event) {
@@ -372,7 +378,7 @@ Vue.component('viewport', {
     },
     CinePlay: function() {
       this.cineControls = true;
-      this.cineIncrement = 1;
+      this.cineIncrement = -1;
       this.UpdateCine();
     },
     CinePause: function() {
@@ -386,8 +392,15 @@ Vue.component('viewport', {
     },
     CineBackward: function() {
       this.cineControls = true;
-      this.cineIncrement = -1;
+      this.cineIncrement = 1;
       this.UpdateCine();
+    },
+    CineSwitch: function() {
+      if (this.cineIncrement != 0) {
+        this.CinePause();
+      } else {
+        this.CinePlay();
+      }
     },
     UpdateCine: function() {
       // Cancel the previous cine loop, if any
@@ -751,6 +764,9 @@ var app = new Vue({
           virtualSeriesId: info.virtualSeriesId
         };
       }
+
+      // Give the focus to this viewport (new in Stone Web viewer 2.5)
+      this.activeViewport = viewportIndex;
     },
     
     ClickSeries: function(seriesIndex) {
@@ -1239,6 +1255,42 @@ var app = new Vue({
         stone.AddTextAnnotation(args.detail.canvasId, label,
                                 args.detail.pointedX, args.detail.pointedY,
                                 args.detail.labelX, args.detail.labelY);
+      }
+    });
+
+    window.addEventListener('keydown', function(event) {
+      var canvas = that.GetActiveCanvas();
+      if (canvas != '') {
+        switch (event.key) {
+        case 'Left':
+        case 'ArrowLeft':
+          stone.DecrementFrame(canvas, false);
+          event.preventDefault();
+          break;
+
+        case 'Right':
+        case 'ArrowRight':
+          stone.IncrementFrame(canvas, false);
+          event.preventDefault();
+          break;
+
+        case 'Up':
+        case 'ArrowUp':
+          break;
+
+        case 'Down':
+        case 'ArrowDown':
+          break;
+
+        case ' ':
+        case 'Space':
+          dispatchEvent(new CustomEvent('CineSwitch', { }));
+          event.preventDefault();
+          break;
+
+        default:
+          break;
+        }
       }
     });
   }

@@ -2,6 +2,24 @@ Pending changes in the mainline
 ===============================
 
 
+Version 2.5 (2022-12-05)
+========================
+
+* Click-drag is available on the vertical slider
+* Added key bindings:
+  - Left/right arrows to change the active frame
+  - Up/down arrows to change the active series
+  - Page up/down to change the active study
+  - Space bar to play/pause videos
+* New URL argument "menu" to change the layout of the list of studies/series
+* The first series to be loaded is now automatically opened
+* Annotations are grouped into one submenu for narrow screens
+* Support generation of ZIP archives in the presence of authorization tokens
+* Fix measurement of arcs
+* Width of the vertical slider has doubled to ease user interactions
+* Patient sex is displayed in the top-left information panel
+
+
 Version 2.4 (2022-11-02)
 ========================
 

@@ -36,6 +36,7 @@
             <h3>Versions</h3>
             <p>
               Stone Web viewer: {{ stoneWebViewerVersion }} <br/>
+              <span v-if="orthancSystem.Version">Orthanc: {{ orthancSystem.Version }} <br/></span>
               Emscripten compiler: {{ emscriptenVersion }}
             </p>
           </div>
@@ -74,6 +75,7 @@
             <h3>Versions</h3>
             <p>
               Stone Web viewer: {{ stoneWebViewerVersion }} <br/>
+              <span v-if="orthancSystem.Version">Orthanc: {{ orthancSystem.Version }} <br/></span>
               Emscripten compiler: {{ emscriptenVersion }}
             </p>
             <h3>User preferences</h3>
@@ -217,7 +219,7 @@
                         <!-- Series without multiple multiframe instances -->
                         <span v-for="seriesIndex in study.series">
                           <li class="wvSerieslist__seriesItem"
-                              v-bind:class="{ highlighted : GetActiveSeries().includes(series[seriesIndex].tags[SERIES_INSTANCE_UID]), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
+                              v-bind:class="{ highlighted : GetActiveSeriesInstanceUid().includes(series[seriesIndex].tags[SERIES_INSTANCE_UID]), 'wvSerieslist__seriesItem--list' : leftMode != 'grid', 'wvSerieslist__seriesItem--grid' : leftMode == 'grid' }"
                               v-on:dragstart="SeriesDragStart($event, seriesIndex)"
                               v-on:click="ClickSeries(seriesIndex)"
                               v-if="series[seriesIndex].virtualSeries === null">
@@ -348,9 +350,9 @@
               <div class="tbGroup">
                 <div class="tbGroup__toggl">
                   <button class="wvButton"
-                          v-bind:class="{ 'wvButton--underline' : !viewportLayoutButtonsVisible }"
+                          v-bind:class="{ 'wvButton--underline' : !viewportLayoutButtonsVisible, 'wvButton--border' : viewportLayoutButtonsVisible }"
                           data-toggle="tooltip" data-title="Change layout"
-                          @click="viewportLayoutButtonsVisible = !viewportLayoutButtonsVisible;HideAllTooltips()">
+                          @click="viewportLayoutButtonsVisible = !viewportLayoutButtonsVisible;mouseActionsVisible=false;annotationActionsVisible=false;HideAllTooltips()">
                     <i class="fa fa-th"></i>
                   </button>
                 </div>
@@ -385,9 +387,9 @@
               <div class="tbGroup">
                 <div class="tbGroup__toggl">
                   <button class="wvButton"
-                          v-bind:class="{ 'wvButton--underline' : !mouseActionsVisible }"
+                          v-bind:class="{ 'wvButton--underline' : !mouseActionsVisible, 'wvButton--border' : mouseActionsVisible }"
                           data-toggle="tooltip" data-title="Mouse actions"
-                          @click="mouseActionsVisible = !mouseActionsVisible;HideAllTooltips()">
+                          @click="viewportLayoutButtonsVisible=false;mouseActionsVisible = !mouseActionsVisible;annotationActionsVisible=false;HideAllTooltips()">
                     <i class="fa fa-mouse-pointer"></i>
                   </button>
                 </div>
@@ -540,77 +542,94 @@
               </button>
             </div>
             
-            <div class="ng-scope inline-object">
-              <button class="wvButton--underline text-center"
-                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_LENGTH }"
-                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_LENGTH, stone.WebViewerAction.CREATE_LENGTH)"
-                      data-toggle="tooltip" data-title="Measure length">
-                <i class="fas fa-ruler"></i>
-              </button>
-            </div>
 
             <div class="ng-scope inline-object">
-              <button class="wvButton--underline text-center"
-                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_ANGLE }"
-                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_ANGLE, stone.WebViewerAction.CREATE_ANGLE)"
-                      data-toggle="tooltip" data-title="Measure angle">
-                <i class="fas fa-drafting-compass"></i>
-              </button>
+              <div class="tbGroup">
+                <div class="tbGroup__toggl">
+                  <button class="wvButton"
+                          v-bind:class="{ 'wvButton--underline' : !annotationActionsVisible, 'wvButton--border' : annotationActionsVisible }"
+                          data-toggle="tooltip" data-title="Annotations"
+                          @click="viewportLayoutButtonsVisible=false;mouseActionsVisible=false;annotationActionsVisible = !annotationActionsVisible;HideAllTooltips()">
+                    <i class="fas fa-pencil-ruler"></i>
+                  </button>
+                </div>
+                
+                <div class="tbGroup__buttons--bottom" v-show="annotationActionsVisible">
+                  <div class="ng-scope inline-object">
+                    <button class="wvButton--underline text-center"
+                            v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_LENGTH }"
+                            v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_LENGTH, stone.WebViewerAction.CREATE_LENGTH)"
+                            data-toggle="tooltip" data-title="Measure length">
+                      <i class="fas fa-ruler"></i>
+                    </button>
+                  </div>
+
+                  <div class="ng-scope inline-object">
+                    <button class="wvButton--underline text-center"
+                            v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_ANGLE }"
+                            v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_ANGLE, stone.WebViewerAction.CREATE_ANGLE)"
+                            data-toggle="tooltip" data-title="Measure angle">
+                      <i class="fas fa-drafting-compass"></i>
+                    </button>
+                  </div>
+
+                  <div class="ng-scope inline-object">
+                    <button class="wvButton--underline text-center"
+                            v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_CIRCLE }"
+                            v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_CIRCLE, stone.WebViewerAction.CREATE_CIRCLE)"
+                            data-toggle="tooltip" data-title="Measure circle">
+                      <i class="far fa-circle"></i>
+                    </button>
+                  </div>
+
+                  <div class="ng-scope inline-object">
+                    <button class="wvButton--underline text-center"
+                            v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_PIXEL_PROBE }"
+                            v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_PIXEL_PROBE, stone.WebViewerAction.CREATE_PIXEL_PROBE)"
+                            data-toggle="tooltip" data-title="Pixel probe">
+                      <i class="fas fa-microscope"></i>
+                    </button>
+                  </div>
+
+                  <div class="ng-scope inline-object">
+                    <button class="wvButton--underline text-center"
+                            v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_RECTANGLE_PROBE }"
+                            v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_RECTANGLE_PROBE, stone.WebViewerAction.CREATE_RECTANGLE_PROBE)"
+                            data-toggle="tooltip" data-title="Rectangle probe">
+                      <i class="fas fa-plus-square"></i>
+                    </button>
+                  </div>
+
+                  <div class="ng-scope inline-object">
+                    <button class="wvButton--underline text-center"
+                            v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_ELLIPSE_PROBE }"
+                            v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_ELLIPSE_PROBE, stone.WebViewerAction.CREATE_ELLIPSE_PROBE)"
+                            data-toggle="tooltip" data-title="Ellipse probe">
+                      <i class="fas fa-plus-circle"></i>
+                    </button>
+                  </div>
+
+                  <div class="ng-scope inline-object">
+                    <button class="wvButton--underline text-center"
+                            v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_TEXT_ANNOTATION }"
+                            v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_TEXT_ANNOTATION, stone.WebViewerAction.CREATE_TEXT_ANNOTATION)"
+                            data-toggle="tooltip" data-title="Add text annotation">
+                      <i class="fas fa-comment-dots"></i>
+                    </button>
+                  </div>
+
+                  <div class="ng-scope inline-object">
+                    <button class="wvButton--underline text-center"
+                            v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_REMOVE_MEASURE }"
+                            v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_REMOVE_MEASURE, stone.WebViewerAction.REMOVE_MEASURE)"
+                            data-toggle="tooltip" data-title="Delete annotation">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="ng-scope inline-object">
-              <button class="wvButton--underline text-center"
-                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_CIRCLE }"
-                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_CIRCLE, stone.WebViewerAction.CREATE_CIRCLE)"
-                      data-toggle="tooltip" data-title="Measure circle">
-                <i class="far fa-circle"></i>
-              </button>
-            </div>
-
-            <div class="ng-scope inline-object">
-              <button class="wvButton--underline text-center"
-                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_PIXEL_PROBE }"
-                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_PIXEL_PROBE, stone.WebViewerAction.CREATE_PIXEL_PROBE)"
-                      data-toggle="tooltip" data-title="Pixel probe">
-                <i class="fas fa-microscope"></i>
-              </button>
-            </div>
-
-            <div class="ng-scope inline-object">
-              <button class="wvButton--underline text-center"
-                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_RECTANGLE_PROBE }"
-                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_RECTANGLE_PROBE, stone.WebViewerAction.CREATE_RECTANGLE_PROBE)"
-                      data-toggle="tooltip" data-title="Rectangle probe">
-                <i class="fas fa-plus-square"></i>
-              </button>
-            </div>
-
-            <div class="ng-scope inline-object">
-              <button class="wvButton--underline text-center"
-                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_ELLIPSE_PROBE }"
-                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_ELLIPSE_PROBE, stone.WebViewerAction.CREATE_ELLIPSE_PROBE)"
-                      data-toggle="tooltip" data-title="Ellipse probe">
-                <i class="fas fa-plus-circle"></i>
-              </button>
-            </div>
-
-            <div class="ng-scope inline-object">
-              <button class="wvButton--underline text-center"
-                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_CREATE_TEXT_ANNOTATION }"
-                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_CREATE_TEXT_ANNOTATION, stone.WebViewerAction.CREATE_TEXT_ANNOTATION)"
-                      data-toggle="tooltip" data-title="Add text annotation">
-                <i class="fas fa-comment-dots"></i>
-              </button>
-            </div>
-
-            <div class="ng-scope inline-object">
-              <button class="wvButton--underline text-center"
-                      v-bind:class="{ 'active' : mouseTool == MOUSE_TOOL_REMOVE_MEASURE }"
-                      v-on:click="SetLeftMouseButtonAction(MOUSE_TOOL_REMOVE_MEASURE, stone.WebViewerAction.REMOVE_MEASURE)"
-                      data-toggle="tooltip" data-title="Delete annotation">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
 
             <div class="ng-scope inline-object">
               <button class="wvButton--underline text-center"
@@ -754,7 +773,7 @@
 
               <div v-show="showInfo">
                 <div v-if="numberOfFrames > 1" class="wvVerticalScrollbar"
-                       v-on:click="var offset = $event.currentTarget.getClientRects()[0]; var y = $event.clientY - offset.top; var height = $event.currentTarget.offsetHeight; currentFrame = Math.min(numberOfFrames - 1, Math.floor(y * numberOfFrames / (height - 1)));">
+                     v-on:mousedown="ClickVerticalScrollbar($event)">
                   <div class="wvVerticalScrollbarHighlight"
                        v-bind:style="{ top: (currentFrame / (numberOfFrames - 1) * 95.0) + '%' }">
                   </div>
@@ -764,7 +783,8 @@
                   <div v-if="'tags' in content.series" class="wv-overlay-topleft">
                     {{ content.series.tags[PATIENT_NAME] }}<br/>
                     {{ content.series.tags[PATIENT_ID] }}<br/>
-                    {{ app.FormatDate(content.series.tags[PATIENT_BIRTH_DATE]) }}
+                    {{ app.FormatDate(content.series.tags[PATIENT_BIRTH_DATE]) }} -
+                    {{ content.series.tags[PATIENT_SEX] }}
                   </div>
                   <div v-if="'tags' in content.series" class="wv-overlay-topright"
                        v-bind:class="{ 'wvInfoRightMargin' : numberOfFrames > 1 }">
@@ -810,13 +830,13 @@
                         </button>
                       </div>
                       <div class="btn-group btn-group-sm" role="group">                        
-                        <button type="button" class="btn btn-primary" @click="CinePlay()">
+                        <button type="button" class="btn btn-primary" @click="CineBackward()">
                           <i class="fas fa-play fa-flip-horizontal"></i>
                         </button>
                         <button type="button" class="btn btn-primary" @click="CinePause()">
                           <i class="fas fa-pause"></i>
                         </button>
-                        <button type="button" class="btn btn-primary" @click="CineBackward()">
+                        <button type="button" class="btn btn-primary" @click="CinePlay()">
                           <i class="fas fa-play"></i>
                         </button>
                       </div>

@@ -34,6 +34,7 @@ var SERIES_NUMBER = '0020,0011';
 var SERIES_DESCRIPTION = '0008,103e';
 var MODALITY = '0008,0060';
 var PATIENT_BIRTH_DATE = '0010,0030';
+var PATIENT_SEX = '0010,0040';
 
 // Registry of the PDF series for which the instance metadata is still waiting
 var pendingSeriesPdf_ = {};
@@ -51,6 +52,9 @@ var MOUSE_TOOL_CREATE_ELLIPSE_PROBE = 10;    // New in 2.4
 var MOUSE_TOOL_CREATE_RECTANGLE_PROBE = 11;  // New in 2.4
 var MOUSE_TOOL_CREATE_TEXT_ANNOTATION = 12;  // New in 2.4
 var MOUSE_TOOL_MAGNIFYING_GLASS = 13;        // New in 2.4
+
+var hasAuthorizationToken = false;
+var axiosHeaders = {};
 
 
 function getParameterFromUrl(key) {
@@ -124,6 +128,17 @@ function ConvertMouseAction(config, defaultAction)
 }
 
 
+function LookupIndexOfResource(array, tag, value) {
+  for (var i = 0; i < array.length; i++) {
+    if (array[i].tags[tag] == value) {
+      return i;
+    }
+  }
+  
+  return -1;
+}
+
+
 /**
  * Enable support for tooltips in Bootstrap. This function must be
  * called after each modification to the DOM that introduces new
@@ -138,6 +153,63 @@ function RefreshTooltips()
   });
 }
 
+
+function TriggerDownloadFromUri(uri, filename, mime)
+{
+  if (hasAuthorizationToken) {
+    axios.get(uri, {
+      headers: axiosHeaders,
+      responseType: 'arraybuffer'
+    })
+      .then(function(response) {
+        const blob = new Blob([ response.data ], { type: mime });
+        const url = URL.createObjectURL(blob);
+
+        //window.open(url, '_blank');
+
+        // https://stackoverflow.com/a/19328891
+        var a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        a.href = url;
+        a.download = filename;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      });
+
+  } else {
+    // This version was used in Stone Web viewer <= 2.4, but doesn't
+    // work with authorization headers
+    
+    /**
+     * The use of "window.open()" below might be blocked (depending on
+     * the browser criteria to block popup).  As a consequence, we
+     * prefer to set "window.location".
+     * https://www.nngroup.com/articles/the-top-ten-web-design-mistakes-of-1999/
+     **/
+    // window.open(uri, '_blank');
+    window.location.href = uri;
+  }
+}
+
+
+/**
+ * The "mousemove" and "mouseup" events were added in Stone Web viewer
+ * 2.5 to allow click/drag on the vertical scrollbar.
+ **/
+var activeVerticalScrollbarViewport = null;
+var activeVerticalScrollbarTarget = null;
+
+window.addEventListener('mousemove', function(event) {
+  if (activeVerticalScrollbarViewport !== null) {
+    activeVerticalScrollbarViewport.ClickVerticalScrollbar(event, activeVerticalScrollbarTarget);
+    event.preventDefault();
+  }
+});
+
+window.addEventListener('mouseup', function(event) {
+  activeVerticalScrollbarViewport = null;
+});
 
 
 Vue.component('viewport', {
@@ -250,19 +322,33 @@ Vue.component('viewport', {
         this.videoUri = '';
         if (this.globalConfiguration.OrthancApiRoot) {
           var that = this;
-          axios.post(that.globalConfiguration.OrthancApiRoot + '/tools/find',
-                     {
-                       Level : 'Instance',
-                       Query : {
-                         StudyInstanceUID: studyInstanceUid
-                       }
-                     })
+          axios.post(that.globalConfiguration.OrthancApiRoot + '/tools/find', {
+            Level : 'Instance',
+            Query : {
+              StudyInstanceUID: studyInstanceUid
+            }
+          }, {
+            headers: axiosHeaders
+          })
             .then(function(response) {
               if (response.data.length != 1) {
                 throw('');
               }
               else {
-                that.videoUri = that.globalConfiguration.OrthancApiRoot + '/instances/' + response.data[0] + '/frames/0/raw';
+                var uri = that.globalConfiguration.OrthancApiRoot + '/instances/' + response.data[0] + '/frames/0/raw';
+
+                if (hasAuthorizationToken) {
+                  axios.get(uri, {
+                    headers: axiosHeaders,
+                    responseType: 'arraybuffer'
+                  })
+                    .then(function(response) {
+                      const blob = new Blob([ response.data ]);
+                      that.videoUri = URL.createObjectURL(blob);
+                    });
+                } else {
+                  that.videoUri = uri;
+                }
               }
             })
             .catch(function(error) {
@@ -331,6 +417,12 @@ Vue.component('viewport', {
         that.windowingWidth = args.detail.windowingWidth;
       }
     });
+
+    window.addEventListener('KeyCineSwitch', function(args) {
+      if (that.active) {
+        that.KeyCineSwitch();
+      }
+    });
   },
   methods: {
     DragDrop: function(event) {
@@ -353,7 +445,7 @@ Vue.component('viewport', {
     },
     CinePlay: function() {
       this.cineControls = true;
-      this.cineIncrement = 1;
+      this.cineIncrement = -1;
       this.UpdateCine();
     },
     CinePause: function() {
@@ -367,8 +459,15 @@ Vue.component('viewport', {
     },
     CineBackward: function() {
       this.cineControls = true;
-      this.cineIncrement = -1;
+      this.cineIncrement = 1;
       this.UpdateCine();
+    },
+    KeyCineSwitch: function() {
+      if (this.cineIncrement != 0) {
+        this.CinePause();
+      } else {
+        this.CinePlay();
+      }
     },
     UpdateCine: function() {
       // Cancel the previous cine loop, if any
@@ -411,6 +510,23 @@ Vue.component('viewport', {
       if (reschedule) {
         this.cineTimeoutId = setTimeout(this.CineCallback, 1000.0 / this.cineFramesPerSecond);
       }     
+    },
+    ClickVerticalScrollbar: function(event, target) {
+      if (target == undefined) {
+        target = event.currentTarget;
+        activeVerticalScrollbarViewport = this;
+        activeVerticalScrollbarTarget = target;
+      }
+      
+      var offset = target.getClientRects()[0];
+      var y = event.clientY - offset.top;
+      var height = target.offsetHeight;
+      var frame = Math.min(this.numberOfFrames - 1, Math.floor(y * this.numberOfFrames / (height - 1)));
+      
+      if (frame >= 0 &&
+          frame < this.numberOfFrames) {
+        this.currentFrame = frame;
+      }
     }
   }
 });
@@ -426,6 +542,7 @@ var app = new Vue({
       leftVisible: true,
       viewportLayoutButtonsVisible: false,
       mouseActionsVisible: false,
+      annotationActionsVisible: false,
       activeViewport: 0,
       showInfo: true,
       showReferenceLines: true,
@@ -437,6 +554,7 @@ var app = new Vue({
       orthancSystem: {},  // Only available if "OrthancApiRoot" configuration option is set
       stoneWebViewerVersion: '...',
       emscriptenVersion: '...',
+      isFirstSeries: true,
 
       modalWarning: false,
       modalNotDiagnostic: false,
@@ -541,8 +659,26 @@ var app = new Vue({
         });
       }
     },
+
+    GetActiveViewportSeriesTags: function() {
+      if (this.activeViewport == 1) {
+        return this.viewport1Content.series.tags;
+      }
+      else if (this.activeViewport == 2) {
+        return this.viewport2Content.series.tags;
+      }
+      else if (this.activeViewport == 3) {
+        return this.viewport3Content.series.tags;
+      }
+      else if (this.activeViewport == 4) {
+        return this.viewport4Content.series.tags;
+      }
+      else {
+        return null;
+      }
+    },
     
-    GetActiveSeries: function() {
+    GetActiveSeriesInstanceUid: function() {
       var s = [];
 
       if ('tags' in this.viewport1Content.series)
@@ -689,6 +825,15 @@ var app = new Vue({
       }
     },
     
+    SetViewportVirtualSeries: function(viewportIndex, seriesInstanceUid, virtualSeriesId) {
+      if (seriesInstanceUid in this.seriesIndex) {
+        this.SetViewportSeries(viewportIndex, {
+          seriesIndex: this.seriesIndex[seriesInstanceUid],
+          virtualSeriesId: virtualSeriesId
+        });
+      }
+    },
+    
     SetViewportSeries: function(viewportIndex, info) {
       var series = this.series[info.seriesIndex];
       
@@ -716,6 +861,9 @@ var app = new Vue({
           virtualSeriesId: info.virtualSeriesId
         };
       }
+
+      // Give the focus to this viewport (new in Stone Web viewer 2.5)
+      this.activeViewport = viewportIndex;
     },
     
     ClickSeries: function(seriesIndex) {
@@ -1071,22 +1219,16 @@ var app = new Vue({
           this.archiveJob.length > 0) {      
 
         var that = this;
-        axios.get(that.globalConfiguration.OrthancApiRoot + '/jobs/' + that.archiveJob)
+        axios.get(that.globalConfiguration.OrthancApiRoot + '/jobs/' + that.archiveJob, {
+          headers: axiosHeaders
+        })
           .then(function(response) {
             console.log('Progress of archive job ' + that.archiveJob + ': ' + response.data['Progress'] + '%');
             var state = response.data['State'];
             if (state == 'Success') {
               that.creatingArchive = false;
               var uri = that.globalConfiguration.OrthancApiRoot + '/jobs/' + that.archiveJob + '/archive';
-
-              /**
-               * The use of "window.open()" below might be blocked
-               * (depending on the browser criteria to block popup).
-               * As a consequence, we prefer to set "window.location".
-               * https://www.nngroup.com/articles/the-top-ten-web-design-mistakes-of-1999/
-               **/
-              // window.open(uri, '_blank');
-              window.location = uri;
+              TriggerDownloadFromUri(uri, that.archiveJob + '.zip', 'application/zip');
             }
             else if (state == 'Running') {
               setTimeout(that.CheckIsDownloadComplete, 1000);
@@ -1108,7 +1250,9 @@ var app = new Vue({
       console.log('Creating archive for study: ' + studyInstanceUid);
 
       var that = this;
-      axios.post(this.globalConfiguration.OrthancApiRoot + '/tools/lookup', studyInstanceUid)
+      axios.post(this.globalConfiguration.OrthancApiRoot + '/tools/lookup', studyInstanceUid, {
+        headers: axiosHeaders
+      })
         .then(function(response) {
           if (response.data.length != 1) {
             throw('');
@@ -1127,12 +1271,13 @@ var app = new Vue({
               // ZIP streaming is available (this is Orthanc >=
               // 1.9.4): Simply give the hand to Orthanc
               event.preventDefault();
-              window.location.href = uri;
-
+              TriggerDownloadFromUri(uri, orthancId + '.zip', 'application/zip');
             } else {
               // ZIP streaming is not available: Create a job to create the archive
               axios.post(uri, {
                 'Asynchronous' : true
+              }, {
+                headers: axiosHeaders
               })
                 .then(function(response) {
                   that.creatingArchive = true;
@@ -1145,12 +1290,74 @@ var app = new Vue({
         .catch(function (error) {
           alert('Cannot find the study in Orthanc');
         });
-      
     },
 
-    ApplyDeepLearning: function()
-    {
+    ApplyDeepLearning: function() {
       stone.ApplyDeepLearningModel(this.GetActiveCanvas());
+    },
+
+    ChangeActiveSeries: function(offset) {
+      var seriesTags = this.GetActiveViewportSeriesTags();
+      if (seriesTags !== null) {
+        var studyIndex = LookupIndexOfResource(this.studies, STUDY_INSTANCE_UID, seriesTags[STUDY_INSTANCE_UID]);
+        if (studyIndex != -1) {
+          var virtualSeriesId = this.GetActiveVirtualSeries();
+          if (virtualSeriesId.length > 0) {
+            virtualSeriesId = virtualSeriesId[0];
+          } else {
+            virtualSeriesId = '';
+          }
+          
+          var seriesInStudyIndices = this.studies[studyIndex].series;
+          for (var i = 0; i < seriesInStudyIndices.length; i++) {
+            var series = this.series[seriesInStudyIndices[i]];
+            if (this.series[seriesInStudyIndices[i]].tags[SERIES_INSTANCE_UID] == seriesTags[SERIES_INSTANCE_UID]) {
+              if (series.virtualSeries !== null) {
+                for (var j = 0; j < series.virtualSeries.length; j++) {
+                  if (series.virtualSeries[j].ID == virtualSeriesId) {
+                    var next = j + offset;
+                    if (next >= 0 &&
+                        next < series.virtualSeries.length) {
+                      this.SetViewportVirtualSeries(this.activeViewport, seriesTags[SERIES_INSTANCE_UID], series.virtualSeries[next].ID);
+                    }
+                    return;
+                  }
+                }
+              }
+              else {              
+                var next = i + offset;
+                if (next >= 0 &&
+                    next < seriesInStudyIndices.length) {
+                  this.SetViewportSeriesInstanceUid(this.activeViewport, this.series[seriesInStudyIndices[next]].tags[SERIES_INSTANCE_UID]);
+                }
+                return;
+              }
+            }
+          }
+        }
+      }
+    },
+
+    ChangeActiveStudy: function(offset) {
+      var seriesTags = this.GetActiveViewportSeriesTags();
+      if (seriesTags !== null) {
+        var studyIndex = LookupIndexOfResource(this.studies, STUDY_INSTANCE_UID, seriesTags[STUDY_INSTANCE_UID]);
+        if (studyIndex != -1) {
+          var next = studyIndex + offset;
+          if (next >= 0 &&
+              next < this.studies.length) {
+            var nextStudy = this.studies[next];
+            if (nextStudy.series.length > 0) {
+              var seriesIndex = nextStudy.series[0];
+              if (this.series[seriesIndex].virtualSeries !== null) {
+                this.ClickVirtualSeries(seriesIndex, this.series[seriesIndex].virtualSeries[0].ID);
+              } else {
+                this.ClickSeries(seriesIndex);
+              }
+            }
+          }
+        }
+      }
     }
   },
   
@@ -1187,6 +1394,12 @@ var app = new Vue({
       var studyInstanceUid = args.detail.studyInstanceUid;
       var seriesInstanceUid = args.detail.seriesInstanceUid;
       that.UpdateIsSeriesComplete(studyInstanceUid, seriesInstanceUid);
+
+      // Automatically open the first series to be loaded (new in Stone Web viewer 2.5)
+      if (that.isFirstSeries) {
+        that.SetViewportSeriesInstanceUid(1, seriesInstanceUid);
+        that.isFirstSeries = false;
+      }
     });
 
     window.addEventListener('StoneAnnotationAdded', function() {
@@ -1203,6 +1416,49 @@ var app = new Vue({
         stone.AddTextAnnotation(args.detail.canvasId, label,
                                 args.detail.pointedX, args.detail.pointedY,
                                 args.detail.labelX, args.detail.labelY);
+      }
+    });
+
+    window.addEventListener('keydown', function(event) {
+      var canvas = that.GetActiveCanvas();
+      if (canvas != '') {
+        switch (event.key) {
+        case 'Left':
+        case 'ArrowLeft':
+          stone.DecrementFrame(canvas, false);
+          break;
+
+        case 'Right':
+        case 'ArrowRight':
+          stone.IncrementFrame(canvas, false);
+          break;
+
+        case 'Up':
+        case 'ArrowUp':
+          that.ChangeActiveSeries(-1);
+          break
+          
+        case 'Down':
+        case 'ArrowDown':
+          that.ChangeActiveSeries(1);
+          break;
+
+        case 'PageUp':
+          that.ChangeActiveStudy(-1);
+          break;
+          
+        case 'PageDown':
+          that.ChangeActiveStudy(1);
+          break;
+
+        case ' ':
+        case 'Space':
+          dispatchEvent(new CustomEvent('KeyCineSwitch', { }));
+          break;
+
+        default:
+          break;
+        }
       }
     });
   }
@@ -1235,9 +1491,20 @@ window.addEventListener('StoneInitialized', function() {
   // Bearer token is new in Stone Web viewer 2.0
   var token = getParameterFromUrl('token');
   if (token !== undefined) {
+    hasAuthorizationToken = true;
     stone.AddHttpHeader('Authorization', 'Bearer ' + token);
+    axiosHeaders['Authorization'] = 'Bearer ' + token;
   }
 
+  if (app.globalConfiguration.OrthancApiRoot) {
+    axios.get(app.globalConfiguration.OrthancApiRoot + '/system', {
+      headers: axiosHeaders
+    })
+      .then(function (response) {
+        app.orthancSystem = response.data;
+      });
+  }
+  
 
   /**
    * Calls to "stone.XXX()" can be reordered after this point.
@@ -1308,6 +1575,21 @@ window.addEventListener('StoneInitialized', function() {
 
     if (empty) {
       alert('No study, nor patient was provided in the URL!');
+    }
+  }
+
+  // New in Stone Web viewer 2.5
+  var menu = getParameterFromUrl('menu');
+  if (menu !== undefined) {
+    if (menu == 'hidden') {
+      app.leftVisible = false;
+    } else if (menu == 'small' ||
+               menu == 'grid' ||
+               menu == 'full') {
+      app.leftVisible = true;
+      app.leftMode = menu;
+    } else {
+      alert('Bad value for the "menu" option in the URL (can be "hidden", "small", "grid", or "full"): ' + menu);
     }
   }
 });
@@ -1393,13 +1675,6 @@ $(document).ready(function() {
         .catch(function (error) {
           alert('Cannot load the WebAssembly framework');
         });
-
-      if (app.globalConfiguration.OrthancApiRoot) {
-        axios.get(app.globalConfiguration.OrthancApiRoot + '/system')
-          .then(function (response) {
-            app.orthancSystem = response.data;
-          });
-      }
     })
     .catch(function (error) {
       alert('Cannot load the configuration file');

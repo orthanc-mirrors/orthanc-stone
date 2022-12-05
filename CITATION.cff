@@ -17,5 +17,5 @@ identifiers:
 repository-code: 'https://hg.orthanc-server.com/orthanc-stone/'
 url: 'https://www.orthanc-server.com/'
 license: AGPL-3.0-or-later
-version: 2.4
-date-released: 2022-11-02
+version: 2.5
+date-released: 2022-12-05

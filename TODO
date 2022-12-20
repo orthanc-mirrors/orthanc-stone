@@ -102,6 +102,11 @@ Wishlist
   in the browser tab name
   https://groups.google.com/g/orthanc-users/c/F7cK8axehfA/m/ku-CPsvbAQAJ
 
+* Configuration option (plus GET parameter in the URL) to set where to
+  start in the series by default (plus possibly a dictionary mapping
+  SOP Class UIDs for per-modality setting):
+  https://groups.google.com/g/orthanc-users/c/tHPMBHe-Z-A/m/XXlRBdhoAgAJ
+
 --------
 Won't do
 --------

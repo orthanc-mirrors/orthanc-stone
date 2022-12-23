@@ -1038,6 +1038,14 @@ var app = new Vue({
       }
     },
 
+    StretchWindowing: function(center, width) {
+      this.showWindowing = false;
+      var canvas = this.GetActiveCanvas();
+      if (canvas != '') {
+        stone.StretchWindowing(canvas);
+      }
+    },
+
     InvertContrast: function() {
       var canvas = this.GetActiveCanvas();
       if (canvas != '') {

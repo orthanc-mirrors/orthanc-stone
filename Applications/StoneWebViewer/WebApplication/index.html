@@ -488,6 +488,11 @@
                       {{ preset.name }} <small>({{ preset.info }})</small>
                     </a>
                   </li>
+                  <li class="wvToolbar__windowingPresetListItem">
+                    <a href="#" v-on:click="StretchWindowing()">
+                      Stretch to whole range
+                    </a>
+                  </li>
                   <li v-for="preset in globalConfiguration.WindowingPresets"
                       class="wvToolbar__windowingPresetListItem">
                     <a href="#" v-on:click="SetWindowing(preset.WindowCenter, preset.WindowWidth)">

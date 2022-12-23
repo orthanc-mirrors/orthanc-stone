@@ -3127,6 +3127,34 @@ public:
     }
   }
 
+  void StretchWindowing()
+  {
+    float minValue, maxValue;
+    
+    {
+      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+
+      if (!lock->GetController().GetScene().HasLayer(LAYER_TEXTURE) ||
+          lock->GetController().GetScene().GetLayer(LAYER_TEXTURE).GetType() !=
+          OrthancStone::ISceneLayer::Type_FloatTexture)
+      {
+        return;
+      }
+
+      const Orthanc::ImageAccessor& texture =
+        dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(
+          lock->GetController().GetScene().GetLayer(LAYER_TEXTURE)).GetTexture();
+      if (texture.GetFormat() != Orthanc::PixelFormat_Float32)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      Orthanc::ImageProcessing::GetMinMaxFloatValue(minValue, maxValue, texture);
+    }
+
+    SetWindowing((minValue + maxValue) / 2.0f, maxValue - minValue);
+  }
+
   void FlipX()
   {
     {
@@ -4596,6 +4624,17 @@ extern "C"
     }
     EXTERN_CATCH_EXCEPTIONS;
   }  
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void StretchWindowing(const char* canvas)
+  {
+    try
+    {
+      GetViewport(canvas)->StretchWindowing();
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
 
 
   EMSCRIPTEN_KEEPALIVE

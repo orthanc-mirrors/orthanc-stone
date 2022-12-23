@@ -606,7 +606,8 @@ var app = new Vue({
       virtualSeriesThumbnails: {},
 
       deepLearningReady: false,
-      deepLearningProgress: 0  // Floating-point number in the range [0..1]
+      deepLearningProgress: 0,  // Floating-point number in the range [0..1]
+      deepLearningStartTime: null
     }
   },
   computed: {
@@ -1294,6 +1295,7 @@ var app = new Vue({
 
     ApplyDeepLearning: function() {
       stone.ApplyDeepLearningModel(this.GetActiveCanvas());
+      app.deepLearningStartTime = performance.now();
     },
 
     ChangeActiveSeries: function(offset) {
@@ -1734,4 +1736,5 @@ window.addEventListener('DeepLearningModelReady', function() {
 
 window.addEventListener('DeepLearningStep', function(args) {
   app.deepLearningProgress = args.detail.progress;
+  console.log('Elapsed time: ' + Math.round(performance.now() - app.deepLearningStartTime) + 'ms');
 });

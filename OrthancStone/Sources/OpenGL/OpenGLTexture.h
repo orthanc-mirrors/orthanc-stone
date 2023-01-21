@@ -24,6 +24,7 @@
 #pragma once
 
 #include "OpenGLIncludes.h"
+#include "IOpenGLContext.h"
 
 #include <Images/ImageAccessor.h>
 
@@ -34,8 +35,6 @@ namespace OrthancStone
 {
   namespace OpenGL
   {
-    class IOpenGLContext;
-
     class OpenGLTexture : public boost::noncopyable
     {
     private:
@@ -63,6 +62,8 @@ namespace OrthancStone
                 bool isLinearInterpolation);
 
       void Bind(GLint location);
+
+      Orthanc::ImageAccessor* Download(Orthanc::PixelFormat format);
     };
   }
 }

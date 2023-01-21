@@ -24,6 +24,7 @@
 #include "OpenGLTexture.h"
 #include "IOpenGLContext.h"
 
+#include <Images/Image.h>
 #include <Logging.h>
 #include <OrthancException.h>
 
@@ -31,10 +32,11 @@ namespace OrthancStone
 {
   namespace OpenGL
   {
-    OpenGLTexture::OpenGLTexture(OpenGL::IOpenGLContext& context)
-      : width_(0)
-      , height_(0)
-      , context_(context)
+    OpenGLTexture::OpenGLTexture(OpenGL::IOpenGLContext& context) :
+      texture_(0),
+      width_(0),
+      height_(0),
+      context_(context)
     {
       if (!context_.IsContextLost())
       {
@@ -43,7 +45,7 @@ namespace OrthancStone
         if (texture_ == 0)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-            "Cannot create an OpenGL program");
+            "Cannot create an OpenGL texture");
         }
       }
     }
@@ -97,23 +99,26 @@ namespace OrthancStone
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture_);
 
-        GLenum sourceFormat, internalFormat;
+        GLenum sourceFormat, internalFormat, pixelType;
 
         switch (image.GetFormat())
         {
         case Orthanc::PixelFormat_Grayscale8:
           sourceFormat = GL_RED;
           internalFormat = GL_RED;
+          pixelType = GL_UNSIGNED_BYTE;
           break;
 
         case Orthanc::PixelFormat_RGB24:
           sourceFormat = GL_RGB;
           internalFormat = GL_RGB;
+          pixelType = GL_UNSIGNED_BYTE;
           break;
 
         case Orthanc::PixelFormat_RGBA32:
           sourceFormat = GL_RGBA;
           internalFormat = GL_RGBA;
+          pixelType = GL_UNSIGNED_BYTE;
           break;
 
         default:
@@ -129,7 +134,7 @@ namespace OrthancStone
 
         // Load the texture from the image buffer
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, image.GetWidth(), image.GetHeight(),
-                     0, sourceFormat, GL_UNSIGNED_BYTE, image.GetConstBuffer());
+                     0, sourceFormat, pixelType, image.GetConstBuffer());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interpolation);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interpolation);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -143,6 +148,40 @@ namespace OrthancStone
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, texture_);
       glUniform1i(location, 0 /* texture unit */);
+    }
+
+
+    Orthanc::ImageAccessor* OpenGLTexture::Download(Orthanc::PixelFormat format)
+    {
+      if (context_.IsContextLost())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                        "OpenGL context is lost");
+      }
+
+      std::unique_ptr<Orthanc::ImageAccessor> target(new Orthanc::Image(format, width_, height_, true));
+
+      glBindTexture(GL_TEXTURE_2D, texture_);
+
+      switch (format)
+      {
+        case Orthanc::PixelFormat_Grayscale8:
+          glGetTexImage(GL_TEXTURE_2D, 0 /* base level */, GL_RED, GL_UNSIGNED_BYTE, target->GetBuffer());
+          break;
+
+        case Orthanc::PixelFormat_RGB24:
+          glGetTexImage(GL_TEXTURE_2D, 0 /* base level */, GL_RGB, GL_UNSIGNED_BYTE, target->GetBuffer());
+          break;
+
+        case Orthanc::PixelFormat_RGBA32:
+          glGetTexImage(GL_TEXTURE_2D, 0 /* base level */, GL_RGBA, GL_UNSIGNED_BYTE, target->GetBuffer());
+          break;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+
+      return target.release();
     }
   }
 }

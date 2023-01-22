@@ -92,7 +92,7 @@ namespace OrthancStone
         if (image.GetPitch() != image.GetBytesPerPixel() * image.GetWidth())
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
-            "Unsupported non-zero padding");
+            "Pitch is not the same as the row size");
         }
 
         // Bind it
@@ -119,6 +119,12 @@ namespace OrthancStone
           sourceFormat = GL_RGBA;
           internalFormat = GL_RGBA;
           pixelType = GL_UNSIGNED_BYTE;
+          break;
+
+        case Orthanc::PixelFormat_Float32:
+          sourceFormat = GL_RED;
+          internalFormat = GL_R32F; // Don't use "GL_RED" here, as it clamps to [0,1]
+          pixelType = GL_FLOAT;
           break;
 
         default:
@@ -160,6 +166,7 @@ namespace OrthancStone
       }
 
       std::unique_ptr<Orthanc::ImageAccessor> target(new Orthanc::Image(format, width_, height_, true));
+      assert(target->GetPitch() == width_ * Orthanc::GetBytesPerPixel(format));
 
       glBindTexture(GL_TEXTURE_2D, texture_);
 
@@ -175,6 +182,10 @@ namespace OrthancStone
 
         case Orthanc::PixelFormat_RGBA32:
           glGetTexImage(GL_TEXTURE_2D, 0 /* base level */, GL_RGBA, GL_UNSIGNED_BYTE, target->GetBuffer());
+          break;
+
+        case Orthanc::PixelFormat_Float32:
+          glGetTexImage(GL_TEXTURE_2D, 0 /* base level */, GL_RED, GL_FLOAT, target->GetBuffer());
           break;
 
         default:

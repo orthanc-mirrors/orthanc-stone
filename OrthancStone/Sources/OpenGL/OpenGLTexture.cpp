@@ -82,18 +82,20 @@ namespace OrthancStone
       }
     }
 
-    void OpenGLTexture::Load(const Orthanc::ImageAccessor& image,
-                             bool isLinearInterpolation)
+    void OpenGLTexture::Setup(Orthanc::PixelFormat format,
+                              unsigned int width,
+                              unsigned int height,
+                              bool isLinearInterpolation,
+                              const void* data)
     {
-      if (!context_.IsContextLost())
+      if (context_.IsContextLost())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+            "OpenGL context has been lost");
+      }
+      else
       {
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
-
-        if (image.GetPitch() != image.GetBytesPerPixel() * image.GetWidth())
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
-            "Pitch is not the same as the row size");
-        }
 
         // Bind it
         glActiveTexture(GL_TEXTURE0);
@@ -101,7 +103,7 @@ namespace OrthancStone
 
         GLenum sourceFormat, internalFormat, pixelType;
 
-        switch (image.GetFormat())
+        switch (format)
         {
         case Orthanc::PixelFormat_Grayscale8:
           sourceFormat = GL_RED;
@@ -130,21 +132,36 @@ namespace OrthancStone
         default:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
             "No support for this format in OpenGL textures: " +
-            std::string(EnumerationToString(image.GetFormat())));
+            std::string(EnumerationToString(format)));
         }
 
-        width_ = image.GetWidth();
-        height_ = image.GetHeight();
+        width_ = width;
+        height_ = height;
 
         GLint interpolation = (isLinearInterpolation ? GL_LINEAR : GL_NEAREST);
 
         // Load the texture from the image buffer
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, image.GetWidth(), image.GetHeight(),
-                     0, sourceFormat, pixelType, image.GetConstBuffer());
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height,
+                     0, sourceFormat, pixelType, data);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interpolation);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interpolation);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      }
+    }
+
+    void OpenGLTexture::Load(const Orthanc::ImageAccessor& image,
+                             bool isLinearInterpolation)
+    {
+      if (image.GetPitch() != image.GetBytesPerPixel() * image.GetWidth())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                        "Pitch is not the same as the row size");
+      }
+      else
+      {
+        Setup(image.GetFormat(), image.GetWidth(), image.GetHeight(),
+              isLinearInterpolation, image.GetConstBuffer());
       }
     }
 

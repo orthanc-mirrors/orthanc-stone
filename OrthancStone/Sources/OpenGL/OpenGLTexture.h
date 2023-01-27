@@ -43,10 +43,21 @@ namespace OrthancStone
       unsigned int  height_;
       OpenGL::IOpenGLContext& context_;
 
+      void Setup(Orthanc::PixelFormat format,
+                 unsigned int width,
+                 unsigned int height,
+                 bool isLinearInterpolation,
+                 const void* data);
+
     public:
       explicit OpenGLTexture(OpenGL::IOpenGLContext& context);
 
       ~OpenGLTexture();
+
+      GLuint GetId() const
+      {
+        return texture_;
+      }
 
       unsigned int GetWidth() const
       {
@@ -56,6 +67,14 @@ namespace OrthancStone
       unsigned int GetHeight() const
       {
         return height_;
+      }
+
+      void Setup(Orthanc::PixelFormat format,
+                 unsigned int width,
+                 unsigned int height,
+                 bool isLinearInterpolation)
+      {
+        Setup(format, width, height, isLinearInterpolation, NULL);
       }
 
       void Load(const Orthanc::ImageAccessor& image,

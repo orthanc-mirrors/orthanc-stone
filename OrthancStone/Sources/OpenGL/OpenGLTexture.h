@@ -83,6 +83,12 @@ namespace OrthancStone
       void Bind(GLint location);
 
       Orthanc::ImageAccessor* Download(Orthanc::PixelFormat format);
+
+      /**
+       * By default, textures are mirrored at the borders. This
+       * function will set out-of-image access to zero.
+       **/
+      void SetClampingToZero();
     };
   }
 }

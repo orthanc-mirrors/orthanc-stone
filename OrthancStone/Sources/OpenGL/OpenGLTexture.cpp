@@ -211,5 +211,16 @@ namespace OrthancStone
 
       return target.release();
     }
+    
+
+    void OpenGLTexture::SetClampingToZero()
+    {
+      glBindTexture(GL_TEXTURE_2D, texture_);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+      GLfloat colorfv[4] = { 0, 0, 0, 0 };
+      glTextureParameterfv(texture_, GL_TEXTURE_BORDER_COLOR, colorfv);
+    }
   }
 }

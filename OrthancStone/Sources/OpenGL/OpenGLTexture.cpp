@@ -143,6 +143,19 @@ namespace OrthancStone
         // Load the texture from the image buffer
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height,
                      0, sourceFormat, pixelType, data);
+
+        GLint w, h;
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+        if (width != static_cast<unsigned int>(w) ||
+            height != static_cast<unsigned int>(h))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                          "Your GPU cannot create a texture of size " +
+                                          boost::lexical_cast<std::string>(width) + " x " +
+                                          boost::lexical_cast<std::string>(height));
+        }
+        
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interpolation);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interpolation);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

@@ -84,9 +84,9 @@ namespace OrthancStone
       void Load(const Orthanc::ImageAccessor& image,
                 bool isLinearInterpolation);
 
-      void Bind(GLint location);
+      void Bind(GLint location) const;
 
-      Orthanc::ImageAccessor* Download(Orthanc::PixelFormat format);
+      Orthanc::ImageAccessor* Download(Orthanc::PixelFormat format) const;
 
       /**
        * By default, textures are mirrored at the borders. This

@@ -148,7 +148,7 @@ namespace OrthancStone
     }
 
 
-    void OpenGLTexture::Bind(GLint location)
+    void OpenGLTexture::Bind(GLint location) const
     {
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, texture_);
@@ -156,7 +156,7 @@ namespace OrthancStone
     }
 
 
-    Orthanc::ImageAccessor* OpenGLTexture::Download(Orthanc::PixelFormat format)
+    Orthanc::ImageAccessor* OpenGLTexture::Download(Orthanc::PixelFormat format) const
     {
       if (context_.IsContextLost())
       {

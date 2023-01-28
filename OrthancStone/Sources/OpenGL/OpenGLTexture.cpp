@@ -102,38 +102,7 @@ namespace OrthancStone
         glBindTexture(GL_TEXTURE_2D, texture_);
 
         GLenum sourceFormat, internalFormat, pixelType;
-
-        switch (format)
-        {
-        case Orthanc::PixelFormat_Grayscale8:
-          sourceFormat = GL_RED;
-          internalFormat = GL_RED;
-          pixelType = GL_UNSIGNED_BYTE;
-          break;
-
-        case Orthanc::PixelFormat_RGB24:
-          sourceFormat = GL_RGB;
-          internalFormat = GL_RGB;
-          pixelType = GL_UNSIGNED_BYTE;
-          break;
-
-        case Orthanc::PixelFormat_RGBA32:
-          sourceFormat = GL_RGBA;
-          internalFormat = GL_RGBA;
-          pixelType = GL_UNSIGNED_BYTE;
-          break;
-
-        case Orthanc::PixelFormat_Float32:
-          sourceFormat = GL_RED;
-          internalFormat = GL_R32F; // Don't use "GL_RED" here, as it clamps to [0,1]
-          pixelType = GL_FLOAT;
-          break;
-
-        default:
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
-            "No support for this format in OpenGL textures: " +
-            std::string(EnumerationToString(format)));
-        }
+        ConvertToOpenGLFormats(sourceFormat, internalFormat, pixelType, format);
 
         width_ = width;
         height_ = height;
@@ -234,6 +203,45 @@ namespace OrthancStone
 
       GLfloat colorfv[4] = { 0, 0, 0, 0 };
       glTextureParameterfv(texture_, GL_TEXTURE_BORDER_COLOR, colorfv);
+    }
+
+
+    void OpenGLTexture::ConvertToOpenGLFormats(GLenum& sourceFormat,
+                                               GLenum& internalFormat,
+                                               GLenum& pixelType,
+                                               Orthanc::PixelFormat format)
+    {
+      switch (format)
+      {
+        case Orthanc::PixelFormat_Grayscale8:
+          sourceFormat = GL_RED;
+          internalFormat = GL_RED;
+          pixelType = GL_UNSIGNED_BYTE;
+          break;
+
+        case Orthanc::PixelFormat_RGB24:
+          sourceFormat = GL_RGB;
+          internalFormat = GL_RGB;
+          pixelType = GL_UNSIGNED_BYTE;
+          break;
+
+        case Orthanc::PixelFormat_RGBA32:
+          sourceFormat = GL_RGBA;
+          internalFormat = GL_RGBA;
+          pixelType = GL_UNSIGNED_BYTE;
+          break;
+
+        case Orthanc::PixelFormat_Float32:
+          sourceFormat = GL_RED;
+          internalFormat = GL_R32F; // Don't use "GL_RED" here, as it clamps to [0,1]
+          pixelType = GL_FLOAT;
+          break;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                          "No support for this format in OpenGL textures: " +
+                                          std::string(EnumerationToString(format)));
+      }
     }
   }
 }

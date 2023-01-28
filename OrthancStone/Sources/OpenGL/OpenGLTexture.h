@@ -89,6 +89,11 @@ namespace OrthancStone
        * function will set out-of-image access to zero.
        **/
       void SetClampingToZero();
+
+      static void ConvertToOpenGLFormats(GLenum& sourceFormat,
+                                         GLenum& internalFormat,
+                                         GLenum& pixelType,
+                                         Orthanc::PixelFormat format);
     };
   }
 }

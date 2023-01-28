@@ -54,6 +54,10 @@ namespace OrthancStone
 
       ~OpenGLTexture();
 
+      /**
+       * Returns the low-level OpenGL handle of the texture. Beware to
+       * never change the size of the texture using this handle!
+       **/
       GLuint GetId() const
       {
         return texture_;

@@ -55,6 +55,8 @@ namespace OrthancStone
         glCompileShader(shader);
         ORTHANC_OPENGL_CHECK("glCompileShader");
 
+        GLenum error = glGetError();
+
         // Check if there were errors
         int infoLen = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
@@ -65,18 +67,24 @@ namespace OrthancStone
           std::string infoLog;
           infoLog.resize(infoLen + 1);
           glGetShaderInfoLog(shader, infoLen, NULL, &infoLog[0]);
-          ORTHANC_OPENGL_CHECK("glGetShaderInfoLog");
-          ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteShader");
-          glDeleteShader(shader);
-          ORTHANC_OPENGL_CHECK("glDeleteShader");
 
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-                                          "Error while creating an OpenGL shader: " + infoLog);
+          if (error)
+          {
+            ORTHANC_OPENGL_CHECK("glGetShaderInfoLog");
+            ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteShader");
+            glDeleteShader(shader);
+            ORTHANC_OPENGL_CHECK("glDeleteShader");
+            
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                            "Error while creating an OpenGL shader: " + infoLog);
+          }
+          else
+          {
+            LOG(WARNING) << "Warning while creating an OpenGL shader: " << infoLog;
+          }
         }
-        else
-        {
-          return shader;
-        }
+
+        return shader;
       }
     }
 

@@ -58,7 +58,7 @@ namespace OrthancStone
         GLenum error = glGetError();
 
         // Check if there were errors
-        int infoLen = 0;
+        GLint infoLen = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
         ORTHANC_OPENGL_CHECK("glGetShaderiv");
 

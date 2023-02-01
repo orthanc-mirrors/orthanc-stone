@@ -86,6 +86,12 @@ namespace OrthancStone
     {
       //ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glUseProgram");
       glUseProgram(program_);
+      if (glGetError() != GL_NO_ERROR)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                        "Cannot use successfully compiled OpenGL shader");
+      }
+      
       ORTHANC_OPENGL_CHECK("glUseProgram");
     }
         

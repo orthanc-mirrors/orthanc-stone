@@ -156,6 +156,23 @@ namespace OrthancStone
     }
 
 
+    void OpenGLTexture::BindAsTextureUnit(GLint location,
+                                          unsigned int unit) const
+    {
+      if (unit >= 32)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+      
+      assert(GL_TEXTURE0 + 1 == GL_TEXTURE1 &&
+             GL_TEXTURE0 + 31 == GL_TEXTURE31);
+      
+      glActiveTexture(GL_TEXTURE0 + unit);
+      glBindTexture(GL_TEXTURE_2D, texture_);
+      glUniform1i(location, unit /* texture unit */);
+    }
+
+
     Orthanc::ImageAccessor* OpenGLTexture::Download(Orthanc::PixelFormat format) const
     {
       if (context_.IsContextLost())

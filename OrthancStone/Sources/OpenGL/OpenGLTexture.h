@@ -86,6 +86,9 @@ namespace OrthancStone
 
       void Bind(GLint location) const;
 
+      void BindAsTextureUnit(GLint location,
+                             unsigned int unit) const;
+
       Orthanc::ImageAccessor* Download(Orthanc::PixelFormat format) const;
 
       /**

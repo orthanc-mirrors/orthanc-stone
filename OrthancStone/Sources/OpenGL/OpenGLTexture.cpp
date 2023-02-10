@@ -113,6 +113,8 @@ namespace OrthancStone
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height,
                      0, sourceFormat, pixelType, data);
 
+#if !defined(__EMSCRIPTEN__)
+        // "glGetTexLevelParameteriv()" seems to be undefined on WebGL
         GLint w, h;
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
@@ -124,6 +126,7 @@ namespace OrthancStone
                                           boost::lexical_cast<std::string>(width) + " x " +
                                           boost::lexical_cast<std::string>(height));
         }
+#endif
         
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interpolation);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interpolation);

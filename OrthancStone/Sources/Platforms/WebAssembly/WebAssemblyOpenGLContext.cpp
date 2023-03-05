@@ -45,7 +45,8 @@ namespace OrthancStone
       bool                            isContextLost_;
 
     public:
-      explicit PImpl(const std::string& canvasSelector) :
+      explicit PImpl(const std::string& canvasSelector,
+                     Version version) :
         canvasSelector_(canvasSelector),
         isContextLost_(false)
       {
@@ -53,6 +54,20 @@ namespace OrthancStone
         EmscriptenWebGLContextAttributes attr; 
         emscripten_webgl_init_context_attributes(&attr);
 
+        switch (version)
+        {
+          case Version_WebGL1:
+            break;
+
+          case Version_WebGL2:
+            attr.majorVersion = 2;
+            attr.minorVersion = 0;
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+        
         // The next line might be necessary to print using
         // WebGL. Sometimes, if set to "false" (the default value),
         // the canvas was rendered as a fully white or black
@@ -162,7 +177,13 @@ namespace OrthancStone
 
 
     WebAssemblyOpenGLContext::WebAssemblyOpenGLContext(const std::string& canvasSelector) :
-      pimpl_(new PImpl(canvasSelector))
+      pimpl_(new PImpl(canvasSelector, Version_WebGL1))
+    {
+    }
+
+    WebAssemblyOpenGLContext::WebAssemblyOpenGLContext(const std::string& canvasSelector,
+                                                       Version version) :
+      pimpl_(new PImpl(canvasSelector, version))
     {
     }
 

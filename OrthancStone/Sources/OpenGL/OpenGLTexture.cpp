@@ -42,6 +42,8 @@ namespace OrthancStone
       {
         // Generate a texture object
         glGenTextures(1, &texture_);
+        ORTHANC_OPENGL_CHECK("glGenTextures()");
+
         if (texture_ == 0)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,

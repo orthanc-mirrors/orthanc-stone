@@ -51,12 +51,22 @@ namespace OrthancStone
   {
     class WebAssemblyOpenGLContext : public OpenGL::IOpenGLContext
     {
+    public:
+      enum Version
+      {
+        Version_WebGL1,
+        Version_WebGL2
+      };
+      
     private:
       class PImpl;
       boost::shared_ptr<PImpl>  pimpl_;
 
     public:
       explicit WebAssemblyOpenGLContext(const std::string& canvasSelector);
+
+      explicit WebAssemblyOpenGLContext(const std::string& canvasSelector,
+                                        Version version);
 
       virtual bool IsContextLost() ORTHANC_OVERRIDE;
 

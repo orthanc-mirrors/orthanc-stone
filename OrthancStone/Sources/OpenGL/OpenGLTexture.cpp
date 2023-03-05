@@ -114,7 +114,7 @@ namespace OrthancStone
                      0, sourceFormat, pixelType, data);
 
 #if !defined(__EMSCRIPTEN__)
-        // "glGetTexLevelParameteriv()" seems to be undefined on WebGL
+        // glGetTexLevelParameteriv() is not implemented yet in Emscripten 3.1.7
         GLint w, h;
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
@@ -187,6 +187,15 @@ namespace OrthancStone
       std::unique_ptr<Orthanc::ImageAccessor> target(new Orthanc::Image(format, width_, height_, true));
       assert(target->GetPitch() == width_ * Orthanc::GetBytesPerPixel(format));
 
+#if defined(__EMSCRIPTEN__)
+      /**
+       * The "glGetTexImage()" is unavailable in WebGL, it is
+       * necessary to use a framebuffer:
+       * https://stackoverflow.com/a/15064957
+       **/
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+
+#else
       glBindTexture(GL_TEXTURE_2D, texture_);
 
       switch (format)
@@ -210,6 +219,7 @@ namespace OrthancStone
         default:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
+#endif
 
       return target.release();
     }

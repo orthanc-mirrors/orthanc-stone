@@ -41,6 +41,8 @@ namespace OrthancStone
       GLuint        texture_;
       unsigned int  width_;
       unsigned int  height_;
+
+      Orthanc::PixelFormat    format_;
       OpenGL::IOpenGLContext& context_;
 
       void Setup(Orthanc::PixelFormat format,
@@ -61,6 +63,11 @@ namespace OrthancStone
       GLuint GetId() const
       {
         return texture_;
+      }
+
+      Orthanc::PixelFormat GetFormat() const
+      {
+        return format_;
       }
 
       unsigned int GetWidth() const

@@ -36,6 +36,7 @@ namespace OrthancStone
       texture_(0),
       width_(0),
       height_(0),
+      format_(Orthanc::PixelFormat_Grayscale8),
       context_(context)
     {
       if (!context_.IsContextLost())
@@ -106,6 +107,7 @@ namespace OrthancStone
         GLenum sourceFormat, internalFormat, pixelType;
         ConvertToOpenGLFormats(sourceFormat, internalFormat, pixelType, format);
 
+        format_ = format;
         width_ = width;
         height_ = height;
 

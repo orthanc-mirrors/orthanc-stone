@@ -114,9 +114,15 @@ namespace OrthancStone
         // Load the texture from the image buffer
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height,
                      0, sourceFormat, pixelType, data);
+        ORTHANC_OPENGL_CHECK("glTexImage2D()");
 
 #if !defined(__EMSCRIPTEN__)
-        // glGetTexLevelParameteriv() is not implemented yet in Emscripten 3.1.7
+        /**
+         * glGetTexLevelParameteriv() was introduced in OpenGL ES 3.1,
+         * but WebGL 2 only supports OpenGL ES 3.0, so it is not
+         * available in WebAssembly:
+         * https://registry.khronos.org/OpenGL-Refpages/es3.1/html/glGetTexLevelParameter.xhtml
+         **/
         GLint w, h;
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);

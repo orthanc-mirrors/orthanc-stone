@@ -28,6 +28,12 @@
 #include <Logging.h>
 #include <OrthancException.h>
 
+#if defined(__EMSCRIPTEN__)
+#  if !defined(ORTHANC_WEBGL2_HEAP_COMPAT)
+#    error The macro ORTHANC_WEBGL2_HEAP_COMPAT must be defined
+#  endif
+#endif
+
 namespace OrthancStone
 {
   namespace OpenGL
@@ -114,8 +120,38 @@ namespace OrthancStone
         GLint interpolation = (isLinearInterpolation ? GL_LINEAR : GL_NEAREST);
 
         // Load the texture from the image buffer
+
+#if defined(__EMSCRIPTEN__) && (ORTHANC_WEBGL2_HEAP_COMPAT == 1)
+        /**
+         * This compatibility implementation seems to be necessary
+         * with WebGL2, at least in Web workers. In such a situation,
+         * the calls that are referred to as the "new garbage-free
+         * entry points" in the Emscripten source file
+         * "upstream/emscripten/src/library_webgl.js" seem to fail,
+         * because the "Uint8Array" and "Float32Array" seem to be
+         * incorrectly created. This compatibility reverts to the
+         * WebGL1 behavior of "library_webgl.js", which requires the
+         * function "emscriptenWebGLGetTexPixelData" that is defined
+         * in "upstream/emscripten/src/library_webgl.js" to be
+         * exported in the linker using option
+         * "EXTRA_EXPORTED_RUNTIME_METHODS" or
+         * "EXPORTED_RUNTIME_METHODS".
+         **/
+        EM_ASM({
+            var ptr = $0 ? emscriptenWebGLGetTexPixelData($5, $4, $2, $3, $0, $1) : null;
+            GLctx.texImage2D(GLctx.TEXTURE_2D, 0, $1, $2, $3, 0, $4, $5, ptr);
+          },
+          data,            // $0
+          internalFormat,  // $1
+          width,           // $2
+          height,          // $3
+          sourceFormat,    // $4
+          pixelType);      // $5
+#else
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height,
                      0, sourceFormat, pixelType, data);
+#endif
+
         ORTHANC_OPENGL_CHECK("glTexImage2D()");
 
 #if !defined(__EMSCRIPTEN__)

@@ -3927,7 +3927,7 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
 
 
 #include <emscripten/fetch.h>
-#include "deep-learning/WebAssembly/Worker.pb.h"
+#include "Worker.pb.h"
 
 enum DeepLearningState
 {

@@ -82,11 +82,6 @@ Wishlist
   type of modality to be displayed):
   https://groups.google.com/g/orthanc-users/c/bGtK3q9ZUmg/m/gr8kCcVWCAAJ
 
-* When opening the viewer, directly load the first series in the
-  viewport (like the OsimisViewer). Whatch out the known issue
-  wrt. dropping a series before the studies/../metadata have been
-  loaded.
-
 * Create secondary capture DICOM images with the annotations burned in:
   https://groups.google.com/g/orthanc-users/c/T3h-6dIjvww/m/sVtHxwT_AQAJ
 

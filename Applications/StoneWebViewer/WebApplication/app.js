@@ -809,13 +809,17 @@ var app = new Vue({
     },
     
     SeriesDragStart: function(event, seriesIndex) {
-      // It is necessary to use ".toString()" for Microsoft Edge Legacy (*)
-      event.dataTransfer.setData('seriesIndex', seriesIndex.toString());
+      if (this.series[seriesIndex].numberOfFrames > 0) { // prevent dragging before the series metadata have been loaded
+        // It is necessary to use ".toString()" for Microsoft Edge Legacy (*)
+        event.dataTransfer.setData('seriesIndex', seriesIndex.toString());
+      }
     },
 
     VirtualSeriesDragStart: function(event, seriesIndex, virtualSeriesId) {
-      event.dataTransfer.setData('seriesIndex', seriesIndex.toString());
-      event.dataTransfer.setData('virtualSeriesId', virtualSeriesId.toString());
+      if (this.series[seriesIndex].numberOfFrames > 0) { // prevent dragging before the series metadata have been loaded
+        event.dataTransfer.setData('seriesIndex', seriesIndex.toString());
+        event.dataTransfer.setData('virtualSeriesId', virtualSeriesId.toString());
+      }
     },
 
     SetViewportSeriesInstanceUid: function(viewportIndex, seriesInstanceUid) {

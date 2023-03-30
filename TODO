@@ -44,10 +44,6 @@ Improvements
 Known issues
 ------------
 
-* When opening a CT with 700 slices, if you drop the thumbnail in the viewport
-  before the studies/../metadata have been loaded, the series will never be displayed.
-  https://groups.google.com/g/orthanc-users/c/04D4exKMVSA
-
 * Compatibility with Google Chrome browser on iPad Air 4:
   https://groups.google.com/g/orthanc-users/c/7SgedbIiA2k/
   https://groups.google.com/g/orthanc-users/c/RfQJFgkOUYY/m/za7rkcLNBQAJ
@@ -61,7 +57,7 @@ Code refactorings
 
 * Replace calls to /studies/.../series/.../metadata by calls to
   /instances?StudyInstanceUID=...&SeriesInstanceUID=...&includefield=...&includefield=...
-  to benefit from ExtraMainDicomTags stored in DB and avoid reading from disk
+  to benefit from ExtraMainDicomTags stored in DB and avoid reading from disk.
 
 --------
 Wishlist
@@ -85,11 +81,6 @@ Wishlist
 * Support hanging protocols (automatically adapt the layout given the
   type of modality to be displayed):
   https://groups.google.com/g/orthanc-users/c/bGtK3q9ZUmg/m/gr8kCcVWCAAJ
-
-* When opening the viewer, directly load the first series in the
-  viewport (like the OsimisViewer). Whatch out the known issue
-  wrt. dropping a series before the studies/../metadata have been
-  loaded.
 
 * Create secondary capture DICOM images with the annotations burned in:
   https://groups.google.com/g/orthanc-users/c/T3h-6dIjvww/m/sVtHxwT_AQAJ

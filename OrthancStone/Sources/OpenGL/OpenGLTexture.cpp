@@ -273,12 +273,25 @@ namespace OrthancStone
 
     void OpenGLTexture::SetClampingToZero()
     {
+      ORTHANC_OPENGL_CHECK("Entering OpenGLTexture::SetClampingToZero()");
+      
+#if defined(__EMSCRIPTEN__)
+      /**
+       * This is because WebGL 2 derives from OpenGL ES 3.0, which
+       * doesn't support GL_CLAMP_TO_BORDER, as can be seen here:
+       * https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glTexParameter.xhtml
+       **/
+      LOG(WARNING) << "OpenGLTexture::SetClampingToZero() is not available in WebGL 2";
+#else
       glBindTexture(GL_TEXTURE_2D, texture_);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
       GLfloat colorfv[4] = { 0, 0, 0, 0 };
       glTextureParameterfv(texture_, GL_TEXTURE_BORDER_COLOR, colorfv);
+#endif
+      
+      ORTHANC_OPENGL_CHECK("Exiting OpenGLTexture::SetClampingToZero()");
     }
 
 

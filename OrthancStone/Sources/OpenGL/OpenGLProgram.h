@@ -48,7 +48,9 @@ namespace OrthancStone
 
       ~OpenGLProgram();
 
-      void Use();
+      // WARNING: Setting "checkStatus" to "true" impacts performance:
+      // Calling "glGetError()" seems like a costly operation in WebGL
+      void Use(bool checkStatus);
 
       // WARNING: A global OpenGL context must be active to run this method!
       void CompileShaders(const std::string& vertexCode,

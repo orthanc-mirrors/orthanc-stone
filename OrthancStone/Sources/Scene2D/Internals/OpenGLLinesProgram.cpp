@@ -426,7 +426,7 @@ namespace OrthancStone
       if (!context_.IsContextLost() && !data.IsEmpty())
       {
         context_.MakeCurrent();
-        program_->Use();
+        program_->Use(true);
 
         GLint locationPosition = program_->GetAttributeLocation("a_position");
         GLint locationMiterDirection = program_->GetAttributeLocation("a_miter_direction");

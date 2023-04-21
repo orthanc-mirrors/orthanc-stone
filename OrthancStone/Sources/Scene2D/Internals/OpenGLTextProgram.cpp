@@ -191,7 +191,7 @@ namespace OrthancStone
       if (!context_.IsContextLost() && !data.IsEmpty())
       {
         context_.MakeCurrent();
-        program_->Use();
+        program_->Use(true);
 
         double dx, dy;  // In pixels
         ComputeAnchorTranslation(dx, dy, data.GetAnchor(), 

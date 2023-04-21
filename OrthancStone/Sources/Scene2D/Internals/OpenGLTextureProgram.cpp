@@ -54,7 +54,7 @@ namespace OrthancStone
       if (!context_.IsContextLost())
       {
         context_.MakeCurrent();
-        program_->Use();
+        program_->Use(true);
 
         AffineTransform2D scale = AffineTransform2D::CreateScaling
         (texture.GetWidth(), texture.GetHeight());

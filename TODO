@@ -57,7 +57,12 @@ Code refactorings
 
 * Replace calls to /studies/.../series/.../metadata by calls to
   /instances?StudyInstanceUID=...&SeriesInstanceUID=...&includefield=...&includefield=...
-  to benefit from ExtraMainDicomTags stored in DB and avoid reading from disk.
+  to benefit from ExtraMainDicomTags stored in DB and avoid reading from disk when not necessary.
+  This way, we request only the tags that the viewer is going to use.
+  The /metadata requests all tags and therefore will read from the storage unless you have
+  specified "DicomWeb.SeriesMetadata": "MainDicomTags"; this is an acceptable workaround
+  for now but the first approach is cleaner and removes dependencies between the DicomWeb config
+  and stone.  It might also be more efficient on other backends as well.
 
 --------
 Wishlist

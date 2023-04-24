@@ -44,6 +44,7 @@ namespace OrthancStone
 
       Orthanc::PixelFormat    format_;
       OpenGL::IOpenGLContext& context_;
+      bool                    isLinearInterpolation_;
 
       void Setup(Orthanc::PixelFormat format,
                  unsigned int width,
@@ -78,6 +79,11 @@ namespace OrthancStone
       unsigned int GetHeight() const
       {
         return height_;
+      }
+
+      bool IsLinearInterpolation() const
+      {
+        return isLinearInterpolation_;
       }
 
       void Setup(Orthanc::PixelFormat format,

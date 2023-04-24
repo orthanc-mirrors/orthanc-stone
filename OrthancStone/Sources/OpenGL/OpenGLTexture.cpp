@@ -43,7 +43,8 @@ namespace OrthancStone
       width_(0),
       height_(0),
       format_(Orthanc::PixelFormat_Grayscale8),
-      context_(context)
+      context_(context),
+      isLinearInterpolation_(false)
     {
       if (!context_.IsContextLost())
       {
@@ -116,6 +117,7 @@ namespace OrthancStone
         format_ = format;
         width_ = width;
         height_ = height;
+        isLinearInterpolation_ = isLinearInterpolation;
 
         GLint interpolation = (isLinearInterpolation ? GL_LINEAR : GL_NEAREST);
 

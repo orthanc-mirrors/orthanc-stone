@@ -105,7 +105,7 @@ namespace OrthancStone
       void Upload(const Orthanc::ImageAccessor& image,
                   unsigned int layer);
 
-      class DownloadedVolume : public boost::noncopyable
+      class DownloadedArray : public boost::noncopyable
       {
       private:
         std::string           buffer_;
@@ -115,7 +115,7 @@ namespace OrthancStone
         unsigned int          depth_;
 
       public:
-        DownloadedVolume(const OpenGLTextureArray& texture);
+        DownloadedArray(const OpenGLTextureArray& texture);
 
         Orthanc::PixelFormat GetFormat() const
         {

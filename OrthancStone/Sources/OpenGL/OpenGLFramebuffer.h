@@ -34,6 +34,7 @@ namespace OrthancStone
   {
     class OpenGLTexture;
     class OpenGLTextureArray;
+    class OpenGLTextureVolume;
 
     class OpenGLFramebuffer : public boost::noncopyable
     {
@@ -55,12 +56,19 @@ namespace OrthancStone
       void SetTarget(OpenGLTextureArray& target,
                      unsigned int layer);
 
+      void SetTarget(OpenGLTextureVolume& target,
+                     unsigned int z);
+
       void ReadTexture(Orthanc::ImageAccessor& target,
                        const OpenGLTexture& source);
 
       void ReadTexture(Orthanc::ImageAccessor& target,
                        const OpenGLTextureArray& source,
                        unsigned int layer);
+
+      void ReadTexture(Orthanc::ImageAccessor& target,
+                       const OpenGLTextureVolume& source,
+                       unsigned int z);
     };
   }
 }

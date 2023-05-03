@@ -223,7 +223,7 @@ namespace OrthancStone
     }
 
 
-    OpenGLTextureArray::DownloadedVolume::DownloadedVolume(const OpenGLTextureArray& texture) :
+    OpenGLTextureArray::DownloadedArray::DownloadedArray(const OpenGLTextureArray& texture) :
       format_(texture.format_),
       width_(texture.width_),
       height_(texture.height_),
@@ -282,7 +282,7 @@ namespace OrthancStone
     }
 
 
-    Orthanc::ImageAccessor* OpenGLTextureArray::DownloadedVolume::GetLayer(unsigned int layer) const
+    Orthanc::ImageAccessor* OpenGLTextureArray::DownloadedArray::GetLayer(unsigned int layer) const
     {
       if (layer >= depth_)
       {

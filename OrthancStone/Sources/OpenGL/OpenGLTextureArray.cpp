@@ -256,7 +256,7 @@ namespace OrthancStone
 #else
         glBindTexture(GL_TEXTURE_2D_ARRAY, texture.texture_);
 
-        switch (format)
+        switch (format_)
         {
           case Orthanc::PixelFormat_Grayscale8:
             glGetTexImage(GL_TEXTURE_2D_ARRAY, 0 /* base level */, GL_RED, GL_UNSIGNED_BYTE, &buffer_[0]);

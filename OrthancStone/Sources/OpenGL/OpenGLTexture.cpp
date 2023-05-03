@@ -45,17 +45,20 @@ namespace OrthancStone
       format_(Orthanc::PixelFormat_Grayscale8),
       isLinearInterpolation_(false)
     {
-      if (!context_.IsContextLost())
+      if (context.IsContextLost())
       {
-        // Generate a texture object
-        glGenTextures(1, &texture_);
-        ORTHANC_OPENGL_CHECK("glGenTextures()");
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                        "OpenGL context has been lost");
+      }
 
-        if (texture_ == 0)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-            "Cannot create an OpenGL texture");
-        }
+      // Generate a texture object
+      glGenTextures(1, &texture_);
+      ORTHANC_OPENGL_CHECK("glGenTextures()");
+
+      if (texture_ == 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                        "Cannot create an OpenGL texture");
       }
     }
 

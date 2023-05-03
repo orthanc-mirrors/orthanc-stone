@@ -21,6 +21,8 @@
  **/
 
 
+#pragma once
+
 #include "../Messages/IObservable.h"
 #include "Scene2D.h"
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"

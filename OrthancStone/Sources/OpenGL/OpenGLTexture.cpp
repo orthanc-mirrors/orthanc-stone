@@ -22,11 +22,6 @@
 
 
 #include "OpenGLTexture.h"
-#include "IOpenGLContext.h"
-
-#include <Images/Image.h>
-#include <Logging.h>
-#include <OrthancException.h>
 
 #if defined(__EMSCRIPTEN__)
 #  if !defined(ORTHANC_WEBGL2_HEAP_COMPAT)
@@ -34,16 +29,20 @@
 #  endif
 #endif
 
+#include <Images/Image.h>
+#include <Logging.h>
+#include <OrthancException.h>
+
 namespace OrthancStone
 {
   namespace OpenGL
   {
     OpenGLTexture::OpenGLTexture(OpenGL::IOpenGLContext& context) :
+      context_(context),
       texture_(0),
       width_(0),
       height_(0),
       format_(Orthanc::PixelFormat_Grayscale8),
-      context_(context),
       isLinearInterpolation_(false)
     {
       if (!context_.IsContextLost())
@@ -275,25 +274,26 @@ namespace OrthancStone
 
     void OpenGLTexture::SetClampingToZero()
     {
-      ORTHANC_OPENGL_CHECK("Entering OpenGLTexture::SetClampingToZero()");
-      
 #if defined(__EMSCRIPTEN__)
       /**
        * This is because WebGL 2 derives from OpenGL ES 3.0, which
        * doesn't support GL_CLAMP_TO_BORDER, as can be seen here:
        * https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glTexParameter.xhtml
        **/
-      LOG(WARNING) << "OpenGLTexture::SetClampingToZero() is not available in WebGL 2";
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
+                                      "OpenGLTextureArray::SetClampingToZero() is not available in WebGL 2");
 #else
+      ORTHANC_OPENGL_CHECK("Entering OpenGLTexture::SetClampingToZero()");
+
       glBindTexture(GL_TEXTURE_2D, texture_);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
       GLfloat colorfv[4] = { 0, 0, 0, 0 };
       glTextureParameterfv(texture_, GL_TEXTURE_BORDER_COLOR, colorfv);
-#endif
-      
+
       ORTHANC_OPENGL_CHECK("Exiting OpenGLTexture::SetClampingToZero()");
+#endif
     }
 
 

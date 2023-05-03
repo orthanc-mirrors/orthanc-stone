@@ -501,6 +501,10 @@ if (ENABLE_OPENGL)
     ${ORTHANC_STONE_ROOT}/OpenGL/OpenGLShader.cpp
     ${ORTHANC_STONE_ROOT}/OpenGL/OpenGLTexture.h
     ${ORTHANC_STONE_ROOT}/OpenGL/OpenGLTexture.cpp
+    ${ORTHANC_STONE_ROOT}/OpenGL/OpenGLTextureArray.h
+    ${ORTHANC_STONE_ROOT}/OpenGL/OpenGLTextureArray.cpp
+    ${ORTHANC_STONE_ROOT}/OpenGL/OpenGLFramebuffer.h
+    ${ORTHANC_STONE_ROOT}/OpenGL/OpenGLFramebuffer.cpp
     ${ORTHANC_STONE_ROOT}/Scene2D/OpenGLCompositor.h
     ${ORTHANC_STONE_ROOT}/Scene2D/OpenGLCompositor.cpp
 

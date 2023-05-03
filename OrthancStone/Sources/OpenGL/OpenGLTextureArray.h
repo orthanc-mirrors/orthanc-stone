@@ -28,14 +28,11 @@
 
 #include <Images/ImageAccessor.h>
 
-#include <boost/noncopyable.hpp>
-
-
 namespace OrthancStone
 {
   namespace OpenGL
   {
-    class OpenGLTexture : public boost::noncopyable
+    class OpenGLTextureArray : public boost::noncopyable
     {
       friend class OpenGLFramebuffer;
 
@@ -44,18 +41,14 @@ namespace OrthancStone
       GLuint                  texture_;
       unsigned int            width_;
       unsigned int            height_;
+      unsigned int            depth_;
       Orthanc::PixelFormat    format_;
       bool                    isLinearInterpolation_;
 
-      void Setup(Orthanc::PixelFormat format,
-                 unsigned int width,
-                 unsigned int height,
-                 bool isLinearInterpolation,
-                 const void* data);
-
       /**
-       * Returns the low-level OpenGL handle of the texture. Beware to
-       * never change the size of the texture using this handle!
+       * Returns the low-level OpenGL handle of the texture
+       * array. Beware to never change the size of the texture using
+       * this handle!
        **/
       GLuint GetId() const
       {
@@ -63,14 +56,9 @@ namespace OrthancStone
       }
 
     public:
-      explicit OpenGLTexture(OpenGL::IOpenGLContext& context);
+      OpenGLTextureArray(IOpenGLContext& context);
 
-      ~OpenGLTexture();
-
-      Orthanc::PixelFormat GetFormat() const
-      {
-        return format_;
-      }
+      ~OpenGLTextureArray();
 
       unsigned int GetWidth() const
       {
@@ -82,6 +70,16 @@ namespace OrthancStone
         return height_;
       }
 
+      unsigned int GetDepth() const
+      {
+        return depth_;
+      }
+
+      Orthanc::PixelFormat GetFormat() const
+      {
+        return format_;
+      }
+
       bool IsLinearInterpolation() const
       {
         return isLinearInterpolation_;
@@ -90,20 +88,8 @@ namespace OrthancStone
       void Setup(Orthanc::PixelFormat format,
                  unsigned int width,
                  unsigned int height,
-                 bool isLinearInterpolation)
-      {
-        Setup(format, width, height, isLinearInterpolation, NULL);
-      }
-
-      void Load(const Orthanc::ImageAccessor& image,
-                bool isLinearInterpolation);
-
-      void Bind(GLint location) const;
-
-      void BindAsTextureUnit(GLint location,
-                             unsigned int unit) const;
-
-      Orthanc::ImageAccessor* Download(Orthanc::PixelFormat format) const;
+                 unsigned int depth,
+                 bool isLinearInterpolation);
 
       /**
        * By default, textures are mirrored at the borders. This
@@ -111,10 +97,48 @@ namespace OrthancStone
        **/
       void SetClampingToZero();
 
-      static void ConvertToOpenGLFormats(GLenum& sourceFormat,
-                                         GLenum& internalFormat,
-                                         GLenum& pixelType,
-                                         Orthanc::PixelFormat format);
+      void Bind(GLint location) const;
+
+      void BindAsTextureUnit(GLint location,
+                             unsigned int unit) const;
+
+      void Upload(const Orthanc::ImageAccessor& image,
+                  unsigned int layer);
+
+      class DownloadedVolume : public boost::noncopyable
+      {
+      private:
+        std::string           buffer_;
+        Orthanc::PixelFormat  format_;
+        unsigned int          width_;
+        unsigned int          height_;
+        unsigned int          depth_;
+
+      public:
+        DownloadedVolume(const OpenGLTextureArray& texture);
+
+        Orthanc::PixelFormat GetFormat() const
+        {
+          return format_;
+        }
+
+        unsigned int GetWidth() const
+        {
+          return width_;
+        }
+
+        unsigned int GetHeight() const
+        {
+          return height_;
+        }
+
+        unsigned int GetDepth() const
+        {
+          return depth_;
+        }
+
+        Orthanc::ImageAccessor* GetLayer(unsigned int layer) const;
+      };
     };
   }
 }

@@ -21,13 +21,7 @@
  **/
 
 
-#include "OpenGLTextureArray.h"
-
-#if defined(__EMSCRIPTEN__)
-#  if !defined(ORTHANC_WEBGL2_HEAP_COMPAT)
-#    error The macro ORTHANC_WEBGL2_HEAP_COMPAT must be defined
-#  endif
-#endif
+#include "OpenGLTextureVolume.h"
 
 #include "OpenGLFramebuffer.h"
 #include "OpenGLTexture.h"
@@ -38,11 +32,12 @@
 #include <boost/lexical_cast.hpp>
 #include <cassert>
 
+
 namespace OrthancStone
 {
   namespace OpenGL
   {
-    OpenGLTextureArray::OpenGLTextureArray(IOpenGLContext& context) :
+    OpenGLTextureVolume::OpenGLTextureVolume(IOpenGLContext& context) :
       context_(context),
       texture_(0),
       width_(0),
@@ -68,27 +63,27 @@ namespace OrthancStone
     }
 
 
-    OpenGLTextureArray::~OpenGLTextureArray()
+    OpenGLTextureVolume::~OpenGLTextureVolume()
     {
       assert(texture_ != 0);
       glDeleteTextures(1, &texture_);
     }
 
 
-    void OpenGLTextureArray::Setup(Orthanc::PixelFormat format,
-                                   unsigned int width,
-                                   unsigned int height,
-                                   unsigned int depth,
-                                   bool isLinearInterpolation)
+    void OpenGLTextureVolume::Setup(Orthanc::PixelFormat format,
+                                    unsigned int width,
+                                    unsigned int height,
+                                    unsigned int depth,
+                                    bool isLinearInterpolation)
     {
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D_ARRAY, texture_);
-      ORTHANC_OPENGL_CHECK("glBindTexture(GL_TEXTURE_2D_ARRAY)");
+      glBindTexture(GL_TEXTURE_3D, texture_);
+      ORTHANC_OPENGL_CHECK("glBindTexture(GL_TEXTURE_3D)");
 
       GLenum sourceFormat, internalFormat, pixelType;
       OpenGLTexture::ConvertToOpenGLFormats(sourceFormat, internalFormat, pixelType, format);
 
-      glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, internalFormat, width, height, depth,
+      glTexImage3D(GL_TEXTURE_3D, 0, internalFormat, width, height, depth,
                    0, sourceFormat, pixelType, NULL);
       ORTHANC_OPENGL_CHECK("glTexImage3D()");
 
@@ -100,15 +95,15 @@ namespace OrthancStone
        * https://registry.khronos.org/OpenGL-Refpages/es3.1/html/glGetTexLevelParameter.xhtml
        **/
       GLint w, h, d;
-      glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_WIDTH, &w);
-      glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_HEIGHT, &h);
-      glGetTexLevelParameteriv(GL_TEXTURE_2D_ARRAY, 0, GL_TEXTURE_DEPTH, &d);
+      glGetTexLevelParameteriv(GL_TEXTURE_3D, 0, GL_TEXTURE_WIDTH, &w);
+      glGetTexLevelParameteriv(GL_TEXTURE_3D, 0, GL_TEXTURE_HEIGHT, &h);
+      glGetTexLevelParameteriv(GL_TEXTURE_3D, 0, GL_TEXTURE_DEPTH, &d);
       if (width != static_cast<unsigned int>(w) ||
           height != static_cast<unsigned int>(h) ||
           depth != static_cast<unsigned int>(d))
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-                                        "Your GPU cannot create an array of textures of size " +
+                                        "Your GPU cannot create a 3D texture of size " +
                                         boost::lexical_cast<std::string>(width) + " x " +
                                         boost::lexical_cast<std::string>(height) + " x " +
                                         boost::lexical_cast<std::string>(depth));
@@ -122,14 +117,15 @@ namespace OrthancStone
       isLinearInterpolation_ = isLinearInterpolation;
 
       GLint interpolation = (isLinearInterpolation ? GL_LINEAR : GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, interpolation);
-      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, interpolation);
-      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, interpolation);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, interpolation);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     }
 
 
-    void OpenGLTextureArray::SetClampingToZero()
+    void OpenGLTextureVolume::SetClampingToZero()
     {
 #if defined(__EMSCRIPTEN__)
       /**
@@ -142,9 +138,9 @@ namespace OrthancStone
 #else
       ORTHANC_OPENGL_CHECK("Entering OpenGLTextureArray::SetClampingToZero()");
 
-      glBindTexture(GL_TEXTURE_2D_ARRAY, texture_);
-      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+      glBindTexture(GL_TEXTURE_3D, texture_);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+      glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
       GLfloat colorfv[4] = { 0, 0, 0, 0 };
       glTexParameterfv(texture_, GL_TEXTURE_BORDER_COLOR, colorfv);
@@ -154,16 +150,16 @@ namespace OrthancStone
     }
 
 
-    void OpenGLTextureArray::Bind(GLint location) const
+    void OpenGLTextureVolume::Bind(GLint location) const
     {
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D_ARRAY, texture_);
+      glBindTexture(GL_TEXTURE_3D, texture_);
       glUniform1i(location, 0 /* texture unit */);
     }
 
 
-    void OpenGLTextureArray::BindAsTextureUnit(GLint location,
-                                               unsigned int unit) const
+    void OpenGLTextureVolume::BindAsTextureUnit(GLint location,
+                                                unsigned int unit) const
     {
       if (unit >= 32)
       {
@@ -174,20 +170,20 @@ namespace OrthancStone
              GL_TEXTURE0 + 31 == GL_TEXTURE31);
 
       glActiveTexture(GL_TEXTURE0 + unit);
-      glBindTexture(GL_TEXTURE_2D_ARRAY, texture_);
+      glBindTexture(GL_TEXTURE_3D, texture_);
       glUniform1i(location, unit /* texture unit */);
     }
 
 
-    void OpenGLTextureArray::Upload(const Orthanc::ImageAccessor& image,
-                                    unsigned int layer)
+    void OpenGLTextureVolume::Upload(const Orthanc::ImageAccessor& image,
+                                     unsigned int z)
     {
       if (image.GetWidth() != width_ ||
           image.GetHeight() != height_)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageSize);
       }
-      else if (layer >= depth_)
+      else if (z >= depth_)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
@@ -201,13 +197,13 @@ namespace OrthancStone
         GLenum sourceFormat, internalFormat, pixelType;
         OpenGLTexture::ConvertToOpenGLFormats(sourceFormat, internalFormat, pixelType, image.GetFormat());
 
-        glBindTexture(GL_TEXTURE_2D_ARRAY, texture_);
+        glBindTexture(GL_TEXTURE_3D, texture_);
 
 #if defined(__EMSCRIPTEN__) && (ORTHANC_WEBGL2_HEAP_COMPAT == 1)
         // Check out "OpenGLTexture.cpp" for an explanation
         EM_ASM({
             var ptr = emscriptenWebGLGetTexPixelData($5, $4, $2, $3, $0, $1);
-            GLctx.texSubImage3D(GLctx.TEXTURE_2D_ARRAY, 0, 0 /* x offset */, 0 /* y offset */,
+            GLctx.texSubImage3D(GLctx.TEXTURE_3D, 0, 0 /* x offset */, 0 /* y offset */,
                                 $6, $2, $3, 1 /* depth */, $4, $5, ptr);
           },
           image.GetConstBuffer(),  // $0
@@ -216,23 +212,23 @@ namespace OrthancStone
           image.GetHeight(),       // $3
           sourceFormat,            // $4
           pixelType,               // $5
-          layer);                  // $6
+          z);                      // $6
 #else
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0 /* x offset */, 0 /* y offset */, layer /* z offset */,
+        glTexSubImage3D(GL_TEXTURE_3D, 0, 0 /* x offset */, 0 /* y offset */, z /* z offset */,
                         width_, height_, 1 /* depth */, sourceFormat, pixelType, image.GetConstBuffer());
 #endif
       }
     }
 
 
-    size_t OpenGLTextureArray::GetMemoryBufferSize() const
+    size_t OpenGLTextureVolume::GetMemoryBufferSize() const
     {
       return static_cast<size_t>(Orthanc::GetBytesPerPixel(format_)) * width_ * height_ * depth_;
     }
 
 
-    void OpenGLTextureArray::Download(void* targetBuffer,
-                                      size_t targetSize) const
+    void OpenGLTextureVolume::Download(void* targetBuffer,
+                                       size_t targetSize) const
     {
       if (targetSize != GetMemoryBufferSize())
       {
@@ -264,10 +260,10 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
         }
 
-        for (unsigned int layer = 0; layer < depth_; layer++)
+        for (unsigned int z = 0; z < depth_; z++)
         {
-          framebuffer.ReadTexture(tmp, *this, layer);
-          memcpy(reinterpret_cast<uint8_t*>(targetBuffer) + layer * sliceSize, tmp.GetBuffer(), sliceSize);
+          framebuffer.ReadTexture(tmp, *this, z);
+          memcpy(reinterpret_cast<uint8_t*>(targetBuffer) + z * sliceSize, tmp.GetBuffer(), sliceSize);
         }
 
 #else
@@ -299,7 +295,7 @@ namespace OrthancStone
     }
 
 
-    void OpenGLTextureArray::Download(std::string& target) const
+    void OpenGLTextureVolume::Download(std::string& target) const
     {
       target.resize(GetMemoryBufferSize());
       Download(target);

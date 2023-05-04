@@ -31,6 +31,7 @@
 
 #include "OpenGLTexture.h"
 #include "OpenGLTextureArray.h"
+#include "OpenGLTextureVolume.h"
 
 #include <OrthancException.h>
 
@@ -216,6 +217,25 @@ namespace OrthancStone
     }
 
 
+    void OpenGLFramebuffer::SetTarget(OpenGLTextureVolume& target,
+                                      unsigned int z)
+    {
+      if (z >= target.GetDepth())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+      else
+      {
+        // Warning: "glFramebufferTexture3D()" is not available in WebGL 2
+        glFramebufferTextureLayer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target.GetId(), 0, z);
+        ORTHANC_OPENGL_CHECK("glFramebufferTextureLayer()");
+
+        SetupTextureTarget();
+        glViewport(0, 0, target.GetWidth(), target.GetHeight());
+      }
+    }
+
+
     void OpenGLFramebuffer::ReadTexture(Orthanc::ImageAccessor& target,
                                         const OpenGLTexture& source)
     {
@@ -258,6 +278,34 @@ namespace OrthancStone
       {
         glFramebufferTextureLayer(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, source.GetId(), 0, layer);
         ORTHANC_OPENGL_CHECK("glFramebufferTextureLayer()");
+        ReadContent(target);
+      }
+    }
+
+
+    void OpenGLFramebuffer::ReadTexture(Orthanc::ImageAccessor& target,
+                                        const OpenGLTextureVolume& source,
+                                        unsigned int z)
+    {
+      if (target.GetWidth() != source.GetWidth() ||
+          target.GetHeight() != source.GetHeight())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageSize);
+      }
+      else if (target.GetFormat() != source.GetFormat())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+      }
+      else if (z >= source.GetDepth())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
+      else
+      {
+        // Warning: "glFramebufferTexture3D()" is not available in WebGL 2
+        glFramebufferTextureLayer(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, source.GetId(), 0, z);
+        ORTHANC_OPENGL_CHECK("glFramebufferTextureLayer()");
+
         ReadContent(target);
       }
     }

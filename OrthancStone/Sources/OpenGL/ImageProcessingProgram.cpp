@@ -179,6 +179,17 @@ namespace OrthancStone
     }
 
 
+    void ImageProcessingProgram::Use(OpenGLTextureVolume& target,
+                                     unsigned int z,
+                                     OpenGLFramebuffer& framebuffer,
+                                     bool checkStatus)
+    {
+      program_.Use(checkStatus);
+      framebuffer.SetTarget(target, z);
+      SetupPosition();
+    }
+
+
     void ImageProcessingProgram::Render()
     {
       glClearColor(0.0, 0.0, 0.0, 1.0);

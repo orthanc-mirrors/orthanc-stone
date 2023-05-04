@@ -50,13 +50,28 @@ static const float TRIANGLES[DIMENSIONS * VERTICES] = {
  * "a_position" (position in the target frame buffer) ranges from -1
  * to 1, whereas texture samplers range from 0 to 1.
  **/
-static const char* VERTEX_SHADER =
+static const char* VERTEX_SHADER_2D =
   "in vec2 a_position;                        \n"
   "out vec2 v_position;                       \n"
   "void main() {                              \n"
   "  v_position = (a_position + 1.0) / 2.0;   \n"
   "  gl_Position = vec4(a_position, 0, 1.0);  \n"
   "}                                          \n";
+
+
+/**
+ * VERTEX_SHADER_3D allows to sample a 3D texture by introducing the
+ * "u_z" uniform whose range is in [0,1] and that allows to scan a 3D
+ * texture along its Z axis.
+ **/
+static const char* VERTEX_SHADER_3D =
+  "in vec2 a_position;                                 \n"
+  "out vec3 v_position;                                \n"
+  "uniform float u_z;                                  \n"
+  "void main() {                                       \n"
+  "  v_position = vec3((a_position + 1.0) / 2.0, u_z); \n"
+  "  gl_Position = vec4(a_position, u_z, 1.0);         \n"
+  "}                                                   \n";
 
 
 namespace OrthancStone
@@ -74,7 +89,8 @@ namespace OrthancStone
 
 
     ImageProcessingProgram::ImageProcessingProgram(IOpenGLContext& context,
-                                                   const std::string& fragmentShader) :
+                                                   const std::string& fragmentShader,
+                                                   bool addUniformZ) :
       program_(context),
       quad_vertexbuffer(0)
     {
@@ -103,7 +119,8 @@ namespace OrthancStone
       version = ("#version 300 es\n"
                  "precision highp float;\n"
                  "precision highp sampler2D;\n"
-                 "precision highp sampler2DArray;\n");
+                 "precision highp sampler2DArray;\n"
+                 "precision highp sampler3D;\n");
 #else
       /**
        * "#version 130" corresponds to:
@@ -113,7 +130,18 @@ namespace OrthancStone
       version = "#version 130\n";
 #endif
 
-      program_.CompileShaders(version + VERTEX_SHADER, version + fragmentShader);
+      std::string vertexShader;
+
+      if (addUniformZ)
+      {
+        vertexShader = version + VERTEX_SHADER_3D;
+      }
+      else
+      {
+        vertexShader = version + VERTEX_SHADER_2D;
+      }
+      
+      program_.CompileShaders(vertexShader, version + fragmentShader);
 
       glGenBuffers(1, &quad_vertexbuffer);
       if (quad_vertexbuffer == 0)

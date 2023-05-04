@@ -33,6 +33,7 @@ namespace OrthancStone
     class OpenGLFramebuffer;
     class OpenGLTexture;
     class OpenGLTextureArray;
+    class OpenGLTextureVolume;
 
     class ImageProcessingProgram : public boost::noncopyable
     {
@@ -44,7 +45,8 @@ namespace OrthancStone
 
     public:
       ImageProcessingProgram(IOpenGLContext& context,
-                             const std::string& fragmentShader);
+                             const std::string& fragmentShader,
+                             bool addUniformZ /* for 3D texture sampling */);
 
       ~ImageProcessingProgram();
 
@@ -54,6 +56,11 @@ namespace OrthancStone
 
       void Use(OpenGLTextureArray& target,
                unsigned int targetLayer,
+               OpenGLFramebuffer& framebuffer,
+               bool checkStatus);
+
+      void Use(OpenGLTextureVolume& volume,
+               unsigned int z,
                OpenGLFramebuffer& framebuffer,
                bool checkStatus);
 

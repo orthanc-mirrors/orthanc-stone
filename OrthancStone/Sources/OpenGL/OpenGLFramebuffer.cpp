@@ -191,6 +191,8 @@ namespace OrthancStone
     void OpenGLFramebuffer::SetTarget(OpenGLTexture& target)
     {
       glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target.GetId(), 0);
+      ORTHANC_OPENGL_CHECK("glFramebufferTexture2D()");
+
       SetupTextureTarget();
       glViewport(0, 0, target.GetWidth(), target.GetHeight());
     }
@@ -206,6 +208,8 @@ namespace OrthancStone
       else
       {
         glFramebufferTextureLayer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target.GetId(), 0, layer);
+        ORTHANC_OPENGL_CHECK("glFramebufferTextureLayer()");
+
         SetupTextureTarget();
         glViewport(0, 0, target.GetWidth(), target.GetHeight());
       }

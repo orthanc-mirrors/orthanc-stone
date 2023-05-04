@@ -223,55 +223,70 @@ namespace OrthancStone
     }
 
 
-    OpenGLTextureArray::DownloadedArray::DownloadedArray(const OpenGLTextureArray& texture) :
-      format_(texture.format_),
-      width_(texture.width_),
-      height_(texture.height_),
-      depth_(texture.depth_)
+    size_t OpenGLTextureArray::GetMemoryBufferSize() const
     {
-      if (width_ != 0 &&
-          height_ != 0 &&
-          depth_ != 0)
-      {
-        buffer_.resize(Orthanc::GetBytesPerPixel(format_) * width_ * height_ * depth_);
-        assert(buffer_.size() > 0);
+      return static_cast<size_t>(Orthanc::GetBytesPerPixel(format_)) * width_ * height_ * depth_;
+    }
 
+
+    void OpenGLTextureArray::Download(void* targetBuffer,
+                                      size_t targetSize) const
+    {
+      if (targetSize != GetMemoryBufferSize())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+      else if (targetSize == 0)
+      {
+        return;
+      }
+      else if (targetBuffer == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+      else
+      {
 #if 1 || defined(__EMSCRIPTEN__)
         /**
          * The "glGetTexImage()" function is unavailable in WebGL, it
          * is necessary to use a framebuffer:
          * https://stackoverflow.com/a/15064957
          **/
-        OpenGLFramebuffer framebuffer(texture.context_);
+        OpenGLFramebuffer framebuffer(context_);
 
-        Orthanc::Image tmp(texture.GetFormat(), texture.GetWidth(), texture.GetHeight(), true);
+        const size_t sliceSize = targetSize / depth_;
+
+        Orthanc::Image tmp(GetFormat(), GetWidth(), GetHeight(), true);
+        if (sliceSize != tmp.GetPitch() * height_)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        }
 
         for (unsigned int layer = 0; layer < depth_; layer++)
         {
-          framebuffer.ReadTexture(tmp, texture, layer);
-          memcpy(&buffer_[0] + layer * tmp.GetPitch() * height_,
-                 tmp.GetBuffer(), tmp.GetPitch() * height_);
+          framebuffer.ReadTexture(tmp, *this, layer);
+          memcpy(reinterpret_cast<uint8_t*>(targetBuffer) + layer * sliceSize, tmp.GetBuffer(), sliceSize);
         }
 
 #else
-        glBindTexture(GL_TEXTURE_2D_ARRAY, texture.texture_);
+        glBindTexture(GL_TEXTURE_3D, texture_);
 
         switch (format_)
         {
           case Orthanc::PixelFormat_Grayscale8:
-            glGetTexImage(GL_TEXTURE_2D_ARRAY, 0 /* base level */, GL_RED, GL_UNSIGNED_BYTE, &buffer_[0]);
+            glGetTexImage(GL_TEXTURE_3D, 0 /* base level */, GL_RED, GL_UNSIGNED_BYTE, targetBuffer);
             break;
 
           case Orthanc::PixelFormat_RGB24:
-            glGetTexImage(GL_TEXTURE_2D_ARRAY, 0 /* base level */, GL_RGB, GL_UNSIGNED_BYTE, &buffer_[0]);
+            glGetTexImage(GL_TEXTURE_3D, 0 /* base level */, GL_RGB, GL_UNSIGNED_BYTE, targetBuffer);
             break;
 
           case Orthanc::PixelFormat_RGBA32:
-            glGetTexImage(GL_TEXTURE_2D_ARRAY, 0 /* base level */, GL_RGBA, GL_UNSIGNED_BYTE, &buffer_[0]);
+            glGetTexImage(GL_TEXTURE_3D, 0 /* base level */, GL_RGBA, GL_UNSIGNED_BYTE, targetBuffer);
             break;
 
           case Orthanc::PixelFormat_Float32:
-            glGetTexImage(GL_TEXTURE_2D_ARRAY, 0 /* base level */, GL_RED, GL_FLOAT, &buffer_[0]);
+            glGetTexImage(GL_TEXTURE_3D, 0 /* base level */, GL_RED, GL_FLOAT, targetBuffer);
             break;
 
           default:
@@ -282,27 +297,10 @@ namespace OrthancStone
     }
 
 
-    Orthanc::ImageAccessor* OpenGLTextureArray::DownloadedArray::GetLayer(unsigned int layer) const
+    void OpenGLTextureArray::Download(std::string& target) const
     {
-      if (layer >= depth_)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-      else if (width_ == 0 ||
-               height_ == 0 ||
-               depth_ == 0)
-      {
-        return new Orthanc::Image(format_, 0, 0, true);
-      }
-      else
-      {
-        const size_t rowSize = width_ * Orthanc::GetBytesPerPixel(format_);
-
-        std::unique_ptr<Orthanc::ImageAccessor> target(new Orthanc::ImageAccessor);
-        target->AssignReadOnly(format_, width_, height_, rowSize,
-                               reinterpret_cast<const uint8_t*>(buffer_.c_str()) + layer * height_ * rowSize);
-        return target.release();
-      }
+      target.resize(GetMemoryBufferSize());
+      Download(target);
     }
   }
 }

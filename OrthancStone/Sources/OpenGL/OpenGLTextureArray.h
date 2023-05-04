@@ -105,40 +105,13 @@ namespace OrthancStone
       void Upload(const Orthanc::ImageAccessor& image,
                   unsigned int layer);
 
-      class DownloadedArray : public boost::noncopyable
-      {
-      private:
-        std::string           buffer_;
-        Orthanc::PixelFormat  format_;
-        unsigned int          width_;
-        unsigned int          height_;
-        unsigned int          depth_;
+      size_t GetMemoryBufferSize() const;
 
-      public:
-        DownloadedArray(const OpenGLTextureArray& texture);
+      // "targetSize" must be equal to "GetMemoryBufferSize()"
+      void Download(void* targetBuffer,
+                    size_t targetSize) const;
 
-        Orthanc::PixelFormat GetFormat() const
-        {
-          return format_;
-        }
-
-        unsigned int GetWidth() const
-        {
-          return width_;
-        }
-
-        unsigned int GetHeight() const
-        {
-          return height_;
-        }
-
-        unsigned int GetDepth() const
-        {
-          return depth_;
-        }
-
-        Orthanc::ImageAccessor* GetLayer(unsigned int layer) const;
-      };
+      void Download(std::string& target) const;
     };
   }
 }

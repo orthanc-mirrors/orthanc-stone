@@ -103,6 +103,9 @@ Wishlist
   SOP Class UIDs for per-modality setting):
   https://groups.google.com/g/orthanc-users/c/tHPMBHe-Z-A/m/XXlRBdhoAgAJ
 
+* Sort the studies by date in the study picker:
+  https://discourse.orthanc-server.org/t/the-study-pickers-list-does-not-sort-properly/3489
+
 --------
 Won't do
 --------

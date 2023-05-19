@@ -4155,7 +4155,7 @@ extern "C"
     framesCache_.reset(new FramesCache);
     osiriXAnnotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
 
-    deepLearningWorker_ = emscripten_create_worker("DeepLearningWorker.js");
+    deepLearningWorker_ = emscripten_create_worker("../stone-deep-learning/DeepLearningWorker.js");
     emscripten_call_worker(deepLearningWorker_, "Initialize", NULL, 0, DeepLearningCallback, NULL);
 
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");

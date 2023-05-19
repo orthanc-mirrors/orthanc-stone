@@ -1738,7 +1738,7 @@ window.addEventListener('message', function(e) {
 
 
 window.addEventListener('DeepLearningInitialized', function() {
-  stone.LoadDeepLearningModel('model.message');
+  stone.LoadDeepLearningModel('../stone-deep-learning/model.message');
 });
 
 window.addEventListener('DeepLearningModelReady', function() {

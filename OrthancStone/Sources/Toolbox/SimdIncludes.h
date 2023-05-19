@@ -41,10 +41,19 @@
 #  define ORTHANC_HAS_WASM_SIMD     0
 #  define ORTHANC_MEMORY_ALIGNMENT  16
 #elif defined(__EMSCRIPTEN__)
+#  if !defined(ORTHANC_HAS_WASM_SIMD)
+#    error ORTHANC_HAS_WASM_SIMD must be defined to use this file
+#  endif
 #  define ORTHANC_HAS_AVX2          0
 #  define ORTHANC_HAS_SSE2          0
-#  define ORTHANC_HAS_WASM_SIMD     1
-#  define ORTHANC_MEMORY_ALIGNMENT  16
+#  if ORTHANC_HAS_WASM_SIMD == 1
+//   Setting macro "ORTHANC_HAS_WASM_SIMD" to "1" means that
+//   "-msimd128" has been provided to Emscripten (there doesn't seem
+//   to exist a predefined macro to automatically check this)
+#    define ORTHANC_MEMORY_ALIGNMENT  16
+#  else
+#    define ORTHANC_MEMORY_ALIGNMENT  8
+#  endif
 #elif defined(_MSC_VER)
 #  if _M_IX86_FP >= 2   // https://stackoverflow.com/a/18563988
 #    define ORTHANC_HAS_AVX2          0

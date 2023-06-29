@@ -1401,7 +1401,7 @@ var app = new Vue({
       that.UpdateIsSeriesComplete(studyInstanceUid, seriesInstanceUid);
 
       // Automatically open the first selected series to be loaded (new in Stone Web viewer 2.5)
-      if (that.isFirstSeries && that.selectedStudies.includes(studyInstanceUid)) {
+      if (that.isFirstSeries && (that.selectedStudies.length == 0 || that.selectedStudies.includes(studyInstanceUid))) {
         that.SetViewportSeriesInstanceUid(1, seriesInstanceUid);
         that.isFirstSeries = false;
       }

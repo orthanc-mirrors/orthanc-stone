@@ -7,6 +7,7 @@ Maintenance
 -----------
 
 * Prevent dragging series before they are ready
+* Open the first loaded series only if it is part of a selected study.
 
 
 Version 2.5 (2022-12-05)

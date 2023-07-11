@@ -149,7 +149,7 @@ namespace OrthancStone
       {
         if (frameOffsets_.size() >= 2)
         {
-          double sliceThickness = frameOffsets_[1] - frameOffsets_[0];
+          double sliceThickness = std::abs(frameOffsets_[1] - frameOffsets_[0]);
           
           if (sliceThickness > 0)
           {
@@ -157,7 +157,7 @@ namespace OrthancStone
             
             for (size_t i = 2; i < frameOffsets_.size(); ++i)
             {
-              double currentThickness = frameOffsets_[i] - frameOffsets_[i-1];
+              double currentThickness = std::abs(frameOffsets_[i] - frameOffsets_[i-1]);
               if (!LinearAlgebra::IsNear(sliceThickness, currentThickness))
               {
                 LOG(ERROR) << "Unable to extract slice thickness from GridFrameOffsetVector (3004,000C) (reason: varying spacing)";
@@ -734,7 +734,7 @@ namespace OrthancStone
 
       for (size_t i = 1; i + 1 < data_.frameOffsets_.size(); i++)
       {
-        double s = data_.frameOffsets_[i + 1] - data_.frameOffsets_[i];
+        double s = std::abs(data_.frameOffsets_[i + 1] - data_.frameOffsets_[i]);
         if (!LinearAlgebra::IsNear(spacing, s, 0.001))
         {
           return false;

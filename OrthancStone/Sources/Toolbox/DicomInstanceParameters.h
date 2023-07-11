@@ -48,6 +48,7 @@ namespace OrthancStone
       unsigned int        numberOfFrames_;
       unsigned int        width_;
       unsigned int        height_;
+      bool                hasSliceThickness_;
       double              sliceThickness_;
       double              pixelSpacingX_;
       double              pixelSpacingY_;
@@ -143,10 +144,12 @@ namespace OrthancStone
       return data_.height_;
     }
 
-    double GetSliceThickness() const
+    bool HasSliceThickness() const
     {
-      return data_.sliceThickness_;
+      return data_.hasSliceThickness_;
     }
+
+    double GetSliceThickness() const;
 
     double GetPixelSpacingX() const
     {
@@ -234,7 +237,7 @@ namespace OrthancStone
     double ApplyRescale(double value) const;
 
     // Required for RT-DOSE
-    bool ComputeRegularSpacing(double& target) const;
+    bool ComputeFrameOffsetsSpacing(double& target) const;
 
     const std::string& GetFrameOfReferenceUid() const
     {
@@ -260,5 +263,9 @@ namespace OrthancStone
     {
       return data_.instanceNumber_;
     }
+
+    CoordinateSystem3D GetMultiFrameGeometry() const;
+
+    bool IsReversedFrameOffsets() const;
   };
 }

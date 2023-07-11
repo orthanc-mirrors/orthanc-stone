@@ -57,7 +57,7 @@ namespace OrthancStone
       double spacing;
       if (parameters.GetSopClassUid() == SopClassUid_RTDose)
       {
-        if (!parameters.ComputeRegularSpacing(spacing))
+        if (!parameters.ComputeFrameOffsetsSpacing(spacing))
         {
           LOG(WARNING) << "Unable to compute the spacing in a RT-DOSE instance";
           spacing = frames.GetSpacingBetweenSlices();

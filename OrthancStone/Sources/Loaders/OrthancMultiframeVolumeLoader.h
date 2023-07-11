@@ -49,6 +49,7 @@ namespace OrthancStone
     };
 
     boost::shared_ptr<DicomVolumeImage>  volume_;
+    bool                                 isReversedFrameOffsets_;
     std::string                          instanceId_;
     std::string                          transferSyntaxUid_;
     bool                                 pixelDataLoaded_;

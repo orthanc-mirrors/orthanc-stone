@@ -59,6 +59,8 @@ add_executable(UnitTests
   ${ORTHANC_STONE_SOURCES}
   )
 
+DefineSourceBasenameForTarget(UnitTests)
+
 add_custom_command(
   TARGET UnitTests
   POST_BUILD

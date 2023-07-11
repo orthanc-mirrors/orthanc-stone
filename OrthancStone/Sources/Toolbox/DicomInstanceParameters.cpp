@@ -114,16 +114,18 @@ namespace OrthancStone
     }
 
 
-    bool sliceThicknessPresent = true;
-    if (!dicom.ParseDouble(sliceThickness_, Orthanc::DICOM_TAG_SLICE_THICKNESS))
+    if (dicom.ParseDouble(sliceThickness_, Orthanc::DICOM_TAG_SLICE_THICKNESS))
     {
+      hasSliceThickness_ = true;
+    }
+    else
+    {
+      hasSliceThickness_ = false;
+
       if (numberOfFrames_ > 1)
       {
         LOG(INFO) << "The (non-madatory) slice thickness information is missing in a multiframe image";
       }
-      
-      sliceThickness_ = 100.0 * std::numeric_limits<double>::epsilon();
-      sliceThicknessPresent = false;
     }
 
     hasPixelSpacing_ = GeometryToolbox::GetPixelSpacing(pixelSpacingX_, pixelSpacingY_, dicom);
@@ -139,49 +141,6 @@ namespace OrthancStone
     if (numberOfFrames_ > 1)
     {
       ExtractFrameOffsets(frameOffsets_, dicom, numberOfFrames_);
-
-      // if the slice thickness is unknown, we try to infer it from the sequence of grid frame offsets
-      // this only works if:
-      // - the first offset is 0.0 (case (a) of http://dicom.nema.org/medical/Dicom/2017c/output/chtml/part03/sect_C.8.8.3.2.html)
-      // - the offsets are all equal, to some small tolerance
-      // - the offsets is positive (increasing throughout the frames)
-      if (!sliceThicknessPresent)
-      {
-        if (frameOffsets_.size() >= 2)
-        {
-          double sliceThickness = std::abs(frameOffsets_[1] - frameOffsets_[0]);
-          
-          if (sliceThickness > 0)
-          {
-            bool sameSized = true;
-            
-            for (size_t i = 2; i < frameOffsets_.size(); ++i)
-            {
-              double currentThickness = std::abs(frameOffsets_[i] - frameOffsets_[i-1]);
-              if (!LinearAlgebra::IsNear(sliceThickness, currentThickness))
-              {
-                LOG(ERROR) << "Unable to extract slice thickness from GridFrameOffsetVector (3004,000C) (reason: varying spacing)";
-                sameSized = false;
-                break;
-              }
-            }
-            
-            if (sameSized)
-            {
-              sliceThickness_ = sliceThickness;
-              LOG(INFO) << "SliceThickness was not specified in the Dicom but was inferred from GridFrameOffsetVector (3004,000C).";
-            }
-          }
-        }
-        else
-        {
-          LOG(ERROR) << "Unable to extract slice thickness from GridFrameOffsetVector (3004,000C) (reason: GridFrameOffsetVector not present or too small)";
-        }
-      }
-    }
-    else
-    {
-      frameOffsets_.resize(0);
     }
 
     if (sopClassUid_ == SopClassUid_RTDose)
@@ -270,6 +229,19 @@ namespace OrthancStone
         !dicom.GetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER).ParseInteger32(instanceNumber_))
     {
       instanceNumber_ = 0;
+    }
+  }
+
+
+  double DicomInstanceParameters::GetSliceThickness() const
+  {
+    if (data_.hasSliceThickness_)
+    {
+      return data_.sliceThickness_;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
 
@@ -715,7 +687,7 @@ namespace OrthancStone
   }
 
 
-  bool DicomInstanceParameters::ComputeRegularSpacing(double& spacing) const
+  bool DicomInstanceParameters::ComputeFrameOffsetsSpacing(double& spacing) const
   {
     if (data_.frameOffsets_.size() == 0)  // Not a RT-DOSE
     {
@@ -728,17 +700,31 @@ namespace OrthancStone
     }
     else
     {
-      assert(data_.frameOffsets_.size() == GetNumberOfFrames());
+      static double THRESHOLD = 0.001;
       
-      spacing = std::abs(data_.frameOffsets_[1] - data_.frameOffsets_[0]);
+      if (data_.frameOffsets_.size() != GetNumberOfFrames())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      double a = data_.frameOffsets_[1] - data_.frameOffsets_[0];
 
       for (size_t i = 1; i + 1 < data_.frameOffsets_.size(); i++)
       {
-        double s = std::abs(data_.frameOffsets_[i + 1] - data_.frameOffsets_[i]);
-        if (!LinearAlgebra::IsNear(spacing, s, 0.001))
+        double b = data_.frameOffsets_[i + 1] - data_.frameOffsets_[i];
+        if (!LinearAlgebra::IsNear(a, b, THRESHOLD))
         {
+          LOG(ERROR) << "Unable to extract slice thickness from GridFrameOffsetVector (3004,000C) (reason: varying spacing)";
           return false;
         }
+      }
+
+      spacing = std::abs(a);
+
+      if (HasSliceThickness() &&
+          !LinearAlgebra::IsNear(spacing, GetSliceThickness(), THRESHOLD))
+      {
+        LOG(WARNING) << "SliceThickness and GridFrameOffsetVector (3004,000C) do not match";
       }
       
       return true;
@@ -814,6 +800,43 @@ namespace OrthancStone
                           10.0 * physicalDeltaY->asDouble());
         }
       }
+    }
+  }
+
+
+  CoordinateSystem3D DicomInstanceParameters::GetMultiFrameGeometry() const
+  {
+    if (data_.frameOffsets_.empty())
+    {
+      return data_.geometry_;
+    }
+    else
+    {
+      assert(data_.frameOffsets_.size() == data_.numberOfFrames_);
+
+      double lowest = data_.frameOffsets_[0];
+      for (size_t i = 1; i < data_.frameOffsets_.size(); i++)
+      {
+        lowest = std::min(lowest, data_.frameOffsets_[i]);
+      }
+
+      return CoordinateSystem3D(
+        data_.geometry_.GetOrigin() + lowest * data_.geometry_.GetNormal(),
+        data_.geometry_.GetAxisX(),
+        data_.geometry_.GetAxisY());
+    }
+  }
+
+
+  bool DicomInstanceParameters::IsReversedFrameOffsets() const
+  {
+    if (data_.frameOffsets_.size() < 2)
+    {
+      return false;
+    }
+    else
+    {
+      return (data_.frameOffsets_[0] > data_.frameOffsets_[1]);
     }
   }
 }

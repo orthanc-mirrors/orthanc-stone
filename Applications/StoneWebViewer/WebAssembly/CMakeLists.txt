@@ -134,6 +134,8 @@ add_executable(StoneWebViewer
   StoneWebViewer.cpp
   )
 
+DefineSourceBasenameForTarget(StoneWebViewer)
+
 set_target_properties(StoneWebViewer
   PROPERTIES
   COMPILE_FLAGS "${WASM_FLAGS}"

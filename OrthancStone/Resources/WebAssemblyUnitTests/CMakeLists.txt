@@ -118,6 +118,8 @@ add_executable(UnitTests
   ${ORTHANC_STONE_SOURCES}
   )
 
+DefineSourceBasenameForTarget(UnitTests)
+
   
 # Declare installation files for the module
 # ---------------------------------------------------------------

@@ -2,8 +2,8 @@
  * Stone of Orthanc
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
- * Copyright (C) 2017-2022 Osimis S.A., Belgium
- * Copyright (C) 2021-2022 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2017-2023 Osimis S.A., Belgium
+ * Copyright (C) 2021-2023 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -215,7 +215,11 @@ namespace OrthancStone
     switch (parameters.GetSopClassUid())
     {
       case SopClassUid_RTDose:
-        spacingZ = parameters.GetSliceThickness();
+        if (!parameters.ComputeFrameOffsetsSpacing(spacingZ))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                          "Cannot load RT-DOSE with incorrect GridFrameOffsetVector (3004,000C)");
+        }
         break;
 
       default:
@@ -224,6 +228,8 @@ namespace OrthancStone
           "No support for multiframe instances with SOP class UID: " + GetSopClassUid(dicom));
     }
 
+    isReversedFrameOffsets_ = parameters.IsReversedFrameOffsets();
+
     const unsigned int width = parameters.GetImageInformation().GetWidth();
     const unsigned int height = parameters.GetImageInformation().GetHeight();
     const unsigned int depth = parameters.GetImageInformation().GetNumberOfFrames();
@@ -231,7 +237,7 @@ namespace OrthancStone
     {
       VolumeImageGeometry geometry;
       geometry.SetSizeInVoxels(width, height, depth);
-      geometry.SetAxialGeometry(parameters.GetGeometry());
+      geometry.SetAxialGeometry(parameters.GetMultiFrameGeometry());
       geometry.SetVoxelDimensions(parameters.GetPixelSpacingX(),
                                   parameters.GetPixelSpacingY(), spacingZ);
       volume_->Initialize(geometry, format, true /* Do compute range */);
@@ -240,8 +246,6 @@ namespace OrthancStone
     volume_->GetPixelData().Clear();
 
     ScheduleFrameDownloads();
-
-
 
     BroadcastMessage(DicomVolumeImage::GeometryReadyMessage(*volume_));
   }
@@ -322,7 +326,17 @@ namespace OrthancStone
 
       for (unsigned int z = 0; z < depth; z++)
       {
-        ImageBuffer3D::SliceWriter writer(target, VolumeProjection_Axial, z);
+        unsigned targetZ;
+        if (isReversedFrameOffsets_)
+        {
+          targetZ = depth - 1 - z;
+        }
+        else
+        {
+          targetZ = z;
+        }
+
+        ImageBuffer3D::SliceWriter writer(target, VolumeProjection_Axial, targetZ);
 
         assert(writer.GetAccessor().GetWidth() == width &&
           writer.GetAccessor().GetHeight() == height);
@@ -554,6 +568,7 @@ namespace OrthancStone
     float outliersHalfRejectionRate) 
     : LoaderStateMachine(loadersContext)
     , volume_(volume)
+    , isReversedFrameOffsets_(false)
     , pixelDataLoaded_(false)
     , outliersHalfRejectionRate_(outliersHalfRejectionRate)
     , distributionRawMin_(0)

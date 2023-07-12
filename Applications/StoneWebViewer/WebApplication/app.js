@@ -2,8 +2,8 @@
  * Stone of Orthanc
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
- * Copyright (C) 2017-2022 Osimis S.A., Belgium
- * Copyright (C) 2021-2022 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2017-2023 Osimis S.A., Belgium
+ * Copyright (C) 2021-2023 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License
@@ -1409,8 +1409,8 @@ var app = new Vue({
       var seriesInstanceUid = args.detail.seriesInstanceUid;
       that.UpdateIsSeriesComplete(studyInstanceUid, seriesInstanceUid);
 
-      // Automatically open the first series to be loaded (new in Stone Web viewer 2.5)
-      if (that.isFirstSeries) {
+      // Automatically open the first selected series to be loaded (new in Stone Web viewer 2.5)
+      if (that.isFirstSeries && (that.selectedStudies.length == 0 || that.selectedStudies.includes(studyInstanceUid))) {
         that.SetViewportSeriesInstanceUid(1, seriesInstanceUid);
         that.isFirstSeries = false;
       }

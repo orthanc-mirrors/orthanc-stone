@@ -2,8 +2,8 @@
  * Stone of Orthanc
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
- * Copyright (C) 2017-2022 Osimis S.A., Belgium
- * Copyright (C) 2021-2022 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2017-2023 Osimis S.A., Belgium
+ * Copyright (C) 2021-2023 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -54,7 +54,8 @@ TEST(DicomInstanceParameters, Basic)
   ASSERT_EQ(1u, p->GetNumberOfFrames());
   ASSERT_EQ(0u, p->GetWidth());
   ASSERT_EQ(0u, p->GetHeight());
-  ASSERT_TRUE(OrthancStone::LinearAlgebra::IsCloseToZero(p->GetSliceThickness()));
+  ASSERT_FALSE(p->HasSliceThickness());
+  ASSERT_THROW(p->GetSliceThickness(), Orthanc::OrthancException);
   ASSERT_FLOAT_EQ(1, p->GetPixelSpacingX());
   ASSERT_FLOAT_EQ(1, p->GetPixelSpacingY());
   ASSERT_FALSE(p->GetGeometry().IsValid());
@@ -81,7 +82,7 @@ TEST(DicomInstanceParameters, Basic)
   ASSERT_DOUBLE_EQ(1.0, p->ApplyRescale(1.0));
 
   double s;
-  ASSERT_FALSE(p->ComputeRegularSpacing(s));
+  ASSERT_FALSE(p->ComputeFrameOffsetsSpacing(s));
   ASSERT_TRUE(p->GetFrameOfReferenceUid().empty());
 }
 
@@ -222,4 +223,83 @@ TEST(DicomSource, Equality)
       ASSERT_FALSE(s1.IsSameSource(s2));
     }
   }
+}
+
+
+TEST(DicomInstanceParameters, ReverseFrameOffsetsGrid)
+{
+  Orthanc::DicomMap m;
+  SetupUids(m);
+
+  m.SetValue(Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, "-276.611\\-274.463\\100", false);
+  m.SetValue(Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, "1\\0\\0\\0\\1\\0", false);
+  m.SetValue(Orthanc::DICOM_TAG_NUMBER_OF_FRAMES, "126", false);
+  m.SetValue(Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR, "0\\-2\\-4\\-6\\-8\\-10\\-12\\-14\\-16\\-18\\-20\\-22\\-24\\-26\\-28\\-30\\-32\\-34\\-36\\-38\\-40\\-42\\-44\\-46\\-48\\-50\\-52\\-54\\-56\\-58\\-60\\-62\\-64\\-66\\-68\\-70\\-72\\-74\\-76\\-78\\-80\\-82\\-84\\-86\\-88\\-90\\-92\\-94\\-96\\-98\\-100\\-102\\-104\\-106\\-108\\-110\\-112\\-114\\-116\\-118\\-120\\-122\\-124\\-126\\-128\\-130\\-132\\-134\\-136\\-138\\-140\\-142\\-144\\-146\\-148\\-150\\-152\\-154\\-156\\-158\\-160\\-162\\-164\\-166\\-168\\-170\\-172\\-174\\-176\\-178\\-180\\-182\\-184\\-186\\-188\\-190\\-192\\-194\\-196\\-198\\-200\\-202\\-204\\-206\\-208\\-210\\-212\\-214\\-216\\-218\\-220\\-222\\-224\\-226\\-228\\-230\\-232\\-234\\-236\\-238\\-240\\-242\\-244\\-246\\-248\\-250", false);
+
+  std::unique_ptr<OrthancStone::DicomInstanceParameters> p;
+  p.reset(OrthancStone::DicomInstanceParameters(m).Clone());
+
+  ASSERT_FALSE(p->HasSliceThickness());
+  ASSERT_THROW(p->GetSliceThickness(), Orthanc::OrthancException);
+
+  double s;
+  ASSERT_TRUE(p->ComputeFrameOffsetsSpacing(s));
+  ASSERT_DOUBLE_EQ(s, 2.0);
+  ASSERT_TRUE(p->IsReversedFrameOffsets());
+
+  ASSERT_DOUBLE_EQ(1, p->GetMultiFrameGeometry().GetAxisX() [0]);
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetAxisX() [1]);
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetAxisX() [2]);
+
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetAxisY() [0]);
+  ASSERT_DOUBLE_EQ(1, p->GetMultiFrameGeometry().GetAxisY() [1]);
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetAxisY() [2]);
+
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetNormal() [0]);
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetNormal() [1]);
+  ASSERT_DOUBLE_EQ(1, p->GetMultiFrameGeometry().GetNormal() [2]);
+
+  ASSERT_DOUBLE_EQ(-276.611, p->GetMultiFrameGeometry().GetOrigin() [0]);
+  ASSERT_DOUBLE_EQ(-274.463, p->GetMultiFrameGeometry().GetOrigin() [1]);
+  ASSERT_DOUBLE_EQ(100.0 - 250.0, p->GetMultiFrameGeometry().GetOrigin() [2]);
+}
+
+
+TEST(DicomInstanceParameters, StandardFrameOffsetsGrid)
+{
+  Orthanc::DicomMap m;
+  SetupUids(m);
+
+  m.SetValue(Orthanc::DICOM_TAG_SLICE_THICKNESS, "2", false);
+  m.SetValue(Orthanc::DICOM_TAG_IMAGE_POSITION_PATIENT, "-205.2157\\-388.4679\\-120", false);
+  m.SetValue(Orthanc::DICOM_TAG_IMAGE_ORIENTATION_PATIENT, "1\\0\\0\\0\\1\\0", false);
+  m.SetValue(Orthanc::DICOM_TAG_NUMBER_OF_FRAMES, "155", false);
+  m.SetValue(Orthanc::DICOM_TAG_GRID_FRAME_OFFSET_VECTOR, "0\\2\\4\\6\\8\\10\\12\\14\\16\\18\\20\\22\\24\\26\\28\\30\\32\\34\\36\\38\\40\\42\\44\\46\\48\\50\\52\\54\\56\\58\\60\\62\\64\\66\\68\\70\\72\\74\\76\\78\\80\\82\\84\\86\\88\\90\\92\\94\\96\\98\\100\\102\\104\\106\\108\\110\\112\\114\\116\\118\\120\\122\\124\\126\\128\\130\\132\\134\\136\\138\\140\\142\\144\\146\\148\\150\\152\\154\\156\\158\\160\\162\\164\\166\\168\\170\\172\\174\\176\\178\\180\\182\\184\\186\\188\\190\\192\\194\\196\\198\\200\\202\\204\\206\\208\\210\\212\\214\\216\\218\\220\\222\\224\\226\\228\\230\\232\\234\\236\\238\\240\\242\\244\\246\\248\\250\\252\\254\\256\\258\\260\\262\\264\\266\\268\\270\\272\\274\\276\\278\\280\\282\\284\\286\\288\\290\\292\\294\\296\\298\\300\\302\\304\\306\\308", false);
+
+  std::unique_ptr<OrthancStone::DicomInstanceParameters> p;
+  p.reset(OrthancStone::DicomInstanceParameters(m).Clone());
+
+  ASSERT_TRUE(p->HasSliceThickness());
+  ASSERT_DOUBLE_EQ(2.0, p->GetSliceThickness());
+
+  double s;
+  ASSERT_TRUE(p->ComputeFrameOffsetsSpacing(s));
+  ASSERT_DOUBLE_EQ(s, 2.0);
+  ASSERT_FALSE(p->IsReversedFrameOffsets());
+
+  ASSERT_DOUBLE_EQ(1, p->GetMultiFrameGeometry().GetAxisX() [0]);
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetAxisX() [1]);
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetAxisX() [2]);
+
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetAxisY() [0]);
+  ASSERT_DOUBLE_EQ(1, p->GetMultiFrameGeometry().GetAxisY() [1]);
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetAxisY() [2]);
+
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetNormal() [0]);
+  ASSERT_DOUBLE_EQ(0, p->GetMultiFrameGeometry().GetNormal() [1]);
+  ASSERT_DOUBLE_EQ(1, p->GetMultiFrameGeometry().GetNormal() [2]);
+
+  ASSERT_DOUBLE_EQ(-205.2157, p->GetMultiFrameGeometry().GetOrigin() [0]);
+  ASSERT_DOUBLE_EQ(-388.4679, p->GetMultiFrameGeometry().GetOrigin() [1]);
+  ASSERT_DOUBLE_EQ(-120.0, p->GetMultiFrameGeometry().GetOrigin() [2]);
 }

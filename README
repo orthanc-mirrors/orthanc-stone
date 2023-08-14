@@ -135,28 +135,28 @@ of Orthanc to warn us about this use. You can cite our work on the
 Stone of Orthanc using the two following BibTeX entries:
 
 @Article{Jodogne2018,
-  author="Jodogne, S{\'e}bastien",
-  title="The {O}rthanc Ecosystem for Medical Imaging",
-  journal="Journal of Digital Imaging",
-  year="2018",
-  month="Jun",
-  day="01",
-  volume="31",
-  number="3",
-  pages="341--352",
-  issn="1618-727X",
-  doi="10.1007/s10278-018-0082-y",
-  url="https://doi.org/10.1007/s10278-018-0082-y"
+ title = {The Orthanc Ecosystem for Medical Imaging},
+ author = {Jodogne, S{\'e}bastien},
+ journal = {Journal of Digital Imaging},
+ volume = {31},
+ number = {3},
+ pages = {341-352},
+ issn = {1618-727X},
+ doi = {10.1007/s10278-018-0082-y},
+ publisher = {Springer Science and Business Media LLC},
+ year = {2018},
+ url = {https://doi.org/10.1007/s10278-018-0082-y}
 }
 
-@inproceedings{Jodogne2022,
-  author="Jodogne, S{\'e}bastien",
-  title="Rendering Medical Images using {WebAssembly}",
-  booktitle="Proc. of the 15th International Joint Conference on Biomedical Engineering Systems and Technologies",
-  year="2022",
-  month="Feb",
-  volume="2",
-  pages="43--51",
-  doi="10.5220/0000156300003123",
-  url="http://hdl.handle.net/2078.1/257268"
+@Article{Jodogne2023,
+ title = {On the Use of WebAssembly for Rendering and Segmenting Medical Images},
+ author = {Jodogne, S{\'e}bastien},
+ journal = {Biomedical Engineering Systems and Technologies},
+ volume = {1814},
+ number = {1},
+ pages = {393-414},
+ issn = {1865-0937},
+ doi = {10.1007/978-3-031-38854-5_20},
+ year = {2023},
+ url = {http://hdl.handle.net/2078.1/277125}
 }

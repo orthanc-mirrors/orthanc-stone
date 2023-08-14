@@ -111,6 +111,14 @@ Technical information
   take place (for instance, multi-threading).
 
 
+Contributing
+------------
+
+Instructions for contributing to the Orthanc project are included in
+the Orthanc Book:
+https://book.orthanc-server.com/developers/repositories.html
+
+
 Licensing
 ---------
 

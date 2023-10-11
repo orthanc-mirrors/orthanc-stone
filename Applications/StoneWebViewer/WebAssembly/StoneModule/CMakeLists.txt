@@ -47,7 +47,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s ENVIRONMENT=web")
-set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
+set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
 set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s ERROR_ON_UNDEFINED_SYMBOLS=1")
 set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0")
 set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=268435456")  # 256MB + resize
@@ -123,6 +123,9 @@ set_target_properties(StoneWebViewer
   COMPILE_FLAGS "${WASM_FLAGS}"
   LINK_FLAGS "${WASM_LINKER_FLAGS}"
   )
+
+# Boost::Math begs for -std=c++14 since Boost 1.82.0
+set_property(TARGET StoneWebViewer PROPERTY CXX_STANDARD 14)
 
 # Make sure to have the wrapper generated
 add_dependencies(StoneWebViewer StoneWrapper)

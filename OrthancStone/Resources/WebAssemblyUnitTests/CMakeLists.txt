@@ -40,7 +40,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s ENVIRONMENT=web")
-set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
+set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s EXPORTED_RUNTIME_METHODS='[\"ccall\", \"cwrap\"]'")
 set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s ERROR_ON_UNDEFINED_SYMBOLS=1")
 set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=268435456")  # 256MB + resize
 set(WASM_LINKER_FLAGS "${WASM_LINKER_FLAGS} -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=1")
@@ -58,11 +58,12 @@ set(ALLOW_DOWNLOADS ON)
 
 include(${CMAKE_SOURCE_DIR}/../CMake/OrthancStoneWebAssemblyParameters.cmake)
 
-SET(ENABLE_DCMTK ON)  # Necessary for the tests of the Orthanc framework
-SET(ENABLE_PUGIXML ON)  # Necessary for the tests of the Orthanc framework
+SET(ENABLE_DCMTK ON)   # Necessary for the tests of the Orthanc framework
 SET(ENABLE_GOOGLE_TEST OFF)
 SET(ENABLE_LOCALE ON)  # Necessary for text rendering
-SET(ENABLE_LUA ON)  # Necessary for the tests of the Orthanc framework
+SET(ENABLE_LUA ON)     # Necessary for the tests of the Orthanc framework
+SET(ENABLE_MODULE_JOBS OFF)
+SET(ENABLE_PUGIXML ON) # Necessary for the tests of the Orthanc framework
 SET(ORTHANC_SANDBOXED ON)
 
 # this will set up the build system for Stone of Orthanc and will
@@ -120,6 +121,9 @@ add_executable(UnitTests
   ${GOOGLE_TEST_SOURCES}
   ${ORTHANC_STONE_SOURCES}
   )
+
+# Boost::Math begs for -std=c++14 since Boost 1.82.0
+set_property(TARGET UnitTests PROPERTY CXX_STANDARD 14)
 
 DefineSourceBasenameForTarget(UnitTests)
 

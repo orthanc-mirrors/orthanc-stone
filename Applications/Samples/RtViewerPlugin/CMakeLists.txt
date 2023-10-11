@@ -119,6 +119,8 @@ add_library(RtViewerPlugin SHARED
   ${ORTHANC_CORE_SOURCES}
   )
 
+DefineSourceBasenameForTarget(RtViewerPlugin)
+
 set_target_properties(RtViewerPlugin PROPERTIES 
   VERSION ${ORTHANC_PLUGIN_VERSION} 
   SOVERSION ${ORTHANC_PLUGIN_VERSION})

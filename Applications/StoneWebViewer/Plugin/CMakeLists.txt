@@ -132,6 +132,8 @@ add_library(StoneWebViewer SHARED
   ${ORTHANC_CORE_SOURCES}
   )
 
+DefineSourceBasenameForTarget(StoneWebViewer)
+
 set_target_properties(StoneWebViewer PROPERTIES 
   VERSION ${STONE_WEB_VIEWER_VERSION} 
   SOVERSION ${STONE_WEB_VIEWER_VERSION})

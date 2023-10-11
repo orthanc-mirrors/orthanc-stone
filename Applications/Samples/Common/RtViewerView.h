@@ -36,7 +36,6 @@
 #include "../../../OrthancStone/Sources/Volumes/VolumeSceneLayerSource.h"
 
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/thread.hpp>
 #include <boost/noncopyable.hpp>
 
 namespace OrthancStone

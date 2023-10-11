@@ -50,6 +50,7 @@ ROOT_DIR=`dirname $(readlink -f $0)`/../../..
 mkdir -p ${ROOT_DIR}/wasm-binaries
 
 docker run -t ${DOCKER_FLAGS} --rm \
+    --dns=8.8.8.8 \
     --user $(id -u):$(id -g) \
     -e STONE_BRANCH=${STONE_BRANCH} \
     -v ${ROOT_DIR}:/source:ro \

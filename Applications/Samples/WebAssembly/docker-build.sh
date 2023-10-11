@@ -43,6 +43,7 @@ ROOT_DIR=`dirname $(readlink -f $0)`/../../..
 mkdir -p ${ROOT_DIR}/wasm-binaries
 
 docker run -t ${DOCKER_FLAGS} --rm \
+    --dns=8.8.8.8 \
     --user $(id -u):$(id -g) \
     -v ${ROOT_DIR}:/source:ro \
     -v ${ROOT_DIR}/wasm-binaries:/target:rw ${IMAGE} \

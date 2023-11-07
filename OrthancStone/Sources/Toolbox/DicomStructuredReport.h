@@ -34,6 +34,7 @@
 #include <DicomParsing/ParsedDicomFile.h>
 
 #include <dcmtk/dcmdata/dcitem.h>
+#include <list>
 
 namespace OrthancStone
 {

@@ -33,6 +33,13 @@
 #include <dcmtk/dcmdata/dcfilefo.h>
 
 
+static std::string FormatTag(const DcmTagKey& key)
+{
+  OFString s = key.toString();
+  return std::string(s.c_str());
+}
+
+
 static std::string GetStringValue(DcmItem& dataset,
                                   const DcmTagKey& key)
 {
@@ -45,7 +52,7 @@ static std::string GetStringValue(DcmItem& dataset,
   else
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
-                                    "Missing tag in DICOM-SR: " + key.toString());
+                                    "Missing tag in DICOM-SR: " + FormatTag(key));
   }
 }
 
@@ -62,7 +69,7 @@ static DcmSequenceOfItems& GetSequenceValue(DcmItem& dataset,
   else
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
-                                    "Missing sequence in DICOM-SR: " + key.toString());
+                                    "Missing sequence in DICOM-SR: " + FormatTag(key));
   }
 }
 

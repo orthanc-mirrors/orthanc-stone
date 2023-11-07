@@ -82,6 +82,7 @@
 #include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
 #include "../../../OrthancStone/Sources/StoneException.h"
 #include "../../../OrthancStone/Sources/Toolbox/DicomInstanceParameters.h"
+#include "../../../OrthancStone/Sources/Toolbox/DicomStructuredReport.h"
 #include "../../../OrthancStone/Sources/Toolbox/GeometryToolbox.h"
 #include "../../../OrthancStone/Sources/Toolbox/OsiriX/AngleAnnotation.h"
 #include "../../../OrthancStone/Sources/Toolbox/OsiriX/CollectionOfAnnotations.h"
@@ -101,8 +102,6 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/math/special_functions/round.hpp>
 #include <stdio.h>
-
-static const char* const DICOM_COMPREHENSIVE_SR_IOD = "1.2.840.10008.5.1.4.1.1.88.33";
 
 static const double PI = boost::math::constants::pi<double>();
 
@@ -427,11 +426,18 @@ private:
     {
       for (size_t i = 0; i < message.GetInstancesCount(); i++)
       {
-        std::string sopClassUid;
-        if (message.GetInstance(i).LookupStringValue(sopClassUid, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) &&
-            sopClassUid == DICOM_COMPREHENSIVE_SR_IOD)
+        std::string sopInstanceUid, sopClassUid;
+        if (message.GetInstance(i).LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
+            message.GetInstance(i).LookupStringValue(sopClassUid, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) &&
+            OrthancStone::StringToSopClassUid(sopClassUid) == OrthancStone::SopClassUid_ComprehensiveSR)
         {
-          LOG(ERROR) << "ICI " << message.GetSeriesInstanceUid();
+          std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
+          lock->Schedule(
+            GetSharedObserver(), PRIORITY_NORMAL, OrthancStone::ParseDicomFromWadoCommand::Create(
+              source_, message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), sopInstanceUid,
+              false /* no transcoding */, Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
+              new InstanceInfo(message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), OrthancStone::SopClassUid_ComprehensiveSR)));
+          return;
         }
       }
 
@@ -533,6 +539,30 @@ private:
           {
             LOG(ERROR) << "Unable to extract PDF from series: " << info.GetSeriesInstanceUid();
           }
+
+          break;
+        }
+
+        case OrthancStone::SopClassUid_ComprehensiveSR:
+        {
+          try
+          {
+            OrthancStone::DicomStructuredReport sr(message.GetDicom());
+
+            std::list<OrthancStone::DicomStructuredReport::Frame> frames;
+            sr.ExportOrderedFrames(frames);
+
+            for (std::list<OrthancStone::DicomStructuredReport::Frame>::const_iterator
+                   it = frames.begin(); it != frames.end(); ++it)
+            {
+              LOG(ERROR) << "YOU " << it->GetSopInstanceUid() << " " << it->GetFrameNumber();
+            }
+          }
+          catch (Orthanc::OrthancException& e)
+          {
+            LOG(ERROR) << "Cannot decode DICOM-SR: " << e.What();
+          }
+          break;
         }
 
         default:

@@ -65,6 +65,10 @@ namespace OrthancStone
     {
       return SopClassUid_DicomSeg;
     }
+    else if (s == "1.2.840.10008.5.1.4.1.1.88.33")
+    {
+      return SopClassUid_ComprehensiveSR;
+    }
     else
     {
       //LOG(INFO) << "Other SOP class UID: " << source;

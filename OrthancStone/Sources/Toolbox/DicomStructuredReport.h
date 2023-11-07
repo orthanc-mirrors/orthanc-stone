@@ -35,6 +35,7 @@
 
 #include <dcmtk/dcmdata/dcitem.h>
 #include <list>
+#include <set>
 
 namespace OrthancStone
 {
@@ -45,12 +46,13 @@ namespace OrthancStone
     class Point;
     class Polyline;
 
-    class ReferencedInstance
+    class ReferencedInstance : public boost::noncopyable
     {
     private:
       std::string  studyInstanceUid_;
       std::string  seriesInstanceUid_;
       std::string  sopClassUid_;
+      std::set<unsigned int>  frames_;
 
     public:
       ReferencedInstance(const std::string& studyInstanceUid,
@@ -59,10 +61,6 @@ namespace OrthancStone
         studyInstanceUid_(studyInstanceUid),
         seriesInstanceUid_(seriesInstanceUid),
         sopClassUid_(sopClassUid)
-      {
-      }
-
-      ReferencedInstance()
       {
       }
 
@@ -80,7 +78,15 @@ namespace OrthancStone
       {
         return sopClassUid_;
       }
+
+      void AddFrame(unsigned int frame);
+
+      const std::set<unsigned int>& GetFrames() const
+      {
+        return frames_;
+      }
     };
+
 
     void AddStructure(const std::string& sopInstanceUid,
                       DcmItem& group,
@@ -89,13 +95,75 @@ namespace OrthancStone
                       bool hasProbabilityOfCancer,
                       float probabilityOfCancer);
 
-    std::map<std::string, ReferencedInstance>  instancesInformation_;
-    std::vector<std::string>                   orderedInstances_;
-    std::list<Structure*>                      structures_;
+    std::map<std::string, ReferencedInstance*>  instancesInformation_;
+    std::vector<std::string>                    orderedInstances_;
+    std::list<Structure*>                       structures_;
 
   public:
+    class Frame
+    {
+    private:
+      std::string  studyInstanceUid_;
+      std::string  seriesInstanceUid_;
+      std::string  sopInstanceUid_;
+      std::string  sopClassUid_;
+      unsigned int frameNumber_;
+
+    public:
+      Frame(const std::string& studyInstanceUid,
+            const std::string& seriesInstanceUid,
+            const std::string& sopInstanceUid,
+            const std::string& sopClassUid,
+            unsigned int frameNumber) :
+        studyInstanceUid_(studyInstanceUid),
+        seriesInstanceUid_(seriesInstanceUid),
+        sopInstanceUid_(sopInstanceUid),
+        sopClassUid_(sopClassUid),
+        frameNumber_(frameNumber)
+      {
+      }
+
+      const std::string& GetStudyInstanceUid() const
+      {
+        return studyInstanceUid_;
+      }
+
+      const std::string& GetSeriesInstanceUid() const
+      {
+        return seriesInstanceUid_;
+      }
+
+      const std::string& GetSopInstanceUid() const
+      {
+        return sopInstanceUid_;
+      }
+
+      const std::string& GetSopClassUid() const
+      {
+        return sopClassUid_;
+      }
+
+      unsigned int GetFrameNumber() const
+      {
+        return frameNumber_;
+      }
+    };
+
     DicomStructuredReport(Orthanc::ParsedDicomFile& dicom);
 
     ~DicomStructuredReport();
+
+    size_t GetReferencedInstancesCount() const
+    {
+      return orderedInstances_.size();
+    }
+
+    void GetReferencedInstance(std::string& studyInstanceUid,
+                               std::string& seriesInstanceUid,
+                               std::string& sopInstanceUid,
+                               std::string& sopClassUid,
+                               size_t i) const;
+
+    void ExportOrderedFrames(std::list<Frame>& frames) const;
   };
 }

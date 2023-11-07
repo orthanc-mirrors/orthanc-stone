@@ -116,7 +116,8 @@ namespace OrthancStone
     SopClassUid_VideoEndoscopicImageStorage,
     SopClassUid_VideoMicroscopicImageStorage,
     SopClassUid_VideoPhotographicImageStorage,
-    SopClassUid_DicomSeg
+    SopClassUid_DicomSeg,
+    SopClassUid_ComprehensiveSR
   };
 
   enum SeriesThumbnailType

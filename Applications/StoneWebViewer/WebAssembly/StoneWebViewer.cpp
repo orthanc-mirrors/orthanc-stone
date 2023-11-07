@@ -422,25 +422,25 @@ private:
 
   void Handle(const OrthancStone::SeriesMetadataLoader::SuccessMessage& message)
   {
+    for (size_t i = 0; i < message.GetInstancesCount(); i++)
+    {
+      std::string sopInstanceUid, sopClassUid;
+      if (message.GetInstance(i).LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
+          message.GetInstance(i).LookupStringValue(sopClassUid, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) &&
+          OrthancStone::StringToSopClassUid(sopClassUid) == OrthancStone::SopClassUid_ComprehensiveSR)
+      {
+        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
+        lock->Schedule(
+          GetSharedObserver(), PRIORITY_NORMAL, OrthancStone::ParseDicomFromWadoCommand::Create(
+            source_, message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), sopInstanceUid,
+            false /* no transcoding */, Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
+            new InstanceInfo(message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), OrthancStone::SopClassUid_ComprehensiveSR)));
+        return;
+      }
+    }
+
     if (observer_.get() != NULL)
     {
-      for (size_t i = 0; i < message.GetInstancesCount(); i++)
-      {
-        std::string sopInstanceUid, sopClassUid;
-        if (message.GetInstance(i).LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
-            message.GetInstance(i).LookupStringValue(sopClassUid, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) &&
-            OrthancStone::StringToSopClassUid(sopClassUid) == OrthancStone::SopClassUid_ComprehensiveSR)
-        {
-          std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
-          lock->Schedule(
-            GetSharedObserver(), PRIORITY_NORMAL, OrthancStone::ParseDicomFromWadoCommand::Create(
-              source_, message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), sopInstanceUid,
-              false /* no transcoding */, Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
-              new InstanceInfo(message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), OrthancStone::SopClassUid_ComprehensiveSR)));
-          return;
-        }
-      }
-
       observer_->SignalSeriesMetadataLoaded(
         message.GetStudyInstanceUid(), message.GetSeriesInstanceUid());
     }
@@ -556,6 +556,12 @@ private:
                    it = frames.begin(); it != frames.end(); ++it)
             {
               LOG(ERROR) << "YOU " << it->GetSopInstanceUid() << " " << it->GetFrameNumber();
+            }
+
+            if (observer_.get() != NULL)
+            {
+              observer_->SignalSeriesMetadataLoaded(
+                info.GetStudyInstanceUid(), info.GetSeriesInstanceUid());
             }
           }
           catch (Orthanc::OrthancException& e)

@@ -102,6 +102,8 @@
 #include <boost/math/special_functions/round.hpp>
 #include <stdio.h>
 
+static const char* const DICOM_COMPREHENSIVE_SR_IOD = "1.2.840.10008.5.1.4.1.1.88.33";
+
 static const double PI = boost::math::constants::pi<double>();
 
 #if !defined(STONE_WEB_VIEWER_EXPORT)
@@ -381,7 +383,6 @@ private:
             thumbnailsLoader_->ScheduleLoadThumbnail(source_, "", studyInstanceUid, seriesInstanceUid);
             metadataLoader_->ScheduleLoadSeries(PRIORITY_LOW + 1, source_, studyInstanceUid, seriesInstanceUid);
           }
-
           else
           {
             seriesIdsToRemove.push_back(seriesInstanceUid);
@@ -424,6 +425,16 @@ private:
   {
     if (observer_.get() != NULL)
     {
+      for (size_t i = 0; i < message.GetInstancesCount(); i++)
+      {
+        std::string sopClassUid;
+        if (message.GetInstance(i).LookupStringValue(sopClassUid, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) &&
+            sopClassUid == DICOM_COMPREHENSIVE_SR_IOD)
+        {
+          LOG(ERROR) << "ICI " << message.GetSeriesInstanceUid();
+        }
+      }
+
       observer_->SignalSeriesMetadataLoaded(
         message.GetStudyInstanceUid(), message.GetSeriesInstanceUid());
     }
@@ -469,17 +480,20 @@ private:
   }
   
 
-  class PdfInfo : public Orthanc::IDynamicObject
+  class InstanceInfo : public Orthanc::IDynamicObject
   {
   private:
-    std::string  studyInstanceUid_;
-    std::string  seriesInstanceUid_;
+    std::string                studyInstanceUid_;
+    std::string                seriesInstanceUid_;
+    OrthancStone::SopClassUid  sopClassUid_;
 
   public:
-    PdfInfo(const std::string& studyInstanceUid,
-            const std::string& seriesInstanceUid) :
+    InstanceInfo(const std::string& studyInstanceUid,
+                 const std::string& seriesInstanceUid,
+                 OrthancStone::SopClassUid sopClassUid) :
       studyInstanceUid_(studyInstanceUid),
-      seriesInstanceUid_(seriesInstanceUid)
+      seriesInstanceUid_(seriesInstanceUid),
+      sopClassUid_(sopClassUid)
     {
     }
 
@@ -492,23 +506,37 @@ private:
     {
       return seriesInstanceUid_;
     }
+
+    OrthancStone::SopClassUid GetSopClassUid() const
+    {
+      return sopClassUid_;
+    }
   };
 
 
   void Handle(const OrthancStone::ParseDicomSuccessMessage& message)
   {
-    const PdfInfo& info = dynamic_cast<const PdfInfo&>(message.GetOrigin().GetPayload());
+    const InstanceInfo& info = dynamic_cast<const InstanceInfo&>(message.GetOrigin().GetPayload());
 
     if (observer_.get() != NULL)
     {
-      std::string pdf;
-      if (message.GetDicom().ExtractPdf(pdf))
+      switch (info.GetSopClassUid())
       {
-        observer_->SignalSeriesPdfLoaded(info.GetStudyInstanceUid(), info.GetSeriesInstanceUid(), pdf);
-      }
-      else
-      {
-        LOG(ERROR) << "Unable to extract PDF from series: " << info.GetSeriesInstanceUid();
+        case OrthancStone::SopClassUid_EncapsulatedPdf:
+        {
+          std::string pdf;
+          if (message.GetDicom().ExtractPdf(pdf))
+          {
+            observer_->SignalSeriesPdfLoaded(info.GetStudyInstanceUid(), info.GetSeriesInstanceUid(), pdf);
+          }
+          else
+          {
+            LOG(ERROR) << "Unable to extract PDF from series: " << info.GetSeriesInstanceUid();
+          }
+        }
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
       }
     }
   }
@@ -860,7 +888,7 @@ public:
             GetSharedObserver(), PRIORITY_NORMAL, OrthancStone::ParseDicomFromWadoCommand::Create(
               source_, studyInstanceUid, seriesInstanceUid, sopInstanceUid,
               false /* no transcoding */, Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
-              new PdfInfo(studyInstanceUid, seriesInstanceUid)));
+              new InstanceInfo(studyInstanceUid, seriesInstanceUid, OrthancStone::SopClassUid_EncapsulatedPdf)));
           
           return;
         }

@@ -205,6 +205,271 @@ static const unsigned int DEFAULT_CINE_RATE = 30;
 
 
 
+class IFramesCollection : public boost::noncopyable
+{
+public:
+  virtual ~IFramesCollection()
+  {
+  }
+
+  // TODO - MUST BE REMOVED
+  virtual std::string GetStudyInstanceUid() const = 0;
+
+  // TODO - MUST BE REMOVED
+  virtual std::string GetSeriesInstanceUid() const = 0;
+
+  virtual size_t GetFramesCount() const = 0;
+
+  virtual const OrthancStone::DicomInstanceParameters& GetInstanceOfFrame(size_t frameIndex) const = 0;
+
+  virtual unsigned int GetFrameNumberInInstance(size_t frameIndex) const = 0;
+
+  // TODO - Could be removed
+  virtual OrthancStone::CoordinateSystem3D GetFrameGeometry(size_t frameIndex) const = 0;
+
+  virtual bool LookupFrame(size_t& frameIndex,
+                           const std::string& sopInstanceUid,
+                           unsigned int frameNumber) const = 0;
+
+  virtual bool FindClosestFrame(size_t& frameIndex,
+                                const OrthancStone::Vector& point,
+                                double maximumDistance) const = 0;
+};
+
+
+class SortedFramesCollection : public IFramesCollection
+{
+private:
+  std::unique_ptr<OrthancStone::SortedFrames>  frames_;
+
+public:
+  SortedFramesCollection(OrthancStone::SortedFrames* frames)
+  {
+    if (frames == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else
+    {
+      frames_.reset(frames);
+    }
+  }
+
+  virtual std::string GetStudyInstanceUid() const ORTHANC_OVERRIDE
+  {
+    return frames_->GetStudyInstanceUid();
+  }
+
+  virtual std::string GetSeriesInstanceUid() const ORTHANC_OVERRIDE
+  {
+    return frames_->GetSeriesInstanceUid();
+  }
+
+  virtual size_t GetFramesCount() const ORTHANC_OVERRIDE
+  {
+    return frames_->GetFramesCount();
+  }
+
+  const OrthancStone::DicomInstanceParameters& GetInstanceOfFrame(size_t frameIndex) const ORTHANC_OVERRIDE
+  {
+    return frames_->GetInstanceOfFrame(frameIndex);
+  }
+
+  virtual unsigned int GetFrameNumberInInstance(size_t frameIndex) const ORTHANC_OVERRIDE
+  {
+    return frames_->GetFrameNumberInInstance(frameIndex);
+  }
+
+  virtual OrthancStone::CoordinateSystem3D GetFrameGeometry(size_t frameIndex) const ORTHANC_OVERRIDE
+  {
+    return frames_->GetFrameGeometry(frameIndex);
+  }
+
+  virtual bool LookupFrame(size_t& frameIndex,
+                           const std::string& sopInstanceUid,
+                           unsigned int frameNumber) const ORTHANC_OVERRIDE
+  {
+    return frames_->LookupFrame(frameIndex, sopInstanceUid, frameNumber);
+  }
+
+  virtual bool FindClosestFrame(size_t& frameIndex,
+                                const OrthancStone::Vector& point,
+                                double maximumDistance) const ORTHANC_OVERRIDE
+  {
+    return frames_->FindClosestFrame(frameIndex, point, maximumDistance);
+  };
+};
+
+
+class DicomStructuredReportFrames : public IFramesCollection
+{
+private:
+  class Frame : public boost::noncopyable
+  {
+  private:
+    OrthancStone::DicomStructuredReport::Frame              info_;
+    Orthanc::DicomMap                                       tags_;
+    std::unique_ptr<OrthancStone::DicomInstanceParameters>  parameters_;
+
+  public:
+    Frame(const OrthancStone::DicomStructuredReport::Frame& info,
+          const OrthancStone::LoadedDicomResources& instances) :
+      info_(info)
+    {
+      if (!instances.LookupResource(tags_, info.GetSopInstanceUid()))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InexistentItem);
+      }
+
+      parameters_.reset(new OrthancStone::DicomInstanceParameters(tags_));
+    }
+
+    const OrthancStone::DicomStructuredReport::Frame& GetInformation() const
+    {
+      return info_;
+    }
+
+    const Orthanc::DicomMap& GetTags() const
+    {
+      return tags_;
+    }
+
+    const OrthancStone::DicomInstanceParameters& GetParameters() const
+    {
+      return *parameters_;
+    }
+  };
+  
+  std::string         studyInstanceUid_;
+  std::string         seriesInstanceUid_;
+  std::vector<Frame*> frames_;
+
+  void Finalize()
+  {
+    for (size_t i = 0; i < frames_.size(); i++)
+    {
+      if (frames_[i] != NULL)
+      {
+        delete frames_[i];
+      }
+    }
+
+    frames_.clear();
+  }
+
+  const Frame& GetFrame(size_t index) const
+  {
+    if (index >= frames_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      assert(frames_[index] != NULL);
+      return *frames_[index];
+    }
+  }
+  
+public:
+  DicomStructuredReportFrames(OrthancStone::DicomStructuredReport& sr,
+                              const OrthancStone::LoadedDicomResources& instances) :
+    studyInstanceUid_(sr.GetStudyInstanceUid()),
+    seriesInstanceUid_(sr.GetSeriesInstanceUid())
+  {
+    std::list<OrthancStone::DicomStructuredReport::Frame> tmp;
+    sr.ExportOrderedFrames(tmp);
+
+    frames_.reserve(tmp.size());
+    for (std::list<OrthancStone::DicomStructuredReport::Frame>::const_iterator
+           it = tmp.begin(); it != tmp.end(); ++it)
+    {
+      try
+      {
+        frames_.push_back(new Frame(*it, instances));
+      }
+      catch (Orthanc::OrthancException&)
+      {
+        // An instance is not loaded yet
+        Finalize();
+        throw;
+      }
+    }
+  }
+
+  virtual ~DicomStructuredReportFrames()
+  {
+    Finalize();
+  }
+  
+  virtual std::string GetStudyInstanceUid() const ORTHANC_OVERRIDE
+  {
+    return studyInstanceUid_;
+  }
+
+  virtual std::string GetSeriesInstanceUid() const ORTHANC_OVERRIDE
+  {
+    return seriesInstanceUid_;
+  }
+
+  virtual size_t GetFramesCount() const ORTHANC_OVERRIDE
+  {
+    return frames_.size();
+  }
+
+  virtual const OrthancStone::DicomInstanceParameters& GetInstanceOfFrame(size_t frameIndex) const ORTHANC_OVERRIDE
+  {
+    return GetFrame(frameIndex).GetParameters();
+  }
+
+  virtual unsigned int GetFrameNumberInInstance(size_t frameIndex) const ORTHANC_OVERRIDE
+  {
+    return GetFrame(frameIndex).GetInformation().GetFrameNumber();
+  }
+
+  virtual OrthancStone::CoordinateSystem3D GetFrameGeometry(size_t frameIndex) const ORTHANC_OVERRIDE
+  {
+    return GetFrame(frameIndex).GetParameters().GetFrameGeometry(GetFrameNumberInInstance(frameIndex));
+  }
+
+  virtual bool LookupFrame(size_t& frameIndex,
+                           const std::string& sopInstanceUid,
+                           unsigned int frameNumber) const ORTHANC_OVERRIDE
+  {
+    // TODO - Could be speeded up with an additional index
+    for (size_t i = 0; i < frames_.size(); i++)
+    {
+      if (frames_[i]->GetInformation().GetSopInstanceUid() == sopInstanceUid &&
+          frames_[i]->GetInformation().GetFrameNumber() == frameNumber)
+      {
+        frameIndex = i;
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  virtual bool FindClosestFrame(size_t& frameIndex,
+                                const OrthancStone::Vector& point,
+                                double maximumDistance) const ORTHANC_OVERRIDE
+  {
+    bool found = false;
+
+    for (size_t i = 0; i < GetFramesCount(); i++)
+    {
+      double distance = GetFrameGeometry(i).ComputeDistance(point);
+      if (distance <= maximumDistance)
+      {
+        found = true;
+        frameIndex = i;
+      }
+    }
+    
+    return found;
+  }
+};
+
+
 class VirtualSeries : public boost::noncopyable
 {
 private:
@@ -333,6 +598,7 @@ private:
   size_t                                                   pending_;
   boost::shared_ptr<OrthancStone::LoadedDicomResources>    studies_;
   boost::shared_ptr<OrthancStone::LoadedDicomResources>    series_;
+  boost::shared_ptr<OrthancStone::LoadedDicomResources>    instances_;
   boost::shared_ptr<OrthancStone::DicomResourcesLoader>    resourcesLoader_;
   boost::shared_ptr<OrthancStone::SeriesThumbnailsLoader>  thumbnailsLoader_;
   boost::shared_ptr<OrthancStone::SeriesMetadataLoader>    metadataLoader_;
@@ -340,13 +606,17 @@ private:
   VirtualSeries                                            virtualSeries_;
   std::vector<std::string>                                 skipSeriesFromModalities_;
 
+  typedef std::map<std::string, boost::shared_ptr<OrthancStone::DicomStructuredReport> >  StructuredReports;
+  StructuredReports structuredReports_;
+
   explicit ResourcesLoader(OrthancStone::ILoadersContext& context,
                            const OrthancStone::DicomSource& source) :
     context_(context),
     source_(source),
     pending_(0),
     studies_(new OrthancStone::LoadedDicomResources(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID)),
-    series_(new OrthancStone::LoadedDicomResources(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID))
+    series_(new OrthancStone::LoadedDicomResources(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID)),
+    instances_(new OrthancStone::LoadedDicomResources(Orthanc::DICOM_TAG_SOP_INSTANCE_UID))
   {
   }
 
@@ -360,11 +630,11 @@ private:
     LOG(INFO) << "resources loaded: " << dicom.GetSize()
               << ", " << Orthanc::EnumerationToString(payload.GetValue());
 
-    std::vector<std::string> seriesIdsToRemove;
-
     if (payload.GetValue() == Orthanc::ResourceType_Series)
     {
       // the 'dicom' var is actually equivalent to the 'series_' member in this case
+
+      std::vector<std::string> seriesIdsToRemove;
 
       for (size_t i = 0; i < dicom.GetSize(); i++)
       {
@@ -395,18 +665,28 @@ private:
         dicom.RemoveResource(seriesIdsToRemove[i]);  
       }
     }
+    else if (payload.GetValue() == Orthanc::ResourceType_Instance)
+    {
+      // This occurs if loading DICOM-SR
 
-    if (pending_ == 0)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      // TODO - Hide/show DICOM-SR once they have been loaded
     }
-    else
+
+    if (payload.GetValue() == Orthanc::ResourceType_Study ||
+        payload.GetValue() == Orthanc::ResourceType_Series)
     {
-      pending_ --;
-      if (pending_ == 0 &&
-          observer_.get() != NULL)
+      if (pending_ == 0)
       {
-        observer_->SignalResourcesLoaded();
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+      else
+      {
+        pending_ --;
+        if (pending_ == 0 &&
+            observer_.get() != NULL)
+        {
+          observer_->SignalResourcesLoaded();
+        }
       }
     }
   }
@@ -434,7 +714,7 @@ private:
           GetSharedObserver(), PRIORITY_NORMAL, OrthancStone::ParseDicomFromWadoCommand::Create(
             source_, message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), sopInstanceUid,
             false /* no transcoding */, Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
-            new InstanceInfo(message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), OrthancStone::SopClassUid_ComprehensiveSR)));
+            new InstanceInfo(message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), sopInstanceUid, Action_ComprehensiveSR)));
         return;
       }
     }
@@ -484,22 +764,33 @@ private:
 
     pending_ += 2;
   }
-  
+
+
+  enum Action
+  {
+    Action_Pdf,
+    Action_ComprehensiveSR,
+    Action_ReferencedInstance
+  };
+
 
   class InstanceInfo : public Orthanc::IDynamicObject
   {
   private:
-    std::string                studyInstanceUid_;
-    std::string                seriesInstanceUid_;
-    OrthancStone::SopClassUid  sopClassUid_;
+    std::string  studyInstanceUid_;
+    std::string  seriesInstanceUid_;
+    std::string  sopInstanceUid_;
+    Action       action_;
 
   public:
     InstanceInfo(const std::string& studyInstanceUid,
                  const std::string& seriesInstanceUid,
-                 OrthancStone::SopClassUid sopClassUid) :
+                 const std::string& sopInstanceUid,
+                 Action action) :
       studyInstanceUid_(studyInstanceUid),
       seriesInstanceUid_(seriesInstanceUid),
-      sopClassUid_(sopClassUid)
+      sopInstanceUid_(sopInstanceUid),
+      action_(action)
     {
     }
 
@@ -513,9 +804,14 @@ private:
       return seriesInstanceUid_;
     }
 
-    OrthancStone::SopClassUid GetSopClassUid() const
+    const std::string& GetSopInstanceUid() const
     {
-      return sopClassUid_;
+      return sopInstanceUid_;
+    }
+
+    Action GetAction() const
+    {
+      return action_;
     }
   };
 
@@ -526,9 +822,9 @@ private:
 
     if (observer_.get() != NULL)
     {
-      switch (info.GetSopClassUid())
+      switch (info.GetAction())
       {
-        case OrthancStone::SopClassUid_EncapsulatedPdf:
+        case Action_Pdf:
         {
           std::string pdf;
           if (message.GetDicom().ExtractPdf(pdf))
@@ -543,20 +839,33 @@ private:
           break;
         }
 
-        case OrthancStone::SopClassUid_ComprehensiveSR:
+        case Action_ComprehensiveSR:
         {
           try
           {
-            OrthancStone::DicomStructuredReport sr(message.GetDicom());
+            boost::shared_ptr<OrthancStone::DicomStructuredReport> sr(new OrthancStone::DicomStructuredReport(message.GetDicom()));
 
-            std::list<OrthancStone::DicomStructuredReport::Frame> frames;
-            sr.ExportOrderedFrames(frames);
-
-            for (std::list<OrthancStone::DicomStructuredReport::Frame>::const_iterator
-                   it = frames.begin(); it != frames.end(); ++it)
+            for (size_t i = 0; i < sr->GetReferencedInstancesCount(); i++)
             {
-              LOG(ERROR) << "YOU " << it->GetSopInstanceUid() << " " << it->GetFrameNumber();
+              std::string studyInstanceUid;
+              std::string seriesInstanceUid;
+              std::string sopInstanceUid;
+              std::string sopClassUid;
+              sr->GetReferencedInstance(studyInstanceUid, seriesInstanceUid, sopInstanceUid, sopClassUid, i);
+
+              Orthanc::DicomMap filter;
+              filter.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, studyInstanceUid, false);
+              filter.SetValue(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, seriesInstanceUid, false);
+              filter.SetValue(Orthanc::DICOM_TAG_SOP_INSTANCE_UID, sopInstanceUid, false);
+
+              std::set<Orthanc::DicomTag> tags;
+
+              resourcesLoader_->ScheduleQido(
+                instances_, PRIORITY_NORMAL, source_, Orthanc::ResourceType_Instance, filter, tags,
+                new Orthanc::SingleValueObject<Orthanc::ResourceType>(Orthanc::ResourceType_Instance));
             }
+
+            structuredReports_[info.GetSeriesInstanceUid()] = sr;
 
             if (observer_.get() != NULL)
             {
@@ -805,32 +1114,48 @@ public:
     }
   }
 
-  bool SortSeriesFrames(OrthancStone::SortedFrames& target,
-                        const std::string& seriesInstanceUid) const
+  IFramesCollection* GetSeriesFrames(const std::string& seriesInstanceUid) const
   {
     OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
     
     if (accessor.IsComplete())
     {
-      target.Clear();
+      StructuredReports::const_iterator sr = structuredReports_.find(seriesInstanceUid);
+      if (sr != structuredReports_.end())
+      {
+        assert(sr->second != NULL);
+
+        try
+        {
+          return new DicomStructuredReportFrames(*sr->second, *instances_);
+        }
+        catch (Orthanc::OrthancException&)
+        {
+          // TODO
+          LOG(ERROR) << "Instances of the DICOM-SR are not available yet";
+          return NULL;
+        }
+      }
+      
+      std::unique_ptr<OrthancStone::SortedFrames> target(new OrthancStone::SortedFrames);
+      target->Clear();
 
       for (size_t i = 0; i < accessor.GetInstancesCount(); i++)
       {
-        target.AddInstance(accessor.GetInstance(i));
+        target->AddInstance(accessor.GetInstance(i));
       }
 
-      target.Sort();
+      target->Sort();
       
-      return true;
+      return new SortedFramesCollection(target.release());
     }
     else
     {
-      return false;
+      return NULL;
     }
   }
 
-  bool SortVirtualSeriesFrames(OrthancStone::SortedFrames& target,
-                               const std::string& virtualSeriesId) const
+  IFramesCollection* GetVirtualSeriesFrames(const std::string& virtualSeriesId) const
   {
     const std::string& seriesInstanceUid = virtualSeries_.GetSeriesInstanceUid(virtualSeriesId);
     
@@ -840,7 +1165,8 @@ public:
     {
       const std::list<std::string>& sopInstanceUids = virtualSeries_.GetSopInstanceUids(virtualSeriesId);
 
-      target.Clear();
+      std::unique_ptr<OrthancStone::SortedFrames> target(new OrthancStone::SortedFrames);
+      target->Clear();
 
       for (std::list<std::string>::const_iterator
              it = sopInstanceUids.begin(); it != sopInstanceUids.end(); ++it)
@@ -848,7 +1174,7 @@ public:
         Orthanc::DicomMap instance;
         if (accessor.LookupInstance(instance, *it))
         {
-          target.AddInstance(instance);
+          target->AddInstance(instance);
         }
         else
         {
@@ -856,12 +1182,13 @@ public:
         }
       }
       
-      target.Sort();
-      return true;
+      target->Sort();
+
+      return new SortedFramesCollection(target.release());
     }
     else
     {
-      return false;
+      return NULL;
     }
   }
 
@@ -924,8 +1251,7 @@ public:
             GetSharedObserver(), PRIORITY_NORMAL, OrthancStone::ParseDicomFromWadoCommand::Create(
               source_, studyInstanceUid, seriesInstanceUid, sopInstanceUid,
               false /* no transcoding */, Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
-              new InstanceInfo(studyInstanceUid, seriesInstanceUid, OrthancStone::SopClassUid_EncapsulatedPdf)));
-          
+              new InstanceInfo(studyInstanceUid, seriesInstanceUid, sopInstanceUid, Action_Pdf)));
           return;
         }
       }
@@ -1621,7 +1947,6 @@ public:
 
 
 
-
 class ViewerViewport : public OrthancStone::ObserverBase<ViewerViewport>
 {
 public:
@@ -1903,6 +2228,8 @@ private:
   class SetFullDicomFrame : public ICommand
   {
   private:
+    std::string   studyInstanceUid_;
+    std::string   seriesInstanceUid_;
     std::string   sopInstanceUid_;
     unsigned int  frameNumber_;
     int           priority_;
@@ -1911,12 +2238,16 @@ private:
     
   public:
     SetFullDicomFrame(boost::shared_ptr<ViewerViewport> viewport,
+                      const std::string& studyInstanceUid,
+                      const std::string& seriesInstanceUid,
                       const std::string& sopInstanceUid,
                       unsigned int frameNumber,
                       int priority,
                       bool isPrefetch,
                       bool serverSideTranscoding) :
       ICommand(viewport),
+      studyInstanceUid_(studyInstanceUid),
+      seriesInstanceUid_(seriesInstanceUid),
       sopInstanceUid_(sopInstanceUid),
       frameNumber_(frameNumber),
       priority_(priority),
@@ -1942,7 +2273,7 @@ private:
             // If we haven't tried server-side rendering yet, give it a try
             LOG(INFO) << "Switching to server-side transcoding";
             GetViewport().serverSideTranscoding_ = true;
-            GetViewport().ScheduleLoadFullDicomFrame(sopInstanceUid_, frameNumber_, priority_, isPrefetch_);
+            GetViewport().ScheduleLoadFullDicomFrame(studyInstanceUid_, seriesInstanceUid_, sopInstanceUid_, frameNumber_, priority_, isPrefetch_);
           }
           return;
         }
@@ -2060,7 +2391,7 @@ private:
   boost::shared_ptr<OrthancStone::DicomResourcesLoader> loader_;
   OrthancStone::DicomSource                    source_;
   boost::shared_ptr<FramesCache>               framesCache_;  
-  std::unique_ptr<OrthancStone::SortedFrames>  frames_;
+  std::unique_ptr<IFramesCollection>           frames_;
   std::unique_ptr<SeriesCursor>                cursor_;
   float                                        windowingCenter_;
   float                                        windowingWidth_;
@@ -2457,7 +2788,9 @@ private:
     }
   }
 
-  void ScheduleLoadFullDicomFrame(const std::string& sopInstanceUid,
+  void ScheduleLoadFullDicomFrame(const std::string& studyInstanceUid,
+                                  const std::string& seriesInstanceUid,
+                                  const std::string& sopInstanceUid,
                                   unsigned int frameNumber,
                                   int priority,
                                   bool isPrefetch)
@@ -2467,10 +2800,10 @@ private:
       std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
       lock->Schedule(
         GetSharedObserver(), priority, OrthancStone::ParseDicomFromWadoCommand::Create(
-          source_, frames_->GetStudyInstanceUid(), frames_->GetSeriesInstanceUid(),
-          sopInstanceUid, serverSideTranscoding_,
+          source_, studyInstanceUid, seriesInstanceUid, sopInstanceUid, serverSideTranscoding_,
           Orthanc::DicomTransferSyntax_LittleEndianExplicit,
-          new SetFullDicomFrame(GetSharedObserver(), sopInstanceUid, frameNumber, priority, isPrefetch, serverSideTranscoding_)));
+          new SetFullDicomFrame(GetSharedObserver(), studyInstanceUid, seriesInstanceUid,
+                                sopInstanceUid, frameNumber, priority, isPrefetch, serverSideTranscoding_)));
     }
   }
 
@@ -2480,9 +2813,11 @@ private:
   {
     if (frames_.get() != NULL)
     {
+      std::string studyInstanceUid = frames_->GetInstanceOfFrame(cursorIndex).GetStudyInstanceUid();
+      std::string seriesInstanceUid = frames_->GetInstanceOfFrame(cursorIndex).GetSeriesInstanceUid();
       std::string sopInstanceUid = frames_->GetInstanceOfFrame(cursorIndex).GetSopInstanceUid();
       unsigned int frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
-      ScheduleLoadFullDicomFrame(sopInstanceUid, frameNumber, priority, isPrefetch);
+      ScheduleLoadFullDicomFrame(studyInstanceUid, seriesInstanceUid, sopInstanceUid, frameNumber, priority, isPrefetch);
     }
   }
 
@@ -2531,8 +2866,8 @@ private:
       bool isMonochrome1 = (instance.GetImageInformation().GetPhotometricInterpretation() ==
                             Orthanc::PhotometricInterpretation_Monochrome1);
 
-      const std::string uri = ("studies/" + frames_->GetStudyInstanceUid() +
-                               "/series/" + frames_->GetSeriesInstanceUid() +
+      const std::string uri = ("studies/" + instance.GetStudyInstanceUid() +
+                               "/series/" + instance.GetSeriesInstanceUid() +
                                "/instances/" + instance.GetSopInstanceUid() +
                                "/frames/" + boost::lexical_cast<std::string>(frameNumber + 1) + "/rendered");
 
@@ -2822,7 +3157,7 @@ public:
     return viewport;    
   }
 
-  void SetFrames(OrthancStone::SortedFrames* frames)
+  void SetFrames(IFramesCollection* frames)
   {
     if (frames == NULL)
     {
@@ -2892,8 +3227,8 @@ public:
           GetSeriesThumbnailType(uid) != OrthancStone::SeriesThumbnailType_Video)
       {
         // Fetch the details of the series from the central instance
-        const std::string uri = ("studies/" + frames_->GetStudyInstanceUid() +
-                                 "/series/" + frames_->GetSeriesInstanceUid() +
+        const std::string uri = ("studies/" + centralInstance.GetStudyInstanceUid() +
+                                 "/series/" + centralInstance.GetSeriesInstanceUid() +
                                  "/instances/" + centralInstance.GetSopInstanceUid() + "/metadata");
         
         loader_->ScheduleGetDicomWeb(
@@ -3134,7 +3469,7 @@ public:
   void SetWindowingPreset()
   {
     assert(windowingPresetCenters_.size() == windowingPresetWidths_.size());
-    
+
     if (windowingPresetCenters_.empty())
     {
       SetWindowing(128, 256);
@@ -4212,9 +4547,9 @@ extern "C"
   {
     try
     {
-      std::unique_ptr<OrthancStone::SortedFrames> frames(new OrthancStone::SortedFrames);
-      
-      if (GetResourcesLoader().SortSeriesFrames(*frames, seriesInstanceUid))
+      std::unique_ptr<IFramesCollection> frames(GetResourcesLoader().GetSeriesFrames(seriesInstanceUid));
+
+      if (frames.get() != NULL)
       {
         GetViewport(canvas)->SetFrames(frames.release());
         return 1;
@@ -4235,9 +4570,9 @@ extern "C"
   {
     try
     {
-      std::unique_ptr<OrthancStone::SortedFrames> frames(new OrthancStone::SortedFrames);
+      std::unique_ptr<IFramesCollection> frames(GetResourcesLoader().GetVirtualSeriesFrames(virtualSeriesId));
 
-      if (GetResourcesLoader().SortVirtualSeriesFrames(*frames, virtualSeriesId))
+      if (frames.get() != NULL)
       {
         GetViewport(canvas)->SetFrames(frames.release());
         return 1;

@@ -95,6 +95,8 @@ namespace OrthancStone
                       bool hasProbabilityOfCancer,
                       float probabilityOfCancer);
 
+    std::string                                 studyInstanceUid_;
+    std::string                                 seriesInstanceUid_;
     std::map<std::string, ReferencedInstance*>  instancesInformation_;
     std::vector<std::string>                    orderedInstances_;
     std::list<Structure*>                       structures_;
@@ -153,6 +155,16 @@ namespace OrthancStone
 
     ~DicomStructuredReport();
 
+    const std::string& GetStudyInstanceUid() const
+    {
+      return studyInstanceUid_;
+    }
+
+    const std::string& GetSeriesInstanceUid() const
+    {
+      return seriesInstanceUid_;
+    }
+    
     size_t GetReferencedInstancesCount() const
     {
       return orderedInstances_.size();

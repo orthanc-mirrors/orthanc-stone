@@ -126,7 +126,7 @@ namespace OrthancStone
     }
     else
     {
-      frames_.insert(frame);
+      frames_.insert(frame - 1);
     }
   }
 
@@ -161,7 +161,7 @@ namespace OrthancStone
       else
       {
         hasFrameNumber_ = true;
-        frameNumber_ = frame;
+        frameNumber_ = frame - 1;
       }
     }
 
@@ -338,6 +338,9 @@ namespace OrthancStone
   DicomStructuredReport::DicomStructuredReport(Orthanc::ParsedDicomFile& dicom)
   {
     DcmDataset& dataset = *dicom.GetDcmtkObject().getDataset();
+
+    studyInstanceUid_ = GetStringValue(dataset, DCM_StudyInstanceUID);
+    seriesInstanceUid_ = GetStringValue(dataset, DCM_SeriesInstanceUID);
 
     CheckStringValue(dataset, DCM_Modality, "SR");
     CheckStringValue(dataset, DCM_SOPClassUID, "1.2.840.10008.5.1.4.1.1.88.33");  // Comprehensive SR IOD

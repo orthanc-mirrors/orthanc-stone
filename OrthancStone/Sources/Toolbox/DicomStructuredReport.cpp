@@ -341,6 +341,7 @@ namespace OrthancStone
 
     studyInstanceUid_ = GetStringValue(dataset, DCM_StudyInstanceUID);
     seriesInstanceUid_ = GetStringValue(dataset, DCM_SeriesInstanceUID);
+    sopInstanceUid_ = GetStringValue(dataset, DCM_SOPInstanceUID);
 
     CheckStringValue(dataset, DCM_Modality, "SR");
     CheckStringValue(dataset, DCM_SOPClassUID, "1.2.840.10008.5.1.4.1.1.88.33");  // Comprehensive SR IOD
@@ -573,7 +574,7 @@ namespace OrthancStone
   }
 
 
-  void DicomStructuredReport::ExportOrderedFrames(std::list<Frame>& frames) const
+  void DicomStructuredReport::ExportReferencedFrames(std::list<ReferencedFrame>& frames) const
   {
     frames.clear();
 
@@ -590,10 +591,10 @@ namespace OrthancStone
       for (std::set<unsigned int>::const_iterator frame = found->second->GetFrames().begin();
            frame != found->second->GetFrames().end(); ++frame)
       {
-        frames.push_back(Frame(found->second->GetStudyInstanceUid(),
-                               found->second->GetSeriesInstanceUid(),
-                               orderedInstances_[i],
-                               found->second->GetSopClassUid(), *frame));
+        frames.push_back(ReferencedFrame(found->second->GetStudyInstanceUid(),
+                                         found->second->GetSeriesInstanceUid(),
+                                         orderedInstances_[i],
+                                         found->second->GetSopClassUid(), *frame));
       }
     }
   }

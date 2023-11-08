@@ -97,12 +97,13 @@ namespace OrthancStone
 
     std::string                                 studyInstanceUid_;
     std::string                                 seriesInstanceUid_;
+    std::string                                 sopInstanceUid_;
     std::map<std::string, ReferencedInstance*>  instancesInformation_;
     std::vector<std::string>                    orderedInstances_;
     std::list<Structure*>                       structures_;
 
   public:
-    class Frame
+    class ReferencedFrame
     {
     private:
       std::string  studyInstanceUid_;
@@ -112,11 +113,11 @@ namespace OrthancStone
       unsigned int frameNumber_;
 
     public:
-      Frame(const std::string& studyInstanceUid,
-            const std::string& seriesInstanceUid,
-            const std::string& sopInstanceUid,
-            const std::string& sopClassUid,
-            unsigned int frameNumber) :
+      ReferencedFrame(const std::string& studyInstanceUid,
+                      const std::string& seriesInstanceUid,
+                      const std::string& sopInstanceUid,
+                      const std::string& sopClassUid,
+                      unsigned int frameNumber) :
         studyInstanceUid_(studyInstanceUid),
         seriesInstanceUid_(seriesInstanceUid),
         sopInstanceUid_(sopInstanceUid),
@@ -165,6 +166,11 @@ namespace OrthancStone
       return seriesInstanceUid_;
     }
     
+    const std::string& GetSopInstanceUid() const
+    {
+      return sopInstanceUid_;
+    }
+
     size_t GetReferencedInstancesCount() const
     {
       return orderedInstances_.size();
@@ -176,6 +182,6 @@ namespace OrthancStone
                                std::string& sopClassUid,
                                size_t i) const;
 
-    void ExportOrderedFrames(std::list<Frame>& frames) const;
+    void ExportReferencedFrames(std::list<ReferencedFrame>& frames) const;
   };
 }

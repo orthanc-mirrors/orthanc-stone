@@ -212,12 +212,6 @@ public:
   {
   }
 
-  // TODO - MUST BE REMOVED
-  virtual std::string GetStudyInstanceUid() const = 0;
-
-  // TODO - MUST BE REMOVED
-  virtual std::string GetSeriesInstanceUid() const = 0;
-
   virtual size_t GetFramesCount() const = 0;
 
   virtual const OrthancStone::DicomInstanceParameters& GetInstanceOfFrame(size_t frameIndex) const = 0;
@@ -253,16 +247,6 @@ public:
     {
       frames_.reset(frames);
     }
-  }
-
-  virtual std::string GetStudyInstanceUid() const ORTHANC_OVERRIDE
-  {
-    return frames_->GetStudyInstanceUid();
-  }
-
-  virtual std::string GetSeriesInstanceUid() const ORTHANC_OVERRIDE
-  {
-    return frames_->GetSeriesInstanceUid();
   }
 
   virtual size_t GetFramesCount() const ORTHANC_OVERRIDE
@@ -307,12 +291,12 @@ private:
   class Frame : public boost::noncopyable
   {
   private:
-    OrthancStone::DicomStructuredReport::Frame              info_;
+    OrthancStone::DicomStructuredReport::ReferencedFrame    info_;
     Orthanc::DicomMap                                       tags_;
     std::unique_ptr<OrthancStone::DicomInstanceParameters>  parameters_;
 
   public:
-    Frame(const OrthancStone::DicomStructuredReport::Frame& info,
+    Frame(const OrthancStone::DicomStructuredReport::ReferencedFrame& info,
           const OrthancStone::LoadedDicomResources& instances) :
       info_(info)
     {
@@ -324,7 +308,7 @@ private:
       parameters_.reset(new OrthancStone::DicomInstanceParameters(tags_));
     }
 
-    const OrthancStone::DicomStructuredReport::Frame& GetInformation() const
+    const OrthancStone::DicomStructuredReport::ReferencedFrame& GetInformation() const
     {
       return info_;
     }
@@ -376,11 +360,11 @@ public:
     studyInstanceUid_(sr.GetStudyInstanceUid()),
     seriesInstanceUid_(sr.GetSeriesInstanceUid())
   {
-    std::list<OrthancStone::DicomStructuredReport::Frame> tmp;
-    sr.ExportOrderedFrames(tmp);
+    std::list<OrthancStone::DicomStructuredReport::ReferencedFrame> tmp;
+    sr.ExportReferencedFrames(tmp);
 
     frames_.reserve(tmp.size());
-    for (std::list<OrthancStone::DicomStructuredReport::Frame>::const_iterator
+    for (std::list<OrthancStone::DicomStructuredReport::ReferencedFrame>::const_iterator
            it = tmp.begin(); it != tmp.end(); ++it)
     {
       try
@@ -399,16 +383,6 @@ public:
   virtual ~DicomStructuredReportFrames()
   {
     Finalize();
-  }
-  
-  virtual std::string GetStudyInstanceUid() const ORTHANC_OVERRIDE
-  {
-    return studyInstanceUid_;
-  }
-
-  virtual std::string GetSeriesInstanceUid() const ORTHANC_OVERRIDE
-  {
-    return seriesInstanceUid_;
   }
 
   virtual size_t GetFramesCount() const ORTHANC_OVERRIDE

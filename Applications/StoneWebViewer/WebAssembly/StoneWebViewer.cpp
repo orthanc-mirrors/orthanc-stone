@@ -218,9 +218,6 @@ public:
 
   virtual unsigned int GetFrameNumberInInstance(size_t frameIndex) const = 0;
 
-  // TODO - Could be removed
-  virtual OrthancStone::CoordinateSystem3D GetFrameGeometry(size_t frameIndex) const = 0;
-
   virtual bool LookupFrame(size_t& frameIndex,
                            const std::string& sopInstanceUid,
                            unsigned int frameNumber) const = 0;
@@ -228,6 +225,12 @@ public:
   virtual bool FindClosestFrame(size_t& frameIndex,
                                 const OrthancStone::Vector& point,
                                 double maximumDistance) const = 0;
+
+  static OrthancStone::CoordinateSystem3D GetFrameGeometry(const IFramesCollection& frames,
+                                                           size_t frameIndex)
+  {
+    return frames.GetInstanceOfFrame(frameIndex).GetFrameGeometry(frames.GetFrameNumberInInstance(frameIndex));
+  }
 };
 
 
@@ -262,11 +265,6 @@ public:
   virtual unsigned int GetFrameNumberInInstance(size_t frameIndex) const ORTHANC_OVERRIDE
   {
     return frames_->GetFrameNumberInInstance(frameIndex);
-  }
-
-  virtual OrthancStone::CoordinateSystem3D GetFrameGeometry(size_t frameIndex) const ORTHANC_OVERRIDE
-  {
-    return frames_->GetFrameGeometry(frameIndex);
   }
 
   virtual bool LookupFrame(size_t& frameIndex,
@@ -400,11 +398,6 @@ public:
     return GetFrame(frameIndex).GetInformation().GetFrameNumber();
   }
 
-  virtual OrthancStone::CoordinateSystem3D GetFrameGeometry(size_t frameIndex) const ORTHANC_OVERRIDE
-  {
-    return GetFrame(frameIndex).GetParameters().GetFrameGeometry(GetFrameNumberInInstance(frameIndex));
-  }
-
   virtual bool LookupFrame(size_t& frameIndex,
                            const std::string& sopInstanceUid,
                            unsigned int frameNumber) const ORTHANC_OVERRIDE
@@ -431,7 +424,7 @@ public:
 
     for (size_t i = 0; i < GetFramesCount(); i++)
     {
-      double distance = GetFrameGeometry(i).ComputeDistance(point);
+      double distance = GetFrameGeometry(*this, i).ComputeDistance(point);
       if (distance <= maximumDistance)
       {
         found = true;
@@ -2723,7 +2716,7 @@ private:
       if (instance.GetSopInstanceUid() == loadedSopInstanceUid &&
           frameNumber == loadedFrameNumber)
       {
-        const OrthancStone::CoordinateSystem3D plane = frames_->GetFrameGeometry(cursorIndex);
+        const OrthancStone::CoordinateSystem3D plane = IFramesCollection::GetFrameGeometry(*frames_, cursorIndex);
         
         if (quality == DisplayedFrameQuality_Low)
         {
@@ -2882,7 +2875,6 @@ private:
     }
   }
   
-
   ViewerViewport(OrthancStone::WebAssemblyLoadersContext& context,
                  const OrthancStone::DicomSource& source,
                  const std::string& canvas,
@@ -2977,14 +2969,12 @@ private:
       {
         const size_t currentCursorIndex = that.cursor_->GetCurrentIndex();
 
-        const OrthancStone::CoordinateSystem3D current =
-          that.frames_->GetFrameGeometry(currentCursorIndex);
+        const OrthancStone::CoordinateSystem3D current = IFramesCollection::GetFrameGeometry(*that.frames_, currentCursorIndex);
       
         if (isShift &&
             previousCursorIndex != currentCursorIndex)
         {
-          const OrthancStone::CoordinateSystem3D previous =
-            that.frames_->GetFrameGeometry(previousCursorIndex);
+          const OrthancStone::CoordinateSystem3D previous = IFramesCollection::GetFrameGeometry(*that.frames_, previousCursorIndex);
           that.synchronizationOffset_ += previous.GetOrigin() - current.GetOrigin();
         }
 
@@ -3258,7 +3248,7 @@ public:
       FramesCache::Accessor accessor(*framesCache_, instance.GetSopInstanceUid(), frameNumber);
       if (accessor.IsValid())
       {
-        RenderCurrentScene(accessor.GetImage(), instance, frameNumber, frames_->GetFrameGeometry(cursorIndex));
+        RenderCurrentScene(accessor.GetImage(), instance, frameNumber, IFramesCollection::GetFrameGeometry(*frames_, cursorIndex));
 
         DisplayedFrameQuality quality;
         
@@ -3369,7 +3359,7 @@ public:
     if (cursor_.get() != NULL &&
         frames_.get() != NULL)
     {
-      plane = frames_->GetFrameGeometry(cursor_->GetCurrentIndex());      
+      plane = IFramesCollection::GetFrameGeometry(*frames_, cursor_->GetCurrentIndex());
       return true;
     }
     else
@@ -3869,8 +3859,7 @@ public:
     {
       const size_t currentCursorIndex = cursor_->GetCurrentIndex();
 
-      const OrthancStone::CoordinateSystem3D current =
-        frames_->GetFrameGeometry(currentCursorIndex);
+      const OrthancStone::CoordinateSystem3D current = IFramesCollection::GetFrameGeometry(*frames_, currentCursorIndex);
       
       observer_->SignalSynchronizedBrowsing(
         *this, current.GetOrigin() + synchronizationOffset_, current.GetNormal());

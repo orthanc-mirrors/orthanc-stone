@@ -226,6 +226,13 @@ public:
                                 const OrthancStone::Vector& point,
                                 double maximumDistance) const = 0;
 
+  virtual OrthancStone::ISceneLayer* ExtractAnnotations(const std::string& sopInstanceUid,
+                                                        unsigned int frameNumber,
+                                                        double originX,
+                                                        double originY,
+                                                        double pixelSpacingX,
+                                                        double pixelSpacingY) const = 0;
+
   static OrthancStone::CoordinateSystem3D GetFrameGeometry(const IFramesCollection& frames,
                                                            size_t frameIndex)
   {
@@ -279,7 +286,17 @@ public:
                                 double maximumDistance) const ORTHANC_OVERRIDE
   {
     return frames_->FindClosestFrame(frameIndex, point, maximumDistance);
-  };
+  }
+
+  virtual OrthancStone::ISceneLayer* ExtractAnnotations(const std::string& sopInstanceUid,
+                                                        unsigned int frameNumber,
+                                                        double originX,
+                                                        double originY,
+                                                        double pixelSpacingX,
+                                                        double pixelSpacingY) const ORTHANC_OVERRIDE
+  {
+    return NULL;
+  }
 };
 
 
@@ -321,10 +338,9 @@ private:
       return *parameters_;
     }
   };
-  
-  std::string         studyInstanceUid_;
-  std::string         seriesInstanceUid_;
-  std::vector<Frame*> frames_;
+
+  std::unique_ptr<OrthancStone::DicomStructuredReport>  sr_;
+  std::vector<Frame*>                                   frames_;
 
   void Finalize()
   {
@@ -353,13 +369,12 @@ private:
   }
   
 public:
-  DicomStructuredReportFrames(OrthancStone::DicomStructuredReport& sr,
+  DicomStructuredReportFrames(const OrthancStone::DicomStructuredReport& sr,
                               const OrthancStone::LoadedDicomResources& instances) :
-    studyInstanceUid_(sr.GetStudyInstanceUid()),
-    seriesInstanceUid_(sr.GetSeriesInstanceUid())
+    sr_(new OrthancStone::DicomStructuredReport(sr))
   {
     std::list<OrthancStone::DicomStructuredReport::ReferencedFrame> tmp;
-    sr.ExportReferencedFrames(tmp);
+    sr_->ExportReferencedFrames(tmp);
 
     frames_.reserve(tmp.size());
     for (std::list<OrthancStone::DicomStructuredReport::ReferencedFrame>::const_iterator
@@ -433,6 +448,61 @@ public:
     }
     
     return found;
+  }
+
+  virtual OrthancStone::ISceneLayer* ExtractAnnotations(const std::string& sopInstanceUid,
+                                                        unsigned int frameNumber,
+                                                        double originX,
+                                                        double originY,
+                                                        double pixelSpacingX,
+                                                        double pixelSpacingY) const ORTHANC_OVERRIDE
+  {
+    size_t frameIndex;
+    if (!LookupFrame(frameIndex, sopInstanceUid, frameNumber))
+    {
+      return NULL;
+    }
+
+    const OrthancStone::DicomInstanceParameters& parameters = GetInstanceOfFrame(frameIndex);
+
+    const double x = originX - pixelSpacingX / 2.0;
+    const double y = originY - pixelSpacingY / 2.0;
+    const double w = parameters.GetWidth() * pixelSpacingX;
+    const double h = parameters.GetHeight() * pixelSpacingY;
+
+    std::unique_ptr<OrthancStone::MacroSceneLayer> layer(new OrthancStone::MacroSceneLayer);
+
+    {
+      std::unique_ptr<OrthancStone::PolylineSceneLayer> polyline(new OrthancStone::PolylineSceneLayer);
+      {
+        OrthancStone::PolylineSceneLayer::Chain chain;
+        chain.push_back(OrthancStone::ScenePoint2D(x, y));
+        chain.push_back(OrthancStone::ScenePoint2D(x + pixelSpacingX, y));
+        chain.push_back(OrthancStone::ScenePoint2D(x + pixelSpacingX, y + pixelSpacingY));
+        chain.push_back(OrthancStone::ScenePoint2D(x, y + pixelSpacingY));
+
+        polyline->AddChain(chain, true, 255, 0, 0);
+      }
+
+      layer->AddLayer(polyline.release());
+    }
+
+    {
+      std::unique_ptr<OrthancStone::PolylineSceneLayer> polyline(new OrthancStone::PolylineSceneLayer);
+      {
+        OrthancStone::PolylineSceneLayer::Chain chain;
+        chain.push_back(OrthancStone::ScenePoint2D(x, y));
+        chain.push_back(OrthancStone::ScenePoint2D(x + w, y));
+        chain.push_back(OrthancStone::ScenePoint2D(x + w, y + h));
+        chain.push_back(OrthancStone::ScenePoint2D(x, y + h));
+
+        polyline->AddChain(chain, true, 255, 0, 0);
+      }
+
+      layer->AddLayer(polyline.release());
+    }
+
+    return layer.release();
   }
 };
 
@@ -1966,6 +2036,7 @@ private:
   static const int LAYER_REFERENCE_LINES = 3;
   static const int LAYER_ANNOTATIONS_OSIRIX = 4;
   static const int LAYER_ANNOTATIONS_STONE = 5;
+  static const int LAYER_STRUCTURED_REPORT = 6;
 
   
   class ICommand : public Orthanc::IDynamicObject
@@ -2650,6 +2721,16 @@ private:
     }
 
 
+    std::unique_ptr<OrthancStone::ISceneLayer> structuredReportAnnotations;
+
+    if (frames_.get() != NULL)
+    {
+      structuredReportAnnotations.reset(frames_->ExtractAnnotations(instance.GetSopInstanceUid(), frameIndex,
+                                                                    layer->GetOriginX(), layer->GetOriginY(),
+                                                                    layer->GetPixelSpacingX(), layer->GetPixelSpacingY()));
+    }
+
+
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
 
@@ -2682,6 +2763,24 @@ private:
       else
       {
         scene.DeleteLayer(LAYER_ORIENTATION_MARKERS);
+      }
+
+      if (orientationMarkers.get() != NULL)
+      {
+        scene.SetLayer(LAYER_ORIENTATION_MARKERS, orientationMarkers.release());
+      }
+      else
+      {
+        scene.DeleteLayer(LAYER_ORIENTATION_MARKERS);
+      }
+
+      if (structuredReportAnnotations.get() != NULL)
+      {
+        scene.SetLayer(LAYER_STRUCTURED_REPORT, structuredReportAnnotations.release());
+      }
+      else
+      {
+        scene.DeleteLayer(LAYER_STRUCTURED_REPORT);
       }
 
       stoneAnnotations_->Render(scene);  // Necessary for "FitContent()" to work

@@ -46,7 +46,7 @@ namespace OrthancStone
     class Point;
     class Polyline;
 
-    class ReferencedInstance : public boost::noncopyable
+    class ReferencedInstance
     {
     private:
       std::string  studyInstanceUid_;
@@ -153,6 +153,8 @@ namespace OrthancStone
     };
 
     DicomStructuredReport(Orthanc::ParsedDicomFile& dicom);
+
+    DicomStructuredReport(const DicomStructuredReport& other);  // Copy constructor
 
     ~DicomStructuredReport();
 

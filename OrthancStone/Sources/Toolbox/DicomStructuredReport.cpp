@@ -120,14 +120,7 @@ namespace OrthancStone
 {
   void DicomStructuredReport::ReferencedInstance::AddFrame(unsigned int frame)
   {
-    if (frame == 0)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-    else
-    {
-      frames_.insert(frame - 1);
-    }
+    frames_.insert(frame);
   }
 
 
@@ -139,6 +132,20 @@ namespace OrthancStone
     unsigned int  frameNumber_;
     bool          hasProbabilityOfCancer_;
     float         probabilityOfCancer_;
+
+  protected:
+    void Copy(const Structure& other)
+    {
+      if (other.HasFrameNumber())
+      {
+        SetFrameNumber(other.GetFrameNumber());
+      }
+
+      if (other.HasProbabilityOfCancer())
+      {
+        SetProbabilityOfCancer(other.GetProbabilityOfCancer());
+      }
+    }
 
   public:
     Structure(const std::string& sopInstanceUid) :
@@ -152,17 +159,17 @@ namespace OrthancStone
     {
     }
 
+    virtual Structure* Clone() const = 0;
+
+    const std::string& GetSopInstanceUid() const
+    {
+      return sopInstanceUid_;
+    }
+
     void SetFrameNumber(unsigned int frame)
     {
-      if (frame <= 0)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-      else
-      {
-        hasFrameNumber_ = true;
-        frameNumber_ = frame - 1;
-      }
+      hasFrameNumber_ = true;
+      frameNumber_ = frame;
     }
 
     void SetProbabilityOfCancer(float probability)
@@ -229,6 +236,13 @@ namespace OrthancStone
     {
     }
 
+    virtual Structure* Clone() const
+    {
+      std::unique_ptr<Point> cloned(new Point(GetSopInstanceUid(), point_.GetX(), point_.GetY()));
+      cloned->Copy(*this);
+      return cloned.release();
+    }
+
     const ScenePoint2D& GetPoint() const
     {
       return point_;
@@ -258,6 +272,20 @@ namespace OrthancStone
       {
         points_.push_back(ScenePoint2D(points[i], points[i + 1]));
       }
+    }
+
+    Polyline(const std::string& sopInstanceUid,
+             const std::vector<ScenePoint2D>& points) :
+      Structure(sopInstanceUid),
+      points_(points)
+    {
+    }
+
+    virtual Structure* Clone() const
+    {
+      std::unique_ptr<Polyline> cloned(new Polyline(GetSopInstanceUid(), points_));
+      cloned->Copy(*this);
+      return cloned.release();
     }
 
     size_t GetSize() const
@@ -504,21 +532,22 @@ namespace OrthancStone
                       for (size_t m = 0; m < tokens.size(); m++)
                       {
                         uint32_t frame;
-                        if (!Orthanc::SerializationToolbox::ParseUnsignedInteger32(frame, tokens[m]))
+                        if (!Orthanc::SerializationToolbox::ParseUnsignedInteger32(frame, tokens[m]) ||
+                            frame <= 0)
                         {
                           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
                         }
                         else
                         {
-                          AddStructure(sopInstanceUid, group, true, frame, hasProbabilityOfCancer, probabilityOfCancer);
-                          instanceInformation->second->AddFrame(frame);
+                          AddStructure(sopInstanceUid, group, true, frame - 1, hasProbabilityOfCancer, probabilityOfCancer);
+                          instanceInformation->second->AddFrame(frame - 1);
                         }
                       }
                     }
                     else
                     {
                       AddStructure(sopInstanceUid, group, false, 0, hasProbabilityOfCancer, probabilityOfCancer);
-                      instanceInformation->second->AddFrame(1);
+                      instanceInformation->second->AddFrame(0);
                     }
                   }
                 }
@@ -527,6 +556,27 @@ namespace OrthancStone
           }
         }
       }
+    }
+  }
+
+
+  DicomStructuredReport::DicomStructuredReport(const DicomStructuredReport& other) :
+    studyInstanceUid_(other.studyInstanceUid_),
+    seriesInstanceUid_(other.seriesInstanceUid_),
+    sopInstanceUid_(other.sopInstanceUid_),
+    orderedInstances_(other.orderedInstances_)
+  {
+    for (std::map<std::string, ReferencedInstance*>::const_iterator
+           it = other.instancesInformation_.begin(); it != other.instancesInformation_.end(); ++it)
+    {
+      assert(it->second != NULL);
+      instancesInformation_[it->first] = new ReferencedInstance(*it->second);
+    }
+
+    for (std::list<Structure*>::const_iterator it = other.structures_.begin(); it != other.structures_.end(); ++it)
+    {
+      assert(*it != NULL);
+      structures_.push_back((*it)->Clone());
     }
   }
 

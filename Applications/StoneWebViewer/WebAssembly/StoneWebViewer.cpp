@@ -457,49 +457,64 @@ public:
                                                         double pixelSpacingX,
                                                         double pixelSpacingY) const ORTHANC_OVERRIDE
   {
-    size_t frameIndex;
-    if (!LookupFrame(frameIndex, sopInstanceUid, frameNumber))
-    {
-      return NULL;
-    }
-
-    const OrthancStone::DicomInstanceParameters& parameters = GetInstanceOfFrame(frameIndex);
+    std::unique_ptr<OrthancStone::MacroSceneLayer> layer(new OrthancStone::MacroSceneLayer);
 
     const double x = originX - pixelSpacingX / 2.0;
     const double y = originY - pixelSpacingY / 2.0;
-    const double w = parameters.GetWidth() * pixelSpacingX;
-    const double h = parameters.GetHeight() * pixelSpacingY;
 
-    std::unique_ptr<OrthancStone::MacroSceneLayer> layer(new OrthancStone::MacroSceneLayer);
-
+    for (size_t i = 0; i < sr_->GetStructuresCount(); i++)
     {
-      std::unique_ptr<OrthancStone::PolylineSceneLayer> polyline(new OrthancStone::PolylineSceneLayer);
+      const OrthancStone::DicomStructuredReport::Structure& structure = sr_->GetStructure(i);
+      if (structure.GetSopInstanceUid() == sopInstanceUid &&
+          (!structure.HasFrameNumber() ||
+           structure.GetFrameNumber() == frameNumber))
       {
-        OrthancStone::PolylineSceneLayer::Chain chain;
-        chain.push_back(OrthancStone::ScenePoint2D(x, y));
-        chain.push_back(OrthancStone::ScenePoint2D(x + pixelSpacingX, y));
-        chain.push_back(OrthancStone::ScenePoint2D(x + pixelSpacingX, y + pixelSpacingY));
-        chain.push_back(OrthancStone::ScenePoint2D(x, y + pixelSpacingY));
+        OrthancStone::Color color(0, 0, 255);
 
-        polyline->AddChain(chain, true, 255, 0, 0);
+        if (structure.HasProbabilityOfCancer())
+        {
+          if (structure.GetProbabilityOfCancer() > 50.0f)
+          {
+            color = OrthancStone::Color(255, 0, 0);
+          }
+          else
+          {
+            color = OrthancStone::Color(0, 255, 0);
+          }
+        }
+
+        switch (structure.GetType())
+        {
+          case OrthancStone::DicomStructuredReport::StructureType_Point:
+            // TODO
+            break;
+
+          case OrthancStone::DicomStructuredReport::StructureType_Polyline:
+          {
+            const OrthancStone::DicomStructuredReport::Polyline& source = dynamic_cast<const OrthancStone::DicomStructuredReport::Polyline&>(structure);
+
+            if (source.GetSize() > 1)
+            {
+              std::unique_ptr<OrthancStone::PolylineSceneLayer> target(new OrthancStone::PolylineSceneLayer);
+
+              OrthancStone::PolylineSceneLayer::Chain chain;
+              chain.resize(source.GetSize());
+              for (size_t i = 0; i < source.GetSize(); i++)
+              {
+                chain[i] = OrthancStone::ScenePoint2D(x + source.GetPoint(i).GetX() * pixelSpacingX,
+                                                      y + source.GetPoint(i).GetY() * pixelSpacingY);
+              }
+
+              target->AddChain(chain, false, color.GetRed(), color.GetGreen(), color.GetBlue());
+              layer->AddLayer(target.release());
+            }
+            break;
+          }
+
+          default:
+            break;
+        }
       }
-
-      layer->AddLayer(polyline.release());
-    }
-
-    {
-      std::unique_ptr<OrthancStone::PolylineSceneLayer> polyline(new OrthancStone::PolylineSceneLayer);
-      {
-        OrthancStone::PolylineSceneLayer::Chain chain;
-        chain.push_back(OrthancStone::ScenePoint2D(x, y));
-        chain.push_back(OrthancStone::ScenePoint2D(x + w, y));
-        chain.push_back(OrthancStone::ScenePoint2D(x + w, y + h));
-        chain.push_back(OrthancStone::ScenePoint2D(x, y + h));
-
-        polyline->AddChain(chain, true, 255, 0, 0);
-      }
-
-      layer->AddLayer(polyline.release());
     }
 
     return layer.release();

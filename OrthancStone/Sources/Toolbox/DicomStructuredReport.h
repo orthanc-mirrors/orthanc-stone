@@ -31,9 +31,12 @@
 #  error Support for DCMTK must be enabled
 #endif
 
+#include "../Scene2D/ScenePoint2D.h"
+
 #include <DicomParsing/ParsedDicomFile.h>
 
 #include <dcmtk/dcmdata/dcitem.h>
+#include <deque>
 #include <list>
 #include <set>
 
@@ -41,11 +44,115 @@ namespace OrthancStone
 {
   class DicomStructuredReport : public boost::noncopyable
   {
-  private:
-    class Structure;
-    class Point;
-    class Polyline;
+  public:
+    enum StructureType
+    {
+      StructureType_Point,
+      StructureType_Polyline
+    };
 
+    class Structure : public boost::noncopyable
+    {
+    private:
+      std::string   sopInstanceUid_;
+      bool          hasFrameNumber_;
+      unsigned int  frameNumber_;
+      bool          hasProbabilityOfCancer_;
+      float         probabilityOfCancer_;
+
+    protected:
+      void Copy(const Structure& other);
+
+    public:
+      Structure(const std::string& sopInstanceUid);
+
+      virtual ~Structure()
+      {
+      }
+
+      virtual Structure* Clone() const = 0;
+
+      virtual StructureType GetType() const = 0;
+
+      const std::string& GetSopInstanceUid() const
+      {
+        return sopInstanceUid_;
+      }
+
+      void SetFrameNumber(unsigned int frame);
+
+      void SetProbabilityOfCancer(float probability);
+
+      bool HasFrameNumber() const
+      {
+        return hasFrameNumber_;
+      }
+
+      bool HasProbabilityOfCancer() const
+      {
+        return hasProbabilityOfCancer_;
+      }
+
+      unsigned int GetFrameNumber() const;
+
+      float GetProbabilityOfCancer() const;
+    };
+
+
+    class Point : public Structure
+    {
+    private:
+      ScenePoint2D  point_;
+
+    public:
+      Point(const std::string& sopInstanceUid,
+            double x,
+            double y);
+
+      virtual Structure* Clone() const ORTHANC_OVERRIDE;
+
+      virtual StructureType GetType() const ORTHANC_OVERRIDE
+      {
+        return StructureType_Point;
+      }
+
+      const ScenePoint2D& GetPoint() const
+      {
+        return point_;
+      }
+    };
+
+
+    class Polyline : public Structure
+    {
+    private:
+      std::vector<ScenePoint2D>  points_;
+
+    public:
+      Polyline(const std::string& sopInstanceUid,
+               const float* points,
+               unsigned long pointsCount);
+
+      Polyline(const std::string& sopInstanceUid,
+               const std::vector<ScenePoint2D>& points);
+
+      virtual Structure* Clone() const ORTHANC_OVERRIDE;
+
+      virtual StructureType GetType() const ORTHANC_OVERRIDE
+      {
+        return StructureType_Polyline;
+      }
+
+      size_t GetSize() const
+      {
+        return points_.size();
+      }
+
+      const ScenePoint2D& GetPoint(size_t i) const;
+    };
+
+
+  private:
     class ReferencedInstance
     {
     private:
@@ -79,7 +186,10 @@ namespace OrthancStone
         return sopClassUid_;
       }
 
-      void AddFrame(unsigned int frame);
+      void AddFrame(unsigned int frame)
+      {
+        frames_.insert(frame);
+      }
 
       const std::set<unsigned int>& GetFrames() const
       {
@@ -100,7 +210,7 @@ namespace OrthancStone
     std::string                                 sopInstanceUid_;
     std::map<std::string, ReferencedInstance*>  instancesInformation_;
     std::vector<std::string>                    orderedInstances_;
-    std::list<Structure*>                       structures_;
+    std::deque<Structure*>                      structures_;
 
   public:
     class ReferencedFrame
@@ -185,5 +295,12 @@ namespace OrthancStone
                                size_t i) const;
 
     void ExportReferencedFrames(std::list<ReferencedFrame>& frames) const;
+
+    size_t GetStructuresCount() const
+    {
+      return structures_.size();
+    }
+
+    const Structure& GetStructure(size_t index) const;
   };
 }

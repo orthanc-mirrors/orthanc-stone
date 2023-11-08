@@ -204,6 +204,84 @@ static const unsigned int DEFAULT_CINE_RATE = 30;
 
 
 
+class IFramesCollection : public boost::noncopyable
+{
+public:
+  virtual ~IFramesCollection()
+  {
+  }
+
+  virtual size_t GetFramesCount() const = 0;
+
+  virtual const OrthancStone::DicomInstanceParameters& GetInstanceOfFrame(size_t frameIndex) const = 0;
+
+  virtual unsigned int GetFrameNumberInInstance(size_t frameIndex) const = 0;
+
+  virtual bool LookupFrame(size_t& frameIndex,
+                           const std::string& sopInstanceUid,
+                           unsigned int frameNumber) const = 0;
+
+  virtual bool FindClosestFrame(size_t& frameIndex,
+                                const OrthancStone::Vector& point,
+                                double maximumDistance) const = 0;
+
+  static OrthancStone::CoordinateSystem3D GetFrameGeometry(const IFramesCollection& frames,
+                                                           size_t frameIndex)
+  {
+    return frames.GetInstanceOfFrame(frameIndex).GetFrameGeometry(frames.GetFrameNumberInInstance(frameIndex));
+  }
+};
+
+
+class SortedFramesCollection : public IFramesCollection
+{
+private:
+  std::unique_ptr<OrthancStone::SortedFrames>  frames_;
+
+public:
+  SortedFramesCollection(OrthancStone::SortedFrames* frames)
+  {
+    if (frames == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else
+    {
+      frames_.reset(frames);
+    }
+  }
+
+  virtual size_t GetFramesCount() const ORTHANC_OVERRIDE
+  {
+    return frames_->GetFramesCount();
+  }
+
+  const OrthancStone::DicomInstanceParameters& GetInstanceOfFrame(size_t frameIndex) const ORTHANC_OVERRIDE
+  {
+    return frames_->GetInstanceOfFrame(frameIndex);
+  }
+
+  virtual unsigned int GetFrameNumberInInstance(size_t frameIndex) const ORTHANC_OVERRIDE
+  {
+    return frames_->GetFrameNumberInInstance(frameIndex);
+  }
+
+  virtual bool LookupFrame(size_t& frameIndex,
+                           const std::string& sopInstanceUid,
+                           unsigned int frameNumber) const ORTHANC_OVERRIDE
+  {
+    return frames_->LookupFrame(frameIndex, sopInstanceUid, frameNumber);
+  }
+
+  virtual bool FindClosestFrame(size_t& frameIndex,
+                                const OrthancStone::Vector& point,
+                                double maximumDistance) const ORTHANC_OVERRIDE
+  {
+    return frames_->FindClosestFrame(frameIndex, point, maximumDistance);
+  };
+};
+
+
 class VirtualSeries : public boost::noncopyable
 {
 private:

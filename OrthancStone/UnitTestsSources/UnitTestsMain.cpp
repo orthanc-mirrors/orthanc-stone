@@ -44,6 +44,7 @@ TEST(Enumerations, Basic)
   ASSERT_EQ(SopClassUid_VideoEndoscopicImageStorage, StringToSopClassUid("1.2.840.10008.5.1.4.1.1.77.1.1.1"));
   ASSERT_EQ(SopClassUid_VideoMicroscopicImageStorage, StringToSopClassUid("1.2.840.10008.5.1.4.1.1.77.1.2.1"));
   ASSERT_EQ(SopClassUid_VideoPhotographicImageStorage, StringToSopClassUid("1.2.840.10008.5.1.4.1.1.77.1.4.1"));
+  ASSERT_EQ(SopClassUid_ComprehensiveSR, StringToSopClassUid("1.2.840.10008.5.1.4.1.1.88.33"));
   ASSERT_EQ(SopClassUid_Other, StringToSopClassUid("nope"));
 
   ASSERT_EQ(SeriesThumbnailType_Pdf, GetSeriesThumbnailType(SopClassUid_EncapsulatedPdf));

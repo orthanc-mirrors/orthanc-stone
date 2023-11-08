@@ -118,6 +118,19 @@ static bool IsDicomConcept(DcmItem& dataset,
 
 namespace OrthancStone
 {
+  void DicomStructuredReport::ReferencedInstance::AddFrame(unsigned int frame)
+  {
+    if (frame == 0)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      frames_.insert(frame - 1);
+    }
+  }
+
+
   class DicomStructuredReport::Structure : public boost::noncopyable
   {
   private:
@@ -148,7 +161,7 @@ namespace OrthancStone
       else
       {
         hasFrameNumber_ = true;
-        frameNumber_ = frame;
+        frameNumber_ = frame - 1;
       }
     }
 
@@ -326,6 +339,10 @@ namespace OrthancStone
   {
     DcmDataset& dataset = *dicom.GetDcmtkObject().getDataset();
 
+    studyInstanceUid_ = GetStringValue(dataset, DCM_StudyInstanceUID);
+    seriesInstanceUid_ = GetStringValue(dataset, DCM_SeriesInstanceUID);
+    sopInstanceUid_ = GetStringValue(dataset, DCM_SOPInstanceUID);
+
     CheckStringValue(dataset, DCM_Modality, "SR");
     CheckStringValue(dataset, DCM_SOPClassUID, "1.2.840.10008.5.1.4.1.1.88.33");  // Comprehensive SR IOD
     CheckStringValue(dataset, DCM_ValueType, "CONTAINER");
@@ -369,7 +386,7 @@ namespace OrthancStone
 
           if (instancesInformation_.find(sopInstanceUid) == instancesInformation_.end())
           {
-            instancesInformation_[sopInstanceUid] = ReferencedInstance(studyInstanceUid, seriesInstanceUid, sopClassUid);
+            instancesInformation_[sopInstanceUid] = new ReferencedInstance(studyInstanceUid, seriesInstanceUid, sopClassUid);
           }
           else
           {
@@ -468,11 +485,15 @@ namespace OrthancStone
                     }
 
                     std::string sopInstanceUid = GetStringValue(*instances.getItem(0), DCM_ReferencedSOPInstanceUID);
-                    if (instancesInformation_.find(sopInstanceUid) == instancesInformation_.end())
+                    std::map<std::string, ReferencedInstance*>::iterator instanceInformation = instancesInformation_.find(sopInstanceUid);
+
+                    if (instanceInformation == instancesInformation_.end())
                     {
                       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
                                                       "Referencing unknown instance in DICOM-SR: " + sopInstanceUid);
                     }
+
+                    assert(instanceInformation->second != NULL);
 
                     if (instances.getItem(0)->tagExists(DCM_ReferencedFrameNumber))
                     {
@@ -490,12 +511,14 @@ namespace OrthancStone
                         else
                         {
                           AddStructure(sopInstanceUid, group, true, frame, hasProbabilityOfCancer, probabilityOfCancer);
+                          instanceInformation->second->AddFrame(frame);
                         }
                       }
                     }
                     else
                     {
                       AddStructure(sopInstanceUid, group, false, 0, hasProbabilityOfCancer, probabilityOfCancer);
+                      instanceInformation->second->AddFrame(1);
                     }
                   }
                 }
@@ -514,6 +537,65 @@ namespace OrthancStone
     {
       assert(*it != NULL);
       delete *it;
+    }
+
+    for (std::map<std::string, ReferencedInstance*>::iterator
+           it = instancesInformation_.begin(); it != instancesInformation_.end(); ++it)
+    {
+      assert(it->second != NULL);
+      delete it->second;
+    }
+  }
+
+
+  void DicomStructuredReport::GetReferencedInstance(std::string& studyInstanceUid,
+                                                    std::string& seriesInstanceUid,
+                                                    std::string& sopInstanceUid,
+                                                    std::string& sopClassUid,
+                                                    size_t i) const
+  {
+    if (i >= orderedInstances_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    sopInstanceUid = orderedInstances_[i];
+
+    std::map<std::string, ReferencedInstance*>::const_iterator found = instancesInformation_.find(sopInstanceUid);
+    if (found == instancesInformation_.end())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+
+    assert(found->second != NULL);
+    studyInstanceUid = found->second->GetStudyInstanceUid();
+    seriesInstanceUid = found->second->GetSeriesInstanceUid();
+    sopClassUid = found->second->GetSopClassUid();
+  }
+
+
+  void DicomStructuredReport::ExportReferencedFrames(std::list<ReferencedFrame>& frames) const
+  {
+    frames.clear();
+
+    for (size_t i = 0; i < orderedInstances_.size(); i++)
+    {
+      std::map<std::string, ReferencedInstance*>::const_iterator found = instancesInformation_.find(orderedInstances_[i]);
+      if (found == instancesInformation_.end())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      assert(found->second != NULL);
+
+      for (std::set<unsigned int>::const_iterator frame = found->second->GetFrames().begin();
+           frame != found->second->GetFrames().end(); ++frame)
+      {
+        frames.push_back(ReferencedFrame(found->second->GetStudyInstanceUid(),
+                                         found->second->GetSeriesInstanceUid(),
+                                         orderedInstances_[i],
+                                         found->second->GetSopClassUid(), *frame));
+      }
     }
   }
 }

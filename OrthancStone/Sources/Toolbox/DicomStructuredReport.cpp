@@ -118,165 +118,138 @@ static bool IsDicomConcept(DcmItem& dataset,
 
 namespace OrthancStone
 {
-  void DicomStructuredReport::ReferencedInstance::AddFrame(unsigned int frame)
+  void DicomStructuredReport::Structure::Copy(const Structure& other)
   {
-    if (frame == 0)
+    if (other.HasFrameNumber())
+    {
+      SetFrameNumber(other.GetFrameNumber());
+    }
+
+    if (other.HasProbabilityOfCancer())
+    {
+      SetProbabilityOfCancer(other.GetProbabilityOfCancer());
+    }
+  }
+
+
+  DicomStructuredReport::Structure::Structure(const std::string& sopInstanceUid) :
+    sopInstanceUid_(sopInstanceUid),
+    hasFrameNumber_(false),
+    hasProbabilityOfCancer_(false)
+  {
+  }
+
+
+  void DicomStructuredReport::Structure::SetFrameNumber(unsigned int frame)
+  {
+    hasFrameNumber_ = true;
+    frameNumber_ = frame;
+  }
+
+
+  void DicomStructuredReport::Structure::SetProbabilityOfCancer(float probability)
+  {
+    if (probability < 0 ||
+        probability > 100)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
     else
     {
-      frames_.insert(frame - 1);
+      hasProbabilityOfCancer_ = true;
+      probabilityOfCancer_ = probability;
     }
   }
 
 
-  class DicomStructuredReport::Structure : public boost::noncopyable
+  unsigned int DicomStructuredReport::Structure::GetFrameNumber() const
   {
-  private:
-    std::string   sopInstanceUid_;
-    bool          hasFrameNumber_;
-    unsigned int  frameNumber_;
-    bool          hasProbabilityOfCancer_;
-    float         probabilityOfCancer_;
-
-  public:
-    Structure(const std::string& sopInstanceUid) :
-      sopInstanceUid_(sopInstanceUid),
-      hasFrameNumber_(false),
-      hasProbabilityOfCancer_(false)
+    if (hasFrameNumber_)
     {
+      return frameNumber_;
     }
-
-    virtual ~Structure()
+    else
     {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
+  }
 
-    void SetFrameNumber(unsigned int frame)
-    {
-      if (frame <= 0)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-      else
-      {
-        hasFrameNumber_ = true;
-        frameNumber_ = frame - 1;
-      }
-    }
-
-    void SetProbabilityOfCancer(float probability)
-    {
-      if (probability < 0 ||
-          probability > 100)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-      else
-      {
-        hasProbabilityOfCancer_ = true;
-        probabilityOfCancer_ = probability;
-      }
-    }
-
-    bool HasFrameNumber() const
-    {
-      return hasFrameNumber_;
-    }
-
-    bool HasProbabilityOfCancer() const
-    {
-      return hasProbabilityOfCancer_;
-    }
-
-    unsigned int GetFrameNumber() const
-    {
-      if (hasFrameNumber_)
-      {
-        return frameNumber_;
-      }
-      else
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-    }
-
-    float GetProbabilityOfCancer() const
-    {
-      if (hasProbabilityOfCancer_)
-      {
-        return probabilityOfCancer_;
-      }
-      else
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-    }
-  };
-
-
-  class DicomStructuredReport::Point : public Structure
+  float DicomStructuredReport::Structure::GetProbabilityOfCancer() const
   {
-  private:
-    ScenePoint2D  point_;
-
-  public:
-    Point(const std::string& sopInstanceUid,
-          double x,
-          double y) :
-      Structure(sopInstanceUid),
-      point_(x, y)
+    if (hasProbabilityOfCancer_)
     {
+      return probabilityOfCancer_;
     }
-
-    const ScenePoint2D& GetPoint() const
+    else
     {
-      return point_;
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-  };
+  }
 
 
-  class DicomStructuredReport::Polyline : public Structure
+  DicomStructuredReport::Point::Point(const std::string& sopInstanceUid,
+                                      double x,
+                                      double y) :
+    Structure(sopInstanceUid),
+    point_(x, y)
   {
-  private:
-    std::vector<ScenePoint2D>  points_;
+  }
 
-  public:
-    Polyline(const std::string& sopInstanceUid,
-             const float* points,
-             unsigned long pointsCount) :
-      Structure(sopInstanceUid)
+
+  DicomStructuredReport::Structure* DicomStructuredReport::Point::Clone() const
+  {
+    std::unique_ptr<Point> cloned(new Point(GetSopInstanceUid(), point_.GetX(), point_.GetY()));
+    cloned->Copy(*this);
+    return cloned.release();
+  }
+
+
+  DicomStructuredReport::Polyline::Polyline(const std::string& sopInstanceUid,
+                                            const float* points,
+                                            unsigned long pointsCount) :
+    Structure(sopInstanceUid)
+  {
+    if (pointsCount % 2 != 0)
     {
-      if (pointsCount % 2 != 0)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-      }
-
-      points_.reserve(pointsCount / 2);
-
-      for (unsigned long i = 0; i < pointsCount; i += 2)
-      {
-        points_.push_back(ScenePoint2D(points[i], points[i + 1]));
-      }
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
 
-    size_t GetSize() const
-    {
-      return points_.size();
-    }
+    points_.reserve(pointsCount / 2);
 
-    const ScenePoint2D& GetPoint(size_t i) const
+    for (unsigned long i = 0; i < pointsCount; i += 2)
     {
-      if (i >= points_.size())
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-      }
-      else
-      {
-        return points_[i];
-      }
+      points_.push_back(ScenePoint2D(points[i], points[i + 1]));
     }
-  };
+  }
+
+
+  DicomStructuredReport::Polyline::Polyline(const std::string& sopInstanceUid,
+                                            const std::vector<ScenePoint2D>& points) :
+    Structure(sopInstanceUid),
+    points_(points)
+  {
+  }
+
+
+  DicomStructuredReport::Structure* DicomStructuredReport::Polyline::Clone() const
+  {
+    std::unique_ptr<Polyline> cloned(new Polyline(GetSopInstanceUid(), points_));
+    cloned->Copy(*this);
+    return cloned.release();
+  }
+
+
+  const ScenePoint2D& DicomStructuredReport::Polyline::GetPoint(size_t i) const
+  {
+    if (i >= points_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      return points_[i];
+    }
+  }
 
 
   void DicomStructuredReport::AddStructure(const std::string& sopInstanceUid,
@@ -504,21 +477,22 @@ namespace OrthancStone
                       for (size_t m = 0; m < tokens.size(); m++)
                       {
                         uint32_t frame;
-                        if (!Orthanc::SerializationToolbox::ParseUnsignedInteger32(frame, tokens[m]))
+                        if (!Orthanc::SerializationToolbox::ParseUnsignedInteger32(frame, tokens[m]) ||
+                            frame <= 0)
                         {
                           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
                         }
                         else
                         {
-                          AddStructure(sopInstanceUid, group, true, frame, hasProbabilityOfCancer, probabilityOfCancer);
-                          instanceInformation->second->AddFrame(frame);
+                          AddStructure(sopInstanceUid, group, true, frame - 1, hasProbabilityOfCancer, probabilityOfCancer);
+                          instanceInformation->second->AddFrame(frame - 1);
                         }
                       }
                     }
                     else
                     {
                       AddStructure(sopInstanceUid, group, false, 0, hasProbabilityOfCancer, probabilityOfCancer);
-                      instanceInformation->second->AddFrame(1);
+                      instanceInformation->second->AddFrame(0);
                     }
                   }
                 }
@@ -531,9 +505,30 @@ namespace OrthancStone
   }
 
 
+  DicomStructuredReport::DicomStructuredReport(const DicomStructuredReport& other) :
+    studyInstanceUid_(other.studyInstanceUid_),
+    seriesInstanceUid_(other.seriesInstanceUid_),
+    sopInstanceUid_(other.sopInstanceUid_),
+    orderedInstances_(other.orderedInstances_)
+  {
+    for (std::map<std::string, ReferencedInstance*>::const_iterator
+           it = other.instancesInformation_.begin(); it != other.instancesInformation_.end(); ++it)
+    {
+      assert(it->second != NULL);
+      instancesInformation_[it->first] = new ReferencedInstance(*it->second);
+    }
+
+    for (std::deque<Structure*>::const_iterator it = other.structures_.begin(); it != other.structures_.end(); ++it)
+    {
+      assert(*it != NULL);
+      structures_.push_back((*it)->Clone());
+    }
+  }
+
+
   DicomStructuredReport::~DicomStructuredReport()
   {
-    for (std::list<Structure*>::iterator it = structures_.begin(); it != structures_.end(); ++it)
+    for (std::deque<Structure*>::iterator it = structures_.begin(); it != structures_.end(); ++it)
     {
       assert(*it != NULL);
       delete *it;
@@ -596,6 +591,20 @@ namespace OrthancStone
                                          orderedInstances_[i],
                                          found->second->GetSopClassUid(), *frame));
       }
+    }
+  }
+
+
+  const DicomStructuredReport::Structure& DicomStructuredReport::GetStructure(size_t index) const
+  {
+    if (index >= structures_.size())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      assert(structures_[index] != NULL);
+      return *structures_[index];
     }
   }
 }

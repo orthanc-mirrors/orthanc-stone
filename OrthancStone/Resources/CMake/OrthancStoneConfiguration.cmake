@@ -189,6 +189,7 @@ endif()
 if (ENABLE_DCMTK)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Oracle/ParseDicomSuccessMessage.cpp
+    ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructuredReport.cpp
     ${ORTHANC_STONE_ROOT}/Toolbox/OrthancDatasets/SimplifiedOrthancDataset.cpp
     ${ORTHANC_STONE_ROOT}/Toolbox/ParsedDicomCache.cpp
     ${ORTHANC_STONE_ROOT}/Toolbox/ParsedDicomDataset.cpp

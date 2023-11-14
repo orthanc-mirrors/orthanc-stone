@@ -146,5 +146,8 @@ namespace OrthancStone
     {
       return GetResourceInternal(index).GetSourceJson();
     }
+
+    bool LookupResource(Orthanc::DicomMap& target,
+                        const std::string& id) const;
   };
 }

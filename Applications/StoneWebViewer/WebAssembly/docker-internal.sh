@@ -44,6 +44,7 @@ cmake /tmp/source-writeable/Applications/StoneWebViewer/WebAssembly \
       -DORTHANC_STONE_INSTALL_PREFIX=/target/StoneWebViewer \
       -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
       -DSTATIC_BUILD=ON \
+      -DLIBCLANG=/usr/lib/llvm-4.0/lib/libclang-4.0.so \
       -G Ninja
 
 ninja -j2 install

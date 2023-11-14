@@ -276,4 +276,22 @@ namespace OrthancStone
       return true;
     }
   }
+
+
+  bool LoadedDicomResources::LookupResource(Orthanc::DicomMap& target,
+                                            const std::string& id) const
+  {
+    Resources::const_iterator it = resources_.find(id);
+    
+    if (it == resources_.end())
+    {
+      return false;
+    }
+    else
+    {
+      assert(it->second != NULL);
+      target.Assign(it->second->GetDicom());
+      return true;
+    }
+  }
 }

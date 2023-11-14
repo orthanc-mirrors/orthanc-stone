@@ -38,7 +38,7 @@ else:
 
 TARGET = os.path.join(os.path.dirname(__file__), 'Orthanc')
 PLUGIN_SDK_VERSION = '1.0.0'
-REPOSITORY = 'https://hg.orthanc-server.com/orthanc/raw-file'
+REPOSITORY = 'https://orthanc.uclouvain.be/hg/orthanc/raw-file'
 
 FILES = [
     ('OrthancServer/Plugins/Samples/Common/OrthancPluginCppWrapper.h',   'Plugins'),

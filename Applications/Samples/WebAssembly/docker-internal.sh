@@ -29,7 +29,7 @@ export EM_CACHE=/tmp/emscripten-cache
 
 # Get the Orthanc framework
 cd /tmp/
-hg clone https://hg.orthanc-server.com/orthanc/
+hg clone https://orthanc.uclouvain.be/hg/orthanc/
 
 # Make a copy of the read-only folder containing the source code into
 # a writeable folder, because of "DownloadPackage.cmake" that writes

@@ -12,9 +12,9 @@ Create your build environment:
 
 mkdir ~/dev
 cd ~/dev
-hg clone https://hg.orthanc-server.com/orthanc/
-hg clone https://hg.orthanc-server.com/orthanc-stone/
-hg clone https://hg.orthanc-server.com/orthanc-dicomweb/
+hg clone https://orthanc.uclouvain.be/hg/orthanc/
+hg clone https://orthanc.uclouvain.be/hg/orthanc-stone/
+hg clone https://orthanc.uclouvain.be/hg/orthanc-dicomweb/
 mkdir -p ~/dev/build/orthanc
 mkdir -p ~/dev/build/orthanc-dicomweb
 mkdir -p ~/dev/build/wasm-stone-viewer

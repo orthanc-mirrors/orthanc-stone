@@ -81,7 +81,7 @@ Installation and usage
 
 Build instructions and usage details are available as part of the
 Orthanc Book:
-http://book.orthanc-server.com/developers/stone.html
+https://orthanc.uclouvain.be/book/developers/stone.html
 
 Stone of Orthanc comes with several sample applications in the
 "Applications/Samples" folder. Please check the
@@ -116,7 +116,7 @@ Contributing
 
 Instructions for contributing to the Orthanc project are included in
 the Orthanc Book:
-https://book.orthanc-server.com/developers/repositories.html
+https://orthanc.uclouvain.be/book/developers/repositories.html
 
 
 Licensing

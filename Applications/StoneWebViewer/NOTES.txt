@@ -26,7 +26,7 @@ Differences with Osimis Web viewer
 
 - The Stone Web viewer uses the DICOM identifiers, while the Osimis Web
   viewer uses the Orthanc identifiers.
-  https://book.orthanc-server.com/faq/orthanc-ids.html
+  https://orthanc.uclouvain.be/book/faq/orthanc-ids.html
 
   In the Stone Web viewer, the studies are indexed by their "Study
   Instance UID" tag (0020,000d). The series are indexed by their

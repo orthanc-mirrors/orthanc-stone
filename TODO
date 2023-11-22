@@ -1,4 +1,4 @@
-Update OrthancFramework to 1.12.1 to benefit from https://hg.orthanc-server.com/orthanc/rev/57c0fba5e5c7
+Update OrthancFramework to 1.12.1 to benefit from https://orthanc.uclouvain.be/hg/orthanc/rev/57c0fba5e5c7
 
 ======================
 == Stone Web viewer ==
@@ -10,7 +10,7 @@ Improvements
 
 * Save/load annotations as attachments of their parent series
   (including detection of collisions thanks to revisions).
-  https://book.orthanc-server.com/faq/features.html#metadata-attachments
+  https://orthanc.uclouvain.be/book/faq/features.html#metadata-attachments
   
 * Internationalization and translations (i18n). Some possible libraries:
   https://phrase.com/blog/posts/the-best-javascript-i18n-libraries/
@@ -116,7 +116,7 @@ Won't do
 
   => A solution for AMD64 architectures is to use the standalone
   Debian repository that is provided by Sebastien Jodogne:
-  https://book.orthanc-server.com/users/cookbook.html#obtaining-binaries
+  https://orthanc.uclouvain.be/book/users/cookbook.html#obtaining-binaries
 
 
 

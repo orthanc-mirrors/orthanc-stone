@@ -18,7 +18,7 @@ devroot/
 
  Orthanc can be retrieved with:
  ```
- hg clone https://hg.orthanc-server.com/orthanc
+ hg clone https://orthanc.uclouvain.be/hg/orthanc
  ```
 
 Furthermore, the samples usually assume that an Orthanc is running locally,

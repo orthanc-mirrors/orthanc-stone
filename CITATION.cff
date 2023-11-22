@@ -14,7 +14,7 @@ identifiers:
   - type: url
     value: 'http://hdl.handle.net/2078.1/277125'
     description: On the Use of WebAssembly for Rendering and Segmenting Medical Images
-repository-code: 'https://hg.orthanc-server.com/orthanc-stone/'
+repository-code: 'https://orthanc.uclouvain.be/hg/orthanc-stone/'
 url: 'https://www.orthanc-server.com/'
 license: AGPL-3.0-or-later
 version: 2.5

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Stone of Orthanc
 # Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics

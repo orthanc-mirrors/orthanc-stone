@@ -24,8 +24,7 @@ set -ex
 
 # NB: Sources of the "jodogne/wasm-builder" Docker image:
 # https://github.com/jodogne/OrthancDocker/tree/master/wasm-builder
-IMAGE=jodogne/wasm-builder:2.0.23
-#IMAGE=wasm-builder
+IMAGE=jodogne/wasm-builder:3.1.49
 
 if [ "$1" != "Debug" -a "$1" != "Release" ]; then
     echo "Please provide build type: Debug or Release"

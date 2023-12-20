@@ -94,6 +94,10 @@ add_library(StoneRendering SHARED
   ${ORTHANC_STONE_SOURCES}
   )
 
+if (COMMAND DefineSourceBasenameForTarget)
+  DefineSourceBasenameForTarget(StoneRendering)
+endif()
+
 set_target_properties(StoneRendering PROPERTIES 
   VERSION ${PLUGIN_VERSION} 
   SOVERSION ${PLUGIN_VERSION})

@@ -59,7 +59,9 @@ add_executable(UnitTests
   ${ORTHANC_STONE_SOURCES}
   )
 
-DefineSourceBasenameForTarget(UnitTests)
+if (COMMAND DefineSourceBasenameForTarget)
+  DefineSourceBasenameForTarget(UnitTests)
+endif()
 
 add_custom_command(
   TARGET UnitTests

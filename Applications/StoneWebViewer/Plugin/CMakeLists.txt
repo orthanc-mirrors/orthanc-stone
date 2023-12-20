@@ -132,7 +132,9 @@ add_library(StoneWebViewer SHARED
   ${ORTHANC_CORE_SOURCES}
   )
 
-DefineSourceBasenameForTarget(StoneWebViewer)
+if (COMMAND DefineSourceBasenameForTarget)
+  DefineSourceBasenameForTarget(StoneWebViewer)
+endif()
 
 set_target_properties(StoneWebViewer PROPERTIES 
   VERSION ${STONE_WEB_VIEWER_VERSION} 

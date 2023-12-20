@@ -122,7 +122,9 @@ add_executable(UnitTests
 # Boost::Math begs for -std=c++14 since Boost 1.82.0
 set_property(TARGET UnitTests PROPERTY CXX_STANDARD 14)
 
-DefineSourceBasenameForTarget(UnitTests)
+if (COMMAND DefineSourceBasenameForTarget)
+  DefineSourceBasenameForTarget(UnitTests)
+endif()
 
   
 # Declare installation files for the module

@@ -138,7 +138,9 @@ add_executable(StoneWebViewer
 # Boost::Math begs for -std=c++14 since Boost 1.82.0
 set_property(TARGET StoneWebViewer PROPERTY CXX_STANDARD 14)
 
-DefineSourceBasenameForTarget(StoneWebViewer)
+if (COMMAND DefineSourceBasenameForTarget)
+  DefineSourceBasenameForTarget(StoneWebViewer)
+endif()
 
 set_target_properties(StoneWebViewer
   PROPERTIES

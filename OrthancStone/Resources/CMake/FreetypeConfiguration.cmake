@@ -21,7 +21,7 @@
 
 if (STATIC_BUILD OR NOT USE_SYSTEM_FREETYPE)
   set(FREETYPE_SOURCES_DIR ${CMAKE_BINARY_DIR}/freetype-2.9.1)
-  set(FREETYPE_URL "http://orthanc.osimis.io/ThirdPartyDownloads/freetype-2.9.1.tar.gz")
+  set(FREETYPE_URL "https://orthanc.uclouvain.be/downloads/third-party-downloads/freetype-2.9.1.tar.gz")
   set(FREETYPE_MD5 "3adb0e35d3c100c456357345ccfa8056")
 
   DownloadPackage(${FREETYPE_MD5} ${FREETYPE_URL} "${FREETYPE_SOURCES_DIR}")

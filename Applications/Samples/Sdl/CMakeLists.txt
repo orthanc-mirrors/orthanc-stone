@@ -60,7 +60,7 @@ endif()
 
 DownloadPackage(
   "a24b8136b8f3bb93f166baf97d9328de"
-  "http://orthanc.osimis.io/ThirdPartyDownloads/ubuntu-font-family-0.83.zip"
+  "https://orthanc.uclouvain.be/downloads/third-party-downloads/ubuntu-font-family-0.83.zip"
   "${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83")
 
 EmbedResources(

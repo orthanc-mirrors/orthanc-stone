@@ -21,7 +21,7 @@
 
 if (STATIC_BUILD OR NOT USE_SYSTEM_GLEW)
   SET(GLEW_SOURCES_DIR ${CMAKE_BINARY_DIR}/glew-2.1.0)
-  SET(GLEW_URL "http://orthanc.osimis.io/ThirdPartyDownloads/glew-2.1.0.tgz")
+  SET(GLEW_URL "https://orthanc.uclouvain.be/downloads/third-party-downloads/glew-2.1.0.tgz")
   SET(GLEW_MD5 "b2ab12331033ddfaa50dc39345343980")
   DownloadPackage(${GLEW_MD5} ${GLEW_URL} "${GLEW_SOURCES_DIR}")
 

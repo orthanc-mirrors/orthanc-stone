@@ -40,6 +40,9 @@ Improvements
 
 * Minor: Rotate the anchors of the text after rotation of the display.
 
+* Order the studies in the left column according to their Instance
+  Number (0020,0013). Suggestion by Joseph Maratt.
+
 
 ------------
 Known issues

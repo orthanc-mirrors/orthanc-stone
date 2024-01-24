@@ -1,8 +1,8 @@
 # Stone of Orthanc
 # Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
 # Department, University Hospital of Liege, Belgium
-# Copyright (C) 2017-2023 Osimis S.A., Belgium
-# Copyright (C) 2021-2023 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+# Copyright (C) 2017-2024 Osimis S.A., Belgium
+# Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
 #
 # This program is free software: you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -21,7 +21,7 @@
 
 if (STATIC_BUILD OR NOT USE_SYSTEM_SDL)
   SET(SDL_SOURCES_DIR ${CMAKE_BINARY_DIR}/SDL2-2.0.4)
-  SET(SDL_URL "http://orthanc.osimis.io/ThirdPartyDownloads/SDL2-2.0.4.tar.gz")
+  SET(SDL_URL "https://orthanc.uclouvain.be/downloads/third-party-downloads/SDL2-2.0.4.tar.gz")
   SET(SDL_MD5 "44fc4a023349933e7f5d7a582f7b886e")
   DownloadPackage(${SDL_MD5} ${SDL_URL} "${SDL_SOURCES_DIR}")
 

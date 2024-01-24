@@ -1,8 +1,8 @@
 # Stone of Orthanc
 # Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
 # Department, University Hospital of Liege, Belgium
-# Copyright (C) 2017-2023 Osimis S.A., Belgium
-# Copyright (C) 2021-2023 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+# Copyright (C) 2017-2024 Osimis S.A., Belgium
+# Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
 #
 # This program is free software: you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -21,7 +21,7 @@
 
 if (STATIC_BUILD OR NOT USE_SYSTEM_FREETYPE)
   set(FREETYPE_SOURCES_DIR ${CMAKE_BINARY_DIR}/freetype-2.9.1)
-  set(FREETYPE_URL "http://orthanc.osimis.io/ThirdPartyDownloads/freetype-2.9.1.tar.gz")
+  set(FREETYPE_URL "https://orthanc.uclouvain.be/downloads/third-party-downloads/freetype-2.9.1.tar.gz")
   set(FREETYPE_MD5 "3adb0e35d3c100c456357345ccfa8056")
 
   DownloadPackage(${FREETYPE_MD5} ${FREETYPE_URL} "${FREETYPE_SOURCES_DIR}")

@@ -1,8 +1,8 @@
 # Stone of Orthanc
 # Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
 # Department, University Hospital of Liege, Belgium
-# Copyright (C) 2017-2023 Osimis S.A., Belgium
-# Copyright (C) 2021-2023 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+# Copyright (C) 2017-2024 Osimis S.A., Belgium
+# Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
 #
 # This program is free software: you can redistribute it and/or
 # modify it under the terms of the GNU Affero General Public License
@@ -86,7 +86,7 @@ endif()
 
 DownloadPackage(
   "a24b8136b8f3bb93f166baf97d9328de"
-  "http://orthanc.osimis.io/ThirdPartyDownloads/ubuntu-font-family-0.83.zip"
+  "https://orthanc.uclouvain.be/downloads/third-party-downloads/ubuntu-font-family-0.83.zip"
   "${CMAKE_BINARY_DIR}/ubuntu-font-family-0.83")
 
 EmbedResources(
@@ -157,7 +157,9 @@ add_executable(StoneWebViewer
 # Boost::Math begs for -std=c++14 since Boost 1.82.0
 set_property(TARGET StoneWebViewer PROPERTY CXX_STANDARD 14)
 
-DefineSourceBasenameForTarget(StoneWebViewer)
+if (COMMAND DefineSourceBasenameForTarget)
+  DefineSourceBasenameForTarget(StoneWebViewer)
+endif()
 
 set_target_properties(StoneWebViewer
   PROPERTIES

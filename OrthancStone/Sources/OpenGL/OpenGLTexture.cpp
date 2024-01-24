@@ -27,6 +27,8 @@
 #include <Logging.h>
 #include <OrthancException.h>
 
+#include <cassert>
+
 namespace OrthancStone
 {
   namespace OpenGL

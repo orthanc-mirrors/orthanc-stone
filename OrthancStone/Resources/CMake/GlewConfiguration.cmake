@@ -1,8 +1,8 @@
 # Stone of Orthanc
 # Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
 # Department, University Hospital of Liege, Belgium
-# Copyright (C) 2017-2023 Osimis S.A., Belgium
-# Copyright (C) 2021-2023 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+# Copyright (C) 2017-2024 Osimis S.A., Belgium
+# Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
 #
 # This program is free software: you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -21,7 +21,7 @@
 
 if (STATIC_BUILD OR NOT USE_SYSTEM_GLEW)
   SET(GLEW_SOURCES_DIR ${CMAKE_BINARY_DIR}/glew-2.1.0)
-  SET(GLEW_URL "http://orthanc.osimis.io/ThirdPartyDownloads/glew-2.1.0.tgz")
+  SET(GLEW_URL "https://orthanc.uclouvain.be/downloads/third-party-downloads/glew-2.1.0.tgz")
   SET(GLEW_MD5 "b2ab12331033ddfaa50dc39345343980")
   DownloadPackage(${GLEW_MD5} ${GLEW_URL} "${GLEW_SOURCES_DIR}")
 

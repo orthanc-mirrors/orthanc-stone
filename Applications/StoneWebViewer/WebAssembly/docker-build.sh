@@ -3,8 +3,8 @@
 # Stone of Orthanc
 # Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
 # Department, University Hospital of Liege, Belgium
-# Copyright (C) 2017-2023 Osimis S.A., Belgium
-# Copyright (C) 2021-2023 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+# Copyright (C) 2017-2024 Osimis S.A., Belgium
+# Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
 #
 # This program is free software: you can redistribute it and/or
 # modify it under the terms of the GNU Affero General Public License
@@ -24,8 +24,7 @@ set -ex
 
 # NB: Sources of the "jodogne/wasm-builder" Docker image:
 # https://github.com/jodogne/OrthancDocker/tree/master/wasm-builder
-IMAGE=jodogne/wasm-builder:2.0.23
-#IMAGE=wasm-builder
+IMAGE=jodogne/wasm-builder:3.1.49
 
 if [ "$1" != "Debug" -a "$1" != "Release" ]; then
     echo "Please provide build type: Debug or Release"

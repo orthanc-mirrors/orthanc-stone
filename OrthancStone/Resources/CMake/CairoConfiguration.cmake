@@ -1,8 +1,8 @@
 # Stone of Orthanc
 # Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
 # Department, University Hospital of Liege, Belgium
-# Copyright (C) 2017-2023 Osimis S.A., Belgium
-# Copyright (C) 2021-2023 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+# Copyright (C) 2017-2024 Osimis S.A., Belgium
+# Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
 #
 # This program is free software: you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -24,7 +24,7 @@
 
 if (STATIC_BUILD OR NOT USE_SYSTEM_CAIRO)
   SET(CAIRO_SOURCES_DIR ${CMAKE_BINARY_DIR}/cairo-1.14.12)
-  SET(CAIRO_URL "http://orthanc.osimis.io/ThirdPartyDownloads/cairo-1.14.12.tar.xz")
+  SET(CAIRO_URL "https://orthanc.uclouvain.be/downloads/third-party-downloads/cairo-1.14.12.tar.xz")
   SET(CAIRO_MD5 "9f0db9dbfca0966be8acd682e636d165")
 
   DownloadPackage(${CAIRO_MD5} ${CAIRO_URL} "${CAIRO_SOURCES_DIR}")

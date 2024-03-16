@@ -279,6 +279,8 @@ extern "C"
 
     try
     {
+      OrthancPluginSetDescription(OrthancPlugins::GetGlobalContext(), "Stone Web viewer");
+
       std::string explorer;
       Orthanc::EmbeddedResources::GetFileResource(
         explorer, Orthanc::EmbeddedResources::ORTHANC_EXPLORER);

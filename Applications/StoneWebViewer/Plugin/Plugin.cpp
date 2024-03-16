@@ -279,10 +279,12 @@ extern "C"
 
     try
     {
+      OrthancPlugins::SetDescription(PLUGIN_NAME, "Stone Web viewer");
+
       std::string explorer;
       Orthanc::EmbeddedResources::GetFileResource(
         explorer, Orthanc::EmbeddedResources::ORTHANC_EXPLORER);
-      OrthancPluginExtendOrthancExplorer(OrthancPlugins::GetGlobalContext(), explorer.c_str());
+      OrthancPlugins::ExtendOrthancExplorer(PLUGIN_NAME, explorer.c_str());
       
       OrthancPlugins::RegisterRestCallback<ServeConfiguration>
         (STONE_WEB_VIEWER_ROOT + "/configuration.json", true);

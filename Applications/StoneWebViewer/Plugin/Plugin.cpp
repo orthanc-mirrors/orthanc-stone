@@ -284,7 +284,7 @@ extern "C"
       std::string explorer;
       Orthanc::EmbeddedResources::GetFileResource(
         explorer, Orthanc::EmbeddedResources::ORTHANC_EXPLORER);
-      OrthancPlugins::ExtendOrthancExplorer(PLUGIN_NAME, explorer.c_str());
+      OrthancPlugins::ExtendOrthancExplorer(PLUGIN_NAME, explorer);
       
       OrthancPlugins::RegisterRestCallback<ServeConfiguration>
         (STONE_WEB_VIEWER_ROOT + "/configuration.json", true);

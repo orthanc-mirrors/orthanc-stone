@@ -1,4 +1,3 @@
-Update OrthancFramework to 1.12.1 to benefit from https://orthanc.uclouvain.be/hg/orthanc/rev/57c0fba5e5c7
 
 ======================
 == Stone Web viewer ==
@@ -7,6 +6,9 @@ Update OrthancFramework to 1.12.1 to benefit from https://orthanc.uclouvain.be/h
 ------------
 Improvements
 ------------
+
+* Update OrthancFramework to 1.12.1 to benefit from:
+  https://orthanc.uclouvain.be/hg/orthanc/rev/57c0fba5e5c7
 
 * Save/load annotations as attachments of their parent series
   (including detection of collisions thanks to revisions).
@@ -42,6 +44,9 @@ Improvements
 
 * Order the studies in the left column according to their Instance
   Number (0020,0013). Suggestion by Joseph Maratt.
+
+* Add a button to download PDF:
+  https://discourse.orthanc-server.org/t/printing-pdf-reports-in-stone-of-orthanc/4731
 
 
 ------------

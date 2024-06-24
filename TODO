@@ -48,6 +48,10 @@ Improvements
 * Add a button to download PDF:
   https://discourse.orthanc-server.org/t/printing-pdf-reports-in-stone-of-orthanc/4731
 
+* Open using Orthanc parent/study/series identifier, or using DICOM
+  accession number:
+  https://discourse.orthanc-server.org/t/stone-web-viewer-what-is-the-link-to-use-through-the-access-number/4808
+
 
 ------------
 Known issues

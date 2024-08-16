@@ -52,6 +52,9 @@ Improvements
   accession number:
   https://discourse.orthanc-server.org/t/stone-web-viewer-what-is-the-link-to-use-through-the-access-number/4808
 
+* Add configuration options to disable annotations and measurements:
+  https://discourse.orthanc-server.org/t/niveles-de-acceso-y-permisos-a-funcionalidades-del-stone-web-viewer/5106
+
 
 ------------
 Known issues

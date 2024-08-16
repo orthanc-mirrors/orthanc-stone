@@ -1793,6 +1793,22 @@ private:
           LOG(INFO) << "No preset windowing";
         }
 
+        uint32_t bitsStored, pixelRepresentation;
+        if (dicom.ParseUnsignedInteger32(bitsStored, Orthanc::DICOM_TAG_BITS_STORED) &&
+            dicom.ParseUnsignedInteger32(pixelRepresentation, Orthanc::DICOM_TAG_PIXEL_REPRESENTATION))
+        {
+          // Added in Stone Web viewer > 2.5
+          const bool isSigned = (pixelRepresentation != 0);
+          const float maximum = powf(2.0, bitsStored);
+          GetViewport().windowingDefaultCenter_ = (isSigned ? 0.0f : maximum / 2.0f);
+          GetViewport().windowingDefaultWidth_ = maximum;
+        }
+        else
+        {
+          GetViewport().windowingDefaultCenter_ = 128;
+          GetViewport().windowingDefaultWidth_ = 256;
+        }
+
         GetViewport().SetWindowingPreset();
       }
 
@@ -2086,6 +2102,8 @@ private:
   float                                        windowingWidth_;
   std::vector<float>                           windowingPresetCenters_;
   std::vector<float>                           windowingPresetWidths_;
+  float                                        windowingDefaultCenter_;
+  float                                        windowingDefaultWidth_;
   unsigned int                                 cineRate_;
   bool                                         inverted_;
   bool                                         fitNextContent_;
@@ -2606,6 +2624,8 @@ private:
     context_(context),
     source_(source),
     framesCache_(cache),
+    windowingDefaultCenter_(128),
+    windowingDefaultWidth_(256),
     fitNextContent_(true),
     hasFocusOnInstance_(false),
     focusFrameNumber_(0),
@@ -3158,7 +3178,7 @@ public:
 
     if (windowingPresetCenters_.empty())
     {
-      SetWindowing(128, 256);
+      SetWindowing(windowingDefaultCenter_, windowingDefaultWidth_);
     }
     else
     {

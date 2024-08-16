@@ -155,6 +155,12 @@ enum STONE_WEB_VIEWER_EXPORT WebViewerAction
     };
   
 
+enum FramesCollectionType
+{
+  FramesCollectionType_None,
+  FramesCollectionType_DicomSR
+};
+
 
 static OrthancStone::MouseAction ConvertWebViewerAction(int action)
 {
@@ -641,6 +647,10 @@ public:
 
     virtual void SignalVirtualSeriesThumbnailLoaded(const std::string& virtualSeriesId,
                                                     const std::string& jpeg) = 0;
+
+    virtual void SignalDicomSRLoaded(const std::string& studyInstanceUid,
+                                     const std::string& seriesInstanceUid,
+                                     const std::string& sopInstanceUid) = 0;
   };
   
 private:
@@ -719,9 +729,45 @@ private:
     }
     else if (payload.GetValue() == Orthanc::ResourceType_Instance)
     {
-      // This occurs if loading DICOM-SR
+      // This occurs if loading DICOM-SR: Show the DICOM-SR once all its referenced instances are loaded
 
-      // TODO - Hide/show DICOM-SR once they have been loaded
+      for (size_t i = 0; i < dicom.GetSize(); i++)
+      {
+        std::string studyInstanceUid, seriesInstanceUid, sopInstanceUid;
+        if (dicom.GetResource(i).LookupStringValue(studyInstanceUid, Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, false) &&
+            dicom.GetResource(i).LookupStringValue(seriesInstanceUid, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false) &&
+            dicom.GetResource(i).LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false))
+        {
+          for (StructuredReports::const_iterator it = structuredReports_.begin(); it != structuredReports_.end(); ++it)
+          {
+            if (it->second->IsReferencedInstance(studyInstanceUid, seriesInstanceUid, sopInstanceUid))
+            {
+              bool complete = true;
+              for (size_t j = 0; j < it->second->GetReferencedInstancesCount(); j++)
+              {
+                std::string referencedStudyInstanceUid, referencedSeriesInstanceUid, referencedInstanceInstanceUid, sopClassUid;
+                it->second->GetReferencedInstance(referencedStudyInstanceUid, referencedSeriesInstanceUid, referencedInstanceInstanceUid, sopClassUid, j);
+                if (!instances_->HasResource(referencedInstanceInstanceUid))
+                {
+                  complete = false;
+                  break;
+                }
+              }
+
+              if (complete)
+              {
+                LOG(INFO) << "Loaded all the instances referred by DICOM-SR instance: " << sopInstanceUid;
+                if (observer_ != NULL)
+                {
+                  observer_->SignalDicomSRLoaded(it->second->GetStudyInstanceUid(),
+                                                 it->second->GetSeriesInstanceUid(),
+                                                 it->second->GetSopInstanceUid());
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
     if (payload.GetValue() == Orthanc::ResourceType_Study ||
@@ -1166,8 +1212,11 @@ public:
     }
   }
 
-  IFramesCollection* GetSeriesFrames(const std::string& seriesInstanceUid) const
+  IFramesCollection* GetSeriesFrames(FramesCollectionType& type,
+                                     const std::string& seriesInstanceUid) const
   {
+    type = FramesCollectionType_None;
+
     OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
     
     if (accessor.IsComplete())
@@ -1176,6 +1225,7 @@ public:
       if (sr != structuredReports_.end())
       {
         assert(sr->second != NULL);
+        type = FramesCollectionType_DicomSR;
 
         try
         {
@@ -1183,8 +1233,8 @@ public:
         }
         catch (Orthanc::OrthancException&)
         {
-          // TODO
-          LOG(ERROR) << "Instances of the DICOM-SR are not available yet";
+          LOG(INFO) << "All the instances referenced by the DICOM-SR series \""
+                    << seriesInstanceUid << "\" are not available yet";
           return NULL;
         }
       }
@@ -2475,6 +2525,7 @@ private:
   boost::shared_ptr<OrthancStone::AnnotationsSceneLayer>  stoneAnnotations_;
 
   bool linearInterpolation_;
+  std::string pendingSeriesInstanceUid_;
 
 
   void ScheduleNextPrefetch()
@@ -3979,6 +4030,24 @@ public:
         *this, current.GetOrigin() + synchronizationOffset_, current.GetNormal());
     }
   }
+
+
+  void SetPendingSeriesInstanceUid(const std::string& seriesInstanceUid)
+  {
+    pendingSeriesInstanceUid_ = seriesInstanceUid;
+  }
+
+
+  void ClearPendingSeriesInstanceUid()
+  {
+    pendingSeriesInstanceUid_.clear();
+  }
+
+
+  const std::string& GetPendingSeriesInstanceUid() const
+  {
+    return pendingSeriesInstanceUid_;
+  }
 };
 
 
@@ -4260,6 +4329,10 @@ public:
       labelPosition.GetX(),
       labelPosition.GetY() );
   }
+
+  virtual void SignalDicomSRLoaded(const std::string& studyInstanceUid,
+                                   const std::string& seriesInstanceUid,
+                                   const std::string& sopInstanceUid) ORTHANC_OVERRIDE;
 };
 
 
@@ -4326,6 +4399,28 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
   else
   {
     return found->second;
+  }
+}
+
+
+void WebAssemblyObserver::SignalDicomSRLoaded(const std::string& studyInstanceUid,
+                                              const std::string& seriesInstanceUid,
+                                              const std::string& sopInstanceUid)
+{
+  for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+  {
+    if (it->second->GetPendingSeriesInstanceUid() == seriesInstanceUid)
+    {
+      it->second->ClearPendingSeriesInstanceUid();
+
+      FramesCollectionType type;
+      std::unique_ptr<IFramesCollection> frames(GetResourcesLoader().GetSeriesFrames(type, seriesInstanceUid));
+
+      if (frames.get() != NULL)
+      {
+        it->second->SetFrames(frames.release());
+      }
+    }
   }
 }
 
@@ -4624,15 +4719,23 @@ extern "C"
   {
     try
     {
-      std::unique_ptr<IFramesCollection> frames(GetResourcesLoader().GetSeriesFrames(seriesInstanceUid));
+      FramesCollectionType type;
+      std::unique_ptr<IFramesCollection> frames(GetResourcesLoader().GetSeriesFrames(type, seriesInstanceUid));
 
       if (frames.get() != NULL)
       {
+        GetViewport(canvas)->ClearPendingSeriesInstanceUid();
         GetViewport(canvas)->SetFrames(frames.release());
         return 1;
       }
+      else if (type == FramesCollectionType_DicomSR)
+      {
+        GetViewport(canvas)->SetPendingSeriesInstanceUid(seriesInstanceUid);
+        return 0;
+      }
       else
       {
+        GetViewport(canvas)->ClearPendingSeriesInstanceUid();
         return 0;
       }
     }

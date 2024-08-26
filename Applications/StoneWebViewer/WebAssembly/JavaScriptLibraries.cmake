@@ -36,13 +36,13 @@ DownloadPackage(
   "${CMAKE_CURRENT_BINARY_DIR}/vue-2.6.14")
 
 DownloadPackage(
-  "3e2b4e1522661f7fcf8ad49cb933296c"
-  "${BASE_URL}/dicom-web/axios-0.19.0.tar.gz"
-  "${CMAKE_CURRENT_BINARY_DIR}/axios-0.19.0")
+  "93082a766ebf2748aba038aeb32d8a06"
+  "${BASE_URL}/dicom-web/axios-1.7.5.tar.gz"
+  "${CMAKE_CURRENT_BINARY_DIR}/axios-1.7.5")
 
 DownloadFile(
-  "220afd743d9e9643852e31a135a9f3ae"
-  "${BASE_URL}/jquery-3.4.1.min.js")
+  "2c872dbe60f4ba70fb85356113d8b35e"
+  "${BASE_URL}/jquery-3.7.1.min.js")
 
 if (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/pdfjs)
   DownloadPackage(
@@ -68,10 +68,10 @@ install(
 install(
   FILES
   ${CMAKE_CURRENT_BINARY_DIR}/bootstrap-3.4.1-dist/js/bootstrap.min.js
-  ${CMAKE_SOURCE_DIR}/ThirdPartyDownloads/jquery-3.4.1.min.js
+  ${CMAKE_SOURCE_DIR}/ThirdPartyDownloads/jquery-3.7.1.min.js
   ${CMAKE_CURRENT_BINARY_DIR}/vue-2.6.14/dist/vue.min.js
-  ${CMAKE_CURRENT_BINARY_DIR}/axios-0.19.0/dist/axios.min.js
-  ${CMAKE_CURRENT_BINARY_DIR}/axios-0.19.0/dist/axios.min.map
+  ${CMAKE_CURRENT_BINARY_DIR}/axios-1.7.5/dist/axios.min.js
+  ${CMAKE_CURRENT_BINARY_DIR}/axios-1.7.5/dist/axios.min.js.map
   ${CMAKE_CURRENT_BINARY_DIR}/pdfjs/pdf.js
   ${CMAKE_CURRENT_BINARY_DIR}/pdfjs/pdf.js.map
   ${CMAKE_CURRENT_BINARY_DIR}/pdfjs/pdf.worker.js

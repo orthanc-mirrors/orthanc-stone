@@ -253,7 +253,7 @@ private:
   std::unique_ptr<OrthancStone::SortedFrames>  frames_;
 
 public:
-  SortedFramesCollection(OrthancStone::SortedFrames* frames)
+  explicit SortedFramesCollection(OrthancStone::SortedFrames* frames)
   {
     if (frames == NULL)
     {

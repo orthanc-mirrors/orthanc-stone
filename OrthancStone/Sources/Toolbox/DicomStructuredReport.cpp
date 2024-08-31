@@ -135,7 +135,9 @@ namespace OrthancStone
   DicomStructuredReport::Structure::Structure(const std::string& sopInstanceUid) :
     sopInstanceUid_(sopInstanceUid),
     hasFrameNumber_(false),
-    hasProbabilityOfCancer_(false)
+    frameNumber_(0),         // dummy initialization
+    hasProbabilityOfCancer_(false),
+    probabilityOfCancer_(0)  // dummy initialization
   {
   }
 
@@ -478,7 +480,7 @@ namespace OrthancStone
                       {
                         uint32_t frame;
                         if (!Orthanc::SerializationToolbox::ParseUnsignedInteger32(frame, tokens[m]) ||
-                            frame <= 0)
+                            frame == 0)
                         {
                           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
                         }

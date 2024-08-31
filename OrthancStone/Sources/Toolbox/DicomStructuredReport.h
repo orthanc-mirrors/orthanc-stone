@@ -64,7 +64,7 @@ namespace OrthancStone
       void Copy(const Structure& other);
 
     public:
-      Structure(const std::string& sopInstanceUid);
+      explicit Structure(const std::string& sopInstanceUid);
 
       virtual ~Structure()
       {
@@ -262,9 +262,9 @@ namespace OrthancStone
       }
     };
 
-    DicomStructuredReport(Orthanc::ParsedDicomFile& dicom);
+    explicit DicomStructuredReport(Orthanc::ParsedDicomFile& dicom);
 
-    DicomStructuredReport(const DicomStructuredReport& other);  // Copy constructor
+    explicit DicomStructuredReport(const DicomStructuredReport& other);  // Copy constructor
 
     ~DicomStructuredReport();
 

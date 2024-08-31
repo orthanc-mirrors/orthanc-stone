@@ -15,7 +15,7 @@ identifiers:
     value: 'http://hdl.handle.net/2078.1/277125'
     description: On the Use of WebAssembly for Rendering and Segmenting Medical Images
 repository-code: 'https://orthanc.uclouvain.be/hg/orthanc-stone/'
-url: 'https://www.orthanc-server.com/'
+url: 'https://orthanc.uclouvain.be/'
 license: AGPL-3.0-or-later
-version: 2.5
-date-released: 2022-12-05
+version: 2.6
+date-released: 2024-08-31

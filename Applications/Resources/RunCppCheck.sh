@@ -29,10 +29,12 @@ if [ $# -ge 1 ]; then
 fi
 
 cat <<EOF > /tmp/cppcheck-suppressions.txt
+assertWithSideEffect:../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.cpp:341
+assertWithSideEffect:../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.cpp:342
 constParameter:../../RenderingPlugin/Sources/Plugin.cpp:778
 stlFindInsert:../../Applications/Samples/WebAssembly/SingleFrameViewer/SingleFrameViewerApplication.h
-stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1166
-stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:523
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1245
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:601
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/Internals/CairoFloatTextureRenderer.cpp
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/LookupTableTextureSceneLayer.cpp
 unreadVariable:../../OrthancStone/Sources/Platforms/Sdl/SdlViewport.cpp:159

@@ -18,12 +18,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-set(STONE_WEB_VIEWER_VERSION "mainline")
+set(STONE_WEB_VIEWER_VERSION "2.6")
 
 if (STONE_WEB_VIEWER_VERSION STREQUAL "mainline")
   set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "mainline")
   set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "hg")
 else()
-  set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "1.11.2")
+  set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "1.12.4")
   set(ORTHANC_FRAMEWORK_DEFAULT_SOURCE "web")
 endif()

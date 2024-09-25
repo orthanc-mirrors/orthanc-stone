@@ -25,6 +25,7 @@
 
 #include "../Sources/StoneEnumerations.h"
 #include "../Sources/StoneInitialization.h"
+#include "../Sources/Toolbox/StoneToolbox.h"
 
 #include <Logging.h>
 
@@ -55,6 +56,22 @@ TEST(Enumerations, Basic)
   ASSERT_EQ(SeriesThumbnailType_Unsupported, GetSeriesThumbnailType(SopClassUid_RTDose));
   ASSERT_EQ(SeriesThumbnailType_Unsupported, GetSeriesThumbnailType(SopClassUid_RTStruct));
   ASSERT_EQ(SeriesThumbnailType_Unsupported, GetSeriesThumbnailType(SopClassUid_RTPlan));
+}
+
+
+TEST(StoneToolbox, JoinUrl)
+{
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("", ""));
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("", "/"));
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("", "//"));
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("/", ""));
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("//", ""));
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("////", "/////"));
+  ASSERT_EQ("a/b/d/e/", OrthancStone::StoneToolbox::JoinUrl("a/b", "d/e/"));
+  ASSERT_EQ("a/b/d/e/", OrthancStone::StoneToolbox::JoinUrl("a/b", "/d/e/"));
+  ASSERT_EQ("a/b/d/e/", OrthancStone::StoneToolbox::JoinUrl("a/b/", "d/e/"));
+  ASSERT_EQ("a/b/d/e/", OrthancStone::StoneToolbox::JoinUrl("a/b/", "/d/e/"));
+  ASSERT_EQ("a/b/d/e/", OrthancStone::StoneToolbox::JoinUrl("a/b///", "///d/e/"));
 }
 
 

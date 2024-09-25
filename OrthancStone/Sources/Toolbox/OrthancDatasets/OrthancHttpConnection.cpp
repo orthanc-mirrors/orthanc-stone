@@ -23,6 +23,8 @@
 
 #include "OrthancHttpConnection.h"
 
+#include "../StoneToolbox.h"
+
 namespace OrthancStone
 {
   void OrthancHttpConnection::Setup()
@@ -54,7 +56,7 @@ namespace OrthancStone
     boost::mutex::scoped_lock lock(mutex_);
 
     client_.SetMethod(Orthanc::HttpMethod_Get);
-    client_.SetUrl(url_ + uri);
+    client_.SetUrl(StoneToolbox::JoinUrl(url_, uri));
     client_.ApplyAndThrowException(result);
   }
 
@@ -66,7 +68,7 @@ namespace OrthancStone
     boost::mutex::scoped_lock lock(mutex_);
 
     client_.SetMethod(Orthanc::HttpMethod_Post);
-    client_.SetUrl(url_ + uri);
+    client_.SetUrl(StoneToolbox::JoinUrl(url_, uri));
 
 #if defined(ORTHANC_FRAMEWORK_VERSION_IS_ABOVE) && ORTHANC_FRAMEWORK_VERSION_IS_ABOVE(1, 9, 3)
     client_.SetExternalBody(body);
@@ -86,7 +88,7 @@ namespace OrthancStone
     boost::mutex::scoped_lock lock(mutex_);
 
     client_.SetMethod(Orthanc::HttpMethod_Put);
-    client_.SetUrl(url_ + uri);
+    client_.SetUrl(StoneToolbox::JoinUrl(url_, uri));
 
 #if defined(ORTHANC_FRAMEWORK_VERSION_IS_ABOVE) && ORTHANC_FRAMEWORK_VERSION_IS_ABOVE(1, 9, 3)
     client_.SetExternalBody(body);
@@ -106,7 +108,7 @@ namespace OrthancStone
     std::string result;
 
     client_.SetMethod(Orthanc::HttpMethod_Delete);
-    client_.SetUrl(url_ + uri);
+    client_.SetUrl(StoneToolbox::JoinUrl(url_, uri));
     client_.ApplyAndThrowException(result);
   }
 }

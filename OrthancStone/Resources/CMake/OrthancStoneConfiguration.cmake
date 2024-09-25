@@ -439,6 +439,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/SlicesSorter.h
   ${ORTHANC_STONE_ROOT}/Toolbox/SortedFrames.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/SortedFrames.h
+  ${ORTHANC_STONE_ROOT}/Toolbox/StoneToolbox.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/StoneToolbox.h
   ${ORTHANC_STONE_ROOT}/Toolbox/SubpixelReader.h
   ${ORTHANC_STONE_ROOT}/Toolbox/SubvoxelReader.h
   ${ORTHANC_STONE_ROOT}/Toolbox/TextRenderer.cpp

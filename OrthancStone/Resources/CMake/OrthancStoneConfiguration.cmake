@@ -404,6 +404,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/BucketAccumulator2D.h
   ${ORTHANC_STONE_ROOT}/Toolbox/CoordinateSystem3D.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/CoordinateSystem3D.h
+  ${ORTHANC_STONE_ROOT}/Toolbox/DebugDrawing2D.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/DebugDrawing2D.h
   ${ORTHANC_STONE_ROOT}/Toolbox/DicomInstanceParameters.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/DicomInstanceParameters.h
   ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructureSet.cpp

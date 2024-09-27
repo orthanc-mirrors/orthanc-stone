@@ -117,6 +117,28 @@ namespace OrthancStone
     bool ComputeNormal(Vector& normal,
                        const Orthanc::DicomMap& dicom);
 
+    bool IntersectTwoLines(double& x,
+                           double& y,
+                           double ax1,
+                           double ay1,
+                           double ax2,
+                           double ay2,
+                           double bx1,
+                           double by1,
+                           double bx2,
+                           double by2);
+
+    bool IntersectLineAndSegment(double& x,
+                                 double& y,
+                                 double lineX1,
+                                 double lineY1,
+                                 double lineX2,
+                                 double lineY2,
+                                 double segmentX1,
+                                 double segmentY1,
+                                 double segmentX2,
+                                 double segmentY2);
+
     inline float ComputeBilinearInterpolationUnitSquare(float x,
                                                         float y,
                                                         float f00,    // source(0, 0)

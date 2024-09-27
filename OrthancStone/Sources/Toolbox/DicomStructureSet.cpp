@@ -283,82 +283,151 @@ namespace OrthancStone
   }
 
 
-  static void AddSegmentIfIntersection(Extent2D& extent,
-                                       const CoordinateSystem3D& cuttingPlane,
-                                       const Vector& p1,
-                                       const Vector& p2,
-                                       double originDistance)
-  {
-    // Does this segment intersects the cutting plane?
-    double d1 = cuttingPlane.ProjectAlongNormal(p1);
-    double d2 = cuttingPlane.ProjectAlongNormal(p2);
-      
-    if ((d1 < originDistance && d2 > originDistance) ||
-        (d1 > originDistance && d2 < originDistance))
-    {
-      // This is an intersection: Add the segment
-      double x, y;
-      cuttingPlane.ProjectPoint2(x, y, p1);
-      extent.AddPoint(x, y);
-      cuttingPlane.ProjectPoint2(x, y, p2);
-      extent.AddPoint(x, y);
-    }
-  }
-  
-  bool DicomStructureSet::Polygon::Project(double& x1,
-                                           double& y1,
-                                           double& x2,
-                                           double& y2,
+  void DicomStructureSet::Polygon::Project(std::list<Extent2D>& target,
                                            const CoordinateSystem3D& cuttingPlane,
                                            const Vector& estimatedNormal,
                                            double estimatedSliceThickness) const
   {
-    if (points_.size() <= 1)
-    {
-      return false;
-    }
-
-    Vector normal = estimatedNormal;
+    CoordinateSystem3D geometry;
     double thickness = estimatedSliceThickness;
+
+    /**
+     * 1. Estimate the 3D plane associated with this polygon.
+     **/
+
     if (hasSlice_)
     {
-      normal = geometry_.GetNormal();
+      // The exact geometry is known for this slice
+      geometry = geometry_;
       thickness = sliceThickness_;
     }
-
-    bool isOpposite;
-    if (!GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, cuttingPlane.GetAxisX()) &&
-        !GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, cuttingPlane.GetAxisY()))
+    else if (points_.size() < 2)
     {
-      return false;
-    }
-
-    const double d = cuttingPlane.ProjectAlongNormal(cuttingPlane.GetOrigin());
-    
-    Extent2D extent;
-    AddSegmentIfIntersection(extent, cuttingPlane, points_[points_.size() - 1], points_[0], d);
-    for (size_t i = 1; i < points_.size(); i++)
-    {
-      AddSegmentIfIntersection(extent, cuttingPlane, points_[i - 1], points_[i], d);
-    }
-
-    if (extent.GetWidth() > 0 ||
-        extent.GetHeight() > 0)
-    {
-      // Let's convert them to 3D world geometry to add the slice thickness
-      Vector p1 = (cuttingPlane.MapSliceToWorldCoordinates(extent.GetX1(), extent.GetY1()) +
-                   thickness / 2.0 * normal);
-      Vector p2 = (cuttingPlane.MapSliceToWorldCoordinates(extent.GetX2(), extent.GetY2()) -
-                   thickness / 2.0 * normal);
-
-      // Then back to the cutting plane geometry
-      cuttingPlane.ProjectPoint2(x1, y1, p1);
-      cuttingPlane.ProjectPoint2(x2, y2, p2);
-      return true;
+      return;
     }
     else
     {
-      return false;
+      // Estimate the geometry
+      Vector origin = points_[0];
+
+      Vector axisX;
+      bool found = false;
+      for (size_t i = 1; i < points_.size(); i++)
+      {
+        axisX = points_[1] - origin;
+        if (boost::numeric::ublas::norm_2(axisX) > 10.0 * std::numeric_limits<double>::epsilon())
+        {
+          found = true;
+          break;
+        }
+      }
+
+      if (!found)
+      {
+        return;  // The polygon is too small to extract a reliable geometry out of it
+      }
+
+      LinearAlgebra::NormalizeVector(axisX);
+
+      Vector axisY;
+      LinearAlgebra::CrossProduct(axisY, axisX, estimatedNormal);
+      geometry = CoordinateSystem3D(origin, axisX, axisY);
+    }
+
+    
+    /**
+     * 2. Project the 3D cutting plane as a 2D line onto the polygon plane.
+     **/
+
+    double cuttingX1, cuttingY1, cuttingX2, cuttingY2;
+    geometry.ProjectPoint(cuttingX1, cuttingY1, cuttingPlane.GetOrigin());
+
+    bool isOpposite;
+    if (GeometryToolbox::IsParallelOrOpposite(isOpposite, geometry.GetNormal(), cuttingPlane.GetAxisX()))
+    {
+      geometry.ProjectPoint(cuttingX2, cuttingY2, cuttingPlane.GetOrigin() + cuttingPlane.GetAxisY());
+    }
+    else if (GeometryToolbox::IsParallelOrOpposite(isOpposite, geometry.GetNormal(), cuttingPlane.GetAxisY()))
+    {
+      geometry.ProjectPoint(cuttingX2, cuttingY2, cuttingPlane.GetOrigin() + cuttingPlane.GetAxisX());
+    }
+    else
+    {
+      return;
+    }
+
+
+    /**
+     * 3. Compute the intersection of the 2D cutting line with the polygon.
+     **/
+
+    // Initialize the projection of a point onto a line:
+    // https://stackoverflow.com/a/64330724
+    const double abx = cuttingX2 - cuttingX1;
+    const double aby = cuttingY2 - cuttingY1;
+    const double denominator = abx * abx + aby * aby;
+    if (LinearAlgebra::IsCloseToZero(denominator))
+    {
+      return;  // Should never happen
+    }
+
+    std::vector<double> intersections;
+    intersections.reserve(points_.size());
+
+    for (size_t i = 0; i < points_.size(); i++)
+    {
+      double segmentX1, segmentY1, segmentX2, segmentY2;
+      geometry.ProjectPoint(segmentX1, segmentY1, points_[i]);
+      geometry.ProjectPoint(segmentX2, segmentY2, points_[(i + 1) % points_.size()]);
+
+      double x, y;
+      if (GeometryToolbox::IntersectLineAndSegment(x, y, cuttingX1, cuttingY1, cuttingX2, cuttingY2,
+                                                   segmentX1, segmentY1, segmentX2, segmentY2))
+      {
+        // For each polygon segment that intersect the cutting line,
+        // register its offset over the cutting line
+        const double acx = x - cuttingX1;
+        const double acy = y - cuttingY1;
+        intersections.push_back((abx * acx + aby * acy) / denominator);
+      }
+    }
+
+
+    /**
+     * 4. Sort the intersection offsets, then generates one 2D rectangle on the
+     * cutting plane from each pair of successive intersections.
+     **/
+
+    std::sort(intersections.begin(), intersections.end());
+
+    if (intersections.size() % 2 == 1)
+    {
+      return;  // Should never happen
+    }
+
+    for (size_t i = 0; i < intersections.size(); i += 2)
+    {
+      Vector p1, p2;
+
+      {
+        // Let's convert them to 3D world geometry to add the slice thickness
+        const double x1 = cuttingX1 + intersections[i] * abx;
+        const double y1 = cuttingY1 + intersections[i] * aby;
+        const double x2 = cuttingX1 + intersections[i + 1] * abx;
+        const double y2 = cuttingY1 + intersections[i + 1] * aby;
+
+        p1 = (geometry.MapSliceToWorldCoordinates(x1, y1) + thickness / 2.0 * geometry.GetNormal());
+        p2 = (geometry.MapSliceToWorldCoordinates(x2, y2) - thickness / 2.0 * geometry.GetNormal());
+      }
+
+      {
+        // Then back to the cutting plane geometry
+        double x1, y1, x2, y2;
+        cuttingPlane.ProjectPoint2(x1, y1, p1);
+        cuttingPlane.ProjectPoint2(x2, y2, p2);
+
+        target.push_back(Extent2D(x1, y1, x2, y2));
+      }
     }
   }
 
@@ -890,11 +959,12 @@ namespace OrthancStone
       for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
-        double x1, y1, x2, y2;
+        std::list<Extent2D> rectangles;
+        polygon->Project(rectangles, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness());
 
-        if (polygon->Project(x1, y1, x2, y2, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness()))
+        for (std::list<Extent2D>::const_iterator it = rectangles.begin(); it != rectangles.end(); ++it)
         {
-          projected.push_back(CreateRectangle(x1, y1, x2, y2));
+          projected.push_back(CreateRectangle(it->GetX1(), it->GetY1(), it->GetX2(), it->GetY2()));
         }
       }
 
@@ -920,12 +990,7 @@ namespace OrthancStone
       for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
-        double x1, y1, x2, y2;
-
-        if (polygon->Project(x1, y1, x2, y2, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness()))
-        {
-          rectangles.push_back(Extent2D(x1, y1, x2, y2));
-        }
+        polygon->Project(rectangles, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness());
       }
 
       typedef std::list< std::vector<ScenePoint2D> >  Contours;

@@ -121,15 +121,17 @@ static BoostPolygon CreateRectangle(float x1, float y1,
 
 namespace OrthancStone
 {
+  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_DATA(0x3006, 0x0050);
   static const Orthanc::DicomTag DICOM_TAG_CONTOUR_GEOMETRIC_TYPE(0x3006, 0x0042);
   static const Orthanc::DicomTag DICOM_TAG_CONTOUR_IMAGE_SEQUENCE(0x3006, 0x0016);
   static const Orthanc::DicomTag DICOM_TAG_CONTOUR_SEQUENCE(0x3006, 0x0040);
-  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_DATA(0x3006, 0x0050);
   static const Orthanc::DicomTag DICOM_TAG_NUMBER_OF_CONTOUR_POINTS(0x3006, 0x0046);
+  static const Orthanc::DicomTag DICOM_TAG_REFERENCED_ROI_NUMBER(0x3006, 0x0084);
   static const Orthanc::DicomTag DICOM_TAG_REFERENCED_SOP_INSTANCE_UID(0x0008, 0x1155);
   static const Orthanc::DicomTag DICOM_TAG_ROI_CONTOUR_SEQUENCE(0x3006, 0x0039);
   static const Orthanc::DicomTag DICOM_TAG_ROI_DISPLAY_COLOR(0x3006, 0x002a);
   static const Orthanc::DicomTag DICOM_TAG_ROI_NAME(0x3006, 0x0026);
+  static const Orthanc::DicomTag DICOM_TAG_ROI_NUMBER(0x3006, 0x0022);
   static const Orthanc::DicomTag DICOM_TAG_RT_ROI_INTERPRETED_TYPE(0x3006, 0x00a4);
   static const Orthanc::DicomTag DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE(0x3006, 0x0080);
   static const Orthanc::DicomTag DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE(0x3006, 0x0020);
@@ -388,162 +390,246 @@ namespace OrthancStone
     boost::posix_time::ptime timerStart = boost::posix_time::microsec_clock::universal_time();
 #endif
 
+    std::map<int, size_t> roiNumbersIndex;
+
     DicomDatasetReader reader(tags);
-    
-    size_t count, tmp;
-    if (!tags.GetSequenceSize(count, Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE)) ||
-        !tags.GetSequenceSize(tmp, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE)) ||
-        tmp != count ||
-        !tags.GetSequenceSize(tmp, Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE)) ||
-        tmp != count)
+
+
+    /**
+     * 1. Read all the available ROIs.
+     **/
+
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-    }
-
-    structures_.resize(count);
-    structureNamesIndex_.clear();
-    
-    for (size_t i = 0; i < count; i++)
-    {
-      structures_[i].interpretation_ = reader.GetStringValue
-        (Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
-                            DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
-         "No interpretation");
-
-      structures_[i].name_ = reader.GetStringValue
-        (Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
-                            DICOM_TAG_ROI_NAME),
-         "No name");
-
-      if (structureNamesIndex_.find(structures_[i].name_) == structureNamesIndex_.end())
+      size_t count;
+      if (!tags.GetSequenceSize(count, Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE)))
       {
-        structureNamesIndex_[structures_[i].name_] = i;
-      }
-      else
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
-                                        "RT-STRUCT with twice the same name for a structure: " + structures_[i].name_);
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
       }
 
-      Vector color;
-      if (FastParseVector(color, tags, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                          DICOM_TAG_ROI_DISPLAY_COLOR)) &&
-          color.size() == 3)
+      structures_.resize(count);
+      structureNamesIndex_.clear();
+
+      for (size_t i = 0; i < count; i++)
       {
-        structures_[i].red_ = ConvertColor(color[0]);
-        structures_[i].green_ = ConvertColor(color[1]);
-        structures_[i].blue_ = ConvertColor(color[2]);
-      }
-      else
-      {
-        structures_[i].red_ = 255;
-        structures_[i].green_ = 0;
-        structures_[i].blue_ = 0;
-      }
-
-      size_t countSlices;
-      if (!tags.GetSequenceSize(countSlices, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                                DICOM_TAG_CONTOUR_SEQUENCE)))
-      {
-        countSlices = 0;
-      }
-
-      LOG(INFO) << "New RT structure: \"" << structures_[i].name_ 
-                << "\" with interpretation \"" << structures_[i].interpretation_
-                << "\" containing " << countSlices << " slices (color: " 
-                << static_cast<int>(structures_[i].red_) << "," 
-                << static_cast<int>(structures_[i].green_) << ","
-                << static_cast<int>(structures_[i].blue_) << ")";
-
-      /**
-       * These temporary variables avoid allocating many vectors in
-       * the loop below (indeed, "Orthanc::DicomPath" handles a
-       * "std::vector<PrefixItem>")
-       **/
-      Orthanc::DicomPath countPointsPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                         DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                         DICOM_TAG_NUMBER_OF_CONTOUR_POINTS);
-
-      Orthanc::DicomPath geometricTypePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                           DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                           DICOM_TAG_CONTOUR_GEOMETRIC_TYPE);
-      
-      Orthanc::DicomPath imageSequencePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                           DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                           DICOM_TAG_CONTOUR_IMAGE_SEQUENCE);
-
-      // (3006,0039)[i] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)
-      Orthanc::DicomPath referencedInstancePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                                DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
-                                                DICOM_TAG_REFERENCED_SOP_INSTANCE_UID);
-
-      Orthanc::DicomPath contourDataPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                         DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                         DICOM_TAG_CONTOUR_DATA);
-
-      for (size_t j = 0; j < countSlices; j++)
-      {
-        unsigned int countPoints;
-
-        countPointsPath.SetPrefixIndex(1, j);
-        if (!reader.GetUnsignedIntegerValue(countPoints, countPointsPath))
+        int roiNumber;
+        if (!reader.GetIntegerValue
+            (roiNumber, Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i, DICOM_TAG_ROI_NUMBER)))
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
-            
-        //LOG(INFO) << "Parsing slice containing " << countPoints << " vertices";
 
-        geometricTypePath.SetPrefixIndex(1, j);
-        std::string type = reader.GetMandatoryStringValue(geometricTypePath);
-        if (type != "CLOSED_PLANAR")
+        if (roiNumbersIndex.find(roiNumber) != roiNumbersIndex.end())
         {
-          LOG(WARNING) << "Ignoring contour with geometry type: " << type;
-          continue;
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                          "Twice the same ROI number: " + boost::lexical_cast<std::string>(roiNumber));
         }
 
-        size_t size;
+        roiNumbersIndex[roiNumber] = i;
 
-        imageSequencePath.SetPrefixIndex(1, j);
-        if (!tags.GetSequenceSize(size, imageSequencePath) || size != 1)
+        structures_[i].name_ = reader.GetStringValue
+          (Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i, DICOM_TAG_ROI_NAME), "No name");
+        structures_[i].interpretation_ = "No interpretation";
+
+        if (structureNamesIndex_.find(structures_[i].name_) == structureNamesIndex_.end())
         {
-          LOG(ERROR) << "The ContourImageSequence sequence (tag 3006,0016) must be present and contain one entry.";
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
+          structureNamesIndex_[structures_[i].name_] = i;
+        }
+        else
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                          "RT-STRUCT with twice the same name for a structure: " + structures_[i].name_);
+        }
+      }
+    }
+
+
+    /**
+     * 2. Read the interpretation of the ROIs (if available).
+     **/
+
+    {
+      size_t count;
+      if (!tags.GetSequenceSize(count, Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE)))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+
+      for (size_t i = 0; i < count; i++)
+      {
+        std::string interpretation;
+        if (reader.GetDataset().GetStringValue(interpretation,
+                                               Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
+                                                                  DICOM_TAG_RT_ROI_INTERPRETED_TYPE)))
+        {
+          int roiNumber;
+          if (!reader.GetIntegerValue(roiNumber,
+                                      Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
+                                                         DICOM_TAG_REFERENCED_ROI_NUMBER)))
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+          }
+
+          std::map<int, size_t>::const_iterator found = roiNumbersIndex.find(roiNumber);
+          if (found == roiNumbersIndex.end())
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+          }
+
+          structures_[found->second].interpretation_ = interpretation;
+        }
+      }
+    }
+
+
+    /**
+     * 3. Read the contours.
+     **/
+
+    {
+      size_t count;
+      if (!tags.GetSequenceSize(count, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE)))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+
+      for (size_t i = 0; i < count; i++)
+      {
+        int roiNumber;
+        if (!reader.GetIntegerValue(roiNumber,
+                                    Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                       DICOM_TAG_REFERENCED_ROI_NUMBER)))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
 
-        referencedInstancePath.SetPrefixIndex(1, j);
-        std::string sopInstanceUid = reader.GetMandatoryStringValue(referencedInstancePath);
-
-        contourDataPath.SetPrefixIndex(1, j);        
-        std::string slicesData = reader.GetMandatoryStringValue(contourDataPath);
-
-        Vector points;
-
-        if (!GenericToolbox::FastParseVector(points, slicesData) ||
-            points.size() != 3 * countPoints)
+        std::map<int, size_t>::const_iterator found = roiNumbersIndex.find(roiNumber);
+        if (found == roiNumbersIndex.end())
         {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
 
-        // seen in real world
-        if(Orthanc::Toolbox::StripSpaces(sopInstanceUid) == "") 
+        Structure& target = structures_[found->second];
+
+        Vector color;
+        if (FastParseVector(color, tags, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                            DICOM_TAG_ROI_DISPLAY_COLOR)) &&
+            color.size() == 3)
         {
-          LOG(ERROR) << "WARNING. The following Dicom tag (Referenced SOP Instance UID) contains an empty value : // (3006,0039)[" << i << "] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)";
+          target.red_ = ConvertColor(color[0]);
+          target.green_ = ConvertColor(color[1]);
+          target.blue_ = ConvertColor(color[2]);
+        }
+        else
+        {
+          target.red_ = 255;
+          target.green_ = 0;
+          target.blue_ = 0;
         }
 
-        Polygon polygon(sopInstanceUid);
-        polygon.Reserve(countPoints);
-
-        for (size_t k = 0; k < countPoints; k++)
+        size_t countSlices;
+        if (!tags.GetSequenceSize(countSlices, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                                  DICOM_TAG_CONTOUR_SEQUENCE)))
         {
-          Vector v(3);
-          v[0] = points[3 * k];
-          v[1] = points[3 * k + 1];
-          v[2] = points[3 * k + 2];
-          polygon.AddPoint(v);
+          countSlices = 0;
         }
 
-        structures_[i].polygons_.push_back(polygon);
+        LOG(INFO) << "New RT structure: \"" << target.name_
+                  << "\" with interpretation \"" << target.interpretation_
+                  << "\" containing " << countSlices << " slices (color: " 
+                  << static_cast<int>(target.red_) << ","
+                  << static_cast<int>(target.green_) << ","
+                  << static_cast<int>(target.blue_) << ")";
+
+        /**
+         * These temporary variables avoid allocating many vectors in
+         * the loop below (indeed, "Orthanc::DicomPath" handles a
+         * "std::vector<PrefixItem>")
+         **/
+        Orthanc::DicomPath countPointsPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                           DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                           DICOM_TAG_NUMBER_OF_CONTOUR_POINTS);
+
+        Orthanc::DicomPath geometricTypePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                             DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                             DICOM_TAG_CONTOUR_GEOMETRIC_TYPE);
+
+        Orthanc::DicomPath imageSequencePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                             DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                             DICOM_TAG_CONTOUR_IMAGE_SEQUENCE);
+
+        // (3006,0039)[i] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)
+        Orthanc::DicomPath referencedInstancePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                  DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                  DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
+                                                  DICOM_TAG_REFERENCED_SOP_INSTANCE_UID);
+
+        Orthanc::DicomPath contourDataPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                           DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                           DICOM_TAG_CONTOUR_DATA);
+
+        for (size_t j = 0; j < countSlices; j++)
+        {
+          unsigned int countPoints;
+
+          countPointsPath.SetPrefixIndex(1, j);
+          if (!reader.GetUnsignedIntegerValue(countPoints, countPointsPath))
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+          }
+
+          //LOG(INFO) << "Parsing slice containing " << countPoints << " vertices";
+
+          geometricTypePath.SetPrefixIndex(1, j);
+          std::string type = reader.GetMandatoryStringValue(geometricTypePath);
+          if (type != "CLOSED_PLANAR")
+          {
+            LOG(WARNING) << "Ignoring contour with geometry type: " << type;
+            continue;
+          }
+
+          size_t size;
+
+          imageSequencePath.SetPrefixIndex(1, j);
+          if (!tags.GetSequenceSize(size, imageSequencePath) || size != 1)
+          {
+            LOG(ERROR) << "The ContourImageSequence sequence (tag 3006,0016) must be present and contain one entry.";
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+          }
+
+          referencedInstancePath.SetPrefixIndex(1, j);
+          std::string sopInstanceUid = reader.GetMandatoryStringValue(referencedInstancePath);
+
+          contourDataPath.SetPrefixIndex(1, j);
+          std::string slicesData = reader.GetMandatoryStringValue(contourDataPath);
+
+          Vector points;
+
+          if (!GenericToolbox::FastParseVector(points, slicesData) ||
+              points.size() != 3 * countPoints)
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+          }
+
+          // seen in real world
+          if(Orthanc::Toolbox::StripSpaces(sopInstanceUid) == "")
+          {
+            LOG(ERROR) << "WARNING. The following Dicom tag (Referenced SOP Instance UID) contains an empty value : // (3006,0039)[" << i << "] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)";
+          }
+
+          Polygon polygon(sopInstanceUid);
+          polygon.Reserve(countPoints);
+
+          for (size_t k = 0; k < countPoints; k++)
+          {
+            Vector v(3);
+            v[0] = points[3 * k];
+            v[1] = points[3 * k + 1];
+            v[2] = points[3 * k + 2];
+            polygon.AddPoint(v);
+          }
+
+          target.polygons_.push_back(polygon);
+        }
       }
     }
 

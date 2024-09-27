@@ -4342,7 +4342,7 @@ TEST(GenericToolbox, FastParseTest_StringToDoubleEx02)
   const char* s = "  \t   0.0/.123/3  \t/12.5e-3//-43.1   \t     ";
 
   int32_t size;
-  double r;
+  double r = -1.0;
   const char* p = s;
 
   while (*p == ' ' || *p == '\t')
@@ -4390,7 +4390,7 @@ TEST(GenericToolbox, FastParseTest_StringToDoubleEx03)
   const char* s = "  \t   0.0/.123/3/12.5e-3//-43.1e-2   \t     ";
 
   int32_t size;
-  double r;
+  double r = -1.0;
   const char* p = s;
 
   while (*p == ' ' || *p == '\t')

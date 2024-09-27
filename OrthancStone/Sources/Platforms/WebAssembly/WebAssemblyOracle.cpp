@@ -29,6 +29,8 @@
 #  include <Oracle/WebAssemblyOracle_Includes.h>
 #endif
 
+#include "../../Toolbox/StoneToolbox.h"
+
 #include <OrthancException.h>
 #include <Toolbox.h>
 
@@ -542,11 +544,11 @@ namespace OrthancStone
   {
     if (isLocalOrthanc_)
     {
-      command.SetUrl(localOrthancRoot_ + uri);
+      command.SetUrl(StoneToolbox::JoinUrl(localOrthancRoot_, uri));
     }
     else
     {
-      command.SetUrl(remoteOrthanc_.GetUrl() + uri);
+      command.SetUrl(StoneToolbox::JoinUrl(remoteOrthanc_.GetUrl(), uri));
       command.AddHttpHeaders(remoteOrthanc_.GetHttpHeaders());
       
       if (!remoteOrthanc_.GetUsername().empty())

@@ -1174,3 +1174,15 @@ TEST(GeometryToolbox, OrientationMarkers)
     ASSERT_EQ("LHP", right);
   }
 }
+
+
+TEST(GeometryToolbox, IntersectTwoLines)
+{
+  double x, y;
+  ASSERT_TRUE(OrthancStone::GeometryToolbox::IntersectTwoLines(x, y, 1, 1, 3, 2, 1, 4, 2, -1));
+  ASSERT_DOUBLE_EQ(x, 17.0 / 11.0);
+  ASSERT_DOUBLE_EQ(y, 14.0 / 11.0);
+  ASSERT_TRUE(OrthancStone::GeometryToolbox::IntersectLineAndSegment(x, y, 1, 1, 3, 2, 1, 4, 2, -1));
+  ASSERT_DOUBLE_EQ(x, 17.0 / 11.0);
+  ASSERT_DOUBLE_EQ(y, 14.0 / 11.0);
+}

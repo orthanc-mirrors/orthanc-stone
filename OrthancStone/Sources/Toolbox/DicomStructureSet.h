@@ -127,10 +127,7 @@ namespace OrthancStone
         return sliceThickness_;
       }
 
-      bool Project(double& x1,
-                   double& y1,
-                   double& x2,
-                   double& y2,
+      void Project(std::list<Extent2D>& target,
                    const CoordinateSystem3D& cuttingPlane,
                    const Vector& estimatedNormal,
                    double estimatedSliceThickness) const;

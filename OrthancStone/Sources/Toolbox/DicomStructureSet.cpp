@@ -121,15 +121,17 @@ static BoostPolygon CreateRectangle(float x1, float y1,
 
 namespace OrthancStone
 {
+  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_DATA(0x3006, 0x0050);
   static const Orthanc::DicomTag DICOM_TAG_CONTOUR_GEOMETRIC_TYPE(0x3006, 0x0042);
   static const Orthanc::DicomTag DICOM_TAG_CONTOUR_IMAGE_SEQUENCE(0x3006, 0x0016);
   static const Orthanc::DicomTag DICOM_TAG_CONTOUR_SEQUENCE(0x3006, 0x0040);
-  static const Orthanc::DicomTag DICOM_TAG_CONTOUR_DATA(0x3006, 0x0050);
   static const Orthanc::DicomTag DICOM_TAG_NUMBER_OF_CONTOUR_POINTS(0x3006, 0x0046);
+  static const Orthanc::DicomTag DICOM_TAG_REFERENCED_ROI_NUMBER(0x3006, 0x0084);
   static const Orthanc::DicomTag DICOM_TAG_REFERENCED_SOP_INSTANCE_UID(0x0008, 0x1155);
   static const Orthanc::DicomTag DICOM_TAG_ROI_CONTOUR_SEQUENCE(0x3006, 0x0039);
   static const Orthanc::DicomTag DICOM_TAG_ROI_DISPLAY_COLOR(0x3006, 0x002a);
   static const Orthanc::DicomTag DICOM_TAG_ROI_NAME(0x3006, 0x0026);
+  static const Orthanc::DicomTag DICOM_TAG_ROI_NUMBER(0x3006, 0x0022);
   static const Orthanc::DicomTag DICOM_TAG_RT_ROI_INTERPRETED_TYPE(0x3006, 0x00a4);
   static const Orthanc::DicomTag DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE(0x3006, 0x0080);
   static const Orthanc::DicomTag DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE(0x3006, 0x0020);
@@ -281,82 +283,151 @@ namespace OrthancStone
   }
 
 
-  static void AddSegmentIfIntersection(Extent2D& extent,
-                                       const CoordinateSystem3D& cuttingPlane,
-                                       const Vector& p1,
-                                       const Vector& p2,
-                                       double originDistance)
-  {
-    // Does this segment intersects the cutting plane?
-    double d1 = cuttingPlane.ProjectAlongNormal(p1);
-    double d2 = cuttingPlane.ProjectAlongNormal(p2);
-      
-    if ((d1 < originDistance && d2 > originDistance) ||
-        (d1 > originDistance && d2 < originDistance))
-    {
-      // This is an intersection: Add the segment
-      double x, y;
-      cuttingPlane.ProjectPoint2(x, y, p1);
-      extent.AddPoint(x, y);
-      cuttingPlane.ProjectPoint2(x, y, p2);
-      extent.AddPoint(x, y);
-    }
-  }
-  
-  bool DicomStructureSet::Polygon::Project(double& x1,
-                                           double& y1,
-                                           double& x2,
-                                           double& y2,
+  void DicomStructureSet::Polygon::Project(std::list<Extent2D>& target,
                                            const CoordinateSystem3D& cuttingPlane,
                                            const Vector& estimatedNormal,
                                            double estimatedSliceThickness) const
   {
-    if (points_.size() <= 1)
-    {
-      return false;
-    }
-
-    Vector normal = estimatedNormal;
+    CoordinateSystem3D geometry;
     double thickness = estimatedSliceThickness;
+
+    /**
+     * 1. Estimate the 3D plane associated with this polygon.
+     **/
+
     if (hasSlice_)
     {
-      normal = geometry_.GetNormal();
+      // The exact geometry is known for this slice
+      geometry = geometry_;
       thickness = sliceThickness_;
     }
-
-    bool isOpposite;
-    if (!GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, cuttingPlane.GetAxisX()) &&
-        !GeometryToolbox::IsParallelOrOpposite(isOpposite, normal, cuttingPlane.GetAxisY()))
+    else if (points_.size() < 2)
     {
-      return false;
-    }
-
-    const double d = cuttingPlane.ProjectAlongNormal(cuttingPlane.GetOrigin());
-    
-    Extent2D extent;
-    AddSegmentIfIntersection(extent, cuttingPlane, points_[points_.size() - 1], points_[0], d);
-    for (size_t i = 1; i < points_.size(); i++)
-    {
-      AddSegmentIfIntersection(extent, cuttingPlane, points_[i - 1], points_[i], d);
-    }
-
-    if (extent.GetWidth() > 0 ||
-        extent.GetHeight() > 0)
-    {
-      // Let's convert them to 3D world geometry to add the slice thickness
-      Vector p1 = (cuttingPlane.MapSliceToWorldCoordinates(extent.GetX1(), extent.GetY1()) +
-                   thickness / 2.0 * normal);
-      Vector p2 = (cuttingPlane.MapSliceToWorldCoordinates(extent.GetX2(), extent.GetY2()) -
-                   thickness / 2.0 * normal);
-
-      // Then back to the cutting plane geometry
-      cuttingPlane.ProjectPoint2(x1, y1, p1);
-      cuttingPlane.ProjectPoint2(x2, y2, p2);
-      return true;
+      return;
     }
     else
     {
-      return false;
+      // Estimate the geometry
+      Vector origin = points_[0];
+
+      Vector axisX;
+      bool found = false;
+      for (size_t i = 1; i < points_.size(); i++)
+      {
+        axisX = points_[1] - origin;
+        if (boost::numeric::ublas::norm_2(axisX) > 10.0 * std::numeric_limits<double>::epsilon())
+        {
+          found = true;
+          break;
+        }
+      }
+
+      if (!found)
+      {
+        return;  // The polygon is too small to extract a reliable geometry out of it
+      }
+
+      LinearAlgebra::NormalizeVector(axisX);
+
+      Vector axisY;
+      LinearAlgebra::CrossProduct(axisY, axisX, estimatedNormal);
+      geometry = CoordinateSystem3D(origin, axisX, axisY);
+    }
+
+    
+    /**
+     * 2. Project the 3D cutting plane as a 2D line onto the polygon plane.
+     **/
+
+    double cuttingX1, cuttingY1, cuttingX2, cuttingY2;
+    geometry.ProjectPoint(cuttingX1, cuttingY1, cuttingPlane.GetOrigin());
+
+    bool isOpposite;
+    if (GeometryToolbox::IsParallelOrOpposite(isOpposite, geometry.GetNormal(), cuttingPlane.GetAxisX()))
+    {
+      geometry.ProjectPoint(cuttingX2, cuttingY2, cuttingPlane.GetOrigin() + cuttingPlane.GetAxisY());
+    }
+    else if (GeometryToolbox::IsParallelOrOpposite(isOpposite, geometry.GetNormal(), cuttingPlane.GetAxisY()))
+    {
+      geometry.ProjectPoint(cuttingX2, cuttingY2, cuttingPlane.GetOrigin() + cuttingPlane.GetAxisX());
+    }
+    else
+    {
+      return;
+    }
+
+
+    /**
+     * 3. Compute the intersection of the 2D cutting line with the polygon.
+     **/
+
+    // Initialize the projection of a point onto a line:
+    // https://stackoverflow.com/a/64330724
+    const double abx = cuttingX2 - cuttingX1;
+    const double aby = cuttingY2 - cuttingY1;
+    const double denominator = abx * abx + aby * aby;
+    if (LinearAlgebra::IsCloseToZero(denominator))
+    {
+      return;  // Should never happen
+    }
+
+    std::vector<double> intersections;
+    intersections.reserve(points_.size());
+
+    for (size_t i = 0; i < points_.size(); i++)
+    {
+      double segmentX1, segmentY1, segmentX2, segmentY2;
+      geometry.ProjectPoint(segmentX1, segmentY1, points_[i]);
+      geometry.ProjectPoint(segmentX2, segmentY2, points_[(i + 1) % points_.size()]);
+
+      double x, y;
+      if (GeometryToolbox::IntersectLineAndSegment(x, y, cuttingX1, cuttingY1, cuttingX2, cuttingY2,
+                                                   segmentX1, segmentY1, segmentX2, segmentY2))
+      {
+        // For each polygon segment that intersect the cutting line,
+        // register its offset over the cutting line
+        const double acx = x - cuttingX1;
+        const double acy = y - cuttingY1;
+        intersections.push_back((abx * acx + aby * acy) / denominator);
+      }
+    }
+
+
+    /**
+     * 4. Sort the intersection offsets, then generates one 2D rectangle on the
+     * cutting plane from each pair of successive intersections.
+     **/
+
+    std::sort(intersections.begin(), intersections.end());
+
+    if (intersections.size() % 2 == 1)
+    {
+      return;  // Should never happen
+    }
+
+    for (size_t i = 0; i < intersections.size(); i += 2)
+    {
+      Vector p1, p2;
+
+      {
+        // Let's convert them to 3D world geometry to add the slice thickness
+        const double x1 = cuttingX1 + intersections[i] * abx;
+        const double y1 = cuttingY1 + intersections[i] * aby;
+        const double x2 = cuttingX1 + intersections[i + 1] * abx;
+        const double y2 = cuttingY1 + intersections[i + 1] * aby;
+
+        p1 = (geometry.MapSliceToWorldCoordinates(x1, y1) + thickness / 2.0 * geometry.GetNormal());
+        p2 = (geometry.MapSliceToWorldCoordinates(x2, y2) - thickness / 2.0 * geometry.GetNormal());
+      }
+
+      {
+        // Then back to the cutting plane geometry
+        double x1, y1, x2, y2;
+        cuttingPlane.ProjectPoint2(x1, y1, p1);
+        cuttingPlane.ProjectPoint2(x2, y2, p2);
+
+        target.push_back(Extent2D(x1, y1, x2, y2));
+      }
     }
   }
 
@@ -388,162 +459,246 @@ namespace OrthancStone
     boost::posix_time::ptime timerStart = boost::posix_time::microsec_clock::universal_time();
 #endif
 
+    std::map<int, size_t> roiNumbersIndex;
+
     DicomDatasetReader reader(tags);
-    
-    size_t count, tmp;
-    if (!tags.GetSequenceSize(count, Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE)) ||
-        !tags.GetSequenceSize(tmp, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE)) ||
-        tmp != count ||
-        !tags.GetSequenceSize(tmp, Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE)) ||
-        tmp != count)
+
+
+    /**
+     * 1. Read all the available ROIs.
+     **/
+
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-    }
-
-    structures_.resize(count);
-    structureNamesIndex_.clear();
-    
-    for (size_t i = 0; i < count; i++)
-    {
-      structures_[i].interpretation_ = reader.GetStringValue
-        (Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
-                            DICOM_TAG_RT_ROI_INTERPRETED_TYPE),
-         "No interpretation");
-
-      structures_[i].name_ = reader.GetStringValue
-        (Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i,
-                            DICOM_TAG_ROI_NAME),
-         "No name");
-
-      if (structureNamesIndex_.find(structures_[i].name_) == structureNamesIndex_.end())
+      size_t count;
+      if (!tags.GetSequenceSize(count, Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE)))
       {
-        structureNamesIndex_[structures_[i].name_] = i;
-      }
-      else
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
-                                        "RT-STRUCT with twice the same name for a structure: " + structures_[i].name_);
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
       }
 
-      Vector color;
-      if (FastParseVector(color, tags, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                          DICOM_TAG_ROI_DISPLAY_COLOR)) &&
-          color.size() == 3)
+      structures_.resize(count);
+      structureNamesIndex_.clear();
+
+      for (size_t i = 0; i < count; i++)
       {
-        structures_[i].red_ = ConvertColor(color[0]);
-        structures_[i].green_ = ConvertColor(color[1]);
-        structures_[i].blue_ = ConvertColor(color[2]);
-      }
-      else
-      {
-        structures_[i].red_ = 255;
-        structures_[i].green_ = 0;
-        structures_[i].blue_ = 0;
-      }
-
-      size_t countSlices;
-      if (!tags.GetSequenceSize(countSlices, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                                DICOM_TAG_CONTOUR_SEQUENCE)))
-      {
-        countSlices = 0;
-      }
-
-      LOG(INFO) << "New RT structure: \"" << structures_[i].name_ 
-                << "\" with interpretation \"" << structures_[i].interpretation_
-                << "\" containing " << countSlices << " slices (color: " 
-                << static_cast<int>(structures_[i].red_) << "," 
-                << static_cast<int>(structures_[i].green_) << ","
-                << static_cast<int>(structures_[i].blue_) << ")";
-
-      /**
-       * These temporary variables avoid allocating many vectors in
-       * the loop below (indeed, "Orthanc::DicomPath" handles a
-       * "std::vector<PrefixItem>")
-       **/
-      Orthanc::DicomPath countPointsPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                         DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                         DICOM_TAG_NUMBER_OF_CONTOUR_POINTS);
-
-      Orthanc::DicomPath geometricTypePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                           DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                           DICOM_TAG_CONTOUR_GEOMETRIC_TYPE);
-      
-      Orthanc::DicomPath imageSequencePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                           DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                           DICOM_TAG_CONTOUR_IMAGE_SEQUENCE);
-
-      // (3006,0039)[i] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)
-      Orthanc::DicomPath referencedInstancePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                                DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                                DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
-                                                DICOM_TAG_REFERENCED_SOP_INSTANCE_UID);
-
-      Orthanc::DicomPath contourDataPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
-                                         DICOM_TAG_CONTOUR_SEQUENCE, 0,
-                                         DICOM_TAG_CONTOUR_DATA);
-
-      for (size_t j = 0; j < countSlices; j++)
-      {
-        unsigned int countPoints;
-
-        countPointsPath.SetPrefixIndex(1, j);
-        if (!reader.GetUnsignedIntegerValue(countPoints, countPointsPath))
+        int roiNumber;
+        if (!reader.GetIntegerValue
+            (roiNumber, Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i, DICOM_TAG_ROI_NUMBER)))
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
-            
-        //LOG(INFO) << "Parsing slice containing " << countPoints << " vertices";
 
-        geometricTypePath.SetPrefixIndex(1, j);
-        std::string type = reader.GetMandatoryStringValue(geometricTypePath);
-        if (type != "CLOSED_PLANAR")
+        if (roiNumbersIndex.find(roiNumber) != roiNumbersIndex.end())
         {
-          LOG(WARNING) << "Ignoring contour with geometry type: " << type;
-          continue;
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                          "Twice the same ROI number: " + boost::lexical_cast<std::string>(roiNumber));
         }
 
-        size_t size;
+        roiNumbersIndex[roiNumber] = i;
 
-        imageSequencePath.SetPrefixIndex(1, j);
-        if (!tags.GetSequenceSize(size, imageSequencePath) || size != 1)
+        structures_[i].name_ = reader.GetStringValue
+          (Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i, DICOM_TAG_ROI_NAME), "No name");
+        structures_[i].interpretation_ = "No interpretation";
+
+        if (structureNamesIndex_.find(structures_[i].name_) == structureNamesIndex_.end())
         {
-          LOG(ERROR) << "The ContourImageSequence sequence (tag 3006,0016) must be present and contain one entry.";
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);          
+          structureNamesIndex_[structures_[i].name_] = i;
+        }
+        else
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
+                                          "RT-STRUCT with twice the same name for a structure: " + structures_[i].name_);
+        }
+      }
+    }
+
+
+    /**
+     * 2. Read the interpretation of the ROIs (if available).
+     **/
+
+    {
+      size_t count;
+      if (!tags.GetSequenceSize(count, Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE)))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+
+      for (size_t i = 0; i < count; i++)
+      {
+        std::string interpretation;
+        if (reader.GetDataset().GetStringValue(interpretation,
+                                               Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
+                                                                  DICOM_TAG_RT_ROI_INTERPRETED_TYPE)))
+        {
+          int roiNumber;
+          if (!reader.GetIntegerValue(roiNumber,
+                                      Orthanc::DicomPath(DICOM_TAG_RT_ROI_OBSERVATIONS_SEQUENCE, i,
+                                                         DICOM_TAG_REFERENCED_ROI_NUMBER)))
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+          }
+
+          std::map<int, size_t>::const_iterator found = roiNumbersIndex.find(roiNumber);
+          if (found == roiNumbersIndex.end())
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+          }
+
+          structures_[found->second].interpretation_ = interpretation;
+        }
+      }
+    }
+
+
+    /**
+     * 3. Read the contours.
+     **/
+
+    {
+      size_t count;
+      if (!tags.GetSequenceSize(count, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE)))
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
+
+      for (size_t i = 0; i < count; i++)
+      {
+        int roiNumber;
+        if (!reader.GetIntegerValue(roiNumber,
+                                    Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                       DICOM_TAG_REFERENCED_ROI_NUMBER)))
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
 
-        referencedInstancePath.SetPrefixIndex(1, j);
-        std::string sopInstanceUid = reader.GetMandatoryStringValue(referencedInstancePath);
-
-        contourDataPath.SetPrefixIndex(1, j);        
-        std::string slicesData = reader.GetMandatoryStringValue(contourDataPath);
-
-        Vector points;
-
-        if (!GenericToolbox::FastParseVector(points, slicesData) ||
-            points.size() != 3 * countPoints)
+        std::map<int, size_t>::const_iterator found = roiNumbersIndex.find(roiNumber);
+        if (found == roiNumbersIndex.end())
         {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);          
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
 
-        // seen in real world
-        if(Orthanc::Toolbox::StripSpaces(sopInstanceUid) == "") 
+        Structure& target = structures_[found->second];
+
+        Vector color;
+        if (FastParseVector(color, tags, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                            DICOM_TAG_ROI_DISPLAY_COLOR)) &&
+            color.size() == 3)
         {
-          LOG(ERROR) << "WARNING. The following Dicom tag (Referenced SOP Instance UID) contains an empty value : // (3006,0039)[" << i << "] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)";
+          target.red_ = ConvertColor(color[0]);
+          target.green_ = ConvertColor(color[1]);
+          target.blue_ = ConvertColor(color[2]);
+        }
+        else
+        {
+          target.red_ = 255;
+          target.green_ = 0;
+          target.blue_ = 0;
         }
 
-        Polygon polygon(sopInstanceUid);
-        polygon.Reserve(countPoints);
-
-        for (size_t k = 0; k < countPoints; k++)
+        size_t countSlices;
+        if (!tags.GetSequenceSize(countSlices, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                                  DICOM_TAG_CONTOUR_SEQUENCE)))
         {
-          Vector v(3);
-          v[0] = points[3 * k];
-          v[1] = points[3 * k + 1];
-          v[2] = points[3 * k + 2];
-          polygon.AddPoint(v);
+          countSlices = 0;
         }
 
-        structures_[i].polygons_.push_back(polygon);
+        LOG(INFO) << "New RT structure: \"" << target.name_
+                  << "\" with interpretation \"" << target.interpretation_
+                  << "\" containing " << countSlices << " slices (color: " 
+                  << static_cast<int>(target.red_) << ","
+                  << static_cast<int>(target.green_) << ","
+                  << static_cast<int>(target.blue_) << ")";
+
+        /**
+         * These temporary variables avoid allocating many vectors in
+         * the loop below (indeed, "Orthanc::DicomPath" handles a
+         * "std::vector<PrefixItem>")
+         **/
+        Orthanc::DicomPath countPointsPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                           DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                           DICOM_TAG_NUMBER_OF_CONTOUR_POINTS);
+
+        Orthanc::DicomPath geometricTypePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                             DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                             DICOM_TAG_CONTOUR_GEOMETRIC_TYPE);
+
+        Orthanc::DicomPath imageSequencePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                             DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                             DICOM_TAG_CONTOUR_IMAGE_SEQUENCE);
+
+        // (3006,0039)[i] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)
+        Orthanc::DicomPath referencedInstancePath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                                  DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                                  DICOM_TAG_CONTOUR_IMAGE_SEQUENCE, 0,
+                                                  DICOM_TAG_REFERENCED_SOP_INSTANCE_UID);
+
+        Orthanc::DicomPath contourDataPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
+                                           DICOM_TAG_CONTOUR_SEQUENCE, 0,
+                                           DICOM_TAG_CONTOUR_DATA);
+
+        for (size_t j = 0; j < countSlices; j++)
+        {
+          unsigned int countPoints;
+
+          countPointsPath.SetPrefixIndex(1, j);
+          if (!reader.GetUnsignedIntegerValue(countPoints, countPointsPath))
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+          }
+
+          //LOG(INFO) << "Parsing slice containing " << countPoints << " vertices";
+
+          geometricTypePath.SetPrefixIndex(1, j);
+          std::string type = reader.GetMandatoryStringValue(geometricTypePath);
+          if (type != "CLOSED_PLANAR")
+          {
+            LOG(WARNING) << "Ignoring contour with geometry type: " << type;
+            continue;
+          }
+
+          size_t size;
+
+          imageSequencePath.SetPrefixIndex(1, j);
+          if (!tags.GetSequenceSize(size, imageSequencePath) || size != 1)
+          {
+            LOG(ERROR) << "The ContourImageSequence sequence (tag 3006,0016) must be present and contain one entry.";
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+          }
+
+          referencedInstancePath.SetPrefixIndex(1, j);
+          std::string sopInstanceUid = reader.GetMandatoryStringValue(referencedInstancePath);
+
+          contourDataPath.SetPrefixIndex(1, j);
+          std::string slicesData = reader.GetMandatoryStringValue(contourDataPath);
+
+          Vector points;
+
+          if (!GenericToolbox::FastParseVector(points, slicesData) ||
+              points.size() != 3 * countPoints)
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+          }
+
+          // seen in real world
+          if(Orthanc::Toolbox::StripSpaces(sopInstanceUid) == "")
+          {
+            LOG(ERROR) << "WARNING. The following Dicom tag (Referenced SOP Instance UID) contains an empty value : // (3006,0039)[" << i << "] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)";
+          }
+
+          Polygon polygon(sopInstanceUid);
+          polygon.Reserve(countPoints);
+
+          for (size_t k = 0; k < countPoints; k++)
+          {
+            Vector v(3);
+            v[0] = points[3 * k];
+            v[1] = points[3 * k + 1];
+            v[2] = points[3 * k + 2];
+            polygon.AddPoint(v);
+          }
+
+          target.polygons_.push_back(polygon);
+        }
       }
     }
 
@@ -804,11 +959,12 @@ namespace OrthancStone
       for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
-        double x1, y1, x2, y2;
+        std::list<Extent2D> rectangles;
+        polygon->Project(rectangles, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness());
 
-        if (polygon->Project(x1, y1, x2, y2, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness()))
+        for (std::list<Extent2D>::const_iterator it = rectangles.begin(); it != rectangles.end(); ++it)
         {
-          projected.push_back(CreateRectangle(x1, y1, x2, y2));
+          projected.push_back(CreateRectangle(it->GetX1(), it->GetY1(), it->GetX2(), it->GetY2()));
         }
       }
 
@@ -834,12 +990,7 @@ namespace OrthancStone
       for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
-        double x1, y1, x2, y2;
-
-        if (polygon->Project(x1, y1, x2, y2, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness()))
-        {
-          rectangles.push_back(Extent2D(x1, y1, x2, y2));
-        }
+        polygon->Project(rectangles, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness());
       }
 
       typedef std::list< std::vector<ScenePoint2D> >  Contours;

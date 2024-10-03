@@ -45,9 +45,6 @@ Improvements
 * Order the studies in the left column according to their Instance
   Number (0020,0013). Suggestion by Joseph Maratt.
 
-* Add a button to download PDF:
-  https://discourse.orthanc-server.org/t/printing-pdf-reports-in-stone-of-orthanc/4731
-
 * Open using Orthanc parent/study/series identifier, or using DICOM
   accession number:
   https://discourse.orthanc-server.org/t/stone-web-viewer-what-is-the-link-to-use-through-the-access-number/4808

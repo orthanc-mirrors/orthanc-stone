@@ -92,6 +92,23 @@ Vue.component('pdf-viewer', {
     });
   },
   methods: {
+    Download: function() {
+      if (this.pdfDoc !== null) {
+        const blob = new Blob([this.pdf], { type: 'application/pdf'});
+        const blobUrl = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = "report.pdf";
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Revoke the object URL to free up memory
+        URL.revokeObjectURL(blobUrl);
+      }
+    },
     Print: function() {
       if (this.pdfDoc !== null) {
         if (0) { // works on Chrome but with a popup that is blocked by default !

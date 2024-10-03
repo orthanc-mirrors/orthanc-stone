@@ -92,6 +92,29 @@ Vue.component('pdf-viewer', {
     });
   },
   methods: {
+    Print: function() {
+      if (this.pdfDoc !== null) {
+        if (0) { // works on Chrome but with a popup that is blocked by default !
+          const blob = new Blob([this.pdf], { type: 'application/pdf'});
+          const blobUrl = URL.createObjectURL(blob);
+
+          let w = window.open(blobUrl, '_blank');
+          w.print();
+        } else {
+          // Let's open a new window with the pdf
+          // First we need to convert the pdf from a byte array to a binary string and then to b64
+          let binaryStringPdf = '';
+          for (let i = 0; i < this.pdf.length; i++) {
+            binaryStringPdf += String.fromCharCode(this.pdf[i]);
+          }
+
+          const htmlContent = '<html><body style="margin: 0;"><embed width="100%" height="100%" src="data:application/pdf;base64,' + btoa(binaryStringPdf) + '" type="application/pdf" /></body></html>';
+
+          let w = window.open('', '_blank');
+          w.document.write(htmlContent);
+        }
+      }
+    },
     NextPage: function() {
       if (this.pdfDoc !== null &&
           this.currentPage < this.pdfDoc.numPages) {

@@ -23,6 +23,8 @@
 
 #include "DebugDrawing2D.h"
 
+#include <stdio.h>
+
 
 namespace OrthancStone
 {

@@ -89,7 +89,7 @@ namespace OrthancStone
       {
         if (lock_.get() != NULL)
         {
-          lock_->GetController().BroadcastGrayscaleWindowingChanged(center, width);
+          lock_->GetController().BroadcastGrayscaleWindowingChanged(Windowing(center, width));
         }
       }        
     };

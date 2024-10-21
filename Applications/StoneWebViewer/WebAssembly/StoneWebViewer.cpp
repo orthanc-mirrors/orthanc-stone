@@ -1665,8 +1665,7 @@ public:
                                             const OrthancStone::Vector& normal) = 0;
 
     virtual void SignalWindowingUpdated(const ViewerViewport& viewport,
-                                        double windowingCenter,
-                                        double windowingWidth) = 0;
+                                        const OrthancStone::Windowing& windowing) = 0;
 
     virtual void SignalStoneAnnotationsChanged(const ViewerViewport& viewport,
                                                const std::string& sopInstanceUid,
@@ -1827,8 +1826,7 @@ private:
   private:
     std::string   sopInstanceUid_;
     unsigned int  frameNumber_;
-    float         windowCenter_;
-    float         windowWidth_;
+    OrthancStone::Windowing  windowing_;
     bool          isMonochrome1_;
     bool          isPrefetch_;
     
@@ -1836,15 +1834,13 @@ private:
     SetLowQualityFrame(boost::shared_ptr<ViewerViewport> viewport,
                        const std::string& sopInstanceUid,
                        unsigned int frameNumber,
-                       float windowCenter,
-                       float windowWidth,
+                       const OrthancStone::Windowing& windowing,
                        bool isMonochrome1,
                        bool isPrefetch) :
       ICommand(viewport),
       sopInstanceUid_(sopInstanceUid),
       frameNumber_(frameNumber),
-      windowCenter_(windowCenter),
-      windowWidth_(windowWidth),
+      windowing_(windowing),
       isMonochrome1_(isMonochrome1),
       isPrefetch_(isPrefetch)
     {
@@ -1890,9 +1886,11 @@ private:
 
           **/
 
-          const float scaling = windowWidth_ / 255.0f;
+          const float center = static_cast<float>(windowing_.GetCenter());
+          const float width = static_cast<float>(windowing_.GetWidth());
+          const float scaling = width / 255.0f;
           const float offset = (OrthancStone::LinearAlgebra::IsCloseToZero(scaling) ? 0 :
-                                (windowCenter_ - windowWidth_ / 2.0f) / scaling);
+                                (center - width / 2.0f) / scaling);
 
           Orthanc::ImageProcessing::ShiftScale(*converted, offset, scaling, false);
           break;
@@ -2081,8 +2079,7 @@ private:
   boost::shared_ptr<FramesCache>               framesCache_;  
   std::unique_ptr<IFramesCollection>           frames_;
   std::unique_ptr<SeriesCursor>                cursor_;
-  float                                        windowingCenter_;
-  float                                        windowingWidth_;
+  OrthancStone::Windowing                      currentWindowing_;
   std::vector<OrthancStone::Windowing>         windowingPresets_;
   OrthancStone::Windowing                      fallbackWindowing_;
   unsigned int                                 cineRate_;
@@ -2236,7 +2233,7 @@ private:
       {
         std::unique_ptr<OrthancStone::FloatTextureSceneLayer> tmp(
           new OrthancStone::FloatTextureSceneLayer(frame));
-        tmp->SetCustomWindowing(windowingCenter_, windowingWidth_);
+        tmp->SetCustomWindowing(currentWindowing_.GetCenter(), currentWindowing_.GetWidth());
         tmp->SetInverted(inverted_ ^ isMonochrome1);
         layer.reset(tmp.release());
         break;
@@ -2562,14 +2559,14 @@ private:
       std::map<std::string, std::string> headers, arguments;
       // arguments["quality"] = "10";   // Low-level quality for test purpose
       arguments["window"] = (
-        boost::lexical_cast<std::string>(windowingCenter_) + ","  +
-        boost::lexical_cast<std::string>(windowingWidth_) + ",linear");
+        boost::lexical_cast<std::string>(currentWindowing_.GetCenter()) + ","  +
+        boost::lexical_cast<std::string>(currentWindowing_.GetWidth()) + ",linear");
 
       std::unique_ptr<OrthancStone::IOracleCommand> command(
         source_.CreateDicomWebCommand(
           uri, arguments, headers, new SetLowQualityFrame(
             GetSharedObserver(), instance.GetSopInstanceUid(), frameNumber,
-            windowingCenter_, windowingWidth_, isMonochrome1, isPrefetch)));
+            currentWindowing_, isMonochrome1, isPrefetch)));
 
       {
         std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
@@ -2589,7 +2586,7 @@ private:
       {
         dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(
           lock->GetController().GetScene().GetLayer(LAYER_TEXTURE)).
-          SetCustomWindowing(windowingCenter_, windowingWidth_);
+          SetCustomWindowing(currentWindowing_.GetCenter(), currentWindowing_.GetWidth());
       }
         
       lock->Invalidate();
@@ -2651,12 +2648,11 @@ private:
   void Handle(const OrthancStone::ViewportController::GrayscaleWindowingChanged& message)
   {
     // This event is triggered by the windowing mouse action, from class "GrayscaleWindowingSceneTracker"
-    windowingCenter_ = message.GetWindowingCenter();
-    windowingWidth_ = message.GetWindowingWidth();
+    currentWindowing_ = message.GetWindowing();
 
     if (observer_.get() != NULL)
     {
-      observer_->SignalWindowingUpdated(*this, message.GetWindowingCenter(), message.GetWindowingWidth());
+      observer_->SignalWindowingUpdated(*this, currentWindowing_);
     }
   }
 
@@ -3165,13 +3161,12 @@ public:
 
   void SetWindowing(const OrthancStone::Windowing& windowing)
   {
-    windowingCenter_ = windowing.GetCenter();
-    windowingWidth_ = windowing.GetWidth();
+    currentWindowing_ = windowing;
     UpdateCurrentTextureParameters();
 
     if (observer_.get() != NULL)
     {
-      observer_->SignalWindowingUpdated(*this, windowingCenter_, windowingWidth_);
+      observer_->SignalWindowingUpdated(*this, currentWindowing_);
     }
   }
 
@@ -3494,8 +3489,6 @@ public:
 
   void FormatWindowingPresets(Json::Value& target) const
   {
-    assert(windowingPresetCenters_.size() == windowingPresetWidths_.size());
-
     target = Json::arrayValue;
 
     for (size_t i = 0; i < windowingPresets_.size(); i++)
@@ -3791,8 +3784,7 @@ public:
   }
 
   virtual void SignalWindowingUpdated(const ViewerViewport& viewport,
-                                      double windowingCenter,
-                                      double windowingWidth) ORTHANC_OVERRIDE
+                                      const OrthancStone::Windowing& windowing) ORTHANC_OVERRIDE
   {
     EM_ASM({
         const customEvent = document.createEvent("CustomEvent");
@@ -3803,8 +3795,8 @@ public:
         window.dispatchEvent(customEvent);
       },
       viewport.GetCanvasId().c_str(),
-      static_cast<int>(boost::math::iround<double>(windowingCenter)),
-      static_cast<int>(boost::math::iround<double>(windowingWidth)));
+      static_cast<int>(boost::math::iround<double>(windowing.GetCenter())),
+      static_cast<int>(boost::math::iround<double>(windowing.GetWidth())));
 
     UpdateReferenceLines();
   }

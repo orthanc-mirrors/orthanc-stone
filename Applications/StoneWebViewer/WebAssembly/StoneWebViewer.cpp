@@ -1775,17 +1775,15 @@ private:
                                                   static_cast<double>(params.GetHeight()));
         }
 
-        GetViewport().windowingPresetCenters_.resize(params.GetWindowingPresetsCount());
-        GetViewport().windowingPresetWidths_.resize(params.GetWindowingPresetsCount());
+        GetViewport().windowingPresets_.resize(params.GetWindowingPresetsCount());
 
         for (size_t i = 0; i < params.GetWindowingPresetsCount(); i++)
         {
           LOG(INFO) << "Preset windowing " << (i + 1) << "/" << params.GetWindowingPresetsCount()
-                    << ": " << params.GetWindowingPresetCenter(i)
-                    << "," << params.GetWindowingPresetWidth(i);
+                    << ": " << params.GetWindowingPreset(i).GetCenter()
+                    << "," << params.GetWindowingPreset(i).GetWidth();
 
-          GetViewport().windowingPresetCenters_[i] = params.GetWindowingPresetCenter(i);
-          GetViewport().windowingPresetWidths_[i] = params.GetWindowingPresetWidth(i);
+          GetViewport().windowingPresets_[i] = params.GetWindowingPreset(i);
         }
 
         if (params.GetWindowingPresetsCount() == 0)
@@ -1793,21 +1791,7 @@ private:
           LOG(INFO) << "No preset windowing";
         }
 
-        uint32_t bitsStored, pixelRepresentation;
-        if (dicom.ParseUnsignedInteger32(bitsStored, Orthanc::DICOM_TAG_BITS_STORED) &&
-            dicom.ParseUnsignedInteger32(pixelRepresentation, Orthanc::DICOM_TAG_PIXEL_REPRESENTATION))
-        {
-          // Added in Stone Web viewer > 2.5
-          const bool isSigned = (pixelRepresentation != 0);
-          const float maximum = powf(2.0, bitsStored);
-          GetViewport().windowingDefaultCenter_ = (isSigned ? 0.0f : maximum / 2.0f);
-          GetViewport().windowingDefaultWidth_ = maximum;
-        }
-        else
-        {
-          GetViewport().windowingDefaultCenter_ = 128;
-          GetViewport().windowingDefaultWidth_ = 256;
-        }
+        GetViewport().fallbackWindowing_ = params.GetFallbackWindowing();
 
         GetViewport().SetWindowingPreset();
       }
@@ -1994,14 +1978,13 @@ private:
       }
       else
       {
-        if (GetViewport().windowingPresetCenters_.empty())
+        if (GetViewport().windowingPresets_.empty())
         {
           // New in Stone Web viewer 2.2: Deal with Philips multiframe
           // (cf. mail from Tomas Kenda on 2021-08-17)
           double windowingCenter, windowingWidth;
           message.GetDicom().GetDefaultWindowing(windowingCenter, windowingWidth, frameNumber_);
-          GetViewport().windowingPresetCenters_.push_back(windowingCenter);
-          GetViewport().windowingPresetWidths_.push_back(windowingWidth);
+          GetViewport().windowingPresets_.push_back(OrthancStone::Windowing(windowingCenter, windowingWidth));
           GetViewport().SetWindowingPreset();
         }
 
@@ -2100,10 +2083,8 @@ private:
   std::unique_ptr<SeriesCursor>                cursor_;
   float                                        windowingCenter_;
   float                                        windowingWidth_;
-  std::vector<float>                           windowingPresetCenters_;
-  std::vector<float>                           windowingPresetWidths_;
-  float                                        windowingDefaultCenter_;
-  float                                        windowingDefaultWidth_;
+  std::vector<OrthancStone::Windowing>         windowingPresets_;
+  OrthancStone::Windowing                      fallbackWindowing_;
   unsigned int                                 cineRate_;
   bool                                         inverted_;
   bool                                         fitNextContent_;
@@ -2624,8 +2605,6 @@ private:
     context_(context),
     source_(source),
     framesCache_(cache),
-    windowingDefaultCenter_(128),
-    windowingDefaultWidth_(256),
     fitNextContent_(true),
     hasFocusOnInstance_(false),
     focusFrameNumber_(0),
@@ -3174,28 +3153,25 @@ public:
 
   void SetWindowingPreset()
   {
-    assert(windowingPresetCenters_.size() == windowingPresetWidths_.size());
-
-    if (windowingPresetCenters_.empty())
+    if (windowingPresets_.empty())
     {
-      SetWindowing(windowingDefaultCenter_, windowingDefaultWidth_);
+      SetWindowing(fallbackWindowing_);
     }
     else
     {
-      SetWindowing(windowingPresetCenters_[0], windowingPresetWidths_[0]);
+      SetWindowing(windowingPresets_[0]);
     }
   }
 
-  void SetWindowing(float windowingCenter,
-                    float windowingWidth)
+  void SetWindowing(const OrthancStone::Windowing& windowing)
   {
-    windowingCenter_ = windowingCenter;
-    windowingWidth_ = windowingWidth;
+    windowingCenter_ = windowing.GetCenter();
+    windowingWidth_ = windowing.GetWidth();
     UpdateCurrentTextureParameters();
 
     if (observer_.get() != NULL)
     {
-      observer_->SignalWindowingUpdated(*this, windowingCenter, windowingWidth);
+      observer_->SignalWindowingUpdated(*this, windowingCenter_, windowingWidth_);
     }
   }
 
@@ -3224,7 +3200,9 @@ public:
       Orthanc::ImageProcessing::GetMinMaxFloatValue(minValue, maxValue, texture);
     }
 
-    SetWindowing((minValue + maxValue) / 2.0f, maxValue - minValue);
+    const float center = (minValue + maxValue) / 2.0f;
+    const float width = maxValue - minValue;
+    SetWindowing(OrthancStone::Windowing(center, width));
   }
 
   void FlipX()
@@ -3520,13 +3498,13 @@ public:
 
     target = Json::arrayValue;
 
-    for (size_t i = 0; i < windowingPresetCenters_.size(); i++)
+    for (size_t i = 0; i < windowingPresets_.size(); i++)
     {
-      const float c = windowingPresetCenters_[i];
-      const float w = windowingPresetWidths_[i];
+      const double c = windowingPresets_[i].GetCenter();
+      const double w = windowingPresets_[i].GetWidth();
       
       std::string name = "Preset";
-      if (windowingPresetCenters_.size() > 1)
+      if (windowingPresets_.size() > 1)
       {
         name += " " + boost::lexical_cast<std::string>(i + 1);
       }
@@ -4396,7 +4374,7 @@ extern "C"
   {
     try
     {
-      GetViewport(canvas)->SetWindowing(center, width);
+      GetViewport(canvas)->SetWindowing(OrthancStone::Windowing(center, width));
     }
     EXTERN_CATCH_EXCEPTIONS;
   }  

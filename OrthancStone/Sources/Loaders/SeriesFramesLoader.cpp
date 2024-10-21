@@ -47,8 +47,7 @@ namespace OrthancStone
     std::string   sopInstanceUid_;  // Only used for debug purpose
     unsigned int  quality_;
     bool          hasWindowing_;
-    float         windowingCenter_;
-    float         windowingWidth_;
+    Windowing     windowing_;
     std::unique_ptr<Orthanc::IDynamicObject>  userPayload_;
 
   public:
@@ -62,8 +61,6 @@ namespace OrthancStone
       sopInstanceUid_(sopInstanceUid),
       quality_(quality),
       hasWindowing_(false),
-      windowingCenter_(0),
-      windowingWidth_(0),
       userPayload_(userPayload)
     {
     }
@@ -83,12 +80,10 @@ namespace OrthancStone
       return quality_;
     }
 
-    void SetWindowing(float center,
-                      float width)
+    void SetWindowing(const Windowing& windowing)
     {
       hasWindowing_ = true;
-      windowingCenter_ = center;
-      windowingWidth_ = width;
+      windowing_ = windowing;
     }
 
     bool HasWindowing() const
@@ -96,23 +91,11 @@ namespace OrthancStone
       return hasWindowing_;
     }
 
-    float GetWindowingCenter() const
+    const Windowing& GetWindowing() const
     {
       if (hasWindowing_)
       {
-        return windowingCenter_;
-      }
-      else
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-    }
-
-    float GetWindowingWidth() const
-    {
-      if (hasWindowing_)
-      {
-        return windowingWidth_;
+        return windowing_;
       }
       else
       {
@@ -227,13 +210,13 @@ namespace OrthancStone
         Orthanc::Image scaled(parameters.GetExpectedPixelFormat(), reader.GetWidth(), reader.GetHeight(), false);
         Orthanc::ImageProcessing::Convert(scaled, reader);
           
-        float w = payload.GetWindowingWidth();
+        float w = static_cast<float>(payload.GetWindowing().GetWidth());
         if (w <= 0.01f)
         {
           w = 0.01f;  // Prevent division by zero
         }
 
-        const float c = payload.GetWindowingCenter();
+        const float c = static_cast<float>(payload.GetWindowing().GetCenter());
         const float scaling = w / 255.0f;
         const float offset = (c - w / 2.0f) / scaling;
 
@@ -417,16 +400,15 @@ namespace OrthancStone
       {
         const DicomInstanceParameters& parameters = frames_.GetInstanceParameters(index);
 
-        float c, w;
-        parameters.GetWindowingPresetsUnion(c, w);
+        Windowing windowing = parameters.GetWindowingPresetsUnion();
 
         std::map<std::string, std::string> arguments, headers;
-        arguments["window"] = (boost::lexical_cast<std::string>(c) + "," +
-                               boost::lexical_cast<std::string>(w) + ",linear");
+        arguments["window"] = (boost::lexical_cast<std::string>(windowing.GetCenter()) + "," +
+                               boost::lexical_cast<std::string>(windowing.GetWidth()) + ",linear");
         headers["Accept"] = "image/jpeg";
 
         std::unique_ptr<Payload> payload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
-        payload->SetWindowing(c, w);
+        payload->SetWindowing(windowing);
 
         {
           std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());

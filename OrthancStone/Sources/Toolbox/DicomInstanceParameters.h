@@ -26,6 +26,7 @@
 #include "../Scene2D/LookupTableTextureSceneLayer.h"
 #include "../StoneEnumerations.h"
 #include "../Toolbox/CoordinateSystem3D.h"
+#include "Windowing.h"
 
 #include <IDynamicObject.h>
 #include <DicomFormat/DicomImageInformation.h>
@@ -57,8 +58,7 @@ namespace OrthancStone
       bool                hasRescale_;
       double              rescaleIntercept_;
       double              rescaleSlope_;
-      Vector              windowingPresetCenters_;
-      Vector              windowingPresetWidths_;
+      std::vector<Windowing>  windowingPresets_;
       bool                hasIndexInSeries_;
       unsigned int        indexInSeries_;
       std::string         doseUnits_;
@@ -185,14 +185,13 @@ namespace OrthancStone
 
     double GetRescaleSlope() const;
 
+    Windowing GetFallbackWindowing() const;
+
     size_t GetWindowingPresetsCount() const;
 
-    float GetWindowingPresetCenter(size_t i) const;
+    Windowing GetWindowingPreset(size_t i) const;
 
-    float GetWindowingPresetWidth(size_t i) const;
-
-    void GetWindowingPresetsUnion(float& center,
-                                  float& width) const;
+    Windowing GetWindowingPresetsUnion() const;
 
     Orthanc::PixelFormat GetExpectedPixelFormat() const;
 

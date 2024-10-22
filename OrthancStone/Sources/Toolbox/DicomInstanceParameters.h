@@ -77,18 +77,12 @@ namespace OrthancStone
     std::unique_ptr<Orthanc::DicomMap>               tags_;
     std::unique_ptr<Orthanc::DicomImageInformation>  imageInformation_;  // Lazy evaluation
 
-  public:
-    explicit DicomInstanceParameters(const DicomInstanceParameters& other) :
-      data_(other.data_),
-      tags_(other.tags_->Clone())
-    {
-    }
+    void InjectSequenceTags(const IDicomDataset& dataset);
 
-    explicit DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
-      data_(dicom),
-      tags_(dicom.Clone())
-    {
-    }
+  public:
+    explicit DicomInstanceParameters(const DicomInstanceParameters& other);
+
+    explicit DicomInstanceParameters(const Orthanc::DicomMap& dicom);
 
     DicomInstanceParameters* Clone() const
     {

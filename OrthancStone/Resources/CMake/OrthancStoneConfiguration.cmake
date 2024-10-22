@@ -226,8 +226,10 @@ endif()
 
 list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/OrthancDatasets/DicomDatasetReader.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/OrthancDatasets/DicomWebDataset.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/OrthancDatasets/FullOrthancDataset.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/OrthancDatasets/IOrthancConnection.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/OrthancDatasets/OrthancNativeDataset.cpp
 
   ${ORTHANC_STONE_ROOT}/Fonts/FontRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Fonts/Glyph.cpp

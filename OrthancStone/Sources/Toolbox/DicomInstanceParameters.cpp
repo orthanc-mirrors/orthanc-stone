@@ -824,32 +824,6 @@ namespace OrthancStone
   }
 
 
-  static const Json::Value* LookupDicomWebSingleValue(const Json::Value& dicomweb,
-                                                      const std::string& tag,
-                                                      const std::string& vr)
-  {
-    static const char* const VALUE = "Value";
-    static const char* const VR = "vr";
-
-    if (dicomweb.type() == Json::objectValue &&
-        dicomweb.isMember(tag) &&
-        dicomweb[tag].type() == Json::objectValue &&
-        dicomweb[tag].isMember(VALUE) &&
-        dicomweb[tag].isMember(VR) &&
-        dicomweb[tag][VR].type() == Json::stringValue &&
-        dicomweb[tag][VR].asString() == vr &&
-        dicomweb[tag][VALUE].type() == Json::arrayValue &&
-        dicomweb[tag][VALUE].size() == 1u)
-    {
-      return &dicomweb[tag][VALUE][0];
-    }
-    else
-    {
-      return NULL;
-    }
-  }
-
-
   void DicomInstanceParameters::EnrichUsingDicomWeb(const Json::Value& dicomweb)
   {
     DicomWebDataset dataset(dicomweb);

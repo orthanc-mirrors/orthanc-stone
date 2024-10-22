@@ -2405,6 +2405,25 @@ private:
         std::unique_ptr<OrthancStone::FloatTextureSceneLayer> tmp(
           new OrthancStone::FloatTextureSceneLayer(frame));
 
+        if (windowingTracker_.GetState() == WindowingState_None ||
+            windowingTracker_.GetState() == WindowingState_Fallback)
+        {
+          const Orthanc::ImageAccessor& texture = tmp->GetTexture();
+          if (texture.GetFormat() != Orthanc::PixelFormat_Float32)
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+          }
+          else
+          {
+            float minValue, maxValue;
+            Orthanc::ImageProcessing::GetMinMaxFloatValue(minValue, maxValue, texture);
+
+            const float center = (minValue + maxValue) / 2.0f;
+            const float width = maxValue - minValue;
+            UpdateWindowing(WindowingState_Fallback, OrthancStone::Windowing(center, width));
+          }
+        }
+
         tmp->SetCustomWindowing(windowingTracker_.GetWindowing().GetCenter(), windowingTracker_.GetWindowing().GetWidth());
         tmp->SetInverted(inverted_ ^ isMonochrome1);
         layer.reset(tmp.release());

@@ -1,6 +1,7 @@
 Pending changes in the mainline
 ===============================
 
+* Automatically stretch to whole range for images without preset
 * Improved support of the (0028,9132) tag for Philips multiframe images
 * Remember the previous layout when re-opening the viewer.
 * Added a Print button in the PDF viewer toolbar.

@@ -61,7 +61,7 @@ OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
       }
 
       std::string version = info["Version"].asString();
-      if (version != "mainline")
+      if (version.find("mainline") != 0)
       {
         std::vector<std::string> tokens;
         Orthanc::Toolbox::TokenizeString(tokens, version, '.');

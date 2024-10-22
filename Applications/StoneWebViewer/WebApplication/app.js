@@ -960,7 +960,7 @@ var app = new Vue({
         this.layoutCountX = 1;
         this.layoutCountY = 2;
       }
-
+      localStorage.setItem('layout', layout);
       this.FitContent();
     },
 
@@ -1369,7 +1369,11 @@ var app = new Vue({
   mounted: function() {
     // Warning: In this function, the "stone" global object is not initialized yet!
     
-    this.SetViewportLayout('1x1');
+    if (localStorage.layout) {
+      this.SetViewportLayout(localStorage.layout);
+    } else {
+      this.SetViewportLayout('1x1');
+    }
 
     if (localStorage.settingNotDiagnostic) {
       this.settingNotDiagnostic = (localStorage.settingNotDiagnostic == '1');

@@ -39,7 +39,7 @@ namespace OrthancStone
                                    const Orthanc::DicomPath& path) const;
 
   public:
-    DicomWebDataset(const Json::Value& dicomweb);
+    explicit DicomWebDataset(const Json::Value& dicomweb);
 
     virtual bool GetStringValue(std::string& result,
                                 const Orthanc::DicomPath& path) const ORTHANC_OVERRIDE;

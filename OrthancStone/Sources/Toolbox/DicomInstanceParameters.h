@@ -67,6 +67,7 @@ namespace OrthancStone
       bool                hasPixelSpacing_;
       bool                hasNumberOfFrames_;
       int32_t             instanceNumber_;
+      std::vector<Windowing>  perFrameWindowing_;
 
       explicit Data(const Orthanc::DicomMap& dicom);
     };
@@ -266,5 +267,8 @@ namespace OrthancStone
     CoordinateSystem3D GetMultiFrameGeometry() const;
 
     bool IsReversedFrameOffsets() const;
+
+    bool LookupPerFrameWindowing(Windowing& windowing,
+                                 unsigned int frame) const;
   };
 }

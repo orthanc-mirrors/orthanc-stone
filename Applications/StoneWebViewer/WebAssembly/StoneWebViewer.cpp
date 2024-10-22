@@ -120,7 +120,8 @@ enum STONE_WEB_VIEWER_EXPORT ThumbnailType
     ThumbnailType_Pdf,
     ThumbnailType_Video,
     ThumbnailType_Loading,
-    ThumbnailType_Unknown
+    ThumbnailType_Unknown,
+    ThumbnailType_Unavailable
     };
 
 
@@ -202,6 +203,76 @@ static const unsigned int QUALITY_FULL = 1;
 
 static const unsigned int DEFAULT_CINE_RATE = 30;
 
+
+
+enum WindowingState
+{
+  WindowingState_None = 1,
+  WindowingState_Fallback = 2,
+  WindowingState_GlobalPreset = 3,
+  WindowingState_FramePreset = 4,
+  WindowingState_User = 5
+};
+
+
+class WindowingTracker
+{
+private:
+  WindowingState           state_;
+  OrthancStone::Windowing  windowing_;
+
+public:
+  WindowingTracker() :
+    state_(WindowingState_None)
+  {
+  }
+
+  WindowingState GetState() const
+  {
+    return state_;
+  }
+
+  const OrthancStone::Windowing& GetWindowing() const
+  {
+    return windowing_;
+  }
+
+  void Reset()
+  {
+    state_ = WindowingState_None;
+    windowing_ = OrthancStone::Windowing();
+  }
+
+  // Returns "true" iif. the windowing needed an update
+  bool Update(WindowingState newState,
+              const OrthancStone::Windowing& newWindowing)
+  {
+    if (newState == WindowingState_None)
+    {
+      // "Reset()" should have been called
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    if (newState >= state_)
+    {
+      state_ = newState;
+
+      if (windowing_.IsNear(newWindowing))
+      {
+        return false;
+      }
+      else
+      {
+        windowing_ = newWindowing;
+        return true;
+      }
+    }
+    else
+    {
+      return false;
+    }
+  }
+};
 
 
 class IFramesCollection : public boost::noncopyable
@@ -1122,6 +1193,79 @@ public:
 
 
 
+class InstancesCache : public boost::noncopyable
+{
+private:
+  // Maps "SOP Instance UID" to DICOM parameters
+  typedef std::map<std::string, OrthancStone::DicomInstanceParameters*>  Content;
+
+  Content  content_;
+
+  void Clear()
+  {
+    for (Content::iterator it = content_.begin(); it != content_.end(); ++it)
+    {
+      assert(it->second != NULL);
+      delete it->second;
+    }
+
+    content_.clear();
+  }
+
+public:
+  ~InstancesCache()
+  {
+    Clear();
+  }
+
+  void Store(const std::string& sopInstanceUid,
+             const OrthancStone::DicomInstanceParameters& parameters)
+  {
+    Content::iterator found = content_.find(sopInstanceUid);
+    if (found == content_.end())
+    {
+      content_[sopInstanceUid] = parameters.Clone();
+    }
+  }
+
+  class Accessor : public boost::noncopyable
+  {
+  private:
+    std::unique_ptr<OrthancStone::DicomInstanceParameters>  parameters_;
+
+  public:
+    Accessor(InstancesCache& that,
+             const std::string& sopInstanceUid)
+    {
+      Content::iterator found = that.content_.find(sopInstanceUid);
+      if (found != that.content_.end())
+      {
+        assert(found->second != NULL);
+        parameters_.reset(found->second->Clone());
+      }
+    }
+
+    bool IsValid() const
+    {
+      return parameters_.get() != NULL;
+    }
+
+    const OrthancStone::DicomInstanceParameters& GetParameters() const
+    {
+      if (IsValid())
+      {
+        return *parameters_;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+    }
+  };
+};
+
+
+
 class SeriesCursor : public boost::noncopyable
 {
 public:
@@ -1785,14 +1929,7 @@ private:
           GetViewport().windowingPresets_[i] = params.GetWindowingPreset(i);
         }
 
-        if (params.GetWindowingPresetsCount() == 0)
-        {
-          LOG(INFO) << "No preset windowing";
-        }
-
-        GetViewport().fallbackWindowing_ = params.GetFallbackWindowing();
-
-        GetViewport().SetWindowingPreset();
+        GetViewport().SetDefaultWindowing(params);
       }
 
       uint32_t cineRate;
@@ -1976,16 +2113,6 @@ private:
       }
       else
       {
-        if (GetViewport().windowingPresets_.empty())
-        {
-          // New in Stone Web viewer 2.2: Deal with Philips multiframe
-          // (cf. mail from Tomas Kenda on 2021-08-17)
-          double windowingCenter, windowingWidth;
-          message.GetDicom().GetDefaultWindowing(windowingCenter, windowingWidth, frameNumber_);
-          GetViewport().windowingPresets_.push_back(OrthancStone::Windowing(windowingCenter, windowingWidth));
-          GetViewport().SetWindowingPreset();
-        }
-
         Apply(GetViewport(), message.GetDicom(), frame.release(), sopInstanceUid_, frameNumber_);
 
         if (isPrefetch_)
@@ -2007,6 +2134,7 @@ private:
       dicom.ExtractDicomSummary(tags, ORTHANC_STONE_MAX_TAG_LENGTH);
 
       OrthancStone::DicomInstanceParameters parameters(tags);
+      viewport.instancesCache_->Store(sopInstanceUid, parameters);
 
       std::unique_ptr<Orthanc::ImageAccessor> converted;
       
@@ -2076,12 +2204,12 @@ private:
   boost::shared_ptr<OrthancStone::WebAssemblyViewport>   viewport_;
   boost::shared_ptr<OrthancStone::DicomResourcesLoader> loader_;
   OrthancStone::DicomSource                    source_;
-  boost::shared_ptr<FramesCache>               framesCache_;  
+  boost::shared_ptr<FramesCache>               framesCache_;
+  boost::shared_ptr<InstancesCache>            instancesCache_;
   std::unique_ptr<IFramesCollection>           frames_;
   std::unique_ptr<SeriesCursor>                cursor_;
-  OrthancStone::Windowing                      currentWindowing_;
+  WindowingTracker                             windowingTracker_;
   std::vector<OrthancStone::Windowing>         windowingPresets_;
-  OrthancStone::Windowing                      fallbackWindowing_;
   unsigned int                                 cineRate_;
   bool                                         inverted_;
   bool                                         fitNextContent_;
@@ -2107,6 +2235,37 @@ private:
   boost::shared_ptr<OrthancStone::AnnotationsSceneLayer>  stoneAnnotations_;
 
   bool linearInterpolation_;
+
+
+  void UpdateWindowing(WindowingState state,
+                       const OrthancStone::Windowing& windowing)
+  {
+    if (windowingTracker_.Update(state, windowing))
+    {
+      UpdateCurrentTextureParameters();
+
+      if (observer_.get() != NULL)
+      {
+        observer_->SignalWindowingUpdated(*this, windowingTracker_.GetWindowing());
+      }
+    }
+  }
+
+
+  void SetDefaultWindowing(const OrthancStone::DicomInstanceParameters& instance)
+  {
+    windowingTracker_.Reset();
+
+    if (instance.GetWindowingPresetsCount() == 0)
+    {
+      LOG(INFO) << "No preset windowing";
+      UpdateWindowing(WindowingState_Fallback, instance.GetFallbackWindowing());
+    }
+    else
+    {
+      UpdateWindowing(WindowingState_GlobalPreset, instance.GetWindowingPreset(0));
+    }
+  }
 
 
   void ScheduleNextPrefetch()
@@ -2231,9 +2390,22 @@ private:
 
       case Orthanc::PixelFormat_Float32:
       {
+        {
+          // New in Stone Web viewer 2.2: Deal with Philips multiframe
+          // (cf. mail from Tomas Kenda on 2021-08-17)
+          InstancesCache::Accessor accessor(*instancesCache_, instance.GetSopInstanceUid());
+          OrthancStone::Windowing windowing;
+          if (accessor.IsValid() &&
+              accessor.GetParameters().LookupPerFrameWindowing(windowing, frameIndex))
+          {
+            UpdateWindowing(WindowingState_FramePreset, windowing);
+          }
+        }
+
         std::unique_ptr<OrthancStone::FloatTextureSceneLayer> tmp(
           new OrthancStone::FloatTextureSceneLayer(frame));
-        tmp->SetCustomWindowing(currentWindowing_.GetCenter(), currentWindowing_.GetWidth());
+
+        tmp->SetCustomWindowing(windowingTracker_.GetWindowing().GetCenter(), windowingTracker_.GetWindowing().GetWidth());
         tmp->SetInverted(inverted_ ^ isMonochrome1);
         layer.reset(tmp.release());
         break;
@@ -2559,14 +2731,14 @@ private:
       std::map<std::string, std::string> headers, arguments;
       // arguments["quality"] = "10";   // Low-level quality for test purpose
       arguments["window"] = (
-        boost::lexical_cast<std::string>(currentWindowing_.GetCenter()) + ","  +
-        boost::lexical_cast<std::string>(currentWindowing_.GetWidth()) + ",linear");
+        boost::lexical_cast<std::string>(windowingTracker_.GetWindowing().GetCenter()) + ","  +
+        boost::lexical_cast<std::string>(windowingTracker_.GetWindowing().GetWidth()) + ",linear");
 
       std::unique_ptr<OrthancStone::IOracleCommand> command(
         source_.CreateDicomWebCommand(
           uri, arguments, headers, new SetLowQualityFrame(
             GetSharedObserver(), instance.GetSopInstanceUid(), frameNumber,
-            currentWindowing_, isMonochrome1, isPrefetch)));
+            windowingTracker_.GetWindowing(), isMonochrome1, isPrefetch)));
 
       {
         std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
@@ -2586,7 +2758,7 @@ private:
       {
         dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(
           lock->GetController().GetScene().GetLayer(LAYER_TEXTURE)).
-          SetCustomWindowing(currentWindowing_.GetCenter(), currentWindowing_.GetWidth());
+          SetCustomWindowing(windowingTracker_.GetWindowing().GetCenter(), windowingTracker_.GetWindowing().GetWidth());
       }
         
       lock->Invalidate();
@@ -2597,11 +2769,13 @@ private:
                  const OrthancStone::DicomSource& source,
                  const std::string& canvas,
                  boost::shared_ptr<FramesCache> cache,
+                 boost::shared_ptr<InstancesCache> instancesCache,
                  bool softwareRendering,
                  bool linearInterpolation) :
     context_(context),
     source_(source),
     framesCache_(cache),
+    instancesCache_(instancesCache),
     fitNextContent_(true),
     hasFocusOnInstance_(false),
     focusFrameNumber_(0),
@@ -2638,8 +2812,6 @@ private:
     
     emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, OnWheel);
 
-    SetWindowingPreset();
-
     stoneAnnotations_.reset(new OrthancStone::AnnotationsSceneLayer(LAYER_ANNOTATIONS_STONE));
     stoneAnnotations_->SetProbedLayer(LAYER_TEXTURE);
   }
@@ -2648,12 +2820,7 @@ private:
   void Handle(const OrthancStone::ViewportController::GrayscaleWindowingChanged& message)
   {
     // This event is triggered by the windowing mouse action, from class "GrayscaleWindowingSceneTracker"
-    currentWindowing_ = message.GetWindowing();
-
-    if (observer_.get() != NULL)
-    {
-      observer_->SignalWindowingUpdated(*this, currentWindowing_);
-    }
+    UpdateWindowing(WindowingState_User, message.GetWindowing());
   }
 
   
@@ -2796,12 +2963,13 @@ public:
   static boost::shared_ptr<ViewerViewport> Create(OrthancStone::WebAssemblyLoadersContext& context,
                                                   const OrthancStone::DicomSource& source,
                                                   const std::string& canvas,
-                                                  boost::shared_ptr<FramesCache> cache,
+                                                  boost::shared_ptr<FramesCache> framesCache,
+                                                  boost::shared_ptr<InstancesCache> instancesCache,
                                                   bool softwareRendering,
                                                   bool linearInterpolation)
   {
     boost::shared_ptr<ViewerViewport> viewport(
-      new ViewerViewport(context, source, canvas, cache, softwareRendering, linearInterpolation));
+      new ViewerViewport(context, source, canvas, framesCache, instancesCache, softwareRendering, linearInterpolation));
 
     {
       std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context.Lock());
@@ -2853,7 +3021,7 @@ public:
 
     frames_.reset(frames);
     cursor_.reset(new SeriesCursor(frames_->GetFramesCount(), false));
-    
+
     if (frames_->GetFramesCount() != 0)
     {
       const OrthancStone::DicomInstanceParameters& firstInstance = frames_->GetInstanceOfFrame(0);
@@ -2873,11 +3041,16 @@ public:
           cursor_.reset(new SeriesCursor(frames_->GetFramesCount(), true));
         }
       }
+
+      SetDefaultWindowing(firstInstance);
+    }
+    else
+    {
+      windowingTracker_.Reset();
     }
 
     LOG(INFO) << "Number of frames in series: " << frames_->GetFramesCount();
 
-    SetWindowingPreset();
     ClearViewport();
     prefetchQueue_.clear();
 
@@ -3147,29 +3320,6 @@ public:
   }
 
 
-  void SetWindowingPreset()
-  {
-    if (windowingPresets_.empty())
-    {
-      SetWindowing(fallbackWindowing_);
-    }
-    else
-    {
-      SetWindowing(windowingPresets_[0]);
-    }
-  }
-
-  void SetWindowing(const OrthancStone::Windowing& windowing)
-  {
-    currentWindowing_ = windowing;
-    UpdateCurrentTextureParameters();
-
-    if (observer_.get() != NULL)
-    {
-      observer_->SignalWindowingUpdated(*this, currentWindowing_);
-    }
-  }
-
   void StretchWindowing()
   {
     float minValue, maxValue;
@@ -3197,7 +3347,7 @@ public:
 
     const float center = (minValue + maxValue) / 2.0f;
     const float width = maxValue - minValue;
-    SetWindowing(OrthancStone::Windowing(center, width));
+    UpdateWindowing(WindowingState_User, OrthancStone::Windowing(center, width));
   }
 
   void FlipX()
@@ -3578,6 +3728,12 @@ public:
         *this, current.GetOrigin() + synchronizationOffset_, current.GetNormal());
     }
   }
+
+
+  void SetUserWindowing(const OrthancStone::Windowing& windowing)
+  {
+    UpdateWindowing(WindowingState_User, windowing);
+  }
 };
 
 
@@ -3864,6 +4020,7 @@ public:
 
 static OrthancStone::DicomSource source_;
 static boost::shared_ptr<FramesCache> framesCache_;
+static boost::shared_ptr<InstancesCache> instancesCache_;
 static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
 static bool softwareRendering_ = false;
@@ -3914,7 +4071,7 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
   if (found == allViewports_.end())
   {
     boost::shared_ptr<ViewerViewport> viewport(
-      ViewerViewport::Create(*context_, source_, canvas, framesCache_, softwareRendering_, linearInterpolation_));
+      ViewerViewport::Create(*context_, source_, canvas, framesCache_, instancesCache_, softwareRendering_, linearInterpolation_));
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
     viewport->SetOsiriXAnnotations(osiriXAnnotations_);
@@ -3943,6 +4100,7 @@ extern "C"
     context_->SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
     
     framesCache_.reset(new FramesCache);
+    instancesCache_.reset(new InstancesCache);
     osiriXAnnotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
 
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");
@@ -4366,7 +4524,7 @@ extern "C"
   {
     try
     {
-      GetViewport(canvas)->SetWindowing(OrthancStone::Windowing(center, width));
+      GetViewport(canvas)->SetUserWindowing(OrthancStone::Windowing(center, width));
     }
     EXTERN_CATCH_EXCEPTIONS;
   }  

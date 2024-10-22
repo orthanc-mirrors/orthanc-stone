@@ -32,6 +32,7 @@
 #include <Images/ImageProcessing.h>
 #include <Logging.h>
 #include <OrthancException.h>
+#include <SerializationToolbox.h>
 #include <Toolbox.h>
 
 
@@ -229,6 +230,65 @@ namespace OrthancStone
         !dicom.GetValue(Orthanc::DICOM_TAG_INSTANCE_NUMBER).ParseInteger32(instanceNumber_))
     {
       instanceNumber_ = 0;
+    }
+
+
+    static const Orthanc::DicomTag DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE(0x5200, 0x9230);
+    static const Orthanc::DicomTag DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE(0x0028, 0x9132);
+
+    const Orthanc::DicomValue* frames = dicom.TestAndGetValue(DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE);
+    if (frames != NULL &&
+        hasNumberOfFrames_ &&
+        frames->IsSequence())
+    {
+      /**
+       * New in Stone Web viewer 2.2: Deal with Philips multiframe
+       * (cf. mail from Tomas Kenda on 2021-08-17). This cannot be done
+       * in LoadSeriesDetailsFromInstance, as the "Per Frame Functional Groups Sequence"
+       * is not available at that point.
+       **/
+
+      const Json::Value& sequence = frames->GetSequenceContent();
+
+      perFrameWindowing_.resize(numberOfFrames_);
+
+      // This corresponds to "ParsedDicomFile::GetDefaultWindowing()"
+      for (Json::ArrayIndex i = 0; i < sequence.size(); i++)
+      {
+        if (i < numberOfFrames_ &&
+            sequence[i].isMember(DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE.Format()))
+        {
+          const Json::Value& v = sequence[i][DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE.Format()];
+
+          static const char* KEY_VALUE = "Value";
+
+          if (v.isMember(KEY_VALUE) &&
+              v[KEY_VALUE].type() == Json::arrayValue &&
+              v[KEY_VALUE].size() >= 1 &&
+              v[KEY_VALUE][0].isMember(Orthanc::DICOM_TAG_WINDOW_CENTER.Format()) &&
+              v[KEY_VALUE][0].isMember(Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()) &&
+              v[KEY_VALUE][0][Orthanc::DICOM_TAG_WINDOW_CENTER.Format()].isMember(KEY_VALUE) &&
+              v[KEY_VALUE][0][Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()].isMember(KEY_VALUE))
+          {
+            const Json::Value& scenter = v[KEY_VALUE][0][Orthanc::DICOM_TAG_WINDOW_CENTER.Format()][KEY_VALUE];
+            const Json::Value& swidth = v[KEY_VALUE][0][Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()][KEY_VALUE];
+
+            double center, width;
+            if (scenter.isString() &&
+                swidth.isString() &&
+                Orthanc::SerializationToolbox::ParseDouble(center, scenter.asString()) &&
+                Orthanc::SerializationToolbox::ParseDouble(width, swidth.asString()))
+            {
+              perFrameWindowing_[i] = Windowing(center, width);
+            }
+            else if (scenter.isNumeric() &&
+                     swidth.isNumeric())
+            {
+              perFrameWindowing_[i] = Windowing(scenter.asDouble(), swidth.asDouble());
+            }
+          }
+        }
+      }
     }
   }
 
@@ -822,6 +882,21 @@ namespace OrthancStone
     else
     {
       return (data_.frameOffsets_[0] > data_.frameOffsets_[1]);
+    }
+  }
+
+
+  bool DicomInstanceParameters::LookupPerFrameWindowing(Windowing& windowing,
+                                                        unsigned int frame) const
+  {
+    if (frame < data_.perFrameWindowing_.size())
+    {
+      windowing = data_.perFrameWindowing_[frame];
+      return true;
+    }
+    else
+    {
+      return false;
     }
   }
 }

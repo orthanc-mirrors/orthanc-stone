@@ -28,6 +28,8 @@
 #include <SystemToolbox.h>
 #include <Toolbox.h>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 
 static const std::string STONE_WEB_VIEWER_ROOT = "/stone-webviewer";  // (*)
 static const char* CONFIG_SECTION = "StoneWebViewer";
@@ -61,7 +63,8 @@ OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
       }
 
       std::string version = info["Version"].asString();
-      if (version.find("mainline") != 0)
+      if (version == "mainline" ||
+          boost::starts_with(version, "mainline-"))  // Allow DICOMweb versions such as "mainline-commitId"
       {
         std::vector<std::string> tokens;
         Orthanc::Toolbox::TokenizeString(tokens, version, '.');

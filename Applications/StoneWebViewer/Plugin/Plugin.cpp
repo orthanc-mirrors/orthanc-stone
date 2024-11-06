@@ -63,8 +63,8 @@ OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
       }
 
       std::string version = info["Version"].asString();
-      if (version == "mainline" ||
-          boost::starts_with(version, "mainline-"))  // Allow DICOMweb versions such as "mainline-commitId"
+      if (version != "mainline" &&
+          !boost::starts_with(version, "mainline-"))  // Allow DICOMweb versions such as "mainline-commitId"
       {
         std::vector<std::string> tokens;
         Orthanc::Toolbox::TokenizeString(tokens, version, '.');

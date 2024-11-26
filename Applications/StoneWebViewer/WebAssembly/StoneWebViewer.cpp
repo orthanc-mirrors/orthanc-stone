@@ -516,13 +516,17 @@ private:
 
       for (size_t i = 0; i < dicom.GetSize(); i++)
       {
-        std::string studyInstanceUid, seriesInstanceUid, modality;
+        std::string modality;
+        if (!dicom.GetResource(i).LookupStringValue(modality, Orthanc::DICOM_TAG_MODALITY, false))
+        {
+          modality = ""; // Arbitrary value if "Modality" is missing
+        }
+
+        std::string studyInstanceUid, seriesInstanceUid;
         if (dicom.GetResource(i).LookupStringValue(
               studyInstanceUid, Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, false) &&
             dicom.GetResource(i).LookupStringValue(
-              seriesInstanceUid, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false) &&
-            dicom.GetResource(i).LookupStringValue(
-              modality, Orthanc::DICOM_TAG_MODALITY, false))
+              seriesInstanceUid, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false))
         {
           // skip series that should not be displayed
           if (std::find(skipSeriesFromModalities_.begin(), skipSeriesFromModalities_.end(), modality) == skipSeriesFromModalities_.end())

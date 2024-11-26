@@ -290,7 +290,7 @@ namespace OrthancStone
 
     if (dataset.GetSequenceSize(size, Orthanc::DicomPath(DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE)))
     {
-      data_.perFrameWindowing_.resize(data_.numberOfFrames_);
+      data_.perFrameWindowing_.reserve(data_.numberOfFrames_);
 
       // This corresponds to "ParsedDicomFile::GetDefaultWindowing()"
       for (size_t i = 0; i < size; i++)
@@ -308,7 +308,7 @@ namespace OrthancStone
                                                             DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE, 0,
                                                             Orthanc::DICOM_TAG_WINDOW_WIDTH)))
         {
-          data_.perFrameWindowing_[i] = Windowing(center, width);
+          data_.perFrameWindowing_.push_back(Windowing(center, width));
         }
       }
     }

@@ -138,65 +138,66 @@ namespace OrthancStone
       return false;
     }
     else if (value->type() == Json::arrayValue &&
-             value->size() == 1u &&
-             (*value) [0].type() == Json::stringValue && (
-               // This is the list of all the string value representations:
-               // https://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html
-               vr == "AE" ||
-               vr == "AS" ||
-               vr == "CS" ||
-               vr == "DA" ||
-               vr == "DS" ||
-               vr == "DT" ||
-               vr == "IS" ||
-               vr == "LO" ||
-               vr == "LT" ||
-               vr == "SH" ||
-               vr == "ST" ||
-               vr == "TM" ||
-               vr == "UC" ||
-               vr == "UI" ||
-               vr == "UR" ||
-               vr == "UT"))
+             value->size() == 1u)
     {
-      result = (*value) [0].asString();
-      return true;
-    }
-    else if (value->type() == Json::arrayValue &&
-             value->size() == 1u &&
-             vr == "PN" &&
-             (*value) [0].type() == Json::objectValue &&
-             (*value) [0].isMember(ALPHABETIC) &&
-             (*value) [0][ALPHABETIC].type() == Json::stringValue)
-    {
-      result = (*value) [0][ALPHABETIC].asString();
-      return true;
-    }
-    else if (value->type() == Json::arrayValue &&
-             value->size() == 1u &&
-             (vr == "FD" || vr == "FL") &&
-             (*value) [0].isDouble())
-    {
-      result = boost::lexical_cast<std::string>((*value) [0].asDouble());
-      return true;
-    }
-    else if (value->type() == Json::arrayValue &&
-             value->size() == 1u &&
-             (vr == "UL" ||
-              vr == "US") &&
-             (*value) [0].isUInt64())
-    {
-      result = boost::lexical_cast<std::string>((*value) [0].asUInt64());
-      return true;
-    }
-    else if (value->type() == Json::arrayValue &&
-             value->size() == 1u &&
-             (vr == "SL" ||
-              vr == "SS") &&
-             (*value) [0].isInt64())
-    {
-      result = boost::lexical_cast<std::string>((*value) [0].asInt64());
-      return true;
+      if ((*value) [0].type() == Json::stringValue && (
+            // This is the list of all the string value representations:
+            // https://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html
+            vr == "AE" ||
+            vr == "AS" ||
+            vr == "CS" ||
+            vr == "DA" ||
+            vr == "DT" ||
+            vr == "LO" ||
+            vr == "LT" ||
+            vr == "SH" ||
+            vr == "ST" ||
+            vr == "TM" ||
+            vr == "UC" ||
+            vr == "UI" ||
+            vr == "UR" ||
+            vr == "UT"))
+      {
+        result = (*value) [0].asString();
+        return true;
+      }
+      else if (vr == "PN" &&
+               (*value) [0].type() == Json::objectValue &&
+               (*value) [0].isMember(ALPHABETIC) &&
+               (*value) [0][ALPHABETIC].type() == Json::stringValue)
+      {
+        result = (*value) [0][ALPHABETIC].asString();
+        return true;
+      }
+      else if ((vr == "DS" ||
+                vr == "FD" ||
+                vr == "FL") &&
+               (*value) [0].isDouble())
+      {
+        result = boost::lexical_cast<std::string>((*value) [0].asDouble());
+        return true;
+      }
+      else if ((vr == "UL" ||
+                vr == "US" ||
+                vr == "UV") &&
+               (*value) [0].isUInt64())
+      {
+        result = boost::lexical_cast<std::string>((*value) [0].asUInt64());
+        return true;
+      }
+      else if ((vr == "IS" ||
+                vr == "SL" ||
+                vr == "SS" ||
+                vr == "SV") &&
+               (*value) [0].isInt64())
+      {
+        result = boost::lexical_cast<std::string>((*value) [0].asInt64());
+        return true;
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented, "Unsupported value representation: " + vr);
+      }
     }
     else if (value->type() == Json::arrayValue &&
              vr == "SQ")

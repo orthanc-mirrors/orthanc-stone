@@ -2395,10 +2395,16 @@ private:
           // (cf. mail from Tomas Kenda on 2021-08-17)
           InstancesCache::Accessor accessor(*instancesCache_, instance.GetSopInstanceUid());
           OrthancStone::Windowing windowing;
-          if (accessor.IsValid() &&
-              accessor.GetParameters().LookupPerFrameWindowing(windowing, frameIndex))
+          if (accessor.IsValid())
           {
-            UpdateWindowing(WindowingState_FramePreset, windowing);
+            if (accessor.GetParameters().LookupPerFrameWindowing(windowing, frameIndex))
+            {
+              UpdateWindowing(WindowingState_FramePreset, windowing);
+            }
+            else if (accessor.GetParameters().GetWindowingPresetsCount() > 0)
+            {
+              UpdateWindowing(WindowingState_FramePreset, accessor.GetParameters().GetWindowingPreset(0));
+            }
           }
         }
 

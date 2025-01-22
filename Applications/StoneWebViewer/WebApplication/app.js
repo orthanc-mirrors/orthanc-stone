@@ -729,6 +729,24 @@ var app = new Vue({
       }
     },
 
+    GetActiveSeries: function() {
+      if (this.activeViewport == 1) {
+        return this.viewport1Content.series;
+      }
+      else if (this.activeViewport == 2) {
+        return this.viewport2Content.series;
+      }
+      else if (this.activeViewport == 3) {
+        return this.viewport3Content.series;
+      }
+      else if (this.activeViewport == 4) {
+        return this.viewport4Content.series;
+      }
+      else {
+        return null;
+      }
+    },
+
     SetResources: function(sourceStudies, sourceSeries) {
       // Here one can fix input studies/series for missing DICOM tags
       // that are needed for the Stone Web viewer (e.g. "hand.dcm")

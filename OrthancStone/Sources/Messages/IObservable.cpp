@@ -80,15 +80,17 @@ namespace OrthancStone
           {
             try
             {
+              // LOG(INFO) << "IN Handling message : " << message.GetIdentifier().AsString();
               (*it)->Apply(message);
+              // LOG(INFO) << "OUT Handling message : " << message.GetIdentifier().AsString();
             }
             catch (Orthanc::OrthancException& e)
             {
-              LOG(ERROR) << "Exception on callable: " << e.What();
+              LOG(ERROR) << "OrthancException on callable: " << e.What() << " " << message.GetIdentifier().AsString();
             }
             catch (StoneException& e)
             {
-              LOG(ERROR) << "Exception on callable: " << e.What();
+              LOG(ERROR) << "StoneException on callable: " << e.What();
             }
             catch (std::exception& e)
             {

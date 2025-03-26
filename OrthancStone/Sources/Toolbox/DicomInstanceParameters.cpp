@@ -256,7 +256,7 @@ namespace OrthancStone
 
     if (!data_.hasPixelSpacing_ &&
         dataset.GetSequenceSize(size, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS)) &&
-        size == 1)
+        size >= 1)
     {
       int directionX, directionY;
       double deltaX, deltaY;

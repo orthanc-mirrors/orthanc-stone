@@ -2461,6 +2461,17 @@ private:
       pixelSpacingY = centralPixelSpacingY_;
     }
 
+    // This hack has been introduced to fix an issue where the first US image of a series had negative PhysicalDeltaX value 
+    // while the other images from the series had different geometries.  layer->SetOrigin was failing later.
+    // At the end, it appears that the measures are corrects although we have set the pixelSpacing to 1m so the values are likely
+    // overwritten later on...
+    if (pixelSpacingX < 0 || pixelSpacingY < 0)
+    {
+      LOG(ERROR) << "Pixel spacings are invalid: " << pixelSpacingX << " " << pixelSpacingY << " setting dummy values to 1000, 1000 -> measures might be invalid !";
+      pixelSpacingX = 1000;
+      pixelSpacingY = 1000;
+    }
+
     if (FIX_LSD_479)
     {
       /**

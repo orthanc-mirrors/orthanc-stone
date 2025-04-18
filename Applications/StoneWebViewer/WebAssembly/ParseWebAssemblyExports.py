@@ -160,6 +160,9 @@ def Explore(node):
             elif returnType in [ 'int', 'unsigned int' ]:
                 f['hasReturn'] = True
                 f['returnType'] = "'int'"
+            elif returnType == 'void *':
+                f['hasReturn'] = True
+                f['returnType'] = "'int'"
             else:
                 raise Exception('Unknown return type in function "%s()": %s' % (node.spelling, returnType))
 
@@ -176,6 +179,10 @@ def Explore(node):
                         arg['type'] = "'string'"
                     elif argType == 'double':
                         arg['type'] = "'double'"
+                    elif argType == 'size_t':
+                        arg['type'] = "'int'"
+                    elif argType in [ 'const void *', 'void *' ]:
+                        arg['type'] = "'int'"
                     else:
                         raise Exception('Unknown type for argument "%s" in function "%s()": %s' %
                                         (child.displayname, node.spelling, argType))

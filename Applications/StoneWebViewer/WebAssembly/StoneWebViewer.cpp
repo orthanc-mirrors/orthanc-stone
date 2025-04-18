@@ -4409,6 +4409,22 @@ static void DeepLearningModelLoaded(emscripten_fetch_t *fetch)
   EXTERN_CATCH_EXCEPTIONS;
 }
 
+
+static void DeepLearningInitialization()
+{
+  deepLearningWorker_ = emscripten_create_worker("../stone-deep-learning/DeepLearningWorker.js");
+  emscripten_call_worker(deepLearningWorker_, "Initialize", NULL, 0, DeepLearningCallback, NULL);
+}
+
+
+typedef void (*PluginInitializer) ();
+
+static const PluginInitializer pluginsInitializers_[] = {
+  DeepLearningInitialization,
+  NULL
+};
+
+
 extern "C"
 {
   int main(int argc, char const *argv[]) 
@@ -4427,8 +4443,10 @@ extern "C"
     instancesCache_.reset(new InstancesCache);
     osiriXAnnotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
 
-    deepLearningWorker_ = emscripten_create_worker("../stone-deep-learning/DeepLearningWorker.js");
-    emscripten_call_worker(deepLearningWorker_, "Initialize", NULL, 0, DeepLearningCallback, NULL);
+    for (size_t i = 0; pluginsInitializers_[i] != NULL; i++)
+    {
+      pluginsInitializers_[i] ();
+    }
 
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");
   }
@@ -5055,7 +5073,8 @@ extern "C"
   // Side-effect: "GetStringBuffer()" is filled with the "Series
   // Instance UID" of the first loaded annotation
   EMSCRIPTEN_KEEPALIVE
-  int LoadOsiriXAnnotations(const char* xml,
+  int LoadOsiriXAnnotations(const void* xmlPointer,
+                            int xmlSize,
                             int clearPreviousAnnotations)
   {
     try
@@ -5064,8 +5083,8 @@ extern "C"
       {
         osiriXAnnotations_->Clear();
       }
-      
-      osiriXAnnotations_->LoadXml(xml);
+
+      osiriXAnnotations_->LoadXml(reinterpret_cast<const char*>(xmlPointer), xmlSize);
       
       // Force redraw, as the annotations might have changed
       for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
@@ -5222,5 +5241,19 @@ extern "C"
                                              OrthancStone::ScenePoint2D(labelX, labelY));
     }
     EXTERN_CATCH_EXCEPTIONS;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void *Allocate(size_t size)
+  {
+    return malloc(size);
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void Deallocate(void* ptr)
+  {
+    free(ptr);
   }
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -559,6 +559,79 @@ namespace OrthancStone
       {
         ComputeNormalFromCosines(normal, cosines);
         return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+
+
+    static bool SolveLineIntersectionSystem(double& x,
+                                            double& y,
+                                            double& s,
+                                            double& t,
+                                            double x1, double y1,
+                                            double x2, double y2,
+                                            double x3, double y3,
+                                            double x4, double y4)
+    {
+      // https://en.wikipedia.org/wiki/Intersection_(geometry)#Two_line_segments
+      const double a1 = x2 - x1;
+      const double b1 = -x4 + x3;
+      const double c1 = x3 - x1;
+      const double a2 = y2 - y1;
+      const double b2 = -y4 + y3;
+      const double c2 = y3 - y1;
+
+      const double denominator = a1 * b2 - a2 * b1;
+      if (LinearAlgebra::IsCloseToZero(denominator))
+      {
+        return false;
+      }
+      else
+      {
+        // This is Cramer's rule
+        s = (c1 * b2 - c2 * b1) / denominator;
+        t = (a1 * c2 - a2 * c1) / denominator;
+        x = x1 + s * (x2 - x1);
+        y = y1 + s * (y2 - y1);
+        return true;
+      }
+    }
+
+
+    bool IntersectTwoLines(double& x,
+                           double& y,
+                           double ax1,
+                           double ay1,
+                           double ax2,
+                           double ay2,
+                           double bx1,
+                           double by1,
+                           double bx2,
+                           double by2)
+    {
+      double s, t;
+      return SolveLineIntersectionSystem(x, y, s, t, ax1, ay1, ax2, ay2, bx1, by1, bx2, by2);
+    }
+
+
+    bool IntersectLineAndSegment(double& x,
+                                 double& y,
+                                 double lineX1,
+                                 double lineY1,
+                                 double lineX2,
+                                 double lineY2,
+                                 double segmentX1,
+                                 double segmentY1,
+                                 double segmentX2,
+                                 double segmentY2)
+    {
+      double s, t;
+      if (SolveLineIntersectionSystem(x, y, s, t, lineX1, lineY1, lineX2, lineY2, segmentX1, segmentY1, segmentX2, segmentY2))
+      {
+        return (t >= 0 && t <= 1);
       }
       else
       {

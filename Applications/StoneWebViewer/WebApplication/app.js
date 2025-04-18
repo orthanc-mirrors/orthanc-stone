@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License
@@ -678,7 +678,14 @@ var app = new Vue({
         return null;
       }
     },
-    
+
+    GetActiveViewportVueComponent: function() {
+      if (this.activeViewport >= 1 && this.activeViewport <= 4) {
+        return $('#canvas' + this.activeViewport + '-container')[0].__vue__;
+      }
+      return null;
+    },
+
     GetActiveSeriesInstanceUid: function() {
       var s = [];
 
@@ -730,6 +737,24 @@ var app = new Vue({
       }
       else {
         return 'canvas1';
+      }
+    },
+
+    GetActiveSeries: function() {
+      if (this.activeViewport == 1) {
+        return this.viewport1Content.series;
+      }
+      else if (this.activeViewport == 2) {
+        return this.viewport2Content.series;
+      }
+      else if (this.activeViewport == 3) {
+        return this.viewport3Content.series;
+      }
+      else if (this.activeViewport == 4) {
+        return this.viewport4Content.series;
+      }
+      else {
+        return null;
       }
     },
 
@@ -964,7 +989,7 @@ var app = new Vue({
         this.layoutCountX = 1;
         this.layoutCountY = 2;
       }
-
+      localStorage.setItem('layout', layout);
       this.FitContent();
     },
 
@@ -1207,7 +1232,58 @@ var app = new Vue({
     DownloadJpeg: function()
     {
       var canvas = document.getElementById(this.GetActiveCanvas());
-      SaveDataUriScheme('StoneWebViewerScreenshot.jpg', canvas.toDataURL('image/jpeg'));
+      var path = 'StoneWebViewerScreenshot.jpg';
+      var viewport = this.GetActiveViewportVueComponent();
+
+      var template = this.globalConfiguration.ScreenshotTemplate;
+      if (template !== undefined && viewport !== undefined) {
+        // var seriesInstanceUid = this.GetActiveSeriesInstanceUid()
+        var activeTags = this.GetActiveSeries().tags;
+        // add instance related values to the dico
+        activeTags['0020,0013'] = viewport.instanceNumber;
+        activeTags['0008,0023'] = viewport.contentDate;
+        activeTags['0008,0033'] = viewport.contentTime;
+
+        activeTags['0028,0008'] = viewport.numberOfFrames;
+        activeTags['ffff,9999'] = viewport.currentFrame + 1;  // current frame is not a DICOM Tag but, let's give it an internal number to standardize the way we substitue values in the template
+
+        // allow using common Tag names in the template instead of group,element:
+        const commonTagsTranslation = {
+          'PatientName': '0010,0010',
+          'PatientID': '0010,0020',
+          'PatientBirthDate': '0010,0030',
+          'PatientSex': '0010,0040',
+          
+          'StudyDate': '0008,0020',
+          'StudyTime': '0008,0030',
+          'AccessionNumber': '0008,0050',
+          'StudyDescription': '0008,1030',
+          'StudyInstanceUID': '0020,000d',
+          
+          'SeriesDate': '0008,0021',
+          'SeriesTime': '0008,0031',
+          'Modality': '0008,0060',
+          'SeriesDescription': '0008,103e',
+          'SeriesInstanceUID': '0020,000e',
+          
+          'InstanceNumber': '0020,0013',
+          'ContentDate': '0008,0023',
+          'ContentTime': '0008,0033',
+          'NumberOfFrames': '0028,0008',
+          'CurrentFrame': 'ffff,9999'
+        }
+
+        // replace common tag names by group,element in the template
+        for (const [symbolicName, numericName] of Object.entries(commonTagsTranslation)) {
+          template = template.replace('{' + symbolicName + '}', '{' + numericName + '}');
+        } 
+        
+        path = template.replace(/{([0-9a-f,]+)}/g, function(match, group1) { return activeTags[group1] || 'undefined'; });
+        console.log('downloading a screenshot with template ', template, ' and tags: ', activeTags, ', final path: ', path);
+      }
+
+      var canvas = document.getElementById(this.GetActiveCanvas());
+      SaveDataUriScheme(path, canvas.toDataURL('image/jpeg'));
     },
 
     SetCombinedToolActions: function()
@@ -1378,7 +1454,11 @@ var app = new Vue({
   mounted: function() {
     // Warning: In this function, the "stone" global object is not initialized yet!
     
-    this.SetViewportLayout('1x1');
+    if (localStorage.layout) {
+      this.SetViewportLayout(localStorage.layout);
+    } else {
+      this.SetViewportLayout('1x1');
+    }
 
     if (localStorage.settingNotDiagnostic) {
       this.settingNotDiagnostic = (localStorage.settingNotDiagnostic == '1');

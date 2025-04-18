@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -66,13 +66,11 @@ TEST(DicomInstanceParameters, Basic)
   ASSERT_THROW(p->GetRescaleIntercept(), Orthanc::OrthancException);
   ASSERT_THROW(p->GetRescaleSlope(), Orthanc::OrthancException);
   ASSERT_EQ(0u, p->GetWindowingPresetsCount());
-  ASSERT_THROW(p->GetWindowingPresetCenter(0), Orthanc::OrthancException);
-  ASSERT_THROW(p->GetWindowingPresetWidth(0), Orthanc::OrthancException);
+  ASSERT_THROW(p->GetWindowingPreset(0), Orthanc::OrthancException);
 
-  float c, w;
-  p->GetWindowingPresetsUnion(c, w);
-  ASSERT_FLOAT_EQ(128.0f, c);
-  ASSERT_FLOAT_EQ(256.0f, w);
+  OrthancStone::Windowing w = p->GetWindowingPresetsUnion();
+  ASSERT_FLOAT_EQ(128.0f, w.GetCenter());
+  ASSERT_FLOAT_EQ(256.0f, w.GetWidth());
 
   ASSERT_THROW(p->GetExpectedPixelFormat(), Orthanc::OrthancException);
   ASSERT_FALSE(p->HasIndexInSeries());
@@ -96,20 +94,19 @@ TEST(DicomInstanceParameters, Windowing)
 
   OrthancStone::DicomInstanceParameters p(m);
   ASSERT_EQ(3u, p.GetWindowingPresetsCount());
-  ASSERT_FLOAT_EQ(10, p.GetWindowingPresetCenter(0));
-  ASSERT_FLOAT_EQ(100, p.GetWindowingPresetCenter(1));
-  ASSERT_FLOAT_EQ(1000, p.GetWindowingPresetCenter(2));
-  ASSERT_FLOAT_EQ(50, p.GetWindowingPresetWidth(0));
-  ASSERT_FLOAT_EQ(60, p.GetWindowingPresetWidth(1));
-  ASSERT_FLOAT_EQ(70, p.GetWindowingPresetWidth(2));
+  ASSERT_FLOAT_EQ(10, p.GetWindowingPreset(0).GetCenter());
+  ASSERT_FLOAT_EQ(100, p.GetWindowingPreset(1).GetCenter());
+  ASSERT_FLOAT_EQ(1000, p.GetWindowingPreset(2).GetCenter());
+  ASSERT_FLOAT_EQ(50, p.GetWindowingPreset(0).GetWidth());
+  ASSERT_FLOAT_EQ(60, p.GetWindowingPreset(1).GetWidth());
+  ASSERT_FLOAT_EQ(70, p.GetWindowingPreset(2).GetWidth());
 
   const float a = 10.0f - 50.0f / 2.0f;
   const float b = 1000.0f + 70.0f / 2.0f;
   
-  float c, w;
-  p.GetWindowingPresetsUnion(c, w);
-  ASSERT_FLOAT_EQ((a + b) / 2.0f, c);
-  ASSERT_FLOAT_EQ(b - a, w);
+  OrthancStone::Windowing w = p.GetWindowingPresetsUnion();
+  ASSERT_FLOAT_EQ((a + b) / 2.0f, w.GetCenter());
+  ASSERT_FLOAT_EQ(b - a, w.GetWidth());
 }
 
 

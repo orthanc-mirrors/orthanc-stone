@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -25,6 +25,7 @@
 
 #include "../Sources/StoneEnumerations.h"
 #include "../Sources/StoneInitialization.h"
+#include "../Sources/Toolbox/StoneToolbox.h"
 
 #include <Logging.h>
 
@@ -55,6 +56,22 @@ TEST(Enumerations, Basic)
   ASSERT_EQ(SeriesThumbnailType_Unsupported, GetSeriesThumbnailType(SopClassUid_RTDose));
   ASSERT_EQ(SeriesThumbnailType_Unsupported, GetSeriesThumbnailType(SopClassUid_RTStruct));
   ASSERT_EQ(SeriesThumbnailType_Unsupported, GetSeriesThumbnailType(SopClassUid_RTPlan));
+}
+
+
+TEST(StoneToolbox, JoinUrl)
+{
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("", ""));
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("", "/"));
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("", "//"));
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("/", ""));
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("//", ""));
+  ASSERT_EQ("/", OrthancStone::StoneToolbox::JoinUrl("////", "/////"));
+  ASSERT_EQ("a/b/d/e/", OrthancStone::StoneToolbox::JoinUrl("a/b", "d/e/"));
+  ASSERT_EQ("a/b/d/e/", OrthancStone::StoneToolbox::JoinUrl("a/b", "/d/e/"));
+  ASSERT_EQ("a/b/d/e/", OrthancStone::StoneToolbox::JoinUrl("a/b/", "d/e/"));
+  ASSERT_EQ("a/b/d/e/", OrthancStone::StoneToolbox::JoinUrl("a/b/", "/d/e/"));
+  ASSERT_EQ("a/b/d/e/", OrthancStone::StoneToolbox::JoinUrl("a/b///", "///d/e/"));
 }
 
 

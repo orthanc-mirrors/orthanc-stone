@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -27,11 +27,15 @@
 #include "../Scene2D/FloatTextureSceneLayer.h"
 #include "GeometryToolbox.h"
 #include "ImageToolbox.h"
+#include "OrthancDatasets/DicomDatasetReader.h"
+#include "OrthancDatasets/DicomWebDataset.h"
+#include "OrthancDatasets/OrthancNativeDataset.h"
 
 #include <Images/Image.h>
 #include <Images/ImageProcessing.h>
 #include <Logging.h>
 #include <OrthancException.h>
+#include <SerializationToolbox.h>
 #include <Toolbox.h>
 
 
@@ -190,28 +194,28 @@ namespace OrthancStone
       }
     }
 
-    bool ok = false;
+
+    windowingPresets_.clear();
+
+    Vector centers, widths;
     
-    if (LinearAlgebra::ParseVector(windowingPresetCenters_, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
-        LinearAlgebra::ParseVector(windowingPresetWidths_, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH))
+    if (LinearAlgebra::ParseVector(centers, dicom, Orthanc::DICOM_TAG_WINDOW_CENTER) &&
+        LinearAlgebra::ParseVector(widths, dicom, Orthanc::DICOM_TAG_WINDOW_WIDTH))
     {
-      if (windowingPresetCenters_.size() == windowingPresetWidths_.size())
+      if (centers.size() == widths.size())
       {
-        ok = true;
+        windowingPresets_.resize(centers.size());
+
+        for (size_t i = 0; i < centers.size(); i++)
+        {
+          windowingPresets_[i] = Windowing(centers[i], widths[i]);
+        }
       }
       else
       {
         LOG(ERROR) << "Mismatch in the number of preset windowing widths/centers, ignoring this";
-        ok = false;
       }
     }
-
-    if (!ok)
-    {
-      // Don't use "Vector::clear()", as it has not the same meaning as "std::vector::clear()"
-      windowingPresetCenters_.resize(0);
-      windowingPresetWidths_.resize(0);
-    }      
 
     // This computes the "IndexInSeries" metadata from Orthanc (check
     // out "Orthanc::ServerIndex::Store()")
@@ -230,6 +234,100 @@ namespace OrthancStone
     {
       instanceNumber_ = 0;
     }
+  }
+
+
+  void DicomInstanceParameters::InjectSequenceTags(const IDicomDataset& dataset)
+  {
+    /**
+     * Use DICOM tag "SequenceOfUltrasoundRegions" (0018,6011) in
+     * order to derive the pixel spacing on ultrasound (US) images
+     **/
+
+    static const Orthanc::DicomTag DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS(0x0018, 0x6011);
+    static const Orthanc::DicomTag DICOM_TAG_PHYSICAL_UNITS_X_DIRECTION(0x0018, 0x6024);
+    static const Orthanc::DicomTag DICOM_TAG_PHYSICAL_UNITS_Y_DIRECTION(0x0018, 0x6026);
+    static const Orthanc::DicomTag DICOM_TAG_PHYSICAL_DELTA_X(0x0018, 0x602c);
+    static const Orthanc::DicomTag DICOM_TAG_PHYSICAL_DELTA_Y(0x0018, 0x602e);
+
+    DicomDatasetReader reader(dataset);
+
+    size_t size;
+
+    if (!data_.hasPixelSpacing_ &&
+        dataset.GetSequenceSize(size, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS)) &&
+        size >= 1)
+    {
+      int directionX, directionY;
+      double deltaX, deltaY;
+
+      if (reader.GetIntegerValue(directionX, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                                0, DICOM_TAG_PHYSICAL_UNITS_X_DIRECTION)) &&
+          reader.GetIntegerValue(directionY, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                                0, DICOM_TAG_PHYSICAL_UNITS_Y_DIRECTION)) &&
+          reader.GetDoubleValue(deltaX, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                           0, DICOM_TAG_PHYSICAL_DELTA_X)) &&
+          reader.GetDoubleValue(deltaY, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                           0, DICOM_TAG_PHYSICAL_DELTA_Y)) &&
+          directionX == 0x0003 &&  // Centimeters
+          directionY == 0x0003)    // Centimeters
+      {
+        // Scene coordinates are expressed in millimeters => multiplication by 10
+        SetPixelSpacing(10.0 * deltaX, 10.0 * deltaY);
+      }
+    }
+
+
+    /**
+     * New in Stone Web viewer 2.2: Deal with Philips multiframe
+     * (cf. mail from Tomas Kenda on 2021-08-17). This cannot be done
+     * in LoadSeriesDetailsFromInstance, as the "Per Frame Functional
+     * Groups Sequence" is not available at that point.
+     **/
+
+    static const Orthanc::DicomTag DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE(0x5200, 0x9230);
+    static const Orthanc::DicomTag DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE(0x0028, 0x9132);
+
+    if (dataset.GetSequenceSize(size, Orthanc::DicomPath(DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE)))
+    {
+      data_.perFrameWindowing_.reserve(data_.numberOfFrames_);
+
+      // This corresponds to "ParsedDicomFile::GetDefaultWindowing()"
+      for (size_t i = 0; i < size; i++)
+      {
+        size_t tmp;
+        double center, width;
+
+        if (dataset.GetSequenceSize(tmp, Orthanc::DicomPath(DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE, i,
+                                                            DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE)) &&
+            tmp == 1 &&
+            reader.GetDoubleValue(center, Orthanc::DicomPath(DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE, i,
+                                                             DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE, 0,
+                                                             Orthanc::DICOM_TAG_WINDOW_CENTER)) &&
+            reader.GetDoubleValue(width, Orthanc::DicomPath(DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE, i,
+                                                            DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE, 0,
+                                                            Orthanc::DICOM_TAG_WINDOW_WIDTH)))
+        {
+          data_.perFrameWindowing_.push_back(Windowing(center, width));
+        }
+      }
+    }
+  }
+
+
+  DicomInstanceParameters::DicomInstanceParameters(const DicomInstanceParameters& other) :
+    data_(other.data_),
+    tags_(other.tags_->Clone())
+  {
+  }
+
+
+  DicomInstanceParameters::DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
+    data_(dicom),
+    tags_(dicom.Clone())
+  {
+    OrthancNativeDataset dataset(dicom);
+    InjectSequenceTags(dataset);
   }
 
 
@@ -399,18 +497,45 @@ namespace OrthancStone
   }
 
 
+  Windowing DicomInstanceParameters::GetFallbackWindowing() const
+  {
+    double a, b;
+    if (tags_->ParseDouble(a, Orthanc::DICOM_TAG_SMALLEST_IMAGE_PIXEL_VALUE) &&
+        tags_->ParseDouble(b, Orthanc::DICOM_TAG_LARGEST_IMAGE_PIXEL_VALUE))
+    {
+      const double center = (a + b) / 2.0f;
+      const double width = (b - a);
+      return Windowing(center, width);
+    }
+
+    // Added in Stone Web viewer > 2.5
+    uint32_t bitsStored, pixelRepresentation;
+    if (tags_->ParseUnsignedInteger32(bitsStored, Orthanc::DICOM_TAG_BITS_STORED) &&
+        tags_->ParseUnsignedInteger32(pixelRepresentation, Orthanc::DICOM_TAG_PIXEL_REPRESENTATION))
+    {
+      const bool isSigned = (pixelRepresentation != 0);
+      const float maximum = powf(2.0, bitsStored);
+      return Windowing(isSigned ? 0.0f : maximum / 2.0f, maximum);
+    }
+    else
+    {
+      // Cannot infer a suitable windowing from the available tags
+      return Windowing();
+    }
+  }
+
+
   size_t DicomInstanceParameters::GetWindowingPresetsCount() const
   {
-    assert(data_.windowingPresetCenters_.size() == data_.windowingPresetWidths_.size());
-    return data_.windowingPresetCenters_.size();
+    return data_.windowingPresets_.size();
   }
   
 
-  float DicomInstanceParameters::GetWindowingPresetCenter(size_t i) const
+  Windowing DicomInstanceParameters::GetWindowingPreset(size_t i) const
   {
     if (i < GetWindowingPresetsCount())
     {
-      return static_cast<float>(data_.windowingPresetCenters_[i]);
+      return data_.windowingPresets_[i];
     }
     else
     {
@@ -418,32 +543,8 @@ namespace OrthancStone
     }
   }
 
-
-  float DicomInstanceParameters::GetWindowingPresetWidth(size_t i) const
-  {
-    if (i < GetWindowingPresetsCount())
-    {
-      return static_cast<float>(data_.windowingPresetWidths_[i]);
-    }
-    else
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-  }
-
-
-  static void GetWindowingBounds(float& low,
-                                 float& high,
-                                 double center,  // in
-                                 double width)   // in
-  {
-    low = static_cast<float>(center - width / 2.0);
-    high = static_cast<float>(center + width / 2.0);
-  }
-
   
-  void DicomInstanceParameters::GetWindowingPresetsUnion(float& center,
-                                                         float& width) const
+  Windowing DicomInstanceParameters::GetWindowingPresetsUnion() const
   {
     assert(tags_.get() != NULL);
     size_t s = GetWindowingPresetsCount();
@@ -452,48 +553,29 @@ namespace OrthancStone
     {
       // Use the largest windowing given all the preset windowings
       // that are available in the DICOM tags
-      float low, high;
-      GetWindowingBounds(low, high, GetWindowingPresetCenter(0), GetWindowingPresetWidth(0));
+      double low, high;
+      GetWindowingPreset(0).GetBounds(low, high);
 
       for (size_t i = 1; i < s; i++)
       {
-        float a, b;
-        GetWindowingBounds(a, b, GetWindowingPresetCenter(i), GetWindowingPresetWidth(i));
+        double a, b;
+        GetWindowingPreset(i).GetBounds(a, b);
         low = std::min(low, a);
         high = std::max(high, b);
       }
 
       assert(low <= high);
 
-      if (LinearAlgebra::IsNear(low, high))
+      if (!LinearAlgebra::IsNear(low, high))
       {
-        // Cannot infer a suitable windowing from the available tags
-        center = 128.0f;
-        width = 256.0f;
-      }
-      else
-      {
-        center = (low + high) / 2.0f;
-        width = (high - low);
+        const double center = (low + high) / 2.0f;
+        const double width = (high - low);
+        return Windowing(center, width);
       }
     }
-    else
-    {
-      float a, b;
-      if (tags_->ParseFloat(a, Orthanc::DICOM_TAG_SMALLEST_IMAGE_PIXEL_VALUE) &&
-          tags_->ParseFloat(b, Orthanc::DICOM_TAG_LARGEST_IMAGE_PIXEL_VALUE) &&
-          a < b)
-      {
-        center = (a + b) / 2.0f;
-        width = (b - a);
-      }
-      else
-      {
-        // Cannot infer a suitable windowing from the available tags
-        center = 128.0f;
-        width = 256.0f;
-      }
-    }
+
+    // No preset, or presets with an empty range
+    return GetFallbackWindowing();
   }
 
 
@@ -565,7 +647,8 @@ namespace OrthancStone
 
       if (GetWindowingPresetsCount() > 0)
       {
-        floatTexture.SetCustomWindowing(GetWindowingPresetCenter(0), GetWindowingPresetWidth(0));
+        Windowing preset = GetWindowingPreset(0);
+        floatTexture.SetCustomWindowing(preset.GetCenter(), preset.GetWidth());
       }
       
       switch (GetImageInformation().GetPhotometricInterpretation())
@@ -741,66 +824,10 @@ namespace OrthancStone
   }
 
 
-  static const Json::Value* LookupDicomWebSingleValue(const Json::Value& dicomweb,
-                                                      const std::string& tag,
-                                                      const std::string& vr)
-  {
-    static const char* const VALUE = "Value";
-    static const char* const VR = "vr";
-
-    if (dicomweb.type() == Json::objectValue &&
-        dicomweb.isMember(tag) &&
-        dicomweb[tag].type() == Json::objectValue &&
-        dicomweb[tag].isMember(VALUE) &&
-        dicomweb[tag].isMember(VR) &&
-        dicomweb[tag][VR].type() == Json::stringValue &&
-        dicomweb[tag][VR].asString() == vr &&
-        dicomweb[tag][VALUE].type() == Json::arrayValue &&
-        dicomweb[tag][VALUE].size() == 1u)
-    {
-      return &dicomweb[tag][VALUE][0];
-    }
-    else
-    {
-      return NULL;
-    }
-  }
-
-
   void DicomInstanceParameters::EnrichUsingDicomWeb(const Json::Value& dicomweb)
   {
-    /**
-     * Use DICOM tag "SequenceOfUltrasoundRegions" (0018,6011) in
-     * order to derive the pixel spacing on ultrasound (US) images
-     **/
-    
-    if (!data_.hasPixelSpacing_)
-    {
-      const Json::Value* region = LookupDicomWebSingleValue(dicomweb, "00186011", "SQ");
-      if (region != NULL)
-      {
-        const Json::Value* physicalUnitsXDirection = LookupDicomWebSingleValue(*region, "00186024", "US");
-        const Json::Value* physicalUnitsYDirection = LookupDicomWebSingleValue(*region, "00186026", "US");
-        const Json::Value* physicalDeltaX = LookupDicomWebSingleValue(*region, "0018602C", "FD");
-        const Json::Value* physicalDeltaY = LookupDicomWebSingleValue(*region, "0018602E", "FD");
-        
-        if (physicalUnitsXDirection != NULL &&
-            physicalUnitsYDirection != NULL &&
-            physicalDeltaX != NULL &&
-            physicalDeltaY != NULL &&
-            physicalUnitsXDirection->type() == Json::intValue &&
-            physicalUnitsYDirection->type() == Json::intValue &&
-            physicalUnitsXDirection->asInt() == 0x0003 &&  // Centimeters
-            physicalUnitsYDirection->asInt() == 0x0003 &&  // Centimeters
-            physicalDeltaX->isNumeric() &&
-            physicalDeltaY->isNumeric())
-        {
-          // Scene coordinates are expressed in millimeters => multiplication by 10
-          SetPixelSpacing(10.0 * physicalDeltaX->asDouble(),
-                          10.0 * physicalDeltaY->asDouble());
-        }
-      }
-    }
+    DicomWebDataset dataset(dicomweb);
+    InjectSequenceTags(dataset);
   }
 
 
@@ -837,6 +864,21 @@ namespace OrthancStone
     else
     {
       return (data_.frameOffsets_[0] > data_.frameOffsets_[1]);
+    }
+  }
+
+
+  bool DicomInstanceParameters::LookupPerFrameWindowing(Windowing& windowing,
+                                                        unsigned int frame) const
+  {
+    if (frame < data_.perFrameWindowing_.size())
+    {
+      windowing = data_.perFrameWindowing_[frame];
+      return true;
+    }
+    else
+    {
+      return false;
     }
   }
 }

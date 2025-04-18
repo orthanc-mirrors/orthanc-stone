@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -4342,7 +4342,7 @@ TEST(GenericToolbox, FastParseTest_StringToDoubleEx02)
   const char* s = "  \t   0.0/.123/3  \t/12.5e-3//-43.1   \t     ";
 
   int32_t size;
-  double r;
+  double r = -1.0;
   const char* p = s;
 
   while (*p == ' ' || *p == '\t')
@@ -4390,7 +4390,7 @@ TEST(GenericToolbox, FastParseTest_StringToDoubleEx03)
   const char* s = "  \t   0.0/.123/3/12.5e-3//-43.1e-2   \t     ";
 
   int32_t size;
-  double r;
+  double r = -1.0;
   const char* p = s;
 
   while (*p == ' ' || *p == '\t')

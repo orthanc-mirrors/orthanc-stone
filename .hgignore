@@ -21,6 +21,7 @@ Applications/Samples/Deprecated/Qt/ThirdPartyDownloads/
 Applications/Samples/Deprecated/WebAssembly/build/
 Applications/Samples/Deprecated/WebAssembly/ThirdPartyDownloads/
 Applications/Samples/Deprecated/WebAssembly/installDir/
+Applications/StoneWebViewer/WebAssembly/Build/
 StoneWebViewer/Plugin/ThirdPartyDownloads/
 StoneWebViewer/Resources/package-lock.json
 StoneWebViewer/WebAssembly/ThirdPartyDownloads/

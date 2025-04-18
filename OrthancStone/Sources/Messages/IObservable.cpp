@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -80,15 +80,17 @@ namespace OrthancStone
           {
             try
             {
+              // LOG(INFO) << "IN Handling message : " << message.GetIdentifier().AsString();
               (*it)->Apply(message);
+              // LOG(INFO) << "OUT Handling message : " << message.GetIdentifier().AsString();
             }
             catch (Orthanc::OrthancException& e)
             {
-              LOG(ERROR) << "Exception on callable: " << e.What();
+              LOG(ERROR) << "OrthancException on callable: " << e.What() << " " << message.GetIdentifier().AsString();
             }
             catch (StoneException& e)
             {
-              LOG(ERROR) << "Exception on callable: " << e.What();
+              LOG(ERROR) << "StoneException on callable: " << e.What();
             }
             catch (std::exception& e)
             {

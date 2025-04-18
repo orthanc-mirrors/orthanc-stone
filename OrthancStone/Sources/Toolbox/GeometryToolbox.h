@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -116,6 +116,28 @@ namespace OrthancStone
 
     bool ComputeNormal(Vector& normal,
                        const Orthanc::DicomMap& dicom);
+
+    bool IntersectTwoLines(double& x,
+                           double& y,
+                           double ax1,
+                           double ay1,
+                           double ax2,
+                           double ay2,
+                           double bx1,
+                           double by1,
+                           double bx2,
+                           double by2);
+
+    bool IntersectLineAndSegment(double& x,
+                                 double& y,
+                                 double lineX1,
+                                 double lineY1,
+                                 double lineX2,
+                                 double lineY2,
+                                 double segmentX1,
+                                 double segmentY1,
+                                 double segmentX2,
+                                 double segmentY2);
 
     inline float ComputeBilinearInterpolationUnitSquare(float x,
                                                         float y,

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -1173,4 +1173,16 @@ TEST(GeometryToolbox, OrientationMarkers)
     ASSERT_EQ("RFA", left);
     ASSERT_EQ("LHP", right);
   }
+}
+
+
+TEST(GeometryToolbox, IntersectTwoLines)
+{
+  double x, y;
+  ASSERT_TRUE(OrthancStone::GeometryToolbox::IntersectTwoLines(x, y, 1, 1, 3, 2, 1, 4, 2, -1));
+  ASSERT_DOUBLE_EQ(x, 17.0 / 11.0);
+  ASSERT_DOUBLE_EQ(y, 14.0 / 11.0);
+  ASSERT_TRUE(OrthancStone::GeometryToolbox::IntersectLineAndSegment(x, y, 1, 1, 3, 2, 1, 4, 2, -1));
+  ASSERT_DOUBLE_EQ(x, 17.0 / 11.0);
+  ASSERT_DOUBLE_EQ(y, 14.0 / 11.0);
 }

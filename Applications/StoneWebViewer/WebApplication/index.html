@@ -910,6 +910,14 @@
 
         <div class="wv-overlay">
           <div class="wv-overlay-bottomleft wvPrintExclude">
+            <button class="btn btn-primary" @click="Download()"
+                    data-toggle="tooltip" data-title="Download">
+              <i class="fa fa-download"></i>
+            </button>
+            <button class="btn btn-primary" @click="Print()"
+                    data-toggle="tooltip" data-title="Print">
+              <i class="fa fa-print"></i>
+            </button>
             <button class="btn btn-primary" @click="FitWidth()"
                     data-toggle="tooltip" data-title="Fit page width">
               <i class="fas fa-text-width"></i>
@@ -939,7 +947,7 @@
         </div>
       </div>
     </script>
-    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/jquery-3.7.1.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/vue.min.js"></script>
     <script src="js/axios.min.js"></script>

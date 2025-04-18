@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License
@@ -27,6 +27,8 @@
 #include <Logging.h>
 #include <SystemToolbox.h>
 #include <Toolbox.h>
+
+#include <boost/algorithm/string/predicate.hpp>
 
 
 static const std::string STONE_WEB_VIEWER_ROOT = "/stone-webviewer";  // (*)
@@ -61,7 +63,8 @@ OrthancPluginErrorCode OnChangeCallback(OrthancPluginChangeType changeType,
       }
 
       std::string version = info["Version"].asString();
-      if (version != "mainline")
+      if (version != "mainline" &&
+          !boost::starts_with(version, "mainline-"))  // Allow DICOMweb versions such as "mainline-commitId"
       {
         std::vector<std::string> tokens;
         Orthanc::Toolbox::TokenizeString(tokens, version, '.');

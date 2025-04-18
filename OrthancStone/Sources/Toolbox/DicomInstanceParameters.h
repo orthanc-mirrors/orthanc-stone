@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -26,6 +26,7 @@
 #include "../Scene2D/LookupTableTextureSceneLayer.h"
 #include "../StoneEnumerations.h"
 #include "../Toolbox/CoordinateSystem3D.h"
+#include "Windowing.h"
 
 #include <IDynamicObject.h>
 #include <DicomFormat/DicomImageInformation.h>
@@ -57,8 +58,7 @@ namespace OrthancStone
       bool                hasRescale_;
       double              rescaleIntercept_;
       double              rescaleSlope_;
-      Vector              windowingPresetCenters_;
-      Vector              windowingPresetWidths_;
+      std::vector<Windowing>  windowingPresets_;
       bool                hasIndexInSeries_;
       unsigned int        indexInSeries_;
       std::string         doseUnits_;
@@ -67,6 +67,7 @@ namespace OrthancStone
       bool                hasPixelSpacing_;
       bool                hasNumberOfFrames_;
       int32_t             instanceNumber_;
+      std::vector<Windowing>  perFrameWindowing_;
 
       explicit Data(const Orthanc::DicomMap& dicom);
     };
@@ -76,18 +77,12 @@ namespace OrthancStone
     std::unique_ptr<Orthanc::DicomMap>               tags_;
     std::unique_ptr<Orthanc::DicomImageInformation>  imageInformation_;  // Lazy evaluation
 
-  public:
-    explicit DicomInstanceParameters(const DicomInstanceParameters& other) :
-      data_(other.data_),
-      tags_(other.tags_->Clone())
-    {
-    }
+    void InjectSequenceTags(const IDicomDataset& dataset);
 
-    explicit DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
-      data_(dicom),
-      tags_(dicom.Clone())
-    {
-    }
+  public:
+    explicit DicomInstanceParameters(const DicomInstanceParameters& other);
+
+    explicit DicomInstanceParameters(const Orthanc::DicomMap& dicom);
 
     DicomInstanceParameters* Clone() const
     {
@@ -185,14 +180,13 @@ namespace OrthancStone
 
     double GetRescaleSlope() const;
 
+    Windowing GetFallbackWindowing() const;
+
     size_t GetWindowingPresetsCount() const;
 
-    float GetWindowingPresetCenter(size_t i) const;
+    Windowing GetWindowingPreset(size_t i) const;
 
-    float GetWindowingPresetWidth(size_t i) const;
-
-    void GetWindowingPresetsUnion(float& center,
-                                  float& width) const;
+    Windowing GetWindowingPresetsUnion() const;
 
     Orthanc::PixelFormat GetExpectedPixelFormat() const;
 
@@ -267,5 +261,8 @@ namespace OrthancStone
     CoordinateSystem3D GetMultiFrameGeometry() const;
 
     bool IsReversedFrameOffsets() const;
+
+    bool LookupPerFrameWindowing(Windowing& windowing,
+                                 unsigned int frame) const;
   };
 }

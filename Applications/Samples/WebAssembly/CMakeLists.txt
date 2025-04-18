@@ -104,9 +104,7 @@ project(RtViewerWasm)
 add_executable(RtViewerWasm
   RtViewer/RtViewerWasm.cpp
   ../Common/RtViewerApp.cpp
-  ../Common/RtViewerApp.h
   ../Common/RtViewerView.cpp
-  ../Common/RtViewerView.h
   )
 
 if (COMMAND DefineSourceBasenameForTarget)

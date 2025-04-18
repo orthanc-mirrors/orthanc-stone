@@ -324,9 +324,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/BucketAccumulator1D.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/BucketAccumulator2D.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/CoordinateSystem3D.cpp
-  ${ORTHANC_STONE_ROOT}/Toolbox/CoordinateSystem3D.h
   ${ORTHANC_STONE_ROOT}/Toolbox/DebugDrawing2D.cpp
-  ${ORTHANC_STONE_ROOT}/Toolbox/DebugDrawing2D.h
   ${ORTHANC_STONE_ROOT}/Toolbox/DicomInstanceParameters.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/DicomStructureSet.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/DynamicBitmap.cpp
@@ -344,17 +342,12 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/ShearWarpProjectiveTransform.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/SlicesSorter.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/SortedFrames.cpp
-  ${ORTHANC_STONE_ROOT}/Toolbox/SortedFrames.h
   ${ORTHANC_STONE_ROOT}/Toolbox/StoneToolbox.cpp
-  ${ORTHANC_STONE_ROOT}/Toolbox/StoneToolbox.h
-  ${ORTHANC_STONE_ROOT}/Toolbox/SubvoxelReader.h
   ${ORTHANC_STONE_ROOT}/Toolbox/TextRenderer.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/TimerLogger.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/UndoRedoStack.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/UnionOfRectangles.cpp
-  ${ORTHANC_STONE_ROOT}/Toolbox/UnionOfRectangles.h
   ${ORTHANC_STONE_ROOT}/Toolbox/Windowing.cpp
-  ${ORTHANC_STONE_ROOT}/Toolbox/Windowing.h
   
   ${ORTHANC_STONE_ROOT}/Viewport/DefaultViewportInteractor.cpp
   ${ORTHANC_STONE_ROOT}/Viewport/ViewportLocker.cpp
@@ -450,4 +443,4 @@ macro(AutodetectHeaderFiles SOURCES_VAR)
 endmacro()
 
 
-AutodetectHeaderFiles(ORTHANC_STONE_SOURCES)
+# AutodetectHeaderFiles(ORTHANC_STONE_SOURCES)

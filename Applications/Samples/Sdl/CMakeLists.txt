@@ -90,12 +90,8 @@ project(RtViewerSdl)
 
 add_executable(RtViewerSdl
   RtViewer/RtViewerSdl.cpp
-  SdlHelpers.h
   ../Common/RtViewerApp.cpp
-  ../Common/RtViewerApp.h
   ../Common/RtViewerView.cpp
-  ../Common/RtViewerView.h
-  ../Common/SampleHelpers.h
   )
 
 if (COMMAND DefineSourceBasenameForTarget)
@@ -108,9 +104,6 @@ target_link_libraries(RtViewerSdl OrthancStone ${DCMTK_LIBRARIES})
 project(SdlSimpleViewer)
 
 add_executable(SdlSimpleViewer
-  SdlHelpers.h
-  ../Common/SampleHelpers.h
-  SingleFrameViewer/SdlSimpleViewerApplication.h
   SingleFrameViewer/SdlSimpleViewer.cpp
   )
 

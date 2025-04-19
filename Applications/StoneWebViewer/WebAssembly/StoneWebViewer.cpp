@@ -101,6 +101,7 @@
 
 static const double PI = boost::math::constants::pi<double>();
 
+static const int LAYER_ORIENTATION_MARKERS = 2;
 static const int LAYER_ANNOTATIONS_OSIRIX = 4;
 
 
@@ -1784,6 +1785,7 @@ public:
 
 
 
+// WARNING: This class can be shared by multiple viewports
 class ILayerSource : public boost::noncopyable
 {
 public:
@@ -1793,66 +1795,12 @@ public:
 
   virtual int GetDepth() const = 0;
 
-  virtual OrthancStone::ISceneLayer* Create(const std::string& studyInstanceUid,
-                                            const std::string& seriesInstanceUid,
-                                            const std::string& sopInstanceUid,
+  virtual OrthancStone::ISceneLayer* Create(const Orthanc::ImageAccessor& frame,
+                                            const OrthancStone::DicomInstanceParameters& instance,
                                             unsigned int frameNumber,
+                                            double pixelSpacingX,
+                                            double pixelSpacingY,
                                             const OrthancStone::CoordinateSystem3D& plane) = 0;
-};
-
-
-class OsiriXLayerSource : public ILayerSource
-{
-private:
-  int depth_;
-
-  // The coordinates of OsiriX annotations are expressed in 3D world coordinates
-  OrthancStone::OsiriX::CollectionOfAnnotations  annotations_;
-
-public:
-  OsiriXLayerSource(int depth) :
-    depth_(depth)
-  {
-  }
-
-  OrthancStone::OsiriX::CollectionOfAnnotations& GetAnnotations()
-  {
-    return annotations_;
-  }
-
-  virtual int GetDepth() const ORTHANC_OVERRIDE
-  {
-    return depth_;
-  }
-
-  virtual OrthancStone::ISceneLayer* Create(const std::string& studyInstanceUid,
-                                            const std::string& seriesInstanceUid,
-                                            const std::string& sopInstanceUid,
-                                            unsigned int frameNumber,
-                                            const OrthancStone::CoordinateSystem3D& plane) ORTHANC_OVERRIDE
-  {
-    std::set<size_t> a;
-    annotations_.LookupSopInstanceUid(a, sopInstanceUid);
-    if (plane.IsValid() &&
-        !a.empty())
-    {
-      std::unique_ptr<OrthancStone::MacroSceneLayer> layer(new OrthancStone::MacroSceneLayer);
-      // layer->Reserve(a.size());
-
-      OrthancStone::OsiriXLayerFactory factory;
-      factory.SetColor(0, 255, 0);
-
-      for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
-      {
-        const OrthancStone::OsiriX::Annotation& annotation = annotations_.GetAnnotation(*it);
-        layer->AddLayer(factory.Create(annotation, plane));
-      }
-
-      return layer.release();
-    }
-
-    return NULL;
-  }
 };
 
 
@@ -1962,7 +1910,6 @@ public:
 private:
   static const int LAYER_TEXTURE = 0;
   static const int LAYER_OVERLAY = 1;
-  static const int LAYER_ORIENTATION_MARKERS = 2;
   static const int LAYER_REFERENCE_LINES = 3;
   static const int LAYER_ANNOTATIONS_STONE = 5;
 
@@ -2649,52 +2596,12 @@ private:
 
     StoneAnnotationsRegistry::GetInstance().Load(*stoneAnnotations_, instance.GetSopInstanceUid(), frameIndex);
 
-    // Orientation markers, new in Stone Web viewer 2.4
-    std::unique_ptr<OrthancStone::MacroSceneLayer>  orientationMarkers;
-
-    if (instance.GetGeometry().IsValid())
-    {
-      orientationMarkers.reset(new OrthancStone::MacroSceneLayer);
-
-      std::string top, bottom, left, right;
-      instance.GetGeometry().GetOrientationMarkers(top, bottom, left, right);
-
-      std::unique_ptr<OrthancStone::TextSceneLayer> text;
-
-      text.reset(new OrthancStone::TextSceneLayer);
-      text->SetText(top);
-      text->SetPosition(pixelSpacingX * static_cast<double>(frame.GetWidth()) / 2.0, 0);
-      text->SetAnchor(OrthancStone::BitmapAnchor_TopCenter);
-      orientationMarkers->AddLayer(text.release());
-
-      text.reset(new OrthancStone::TextSceneLayer);
-      text->SetText(bottom);
-      text->SetPosition(pixelSpacingX * static_cast<double>(frame.GetWidth()) / 2.0,
-                        pixelSpacingY * static_cast<double>(frame.GetHeight()));
-      text->SetAnchor(OrthancStone::BitmapAnchor_BottomCenter);
-      orientationMarkers->AddLayer(text.release());
-
-      text.reset(new OrthancStone::TextSceneLayer);
-      text->SetText(left);
-      text->SetPosition(0, pixelSpacingY * static_cast<double>(frame.GetHeight()) / 2.0);
-      text->SetAnchor(OrthancStone::BitmapAnchor_CenterLeft);
-      orientationMarkers->AddLayer(text.release());
-
-      text.reset(new OrthancStone::TextSceneLayer);
-      text->SetText(right);
-      text->SetPosition(pixelSpacingX * static_cast<double>(frame.GetWidth()),
-                        pixelSpacingY * static_cast<double>(frame.GetHeight()) / 2.0);
-      text->SetAnchor(OrthancStone::BitmapAnchor_CenterRight);
-      orientationMarkers->AddLayer(text.release());
-    }
-
-
     LayersHolder holder;
 
     for (std::list<ILayerSource*>::const_iterator it = layerSources_.begin(); it != layerSources_.end(); ++it)
     {
       assert(*it != NULL);
-      holder.AddLayer((*it)->GetDepth(), (*it)->Create(instance.GetStudyInstanceUid(), instance.GetSeriesInstanceUid(), instance.GetSopInstanceUid(), frameIndex, plane));
+      holder.AddLayer((*it)->GetDepth(), (*it)->Create(frame, instance, frameIndex, pixelSpacingX, pixelSpacingY, plane));
     }
 
     {
@@ -2713,15 +2620,6 @@ private:
       else
       {
         scene.DeleteLayer(LAYER_OVERLAY);
-      }
-
-      if (orientationMarkers.get() != NULL)
-      {
-        scene.SetLayer(LAYER_ORIENTATION_MARKERS, orientationMarkers.release());
-      }
-      else
-      {
-        scene.DeleteLayer(LAYER_ORIENTATION_MARKERS);
       }
 
       stoneAnnotations_->Render(scene);  // Necessary for "FitContent()" to work
@@ -3892,11 +3790,124 @@ public:
 
 
 
+class OrientationMarkersSource : public ILayerSource
+{
+public:
+  virtual int GetDepth() const ORTHANC_OVERRIDE
+  {
+    return LAYER_ORIENTATION_MARKERS;
+  }
+
+  virtual OrthancStone::ISceneLayer* Create(const Orthanc::ImageAccessor& frame,
+                                            const OrthancStone::DicomInstanceParameters& instance,
+                                            unsigned int frameNumber,
+                                            double pixelSpacingX,
+                                            double pixelSpacingY,
+                                            const OrthancStone::CoordinateSystem3D& plane) ORTHANC_OVERRIDE
+  {
+    if (instance.GetGeometry().IsValid())
+    {
+      std::unique_ptr<OrthancStone::MacroSceneLayer> layer(new OrthancStone::MacroSceneLayer);
+
+      std::string top, bottom, left, right;
+      instance.GetGeometry().GetOrientationMarkers(top, bottom, left, right);
+
+      std::unique_ptr<OrthancStone::TextSceneLayer> text;
+
+      text.reset(new OrthancStone::TextSceneLayer);
+      text->SetText(top);
+      text->SetPosition(pixelSpacingX * static_cast<double>(frame.GetWidth()) / 2.0, 0);
+      text->SetAnchor(OrthancStone::BitmapAnchor_TopCenter);
+      layer->AddLayer(text.release());
+
+      text.reset(new OrthancStone::TextSceneLayer);
+      text->SetText(bottom);
+      text->SetPosition(pixelSpacingX * static_cast<double>(frame.GetWidth()) / 2.0,
+                        pixelSpacingY * static_cast<double>(frame.GetHeight()));
+      text->SetAnchor(OrthancStone::BitmapAnchor_BottomCenter);
+      layer->AddLayer(text.release());
+
+      text.reset(new OrthancStone::TextSceneLayer);
+      text->SetText(left);
+      text->SetPosition(0, pixelSpacingY * static_cast<double>(frame.GetHeight()) / 2.0);
+      text->SetAnchor(OrthancStone::BitmapAnchor_CenterLeft);
+      layer->AddLayer(text.release());
+
+      text.reset(new OrthancStone::TextSceneLayer);
+      text->SetText(right);
+      text->SetPosition(pixelSpacingX * static_cast<double>(frame.GetWidth()),
+                        pixelSpacingY * static_cast<double>(frame.GetHeight()) / 2.0);
+      text->SetAnchor(OrthancStone::BitmapAnchor_CenterRight);
+      layer->AddLayer(text.release());
+
+      return layer.release();
+    }
+    else
+    {
+      return NULL;
+    }
+  }
+};
+
+
+class OsiriXLayerSource : public ILayerSource
+{
+private:
+  // The coordinates of OsiriX annotations are expressed in 3D world coordinates
+  OrthancStone::OsiriX::CollectionOfAnnotations  annotations_;
+
+public:
+  OrthancStone::OsiriX::CollectionOfAnnotations& GetAnnotations()
+  {
+    return annotations_;
+  }
+
+  virtual int GetDepth() const ORTHANC_OVERRIDE
+  {
+    return LAYER_ANNOTATIONS_OSIRIX;
+  }
+
+  virtual OrthancStone::ISceneLayer* Create(const Orthanc::ImageAccessor& frame,
+                                            const OrthancStone::DicomInstanceParameters& instance,
+                                            unsigned int frameNumber,
+                                            double pixelSpacingX,
+                                            double pixelSpacingY,
+                                            const OrthancStone::CoordinateSystem3D& plane) ORTHANC_OVERRIDE
+  {
+    std::set<size_t> a;
+    annotations_.LookupSopInstanceUid(a, instance.GetSopInstanceUid());
+    if (plane.IsValid() &&
+        !a.empty())
+    {
+      std::unique_ptr<OrthancStone::MacroSceneLayer> layer(new OrthancStone::MacroSceneLayer);
+      // layer->Reserve(a.size());
+
+      OrthancStone::OsiriXLayerFactory factory;
+      factory.SetColor(0, 255, 0);
+
+      for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
+      {
+        const OrthancStone::OsiriX::Annotation& annotation = annotations_.GetAnnotation(*it);
+        layer->AddLayer(factory.Create(annotation, plane));
+      }
+
+      return layer.release();
+    }
+
+    return NULL;
+  }
+};
+
+
+
 typedef std::map<std::string, boost::shared_ptr<ViewerViewport> >  Viewports;
 
 static Viewports allViewports_;
 static bool showReferenceLines_ = true;
 static boost::shared_ptr<OsiriXLayerSource>  osiriXLayerSource_;
+
+// Orientation markers, new in Stone Web viewer 2.4
+static boost::shared_ptr<OrientationMarkersSource>  orientationMarkersSource_;
 
 
 static void UpdateReferenceLines()
@@ -4227,6 +4238,7 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
     viewport->AddLayerSource(*osiriXLayerSource_);
+    viewport->AddLayerSource(*orientationMarkersSource_);
     allViewports_[canvas] = viewport;
     return viewport;
   }
@@ -4262,7 +4274,8 @@ extern "C"
     
     framesCache_.reset(new FramesCache);
     instancesCache_.reset(new InstancesCache);
-    osiriXLayerSource_.reset(new OsiriXLayerSource(LAYER_ANNOTATIONS_OSIRIX));
+    osiriXLayerSource_.reset(new OsiriXLayerSource);
+    orientationMarkersSource_.reset(new OrientationMarkersSource);
 
     for (size_t i = 0; pluginsInitializers_[i] != NULL; i++)
     {

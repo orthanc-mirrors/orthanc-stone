@@ -2313,10 +2313,6 @@ private:
 
   bool linearInterpolation_;
 
-  boost::shared_ptr<Orthanc::ImageAccessor>  deepLearningMask_;
-  std::string deepLearningSopInstanceUid_;
-  unsigned int deepLearningFrameNumber_;
-
   // WARNING: The ownership is not transferred
   std::list<ILayerSource*>  layerSources_;
 
@@ -2584,26 +2580,6 @@ private:
       layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
     }
 
-    std::unique_ptr<OrthancStone::LookupTableTextureSceneLayer> deepLearningLayer;
-
-    if (deepLearningMask_.get() != NULL &&
-        deepLearningSopInstanceUid_ == instance.GetSopInstanceUid() &&
-        deepLearningFrameNumber_ == frameIndex)
-    {
-      std::vector<uint8_t> lut(4 * 256);
-      for (unsigned int v = 128; v < 256; v++)
-      {
-        lut[4 * v] = 196;
-        lut[4 * v + 1] = 0;
-        lut[4 * v + 2] = 0;
-        lut[4 * v + 3] = 196;
-      }
-      
-      deepLearningLayer.reset(new OrthancStone::LookupTableTextureSceneLayer(*deepLearningMask_));
-      deepLearningLayer->SetLookupTable(lut);
-      deepLearningLayer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
-    }
-
     StoneAnnotationsRegistry::GetInstance().Load(*stoneAnnotations_, instance.GetSopInstanceUid(), frameIndex);
 
     LayersHolder holder;
@@ -2622,15 +2598,6 @@ private:
       OrthancStone::Scene2D& scene = lock->GetController().GetScene();
 
       holder.Commit(scene);
-
-      if (deepLearningLayer.get() != NULL)
-      {
-        scene.SetLayer(LAYER_DEEP_LEARNING, deepLearningLayer.release());
-      }
-      else
-      {
-        scene.DeleteLayer(LAYER_DEEP_LEARNING);
-      }
 
       stoneAnnotations_->Render(scene);  // Necessary for "FitContent()" to work
 
@@ -3756,7 +3723,6 @@ public:
     }    
   }
 
-
   void SetLinearInterpolation(bool linearInterpolation)
   {
     if (linearInterpolation_ != linearInterpolation)
@@ -3766,7 +3732,6 @@ public:
     }
   }
 
-  
   void AddTextAnnotation(const std::string& label,
                          const OrthancStone::ScenePoint2D& pointedPosition,
                          const OrthancStone::ScenePoint2D& labelPosition)
@@ -3795,24 +3760,6 @@ public:
   }
 
 
-  void SetDeepLearningMask(const std::string& sopInstanceUid,
-                           unsigned int frameNumber,
-                           const Orthanc::ImageAccessor& mask)
-  {
-    std::string currentSopInstanceUid;
-    unsigned int currentFrameNumber;
-    if (GetCurrentFrame(currentSopInstanceUid, currentFrameNumber) &&
-        sopInstanceUid == currentSopInstanceUid &&
-        frameNumber == currentFrameNumber)
-    {
-      deepLearningSopInstanceUid_ = sopInstanceUid;
-      deepLearningFrameNumber_ = frameNumber;
-      deepLearningMask_.reset(Orthanc::Image::Clone(mask));
-      Redraw();
-    }
-  }
-
-  
   void SignalSynchronizedBrowsing()
   {
     if (synchronizationEnabled_ &&
@@ -3980,6 +3927,70 @@ public:
 
 
 
+class DeepLearningSegmentationSource : public ILayerSource
+{
+private:
+  std::unique_ptr<Orthanc::ImageAccessor>  mask_;
+  std::string sopInstanceUid_;
+  unsigned int frameNumber_;
+
+public:
+  DeepLearningSegmentationSource() :
+    frameNumber_(0)  // Dummy initialization
+  {
+  }
+
+  virtual int GetDepth() const ORTHANC_OVERRIDE
+  {
+    return LAYER_DEEP_LEARNING;
+  }
+
+  void SetMask(const std::string& sopInstanceUid,
+               unsigned int frameNumber,
+               const Orthanc::ImageAccessor& mask)
+  {
+    sopInstanceUid_ = sopInstanceUid;
+    frameNumber_ = frameNumber;
+    mask_.reset(Orthanc::Image::Clone(mask));
+  }
+
+  virtual OrthancStone::ISceneLayer* Create(const Orthanc::ImageAccessor& frame,
+                                            const OrthancStone::DicomInstanceParameters& instance,
+                                            unsigned int frameNumber,
+                                            double pixelSpacingX,
+                                            double pixelSpacingY,
+                                            const OrthancStone::CoordinateSystem3D& plane) ORTHANC_OVERRIDE
+  {
+    if (mask_.get() != NULL &&
+        sopInstanceUid_ == instance.GetSopInstanceUid() &&
+        frameNumber_ == frameNumber)
+    {
+      std::unique_ptr<OrthancStone::LookupTableTextureSceneLayer> layer;
+
+      std::vector<uint8_t> lut(4 * 256);
+      for (unsigned int v = 128; v < 256; v++)
+      {
+        lut[4 * v] = 196;
+        lut[4 * v + 1] = 0;
+        lut[4 * v + 2] = 0;
+        lut[4 * v + 3] = 196;
+      }
+
+      layer.reset(new OrthancStone::LookupTableTextureSceneLayer(*mask_));
+      layer->SetLookupTable(lut);
+      layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
+
+      return layer.release();
+    }
+    else
+    {
+      return NULL;
+    }
+  }
+};
+
+
+
 typedef std::map<std::string, boost::shared_ptr<ViewerViewport> >  Viewports;
 
 static Viewports allViewports_;
@@ -3990,6 +4001,7 @@ static std::unique_ptr<OsiriXLayerSource>   osiriXLayerSource_;
 // Orientation markers, new in Stone Web viewer 2.4
 static std::unique_ptr<OrientationMarkersSource>  orientationMarkersSource_;
 
+static std::unique_ptr<DeepLearningSegmentationSource>  deepLearningSegmentationSource_;
 
 static void UpdateReferenceLines()
 {
@@ -4321,6 +4333,9 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
     viewport->AddLayerSource(*overlayLayerSource_);
     viewport->AddLayerSource(*osiriXLayerSource_);
     viewport->AddLayerSource(*orientationMarkersSource_);
+
+    viewport->AddLayerSource(*deepLearningSegmentationSource_);
+
     allViewports_[canvas] = viewport;
     return viewport;
   }
@@ -4428,7 +4443,7 @@ static void DeepLearningNextStep()
       deepLearningState_ = DeepLearningState_Waiting;
       DeepLearningSchedule(deepLearningPendingSopInstanceUid_, deepLearningPendingFrameNumber_);
       break;
-      
+
     case DeepLearningState_Running:
     {
       OrthancStone::Messages::Request request;
@@ -4483,7 +4498,7 @@ static void DeepLearningCallback(char* data,
 
             const unsigned int height = response.step().mask().height();
             const unsigned int width = response.step().mask().width();
-            
+
             LOG(WARNING) << "SUCCESS! Mask: " << width << "x" << height << " for frame "
                          << response.step().mask().sop_instance_uid() << " / "
                          << response.step().mask().frame_number();
@@ -4500,18 +4515,20 @@ static void DeepLearningCallback(char* data,
               }
             }
 
+            deepLearningSegmentationSource_->SetMask(response.step().mask().sop_instance_uid(),
+                                                     response.step().mask().frame_number(), mask);
+
             for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
             {
               assert(it->second != NULL);
-              it->second->SetDeepLearningMask(response.step().mask().sop_instance_uid(),
-                                              response.step().mask().frame_number(), mask);
+              it->second->Redraw();
             }
           }
           else
           {
             DeepLearningNextStep();
           }
-        
+
           break;
         }
 
@@ -4536,7 +4553,7 @@ static void DeepLearningModelLoaded(emscripten_fetch_t *fetch)
     OrthancStone::Messages::Request request;
     request.set_type(OrthancStone::Messages::RequestType::PARSE_MODEL);
     request.mutable_parse_model()->mutable_content()->assign(fetch->data, fetch->numBytes);
-    
+
     emscripten_fetch_close(fetch);  // Don't use "fetch" below
     SendRequestToWebWorker(request);
   }
@@ -4578,6 +4595,8 @@ extern "C"
     overlayLayerSource_.reset(new OverlayLayerSource);
     osiriXLayerSource_.reset(new OsiriXLayerSource);
     orientationMarkersSource_.reset(new OrientationMarkersSource);
+
+    deepLearningSegmentationSource_.reset(new DeepLearningSegmentationSource);
 
     for (size_t i = 0; pluginsInitializers_[i] != NULL; i++)
     {

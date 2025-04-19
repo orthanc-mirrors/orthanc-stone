@@ -83,10 +83,7 @@
 #include "../../../OrthancStone/Sources/StoneException.h"
 #include "../../../OrthancStone/Sources/Toolbox/DicomInstanceParameters.h"
 #include "../../../OrthancStone/Sources/Toolbox/GeometryToolbox.h"
-#include "../../../OrthancStone/Sources/Toolbox/OsiriX/AngleAnnotation.h"
 #include "../../../OrthancStone/Sources/Toolbox/OsiriX/CollectionOfAnnotations.h"
-#include "../../../OrthancStone/Sources/Toolbox/OsiriX/LineAnnotation.h"
-#include "../../../OrthancStone/Sources/Toolbox/OsiriX/TextAnnotation.h"
 #include "../../../OrthancStone/Sources/Toolbox/SortedFrames.h"
 #include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 
@@ -103,6 +100,9 @@
 #include <stdio.h>
 
 static const double PI = boost::math::constants::pi<double>();
+
+static const int LAYER_ANNOTATIONS_OSIRIX = 4;
+
 
 #if !defined(STONE_WEB_VIEWER_EXPORT)
 // We are not running ParseWebAssemblyExports.py, but we're compiling the wasm
@@ -1784,6 +1784,137 @@ public:
 
 
 
+class ILayerSource : public boost::noncopyable
+{
+public:
+  virtual ~ILayerSource()
+  {
+  }
+
+  virtual int GetDepth() const = 0;
+
+  virtual OrthancStone::ISceneLayer* Create(const std::string& studyInstanceUid,
+                                            const std::string& seriesInstanceUid,
+                                            const std::string& sopInstanceUid,
+                                            unsigned int frameNumber,
+                                            const OrthancStone::CoordinateSystem3D& plane) = 0;
+};
+
+
+class OsiriXLayerSource : public ILayerSource
+{
+private:
+  int depth_;
+
+  // The coordinates of OsiriX annotations are expressed in 3D world coordinates
+  OrthancStone::OsiriX::CollectionOfAnnotations  annotations_;
+
+public:
+  OsiriXLayerSource(int depth) :
+    depth_(depth)
+  {
+  }
+
+  OrthancStone::OsiriX::CollectionOfAnnotations& GetAnnotations()
+  {
+    return annotations_;
+  }
+
+  virtual int GetDepth() const ORTHANC_OVERRIDE
+  {
+    return depth_;
+  }
+
+  virtual OrthancStone::ISceneLayer* Create(const std::string& studyInstanceUid,
+                                            const std::string& seriesInstanceUid,
+                                            const std::string& sopInstanceUid,
+                                            unsigned int frameNumber,
+                                            const OrthancStone::CoordinateSystem3D& plane) ORTHANC_OVERRIDE
+  {
+    std::set<size_t> a;
+    annotations_.LookupSopInstanceUid(a, sopInstanceUid);
+    if (plane.IsValid() &&
+        !a.empty())
+    {
+      std::unique_ptr<OrthancStone::MacroSceneLayer> layer(new OrthancStone::MacroSceneLayer);
+      // layer->Reserve(a.size());
+
+      OrthancStone::OsiriXLayerFactory factory;
+      factory.SetColor(0, 255, 0);
+
+      for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
+      {
+        const OrthancStone::OsiriX::Annotation& annotation = annotations_.GetAnnotation(*it);
+        layer->AddLayer(factory.Create(annotation, plane));
+      }
+
+      return layer.release();
+    }
+
+    return NULL;
+  }
+};
+
+
+class LayersHolder : public boost::noncopyable
+{
+private:
+  typedef std::map<int, OrthancStone::ISceneLayer*>  Layers;
+
+  Layers layers_;
+
+public:
+  ~LayersHolder()
+  {
+    for (Layers::iterator it = layers_.begin(); it != layers_.end(); ++it)
+    {
+      if (it->second != NULL)
+      {
+        delete it->second;
+      }
+    }
+  }
+
+  void AddLayer(int depth,
+                OrthancStone::ISceneLayer* layer)
+  {
+    std::unique_ptr<OrthancStone::ISceneLayer> protection(layer);
+
+    if (layers_.find(depth) != layers_.end())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls, "Two layer sources are writing to the same depth: " +
+                                      boost::lexical_cast<std::string>(depth));
+    }
+    else if (layer == NULL)
+    {
+      layers_[depth] = NULL;
+    }
+    else
+    {
+      layers_[depth] = protection.release();
+    }
+  }
+
+  void Commit(OrthancStone::Scene2D& scene)
+  {
+    for (Layers::iterator it = layers_.begin(); it != layers_.end(); ++it)
+    {
+      if (it->second == NULL)
+      {
+        scene.DeleteLayer(it->first);
+      }
+      else
+      {
+        std::unique_ptr<OrthancStone::ISceneLayer> layer(it->second);
+        it->second = NULL;
+        scene.SetLayer(it->first, layer.release());
+      }
+    }
+  }
+};
+
+
+
 class ViewerViewport : public OrthancStone::ObserverBase<ViewerViewport>
 {
 public:
@@ -1833,7 +1964,6 @@ private:
   static const int LAYER_OVERLAY = 1;
   static const int LAYER_ORIENTATION_MARKERS = 2;
   static const int LAYER_REFERENCE_LINES = 3;
-  static const int LAYER_ANNOTATIONS_OSIRIX = 4;
   static const int LAYER_ANNOTATIONS_STONE = 5;
 
   
@@ -2230,15 +2360,17 @@ private:
   std::string  focusSopInstanceUid_;
   size_t       focusFrameNumber_;
 
-  // The coordinates of OsiriX annotations are expressed in 3D world coordinates
-  boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  osiriXAnnotations_;
-
   // The coordinates of Stone annotations are expressed in 2D
   // coordinates of the current texture, with (0,0) corresponding to
   // the center of the top-left pixel
   boost::shared_ptr<OrthancStone::AnnotationsSceneLayer>  stoneAnnotations_;
 
+
   bool linearInterpolation_;
+
+
+  // WARNING: The ownership is not transferred
+  std::list<ILayerSource*>  layerSources_;
 
 
   void UpdateWindowing(WindowingState state,
@@ -2515,29 +2647,6 @@ private:
       }
     }
 
-    std::unique_ptr<OrthancStone::MacroSceneLayer>  annotationsOsiriX;
-
-    if (osiriXAnnotations_)
-    {
-      std::set<size_t> a;
-      osiriXAnnotations_->LookupSopInstanceUid(a, instance.GetSopInstanceUid());
-      if (plane.IsValid() &&
-          !a.empty())
-      {
-        annotationsOsiriX.reset(new OrthancStone::MacroSceneLayer);
-        // annotationsOsiriX->Reserve(a.size());
-
-        OrthancStone::OsiriXLayerFactory factory;
-        factory.SetColor(0, 255, 0);
-          
-        for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
-        {
-          const OrthancStone::OsiriX::Annotation& annotation = osiriXAnnotations_->GetAnnotation(*it);
-          annotationsOsiriX->AddLayer(factory.Create(annotation, plane));
-        }
-      }
-    }
-
     StoneAnnotationsRegistry::GetInstance().Load(*stoneAnnotations_, instance.GetSopInstanceUid(), frameIndex);
 
     // Orientation markers, new in Stone Web viewer 2.4
@@ -2580,12 +2689,22 @@ private:
     }
 
 
+    LayersHolder holder;
+
+    for (std::list<ILayerSource*>::const_iterator it = layerSources_.begin(); it != layerSources_.end(); ++it)
+    {
+      assert(*it != NULL);
+      holder.AddLayer((*it)->GetDepth(), (*it)->Create(instance.GetStudyInstanceUid(), instance.GetSeriesInstanceUid(), instance.GetSopInstanceUid(), frameIndex, plane));
+    }
+
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
 
       OrthancStone::Scene2D& scene = lock->GetController().GetScene();
 
       scene.SetLayer(LAYER_TEXTURE, layer.release());
+
+      holder.Commit(scene);
 
       if (overlay.get() != NULL)
       {
@@ -2594,15 +2713,6 @@ private:
       else
       {
         scene.DeleteLayer(LAYER_OVERLAY);
-      }
-
-      if (annotationsOsiriX.get() != NULL)
-      {
-        scene.SetLayer(LAYER_ANNOTATIONS_OSIRIX, annotationsOsiriX.release());
-      }
-      else
-      {
-        scene.DeleteLayer(LAYER_ANNOTATIONS_OSIRIX);
       }
 
       if (orientationMarkers.get() != NULL)
@@ -3045,6 +3155,13 @@ public:
 
     return viewport;    
   }
+
+
+  void AddLayerSource(ILayerSource& source)  // Ownership is not transfered
+  {
+    layerSources_.push_back(&source);
+  }
+
 
   void SetFrames(IFramesCollection* frames)
   {
@@ -3621,11 +3738,6 @@ public:
     viewport_->FitForPrint();
   }
 
-  void SetOsiriXAnnotations(boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations> annotations)
-  {
-    osiriXAnnotations_ = annotations;
-  }
-
   void ScheduleFrameFocus(const std::string& sopInstanceUid,
                           unsigned int frameNumber)
   {
@@ -3784,7 +3896,7 @@ typedef std::map<std::string, boost::shared_ptr<ViewerViewport> >  Viewports;
 
 static Viewports allViewports_;
 static bool showReferenceLines_ = true;
-static boost::shared_ptr<OrthancStone::OsiriX::CollectionOfAnnotations>  osiriXAnnotations_;
+static boost::shared_ptr<OsiriXLayerSource>  osiriXLayerSource_;
 
 
 static void UpdateReferenceLines()
@@ -4114,7 +4226,7 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
       ViewerViewport::Create(*context_, source_, canvas, framesCache_, instancesCache_, softwareRendering_, linearInterpolation_));
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
-    viewport->SetOsiriXAnnotations(osiriXAnnotations_);
+    viewport->AddLayerSource(*osiriXLayerSource_);
     allViewports_[canvas] = viewport;
     return viewport;
   }
@@ -4150,7 +4262,7 @@ extern "C"
     
     framesCache_.reset(new FramesCache);
     instancesCache_.reset(new InstancesCache);
-    osiriXAnnotations_.reset(new OrthancStone::OsiriX::CollectionOfAnnotations);
+    osiriXLayerSource_.reset(new OsiriXLayerSource(LAYER_ANNOTATIONS_OSIRIX));
 
     for (size_t i = 0; pluginsInitializers_[i] != NULL; i++)
     {
@@ -4749,10 +4861,10 @@ extern "C"
     {
       if (clearPreviousAnnotations)
       {
-        osiriXAnnotations_->Clear();
+        osiriXLayerSource_->GetAnnotations().Clear();
       }
 
-      osiriXAnnotations_->LoadXml(reinterpret_cast<const char*>(xmlPointer), xmlSize);
+      osiriXLayerSource_->GetAnnotations().LoadXml(reinterpret_cast<const char*>(xmlPointer), xmlSize);
       
       // Force redraw, as the annotations might have changed
       for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
@@ -4761,16 +4873,16 @@ extern "C"
         it->second->Redraw();
       }
 
-      if (osiriXAnnotations_->GetSize() == 0)
+      if (osiriXLayerSource_->GetAnnotations().GetSize() == 0)
       {
         stringBuffer_.clear();
       }
       else
       {
-        stringBuffer_ = osiriXAnnotations_->GetAnnotation(0).GetSeriesInstanceUid();
+        stringBuffer_ = osiriXLayerSource_->GetAnnotations().GetAnnotation(0).GetSeriesInstanceUid();
       }
 
-      LOG(WARNING) << "Loaded " << osiriXAnnotations_->GetSize() << " annotations from OsiriX";
+      LOG(WARNING) << "Loaded " << osiriXLayerSource_->GetAnnotations().GetSize() << " annotations from OsiriX";
       return 1;
     }
     EXTERN_CATCH_EXCEPTIONS;
@@ -4783,9 +4895,9 @@ extern "C"
   {
     try
     {
-      if (osiriXAnnotations_->GetSize() != 0)
+      if (osiriXLayerSource_->GetAnnotations().GetSize() != 0)
       {
-        const OrthancStone::OsiriX::Annotation& annotation = osiriXAnnotations_->GetAnnotation(0);
+        const OrthancStone::OsiriX::Annotation& annotation = osiriXLayerSource_->GetAnnotations().GetAnnotation(0);
         
         boost::shared_ptr<ViewerViewport> viewport = GetViewport(canvas);
         viewport->ScheduleFrameFocus(annotation.GetSopInstanceUid(), 0 /* focus on first frame */);

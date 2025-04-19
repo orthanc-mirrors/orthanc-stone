@@ -20,39 +20,10 @@
  **/
 
 
+#include "IStoneWebViewerContext.h"
+
 #include <EmbeddedResources.h>
 #include <emscripten.h>
-
-
-#define DISPATCH_JAVASCRIPT_EVENT(name)                         \
-  EM_ASM(                                                       \
-    const customEvent = document.createEvent("CustomEvent");    \
-    customEvent.initCustomEvent(name, false, false, undefined); \
-    window.dispatchEvent(customEvent);                          \
-    );
-
-
-#define EXTERN_CATCH_EXCEPTIONS                         \
-  catch (Orthanc::OrthancException& e)                  \
-  {                                                     \
-    LOG(ERROR) << "OrthancException: " << e.What();     \
-    DISPATCH_JAVASCRIPT_EVENT("StoneException");        \
-  }                                                     \
-  catch (OrthancStone::StoneException& e)               \
-  {                                                     \
-    LOG(ERROR) << "StoneException: " << e.What();       \
-    DISPATCH_JAVASCRIPT_EVENT("StoneException");        \
-  }                                                     \
-  catch (std::exception& e)                             \
-  {                                                     \
-    LOG(ERROR) << "Runtime error: " << e.what();        \
-    DISPATCH_JAVASCRIPT_EVENT("StoneException");        \
-  }                                                     \
-  catch (...)                                           \
-  {                                                     \
-    LOG(ERROR) << "Native exception";                   \
-    DISPATCH_JAVASCRIPT_EVENT("StoneException");        \
-  }
 
 
 // Orthanc framework includes
@@ -107,7 +78,6 @@ static const int LAYER_ORIENTATION_MARKERS = 2;
 static const int LAYER_REFERENCE_LINES = 3;
 static const int LAYER_ANNOTATIONS_STONE = 5;
 static const int LAYER_ANNOTATIONS_OSIRIX = 4;
-static const int LAYER_DEEP_LEARNING = 6;
 
 
 #if !defined(STONE_WEB_VIEWER_EXPORT)
@@ -1788,25 +1758,6 @@ public:
   };
 };
 
-
-
-// WARNING: This class can be shared by multiple viewports
-class ILayerSource : public boost::noncopyable
-{
-public:
-  virtual ~ILayerSource()
-  {
-  }
-
-  virtual int GetDepth() const = 0;
-
-  virtual OrthancStone::ISceneLayer* Create(const Orthanc::ImageAccessor& frame,
-                                            const OrthancStone::DicomInstanceParameters& instance,
-                                            unsigned int frameNumber,
-                                            double pixelSpacingX,
-                                            double pixelSpacingY,
-                                            const OrthancStone::CoordinateSystem3D& plane) = 0;
-};
 
 
 class LayersHolder : public boost::noncopyable
@@ -3927,70 +3878,6 @@ public:
 
 
 
-class DeepLearningSegmentationSource : public ILayerSource
-{
-private:
-  std::unique_ptr<Orthanc::ImageAccessor>  mask_;
-  std::string sopInstanceUid_;
-  unsigned int frameNumber_;
-
-public:
-  DeepLearningSegmentationSource() :
-    frameNumber_(0)  // Dummy initialization
-  {
-  }
-
-  virtual int GetDepth() const ORTHANC_OVERRIDE
-  {
-    return LAYER_DEEP_LEARNING;
-  }
-
-  void SetMask(const std::string& sopInstanceUid,
-               unsigned int frameNumber,
-               const Orthanc::ImageAccessor& mask)
-  {
-    sopInstanceUid_ = sopInstanceUid;
-    frameNumber_ = frameNumber;
-    mask_.reset(Orthanc::Image::Clone(mask));
-  }
-
-  virtual OrthancStone::ISceneLayer* Create(const Orthanc::ImageAccessor& frame,
-                                            const OrthancStone::DicomInstanceParameters& instance,
-                                            unsigned int frameNumber,
-                                            double pixelSpacingX,
-                                            double pixelSpacingY,
-                                            const OrthancStone::CoordinateSystem3D& plane) ORTHANC_OVERRIDE
-  {
-    if (mask_.get() != NULL &&
-        sopInstanceUid_ == instance.GetSopInstanceUid() &&
-        frameNumber_ == frameNumber)
-    {
-      std::unique_ptr<OrthancStone::LookupTableTextureSceneLayer> layer;
-
-      std::vector<uint8_t> lut(4 * 256);
-      for (unsigned int v = 128; v < 256; v++)
-      {
-        lut[4 * v] = 196;
-        lut[4 * v + 1] = 0;
-        lut[4 * v + 2] = 0;
-        lut[4 * v + 3] = 196;
-      }
-
-      layer.reset(new OrthancStone::LookupTableTextureSceneLayer(*mask_));
-      layer->SetLookupTable(lut);
-      layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
-
-      return layer.release();
-    }
-    else
-    {
-      return NULL;
-    }
-  }
-};
-
-
-
 typedef std::map<std::string, boost::shared_ptr<ViewerViewport> >  Viewports;
 
 static Viewports allViewports_;
@@ -4000,8 +3887,6 @@ static std::unique_ptr<OsiriXLayerSource>   osiriXLayerSource_;
 
 // Orientation markers, new in Stone Web viewer 2.4
 static std::unique_ptr<OrientationMarkersSource>  orientationMarkersSource_;
-
-static std::unique_ptr<DeepLearningSegmentationSource>  deepLearningSegmentationSource_;
 
 static void UpdateReferenceLines()
 {
@@ -4321,6 +4206,18 @@ static ResourcesLoader& GetResourcesLoader()
 }
 
 
+IStoneWebViewerPlugin* DeepLearningInitialization(IStoneWebViewerContext& context);
+
+typedef IStoneWebViewerPlugin* (*PluginInitializer) (IStoneWebViewerContext&);
+
+static const PluginInitializer pluginsInitializers_[] = {
+  DeepLearningInitialization,
+  NULL
+};
+
+static std::list< boost::shared_ptr<IStoneWebViewerPlugin> >  plugins_;
+
+
 static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
 {
   Viewports::iterator found = allViewports_.find(canvas);
@@ -4334,7 +4231,10 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
     viewport->AddLayerSource(*osiriXLayerSource_);
     viewport->AddLayerSource(*orientationMarkersSource_);
 
-    viewport->AddLayerSource(*deepLearningSegmentationSource_);
+    for (std::list< boost::shared_ptr<IStoneWebViewerPlugin> >::iterator it = plugins_.begin(); it != plugins_.end(); ++it)
+    {
+      viewport->AddLayerSource((*it)->GetLayerSource());
+    }
 
     allViewports_[canvas] = viewport;
     return viewport;
@@ -4346,233 +4246,50 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
 }
 
 
-#include <emscripten/fetch.h>
-#include <DeepLearningWorker.pb.h>
-
-enum DeepLearningState
+class StoneWebViewerContext : public IStoneWebViewerContext
 {
-  DeepLearningState_Waiting,
-  DeepLearningState_Pending,
-  DeepLearningState_Running
-};
-
-static DeepLearningState deepLearningState_ = DeepLearningState_Waiting;
-static worker_handle deepLearningWorker_;
-static std::string deepLearningPendingSopInstanceUid_;
-static unsigned int deepLearningPendingFrameNumber_;
-
-// Forward declaration
-static void DeepLearningCallback(char* data,
-                                 int size,
-                                 void* payload);
-
-static void SendRequestToWebWorker(const OrthancStone::Messages::Request& request)
-{
-  std::string s;
-  if (request.SerializeToString(&s) &&
-      !s.empty())
+public:
+  static StoneWebViewerContext& GetInstance()
   {
-    emscripten_call_worker(deepLearningWorker_, "Execute", &s[0], s.size(), DeepLearningCallback, NULL);
+    static StoneWebViewerContext instance;
+    return instance;
   }
-  else
-  {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
-                                    "Cannot send command to the Web worker");
-  }
-}
 
-static void DeepLearningSchedule(const std::string& sopInstanceUid,
-                                 unsigned int frameNumber)
-{
-  if (deepLearningState_ == DeepLearningState_Waiting)
+  virtual void RedrawAllViewports() ORTHANC_OVERRIDE
   {
-    LOG(WARNING) << "Starting deep learning on: " << sopInstanceUid << " / " << frameNumber;
-
-    FramesCache::Accessor accessor(*framesCache_, sopInstanceUid, frameNumber);
-    if (accessor.IsValid() &&
-        accessor.GetImage().GetFormat() == Orthanc::PixelFormat_Float32)
+    for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
     {
-      const Orthanc::ImageAccessor& image = accessor.GetImage();
+      assert(it->second != NULL);
+      it->second->Redraw();
+    }
+  }
 
-      OrthancStone::Messages::Request request;
-      request.set_type(OrthancStone::Messages::RequestType::LOAD_IMAGE);
-      request.mutable_load_image()->set_sop_instance_uid(sopInstanceUid);
-      request.mutable_load_image()->set_frame_number(frameNumber);
-      request.mutable_load_image()->set_width(image.GetWidth());
-      request.mutable_load_image()->set_height(image.GetHeight());
+  virtual bool GetSelectedFrame(Orthanc::ImageAccessor& target /* out */,
+                                std::string& sopInstanceUid /* out */,
+                                unsigned int& frameNumber /* out */,
+                                const std::string& canvas /* in */) ORTHANC_OVERRIDE
+  {
+    boost::shared_ptr<ViewerViewport> viewport = GetViewport(canvas);
 
-      const unsigned int height = image.GetHeight();
-      const unsigned int width = image.GetWidth();
-      for (unsigned int y = 0; y < height; y++)
+    if (viewport->GetCurrentFrame(sopInstanceUid, frameNumber))
+    {
+      FramesCache::Accessor accessor(*framesCache_, sopInstanceUid, frameNumber);
+      if (accessor.IsValid())
       {
-        const float* p = reinterpret_cast<const float*>(image.GetConstRow(y));
-        for (unsigned int x = 0; x < width; x++, p++)
-        {
-          request.mutable_load_image()->mutable_values()->Add(*p);
-        }
+        accessor.GetImage().GetReadOnlyAccessor(target);
+        return true;
       }
-
-      deepLearningState_ = DeepLearningState_Running;
-      SendRequestToWebWorker(request);
-    }
-    else
-    {
-      LOG(ERROR) << "Cannot access the frame content, maybe a color image?";
-
-      EM_ASM({
-          const customEvent = document.createEvent("CustomEvent");
-          customEvent.initCustomEvent("DeepLearningStep", false, false,
-                                      { "progress" : "0" });
-          window.dispatchEvent(customEvent);
-        });
-    }
-  }
-  else
-  {
-    deepLearningState_ = DeepLearningState_Pending;
-    deepLearningPendingSopInstanceUid_ = sopInstanceUid;
-    deepLearningPendingFrameNumber_ = frameNumber;
-  }
-}
-
-static void DeepLearningNextStep()
-{
-  switch (deepLearningState_)
-  {
-    case DeepLearningState_Pending:
-      deepLearningState_ = DeepLearningState_Waiting;
-      DeepLearningSchedule(deepLearningPendingSopInstanceUid_, deepLearningPendingFrameNumber_);
-      break;
-
-    case DeepLearningState_Running:
-    {
-      OrthancStone::Messages::Request request;
-      request.set_type(OrthancStone::Messages::RequestType::EXECUTE_STEP);
-      SendRequestToWebWorker(request);
-      break;
-    }
-
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, "Bad state for deep learning");
-  }
-}
-
-static void DeepLearningCallback(char* data,
-                                 int size,
-                                 void* payload)
-{
-  try
-  {
-    OrthancStone::Messages::Response response;
-    if (response.ParseFromArray(data, size))
-    {
-      switch (response.type())
+      else
       {
-        case OrthancStone::Messages::ResponseType::INITIALIZED:
-          DISPATCH_JAVASCRIPT_EVENT("DeepLearningInitialized");
-          break;
-
-        case OrthancStone::Messages::ResponseType::PARSED_MODEL:
-          LOG(WARNING) << "Number of steps in the model: " << response.parse_model().number_of_steps();
-          DISPATCH_JAVASCRIPT_EVENT("DeepLearningModelReady");
-          break;
-
-        case OrthancStone::Messages::ResponseType::LOADED_IMAGE:
-          DeepLearningNextStep();
-          break;
-
-        case OrthancStone::Messages::ResponseType::STEP_DONE:
-        {
-          EM_ASM({
-              const customEvent = document.createEvent("CustomEvent");
-              customEvent.initCustomEvent("DeepLearningStep", false, false,
-                                          { "progress" : $0 });
-              window.dispatchEvent(customEvent);
-            },
-            response.step().progress()
-            );
-
-          if (response.step().done())
-          {
-            deepLearningState_ = DeepLearningState_Waiting;
-
-            const unsigned int height = response.step().mask().height();
-            const unsigned int width = response.step().mask().width();
-
-            LOG(WARNING) << "SUCCESS! Mask: " << width << "x" << height << " for frame "
-                         << response.step().mask().sop_instance_uid() << " / "
-                         << response.step().mask().frame_number();
-
-            Orthanc::Image mask(Orthanc::PixelFormat_Grayscale8, width, height, false);
-
-            size_t pos = 0;
-            for (unsigned int y = 0; y < height; y++)
-            {
-              uint8_t* p = reinterpret_cast<uint8_t*>(mask.GetRow(y));
-              for (unsigned int x = 0; x < width; x++, p++, pos++)
-              {
-                *p = response.step().mask().values(pos) ? 255 : 0;
-              }
-            }
-
-            deepLearningSegmentationSource_->SetMask(response.step().mask().sop_instance_uid(),
-                                                     response.step().mask().frame_number(), mask);
-
-            for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
-            {
-              assert(it->second != NULL);
-              it->second->Redraw();
-            }
-          }
-          else
-          {
-            DeepLearningNextStep();
-          }
-
-          break;
-        }
-
-        default:
-          LOG(ERROR) << "Unsupported response type from the deep learning worker";
+        return false;
       }
     }
     else
     {
-      LOG(ERROR) << "Bad response received from the deep learning worker";
+      LOG(WARNING) << "No active frame";
+      return false;
     }
   }
-  EXTERN_CATCH_EXCEPTIONS;
-}
-
-static void DeepLearningModelLoaded(emscripten_fetch_t *fetch)
-{
-  try
-  {
-    LOG(WARNING) << "Deep learning model loaded: " << fetch->numBytes;
-
-    OrthancStone::Messages::Request request;
-    request.set_type(OrthancStone::Messages::RequestType::PARSE_MODEL);
-    request.mutable_parse_model()->mutable_content()->assign(fetch->data, fetch->numBytes);
-
-    emscripten_fetch_close(fetch);  // Don't use "fetch" below
-    SendRequestToWebWorker(request);
-  }
-  EXTERN_CATCH_EXCEPTIONS;
-}
-
-
-static void DeepLearningInitialization()
-{
-  deepLearningWorker_ = emscripten_create_worker("../stone-deep-learning/DeepLearningWorker.js");
-  emscripten_call_worker(deepLearningWorker_, "Initialize", NULL, 0, DeepLearningCallback, NULL);
-}
-
-
-typedef void (*PluginInitializer) ();
-
-static const PluginInitializer pluginsInitializers_[] = {
-  DeepLearningInitialization,
-  NULL
 };
 
 
@@ -4596,55 +4313,16 @@ extern "C"
     osiriXLayerSource_.reset(new OsiriXLayerSource);
     orientationMarkersSource_.reset(new OrientationMarkersSource);
 
-    deepLearningSegmentationSource_.reset(new DeepLearningSegmentationSource);
-
     for (size_t i = 0; pluginsInitializers_[i] != NULL; i++)
     {
-      pluginsInitializers_[i] ();
+      std::unique_ptr<IStoneWebViewerPlugin> plugin(pluginsInitializers_[i] (StoneWebViewerContext::GetInstance()));
+      if (plugin.get() != NULL)
+      {
+        plugins_.push_back(boost::shared_ptr<IStoneWebViewerPlugin>(plugin.release()));
+      }
     }
 
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");
-  }
-
-
-  EMSCRIPTEN_KEEPALIVE
-  void LoadDeepLearningModel(const char* uri)
-  {
-    try
-    {
-      LOG(WARNING) << "Loading deep learning model: " << uri;
-
-      emscripten_fetch_attr_t attr;
-      emscripten_fetch_attr_init(&attr);
-      strcpy(attr.requestMethod, "GET");
-      attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
-      attr.onsuccess = DeepLearningModelLoaded;
-      attr.onerror = NULL;
-      emscripten_fetch(&attr, uri);
-    }
-    EXTERN_CATCH_EXCEPTIONS;
-  }
-
-
-  EMSCRIPTEN_KEEPALIVE
-  void ApplyDeepLearningModel(const char* canvas)
-  {
-    try
-    {
-      boost::shared_ptr<ViewerViewport> viewport = GetViewport(canvas);
-
-      std::string sopInstanceUid;
-      unsigned int frameNumber;
-      if (viewport->GetCurrentFrame(sopInstanceUid, frameNumber))
-      {
-        DeepLearningSchedule(sopInstanceUid, frameNumber);
-      }
-      else
-      {
-        LOG(WARNING) << "No active frame";
-      }
-    }
-    EXTERN_CATCH_EXCEPTIONS;
   }
 
 

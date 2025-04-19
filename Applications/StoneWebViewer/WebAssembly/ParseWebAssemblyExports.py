@@ -45,8 +45,8 @@ parser = argparse.ArgumentParser(description = 'Parse WebAssembly C++ source fil
 parser.add_argument('--libclang',
                     default = '',
                     help = 'manually provides the path to the libclang shared library')
-parser.add_argument('source', 
-                    help = 'Input C++ file')
+parser.add_argument('sources', nargs='+',
+                    help = 'Input C++ files')
 
 args = parser.parse_args()
 
@@ -56,13 +56,6 @@ if len(args.libclang) != 0:
     clang.cindex.Config.set_library_file(args.libclang)
 
 index = clang.cindex.Index.create()
-
-# PARSE_SKIP_FUNCTION_BODIES prevents clang from failing because of
-# undefined types, which prevents compilation of functions
-tu = index.parse(args.source,
-                 [ '-DEMSCRIPTEN_KEEPALIVE=__attribute__((annotate("WebAssembly")))',
-                   '-DSTONE_WEB_VIEWER_EXPORT=__attribute__((annotate("WebAssembly")))'],
-                 options = clang.cindex.TranslationUnit.PARSE_SKIP_FUNCTION_BODIES)
 
 
 
@@ -197,8 +190,15 @@ def Explore(node):
     for child in node.get_children():
         Explore(child)
 
-Explore(tu.cursor)
 
+for source in args.sources:
+    # PARSE_SKIP_FUNCTION_BODIES prevents clang from failing because of
+    # undefined types, which prevents compilation of functions
+    tu = index.parse(source,
+                     [ '-DEMSCRIPTEN_KEEPALIVE=__attribute__((annotate("WebAssembly")))',
+                       '-DSTONE_WEB_VIEWER_EXPORT=__attribute__((annotate("WebAssembly")))'],
+                     options = clang.cindex.TranslationUnit.PARSE_SKIP_FUNCTION_BODIES)
+    Explore(tu.cursor)
 
 
 print(pystache.render(TEMPLATE, {

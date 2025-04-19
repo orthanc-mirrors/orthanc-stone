@@ -20,39 +20,10 @@
  **/
 
 
+#include "IStoneWebViewerContext.h"
+
 #include <EmbeddedResources.h>
 #include <emscripten.h>
-
-
-#define DISPATCH_JAVASCRIPT_EVENT(name)                         \
-  EM_ASM(                                                       \
-    const customEvent = document.createEvent("CustomEvent");    \
-    customEvent.initCustomEvent(name, false, false, undefined); \
-    window.dispatchEvent(customEvent);                          \
-    );
-
-
-#define EXTERN_CATCH_EXCEPTIONS                         \
-  catch (Orthanc::OrthancException& e)                  \
-  {                                                     \
-    LOG(ERROR) << "OrthancException: " << e.What();     \
-    DISPATCH_JAVASCRIPT_EVENT("StoneException");        \
-  }                                                     \
-  catch (OrthancStone::StoneException& e)               \
-  {                                                     \
-    LOG(ERROR) << "StoneException: " << e.What();       \
-    DISPATCH_JAVASCRIPT_EVENT("StoneException");        \
-  }                                                     \
-  catch (std::exception& e)                             \
-  {                                                     \
-    LOG(ERROR) << "Runtime error: " << e.what();        \
-    DISPATCH_JAVASCRIPT_EVENT("StoneException");        \
-  }                                                     \
-  catch (...)                                           \
-  {                                                     \
-    LOG(ERROR) << "Native exception";                   \
-    DISPATCH_JAVASCRIPT_EVENT("StoneException");        \
-  }
 
 
 // Orthanc framework includes
@@ -1787,25 +1758,6 @@ public:
   };
 };
 
-
-
-// WARNING: This class can be shared by multiple viewports
-class ILayerSource : public boost::noncopyable
-{
-public:
-  virtual ~ILayerSource()
-  {
-  }
-
-  virtual int GetDepth() const = 0;
-
-  virtual OrthancStone::ISceneLayer* Create(const Orthanc::ImageAccessor& frame,
-                                            const OrthancStone::DicomInstanceParameters& instance,
-                                            unsigned int frameNumber,
-                                            double pixelSpacingX,
-                                            double pixelSpacingY,
-                                            const OrthancStone::CoordinateSystem3D& plane) = 0;
-};
 
 
 class LayersHolder : public boost::noncopyable
@@ -3742,6 +3694,25 @@ public:
   }
 
 
+  bool GetCurrentFrame(std::string& sopInstanceUid /* out */,
+                       unsigned int& frameNumber /* out */) const
+  {
+    if (cursor_.get() != NULL &&
+        frames_.get() != NULL)
+    {
+      const size_t cursorIndex = cursor_->GetCurrentIndex();
+      const OrthancStone::DicomInstanceParameters& instance = frames_->GetInstanceOfFrame(cursorIndex);
+      sopInstanceUid = instance.GetSopInstanceUid();
+      frameNumber = frames_->GetFrameNumberInInstance(cursorIndex);
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+
   void SignalSynchronizedBrowsing()
   {
     if (synchronizationEnabled_ &&
@@ -4238,6 +4209,15 @@ static ResourcesLoader& GetResourcesLoader()
 }
 
 
+typedef IStoneWebViewerPlugin* (*PluginInitializer) (IStoneWebViewerContext&);
+
+static const PluginInitializer pluginsInitializers_[] = {
+  NULL
+};
+
+static std::list< boost::shared_ptr<IStoneWebViewerPlugin> >  plugins_;
+
+
 static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
 {
   Viewports::iterator found = allViewports_.find(canvas);
@@ -4250,6 +4230,12 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
     viewport->AddLayerSource(*overlayLayerSource_);
     viewport->AddLayerSource(*osiriXLayerSource_);
     viewport->AddLayerSource(*orientationMarkersSource_);
+
+    for (std::list< boost::shared_ptr<IStoneWebViewerPlugin> >::iterator it = plugins_.begin(); it != plugins_.end(); ++it)
+    {
+      viewport->AddLayerSource((*it)->GetLayerSource());
+    }
+
     allViewports_[canvas] = viewport;
     return viewport;
   }
@@ -4260,13 +4246,51 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
 }
 
 
+class StoneWebViewerContext : public IStoneWebViewerContext
+{
+public:
+  static StoneWebViewerContext& GetInstance()
+  {
+    static StoneWebViewerContext instance;
+    return instance;
+  }
 
-typedef void (*PluginInitializer) ();
+  virtual void RedrawAllViewports() ORTHANC_OVERRIDE
+  {
+    for (Viewports::iterator it = allViewports_.begin(); it != allViewports_.end(); ++it)
+    {
+      assert(it->second != NULL);
+      it->second->Redraw();
+    }
+  }
 
-static const PluginInitializer pluginsInitializers_[] = {
-  NULL
+  virtual bool GetSelectedFrame(Orthanc::ImageAccessor& target /* out */,
+                                std::string& sopInstanceUid /* out */,
+                                unsigned int& frameNumber /* out */,
+                                const std::string& canvas /* in */) ORTHANC_OVERRIDE
+  {
+    boost::shared_ptr<ViewerViewport> viewport = GetViewport(canvas);
+
+    if (viewport->GetCurrentFrame(sopInstanceUid, frameNumber))
+    {
+      FramesCache::Accessor accessor(*framesCache_, sopInstanceUid, frameNumber);
+      if (accessor.IsValid())
+      {
+        accessor.GetImage().GetReadOnlyAccessor(target);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+    else
+    {
+      LOG(WARNING) << "No active frame";
+      return false;
+    }
+  }
 };
-
 
 
 extern "C"
@@ -4291,7 +4315,11 @@ extern "C"
 
     for (size_t i = 0; pluginsInitializers_[i] != NULL; i++)
     {
-      pluginsInitializers_[i] ();
+      std::unique_ptr<IStoneWebViewerPlugin> plugin(pluginsInitializers_[i] (StoneWebViewerContext::GetInstance()));
+      if (plugin.get() != NULL)
+      {
+        plugins_.push_back(boost::shared_ptr<IStoneWebViewerPlugin>(plugin.release()));
+      }
     }
 
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");

@@ -101,7 +101,11 @@
 
 static const double PI = boost::math::constants::pi<double>();
 
+static const int LAYER_TEXTURE = 0;
+static const int LAYER_OVERLAY = 1;
 static const int LAYER_ORIENTATION_MARKERS = 2;
+static const int LAYER_REFERENCE_LINES = 3;
+static const int LAYER_ANNOTATIONS_STONE = 5;
 static const int LAYER_ANNOTATIONS_OSIRIX = 4;
 
 
@@ -1908,12 +1912,6 @@ public:
   };
 
 private:
-  static const int LAYER_TEXTURE = 0;
-  static const int LAYER_OVERLAY = 1;
-  static const int LAYER_REFERENCE_LINES = 3;
-  static const int LAYER_ANNOTATIONS_STONE = 5;
-
-  
   class ICommand : public Orthanc::IDynamicObject
   {
   private:
@@ -2583,20 +2581,11 @@ private:
       layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
     }
 
-    std::unique_ptr<OrthancStone::LookupTableTextureSceneLayer> overlay;
-
-    {
-      OverlaysRegistry::Accessor accessor(OverlaysRegistry::GetInstance(), instance.GetSopInstanceUid());
-      if (accessor.IsValid())
-      {
-        overlay.reset(accessor.CreateTexture());
-        overlay->SetLinearInterpolation(false);
-      }
-    }
-
     StoneAnnotationsRegistry::GetInstance().Load(*stoneAnnotations_, instance.GetSopInstanceUid(), frameIndex);
 
     LayersHolder holder;
+
+    holder.AddLayer(LAYER_TEXTURE, layer.release());
 
     for (std::list<ILayerSource*>::const_iterator it = layerSources_.begin(); it != layerSources_.end(); ++it)
     {
@@ -2609,18 +2598,7 @@ private:
 
       OrthancStone::Scene2D& scene = lock->GetController().GetScene();
 
-      scene.SetLayer(LAYER_TEXTURE, layer.release());
-
       holder.Commit(scene);
-
-      if (overlay.get() != NULL)
-      {
-        scene.SetLayer(LAYER_OVERLAY, overlay.release());
-      }
-      else
-      {
-        scene.DeleteLayer(LAYER_OVERLAY);
-      }
 
       stoneAnnotations_->Render(scene);  // Necessary for "FitContent()" to work
 
@@ -3900,14 +3878,46 @@ public:
 
 
 
+class OverlayLayerSource : public ILayerSource
+{
+public:
+  virtual int GetDepth() const ORTHANC_OVERRIDE
+  {
+    return LAYER_OVERLAY;
+  }
+
+  virtual OrthancStone::ISceneLayer* Create(const Orthanc::ImageAccessor& frame,
+                                            const OrthancStone::DicomInstanceParameters& instance,
+                                            unsigned int frameNumber,
+                                            double pixelSpacingX,
+                                            double pixelSpacingY,
+                                            const OrthancStone::CoordinateSystem3D& plane) ORTHANC_OVERRIDE
+  {
+    OverlaysRegistry::Accessor accessor(OverlaysRegistry::GetInstance(), instance.GetSopInstanceUid());
+    if (accessor.IsValid())
+    {
+      std::unique_ptr<OrthancStone::LookupTableTextureSceneLayer> layer(accessor.CreateTexture());
+      layer->SetLinearInterpolation(false);
+      return layer.release();
+    }
+    else
+    {
+      return NULL;
+    }
+  }
+};
+
+
+
 typedef std::map<std::string, boost::shared_ptr<ViewerViewport> >  Viewports;
 
 static Viewports allViewports_;
 static bool showReferenceLines_ = true;
-static boost::shared_ptr<OsiriXLayerSource>  osiriXLayerSource_;
+static std::unique_ptr<OverlayLayerSource>  overlayLayerSource_;
+static std::unique_ptr<OsiriXLayerSource>   osiriXLayerSource_;
 
 // Orientation markers, new in Stone Web viewer 2.4
-static boost::shared_ptr<OrientationMarkersSource>  orientationMarkersSource_;
+static std::unique_ptr<OrientationMarkersSource>  orientationMarkersSource_;
 
 
 static void UpdateReferenceLines()
@@ -4237,6 +4247,7 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
       ViewerViewport::Create(*context_, source_, canvas, framesCache_, instancesCache_, softwareRendering_, linearInterpolation_));
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
+    viewport->AddLayerSource(*overlayLayerSource_);
     viewport->AddLayerSource(*osiriXLayerSource_);
     viewport->AddLayerSource(*orientationMarkersSource_);
     allViewports_[canvas] = viewport;
@@ -4274,6 +4285,7 @@ extern "C"
     
     framesCache_.reset(new FramesCache);
     instancesCache_.reset(new InstancesCache);
+    overlayLayerSource_.reset(new OverlayLayerSource);
     osiriXLayerSource_.reset(new OsiriXLayerSource);
     orientationMarkersSource_.reset(new OrientationMarkersSource);
 

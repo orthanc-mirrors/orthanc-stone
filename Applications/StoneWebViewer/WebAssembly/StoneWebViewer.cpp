@@ -1071,7 +1071,7 @@ private:
 
 
   static std::string GetKey(const std::string& sopInstanceUid,
-                            size_t frameNumber)
+                            unsigned int frameNumber)
   {
     return sopInstanceUid + "|" + boost::lexical_cast<std::string>(frameNumber);
   }
@@ -1101,7 +1101,7 @@ public:
    * previously cached one, or if no cache was previously available.
    **/
   bool Acquire(const std::string& sopInstanceUid,
-               size_t frameNumber,
+               unsigned int frameNumber,
                Orthanc::ImageAccessor* image /* transfer ownership */,
                unsigned int quality)
   {
@@ -1179,7 +1179,7 @@ public:
   public:
     Accessor(FramesCache& that,
              const std::string& sopInstanceUid,
-             size_t frameNumber) :
+             unsigned int frameNumber) :
       accessor_(that.cache_, GetKey(sopInstanceUid, frameNumber), false /* shared lock */)
     {
     }
@@ -2304,7 +2304,7 @@ private:
 
   bool         hasFocusOnInstance_;
   std::string  focusSopInstanceUid_;
-  size_t       focusFrameNumber_;
+  unsigned int focusFrameNumber_;
 
   // The coordinates of Stone annotations are expressed in 2D
   // coordinates of the current texture, with (0,0) corresponding to

@@ -126,7 +126,8 @@ namespace OrthancStone
     SeriesThumbnailType_Unsupported = 2,  // The remote server cannot decode this image
     SeriesThumbnailType_Pdf = 3,
     SeriesThumbnailType_Video = 4,
-    SeriesThumbnailType_Image = 5
+    SeriesThumbnailType_Image = 5,
+    SeriesThumbnailType_StructuredReport = 6
   };
 
   enum BitmapAnchor

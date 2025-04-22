@@ -609,4 +609,23 @@ namespace OrthancStone
       return *structures_[index];
     }
   }
+
+
+  bool DicomStructuredReport::IsReferencedInstance(const std::string& studyInstanceUid,
+                                                   const std::string& seriesInstanceUid,
+                                                   const std::string& sopInstanceUid) const
+  {
+    std::map<std::string, ReferencedInstance*>::const_iterator found = instancesInformation_.find(sopInstanceUid);
+
+    if (found == instancesInformation_.end())
+    {
+      return false;
+    }
+    else
+    {
+      assert(found->second != NULL);
+      return (found->second->GetStudyInstanceUid() == studyInstanceUid &&
+              found->second->GetSeriesInstanceUid() == seriesInstanceUid);
+    }
+  }
 }

@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License
@@ -771,13 +771,17 @@ private:
 
       for (size_t i = 0; i < dicom.GetSize(); i++)
       {
-        std::string studyInstanceUid, seriesInstanceUid, modality;
+        std::string modality;
+        if (!dicom.GetResource(i).LookupStringValue(modality, Orthanc::DICOM_TAG_MODALITY, false))
+        {
+          modality = ""; // Arbitrary value if "Modality" is missing
+        }
+
+        std::string studyInstanceUid, seriesInstanceUid;
         if (dicom.GetResource(i).LookupStringValue(
               studyInstanceUid, Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, false) &&
             dicom.GetResource(i).LookupStringValue(
-              seriesInstanceUid, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false) &&
-            dicom.GetResource(i).LookupStringValue(
-              modality, Orthanc::DICOM_TAG_MODALITY, false))
+              seriesInstanceUid, Orthanc::DICOM_TAG_SERIES_INSTANCE_UID, false))
         {
           // skip series that should not be displayed
           if (std::find(skipSeriesFromModalities_.begin(), skipSeriesFromModalities_.end(), modality) == skipSeriesFromModalities_.end())
@@ -2810,10 +2814,16 @@ private:
           // (cf. mail from Tomas Kenda on 2021-08-17)
           InstancesCache::Accessor accessor(*instancesCache_, instance.GetSopInstanceUid());
           OrthancStone::Windowing windowing;
-          if (accessor.IsValid() &&
-              accessor.GetParameters().LookupPerFrameWindowing(windowing, frameIndex))
+          if (accessor.IsValid())
           {
-            UpdateWindowing(WindowingState_FramePreset, windowing);
+            if (accessor.GetParameters().LookupPerFrameWindowing(windowing, frameIndex))
+            {
+              UpdateWindowing(WindowingState_FramePreset, windowing);
+            }
+            else if (accessor.GetParameters().GetWindowingPresetsCount() > 0)
+            {
+              UpdateWindowing(WindowingState_FramePreset, accessor.GetParameters().GetWindowingPreset(0));
+            }
           }
         }
 
@@ -2864,6 +2874,17 @@ private:
     {
       pixelSpacingX = centralPixelSpacingX_;
       pixelSpacingY = centralPixelSpacingY_;
+    }
+
+    // This hack has been introduced to fix an issue where the first US image of a series had negative PhysicalDeltaX value 
+    // while the other images from the series had different geometries.  layer->SetOrigin was failing later.
+    // At the end, it appears that the measures are corrects although we have set the pixelSpacing to 1m so the values are likely
+    // overwritten later on...
+    if (pixelSpacingX < 0 || pixelSpacingY < 0)
+    {
+      LOG(ERROR) << "Pixel spacings are invalid: " << pixelSpacingX << " " << pixelSpacingY << " setting dummy values to 1000, 1000 -> measures might be invalid !";
+      pixelSpacingX = 1000;
+      pixelSpacingY = 1000;
     }
 
     if (FIX_LSD_479)

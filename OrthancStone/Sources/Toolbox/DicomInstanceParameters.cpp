@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
  * Department, University Hospital of Liege, Belgium
  * Copyright (C) 2017-2023 Osimis S.A., Belgium
- * Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+ * Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -27,6 +27,9 @@
 #include "../Scene2D/FloatTextureSceneLayer.h"
 #include "GeometryToolbox.h"
 #include "ImageToolbox.h"
+#include "OrthancDatasets/DicomDatasetReader.h"
+#include "OrthancDatasets/DicomWebDataset.h"
+#include "OrthancDatasets/OrthancNativeDataset.h"
 
 #include <Images/Image.h>
 #include <Images/ImageProcessing.h>
@@ -231,65 +234,100 @@ namespace OrthancStone
     {
       instanceNumber_ = 0;
     }
+  }
 
+
+  void DicomInstanceParameters::InjectSequenceTags(const IDicomDataset& dataset)
+  {
+    /**
+     * Use DICOM tag "SequenceOfUltrasoundRegions" (0018,6011) in
+     * order to derive the pixel spacing on ultrasound (US) images
+     **/
+
+    static const Orthanc::DicomTag DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS(0x0018, 0x6011);
+    static const Orthanc::DicomTag DICOM_TAG_PHYSICAL_UNITS_X_DIRECTION(0x0018, 0x6024);
+    static const Orthanc::DicomTag DICOM_TAG_PHYSICAL_UNITS_Y_DIRECTION(0x0018, 0x6026);
+    static const Orthanc::DicomTag DICOM_TAG_PHYSICAL_DELTA_X(0x0018, 0x602c);
+    static const Orthanc::DicomTag DICOM_TAG_PHYSICAL_DELTA_Y(0x0018, 0x602e);
+
+    DicomDatasetReader reader(dataset);
+
+    size_t size;
+
+    if (!data_.hasPixelSpacing_ &&
+        dataset.GetSequenceSize(size, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS)) &&
+        size >= 1)
+    {
+      int directionX, directionY;
+      double deltaX, deltaY;
+
+      if (reader.GetIntegerValue(directionX, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                                0, DICOM_TAG_PHYSICAL_UNITS_X_DIRECTION)) &&
+          reader.GetIntegerValue(directionY, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                                0, DICOM_TAG_PHYSICAL_UNITS_Y_DIRECTION)) &&
+          reader.GetDoubleValue(deltaX, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                           0, DICOM_TAG_PHYSICAL_DELTA_X)) &&
+          reader.GetDoubleValue(deltaY, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                           0, DICOM_TAG_PHYSICAL_DELTA_Y)) &&
+          directionX == 0x0003 &&  // Centimeters
+          directionY == 0x0003)    // Centimeters
+      {
+        // Scene coordinates are expressed in millimeters => multiplication by 10
+        SetPixelSpacing(10.0 * deltaX, 10.0 * deltaY);
+      }
+    }
+
+
+    /**
+     * New in Stone Web viewer 2.2: Deal with Philips multiframe
+     * (cf. mail from Tomas Kenda on 2021-08-17). This cannot be done
+     * in LoadSeriesDetailsFromInstance, as the "Per Frame Functional
+     * Groups Sequence" is not available at that point.
+     **/
 
     static const Orthanc::DicomTag DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE(0x5200, 0x9230);
     static const Orthanc::DicomTag DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE(0x0028, 0x9132);
 
-    const Orthanc::DicomValue* frames = dicom.TestAndGetValue(DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE);
-    if (frames != NULL &&
-        hasNumberOfFrames_ &&
-        frames->IsSequence())
+    if (dataset.GetSequenceSize(size, Orthanc::DicomPath(DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE)))
     {
-      /**
-       * New in Stone Web viewer 2.2: Deal with Philips multiframe
-       * (cf. mail from Tomas Kenda on 2021-08-17). This cannot be done
-       * in LoadSeriesDetailsFromInstance, as the "Per Frame Functional Groups Sequence"
-       * is not available at that point.
-       **/
-
-      const Json::Value& sequence = frames->GetSequenceContent();
-
-      perFrameWindowing_.resize(numberOfFrames_);
+      data_.perFrameWindowing_.reserve(data_.numberOfFrames_);
 
       // This corresponds to "ParsedDicomFile::GetDefaultWindowing()"
-      for (Json::ArrayIndex i = 0; i < sequence.size(); i++)
+      for (size_t i = 0; i < size; i++)
       {
-        if (i < numberOfFrames_ &&
-            sequence[i].isMember(DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE.Format()))
+        size_t tmp;
+        double center, width;
+
+        if (dataset.GetSequenceSize(tmp, Orthanc::DicomPath(DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE, i,
+                                                            DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE)) &&
+            tmp == 1 &&
+            reader.GetDoubleValue(center, Orthanc::DicomPath(DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE, i,
+                                                             DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE, 0,
+                                                             Orthanc::DICOM_TAG_WINDOW_CENTER)) &&
+            reader.GetDoubleValue(width, Orthanc::DicomPath(DICOM_TAG_PER_FRAME_FUNCTIONAL_GROUPS_SEQUENCE, i,
+                                                            DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE, 0,
+                                                            Orthanc::DICOM_TAG_WINDOW_WIDTH)))
         {
-          const Json::Value& v = sequence[i][DICOM_TAG_FRAME_VOI_LUT_SEQUENCE_ATTRIBUTE.Format()];
-
-          static const char* KEY_VALUE = "Value";
-
-          if (v.isMember(KEY_VALUE) &&
-              v[KEY_VALUE].type() == Json::arrayValue &&
-              v[KEY_VALUE].size() >= 1 &&
-              v[KEY_VALUE][0].isMember(Orthanc::DICOM_TAG_WINDOW_CENTER.Format()) &&
-              v[KEY_VALUE][0].isMember(Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()) &&
-              v[KEY_VALUE][0][Orthanc::DICOM_TAG_WINDOW_CENTER.Format()].isMember(KEY_VALUE) &&
-              v[KEY_VALUE][0][Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()].isMember(KEY_VALUE))
-          {
-            const Json::Value& scenter = v[KEY_VALUE][0][Orthanc::DICOM_TAG_WINDOW_CENTER.Format()][KEY_VALUE];
-            const Json::Value& swidth = v[KEY_VALUE][0][Orthanc::DICOM_TAG_WINDOW_WIDTH.Format()][KEY_VALUE];
-
-            double center, width;
-            if (scenter.isString() &&
-                swidth.isString() &&
-                Orthanc::SerializationToolbox::ParseDouble(center, scenter.asString()) &&
-                Orthanc::SerializationToolbox::ParseDouble(width, swidth.asString()))
-            {
-              perFrameWindowing_[i] = Windowing(center, width);
-            }
-            else if (scenter.isNumeric() &&
-                     swidth.isNumeric())
-            {
-              perFrameWindowing_[i] = Windowing(scenter.asDouble(), swidth.asDouble());
-            }
-          }
+          data_.perFrameWindowing_.push_back(Windowing(center, width));
         }
       }
     }
+  }
+
+
+  DicomInstanceParameters::DicomInstanceParameters(const DicomInstanceParameters& other) :
+    data_(other.data_),
+    tags_(other.tags_->Clone())
+  {
+  }
+
+
+  DicomInstanceParameters::DicomInstanceParameters(const Orthanc::DicomMap& dicom) :
+    data_(dicom),
+    tags_(dicom.Clone())
+  {
+    OrthancNativeDataset dataset(dicom);
+    InjectSequenceTags(dataset);
   }
 
 
@@ -786,66 +824,10 @@ namespace OrthancStone
   }
 
 
-  static const Json::Value* LookupDicomWebSingleValue(const Json::Value& dicomweb,
-                                                      const std::string& tag,
-                                                      const std::string& vr)
-  {
-    static const char* const VALUE = "Value";
-    static const char* const VR = "vr";
-
-    if (dicomweb.type() == Json::objectValue &&
-        dicomweb.isMember(tag) &&
-        dicomweb[tag].type() == Json::objectValue &&
-        dicomweb[tag].isMember(VALUE) &&
-        dicomweb[tag].isMember(VR) &&
-        dicomweb[tag][VR].type() == Json::stringValue &&
-        dicomweb[tag][VR].asString() == vr &&
-        dicomweb[tag][VALUE].type() == Json::arrayValue &&
-        dicomweb[tag][VALUE].size() == 1u)
-    {
-      return &dicomweb[tag][VALUE][0];
-    }
-    else
-    {
-      return NULL;
-    }
-  }
-
-
   void DicomInstanceParameters::EnrichUsingDicomWeb(const Json::Value& dicomweb)
   {
-    /**
-     * Use DICOM tag "SequenceOfUltrasoundRegions" (0018,6011) in
-     * order to derive the pixel spacing on ultrasound (US) images
-     **/
-    
-    if (!data_.hasPixelSpacing_)
-    {
-      const Json::Value* region = LookupDicomWebSingleValue(dicomweb, "00186011", "SQ");
-      if (region != NULL)
-      {
-        const Json::Value* physicalUnitsXDirection = LookupDicomWebSingleValue(*region, "00186024", "US");
-        const Json::Value* physicalUnitsYDirection = LookupDicomWebSingleValue(*region, "00186026", "US");
-        const Json::Value* physicalDeltaX = LookupDicomWebSingleValue(*region, "0018602C", "FD");
-        const Json::Value* physicalDeltaY = LookupDicomWebSingleValue(*region, "0018602E", "FD");
-        
-        if (physicalUnitsXDirection != NULL &&
-            physicalUnitsYDirection != NULL &&
-            physicalDeltaX != NULL &&
-            physicalDeltaY != NULL &&
-            physicalUnitsXDirection->type() == Json::intValue &&
-            physicalUnitsYDirection->type() == Json::intValue &&
-            physicalUnitsXDirection->asInt() == 0x0003 &&  // Centimeters
-            physicalUnitsYDirection->asInt() == 0x0003 &&  // Centimeters
-            physicalDeltaX->isNumeric() &&
-            physicalDeltaY->isNumeric())
-        {
-          // Scene coordinates are expressed in millimeters => multiplication by 10
-          SetPixelSpacing(10.0 * physicalDeltaX->asDouble(),
-                          10.0 * physicalDeltaY->asDouble());
-        }
-      }
-    }
+    DicomWebDataset dataset(dicomweb);
+    InjectSequenceTags(dataset);
   }
 
 

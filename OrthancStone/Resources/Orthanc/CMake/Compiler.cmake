@@ -2,8 +2,8 @@
 # Copyright (C) 2012-2016 Sebastien Jodogne, Medical Physics
 # Department, University Hospital of Liege, Belgium
 # Copyright (C) 2017-2023 Osimis S.A., Belgium
-# Copyright (C) 2024-2024 Orthanc Team SRL, Belgium
-# Copyright (C) 2021-2024 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
+# Copyright (C) 2024-2025 Orthanc Team SRL, Belgium
+# Copyright (C) 2021-2025 Sebastien Jodogne, ICTEAM UCLouvain, Belgium
 #
 # This program is free software: you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -21,6 +21,16 @@
 
 
 # This file sets all the compiler-related flags
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+  # Since Orthanc 1.12.7 that allows CMake 4.0, builds for macOS
+  # require the C++ standard to be explicitly set to C++11. Do *not*
+  # do this on GNU/Linux, as third-party system libraries could have
+  # been compiled with higher versions of the C++ standard.
+  set(CMAKE_CXX_STANDARD 11)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
 
 
 # Save the current compiler flags to the cache every time cmake configures the project
@@ -239,7 +249,9 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
   add_definitions(
     -D_XOPEN_SOURCE=1
     )
-  link_libraries(iconv)
+  
+  # Linking with iconv breaks the Universal builds on modern compilers
+  # link_libraries(iconv)
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   message("Building using Emscripten (for WebAssembly or asm.js targets)")

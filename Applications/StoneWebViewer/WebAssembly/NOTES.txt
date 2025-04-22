@@ -21,6 +21,42 @@ the following location:
 https://github.com/jodogne/OrthancDocker/tree/master/wasm-builder
 
 
+Building WebAssembly using Docker & interactively
+=================================================
+
+
+ROOT_DIR=$(pwd)/../../..
+mkdir -p ${ROOT_DIR}/wasm-binaries
+docker run -it --rm \
+    --dns=8.8.8.8 \
+    --user $(id -u):$(id -g) \
+    -v ${ROOT_DIR}:/source \
+    -v ${ROOT_DIR}/wasm-binaries:/target jodogne/wasm-builder:3.1.49 \
+    bash
+
+# In Docker:
+mkdir /tmp/build
+cd /tmp/build
+source /opt/emsdk/emsdk_env.sh
+
+cmake /source/Applications/StoneWebViewer/WebAssembly \
+      -DCMAKE_BUILD_TYPE=Debug \
+      -DORTHANC_STONE_INSTALL_PREFIX=/target/StoneWebViewer \
+      -DCMAKE_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake \
+      -DSTATIC_BUILD=ON \
+      -DLIBCLANG=/usr/lib/llvm-4.0/lib/libclang-4.0.so \
+      -G Ninja
+
+ninja -j12 install
+
+# each time you modify code, run the ninja command again
+
+# to serve the WASM code, you may use
+    "ServeFolders": {
+        "/stone-webviewer-live" : "/home/alain/o/orthanc-stone/wasm-binaries/StoneWebViewer/"
+    }
+
+
 Native compilation (without Docker)
 ===================================
 

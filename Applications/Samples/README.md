@@ -205,7 +205,7 @@ orthanc-stone.
     -DALLOW_DOWNLOADS=ON `
     -DSTATIC_BUILD=ON `
     -DOPENSSL_NO_CAPIENG=ON `
-    ../orthanc-stone/OrthancStone/Samples/Sdl
+    ../orthanc-stone/Applications/Samples/Sdl
   
   $solutionPath = ls -filter *.sln
   Write-Host "Solution file(s) available at: $solutionPath"

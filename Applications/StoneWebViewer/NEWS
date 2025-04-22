@@ -6,7 +6,11 @@ Pending changes in the mainline
 * Remember the previous layout when re-opening the viewer.
 * Added a Print button in the PDF viewer toolbar.
 * Added a Download button in the PDF viewer toolbar.
- 
+* New configuration "ScreenshotTemplate" to define the filename of the
+  "download as JPEG" function.  New default value is:
+  "{PatientID}-{PatientName}-{StudyDate}-{SeriesDescription}-{InstanceNumber}-{CurrentFrame}.jpg"
+* Fix loading of US images with a negative PhyiscalDeltaX value.
+
 
 Version 2.6 (2024-08-31)
 ========================

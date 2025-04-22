@@ -149,6 +149,20 @@
      **/
     "DicomWebHttpHeaders" : {
       /* "Authorization" : "Bearer ${USER}" */
-    }
+    },
+
+
+    /**
+     * Define the the filename of the 'Download as Jpeg' screenshots.
+     * The template can either contain Patient, Study or Series tags 
+     * in the group,element form (e.g. {0008,103e}) or the DICOM tag
+     * common name (e.g. {SeriesDescription}).  A few Instance tags are
+     * also available: {InstanceNumber}, {ContentDate}, {ContentTime}.
+     * {CurrentFrame} is also available although not a DICOM Tag.
+     * (New in Stone Web viewer 2.7).  In prior versions, the filename
+     * was always "StoneWebViewerScreenshot.jpg".
+     **/
+    "ScreenshotTemplate" : "{PatientID}-{PatientName}-{StudyDate}-{SeriesDescription}-{InstanceNumber}-{CurrentFrame}.jpg"
+
   }
 }

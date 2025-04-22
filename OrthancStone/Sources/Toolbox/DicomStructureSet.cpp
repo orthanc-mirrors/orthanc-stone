@@ -226,18 +226,6 @@ namespace OrthancStone
         geometry_ = geometry;
         projectionAlongNormal_ = GeometryToolbox::ProjectAlongNormal(geometry.GetOrigin(), geometry.GetNormal());
         sliceThickness_ = it->second.thickness_;
-
-        extent_.Clear();
-        
-        for (Points::const_iterator it2 = points_.begin(); it2 != points_.end(); ++it2)
-        {
-          if (IsPointOnSliceIfAny(*it2))
-          {
-            double x, y;
-            geometry.ProjectPoint2(x, y, *it2);
-            extent_.AddPoint(x, y);
-          }
-        }
         return true;
       }
     }

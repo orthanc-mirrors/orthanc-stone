@@ -81,7 +81,6 @@ namespace OrthancStone
       double              projectionAlongNormal_;
       double              sliceThickness_;  // In millimeters
       Points              points_;
-      Extent2D            extent_;
 
       bool IsPointOnSliceIfAny(const Vector& v) const;
 

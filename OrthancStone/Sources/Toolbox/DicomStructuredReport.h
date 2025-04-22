@@ -302,5 +302,9 @@ namespace OrthancStone
     }
 
     const Structure& GetStructure(size_t index) const;
+
+    bool IsReferencedInstance(const std::string& studyInstanceUid,
+                              const std::string& seriesInstanceUid,
+                              const std::string& sopInstanceUid) const;
   };
 }

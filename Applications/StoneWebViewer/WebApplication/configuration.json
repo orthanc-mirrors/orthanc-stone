@@ -120,7 +120,7 @@
     /**
      * Define a list of modality type that the viewer will ignore.
      **/
-    "SkipSeriesFromModalities": ["SR", "SEG", "PR"],
+    "SkipSeriesFromModalities": [ "SEG", "PR" ],
 
     /**
      * Whether to display the info panel at startup. Allowed values:

@@ -280,6 +280,7 @@ Vue.component('viewport', {
       stone.SpeedUpFetchSeriesMetadata(studyInstanceUid, seriesInstanceUid);
 
       if (newVal.series.type == stone.ThumbnailType.IMAGE ||
+          newVal.series.type == stone.ThumbnailType.STRUCTURED_REPORT ||
           newVal.series.type == stone.ThumbnailType.NO_PREVIEW) {
         if (newVal.series.complete) {
           this.status = 'ready';

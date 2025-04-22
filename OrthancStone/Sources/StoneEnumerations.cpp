@@ -222,6 +222,9 @@ namespace OrthancStone
       case SopClassUid_VideoPhotographicImageStorage:
         return SeriesThumbnailType_Video;
 
+      case SopClassUid_ComprehensiveSR:
+        return SeriesThumbnailType_StructuredReport;
+
       default:
         return SeriesThumbnailType_Unsupported;
     }

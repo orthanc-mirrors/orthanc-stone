@@ -241,6 +241,10 @@
                               <i v-if="series[seriesIndex].type == stone.ThumbnailType.VIDEO"
                                  class="wvSerieslist__placeholderIcon fa fa-video"
                                  v-bind:title="leftMode == 'full' ? null : series[seriesIndex].tags[SERIES_DESCRIPTION]"></i>
+
+                              <i v-if="series[seriesIndex].type == stone.ThumbnailType.STRUCTURED_REPORT"
+                                 class="wvSerieslist__placeholderIcon fa fa-project-diagram"
+                                 v-bind:title="leftMode == 'full' ? null : series[seriesIndex].tags[SERIES_DESCRIPTION]"></i>
                               
                               <div v-if="[stone.ThumbnailType.IMAGE, stone.ThumbnailType.NO_PREVIEW].includes(series[seriesIndex].type)"
                                    class="wvSerieslist__placeholderIcon"

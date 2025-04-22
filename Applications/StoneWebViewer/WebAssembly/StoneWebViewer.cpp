@@ -98,6 +98,7 @@ enum STONE_WEB_VIEWER_EXPORT ThumbnailType
     ThumbnailType_Pdf,
     ThumbnailType_Video,
     ThumbnailType_Loading,
+    ThumbnailType_StructuredReport,
     ThumbnailType_Unknown,
     ThumbnailType_Unavailable
     };
@@ -5018,6 +5019,9 @@ extern "C"
         case OrthancStone::SeriesThumbnailType_Video:
           return ThumbnailType_Video;
           
+        case OrthancStone::SeriesThumbnailType_StructuredReport:
+          return ThumbnailType_StructuredReport;
+
         case OrthancStone::SeriesThumbnailType_NotLoaded:
           return ThumbnailType_Loading;
           

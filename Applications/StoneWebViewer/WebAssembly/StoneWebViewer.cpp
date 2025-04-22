@@ -289,6 +289,8 @@ public:
   {
   }
 
+  virtual FramesCollectionType GetType() const = 0;
+
   virtual size_t GetFramesCount() const = 0;
 
   virtual const OrthancStone::DicomInstanceParameters& GetInstanceOfFrame(size_t frameIndex) const = 0;
@@ -302,13 +304,6 @@ public:
   virtual bool FindClosestFrame(size_t& frameIndex,
                                 const OrthancStone::Vector& point,
                                 double maximumDistance) const = 0;
-
-  virtual OrthancStone::ISceneLayer* ExtractAnnotations(const std::string& sopInstanceUid,
-                                                        unsigned int frameNumber,
-                                                        double originX,
-                                                        double originY,
-                                                        double pixelSpacingX,
-                                                        double pixelSpacingY) const = 0;
 
   static OrthancStone::CoordinateSystem3D GetFrameGeometry(const IFramesCollection& frames,
                                                            size_t frameIndex)
@@ -334,6 +329,11 @@ public:
     {
       frames_.reset(frames);
     }
+  }
+
+  virtual FramesCollectionType GetType() const ORTHANC_OVERRIDE
+  {
+    return FramesCollectionType_None;
   }
 
   virtual size_t GetFramesCount() const ORTHANC_OVERRIDE
@@ -363,16 +363,6 @@ public:
                                 double maximumDistance) const ORTHANC_OVERRIDE
   {
     return frames_->FindClosestFrame(frameIndex, point, maximumDistance);
-  }
-
-  virtual OrthancStone::ISceneLayer* ExtractAnnotations(const std::string& sopInstanceUid,
-                                                        unsigned int frameNumber,
-                                                        double originX,
-                                                        double originY,
-                                                        double pixelSpacingX,
-                                                        double pixelSpacingY) const ORTHANC_OVERRIDE
-  {
-    return NULL;
   }
 };
 
@@ -475,6 +465,11 @@ public:
     Finalize();
   }
 
+  virtual FramesCollectionType GetType() const ORTHANC_OVERRIDE
+  {
+    return FramesCollectionType_DicomSR;
+  }
+
   virtual size_t GetFramesCount() const ORTHANC_OVERRIDE
   {
     return frames_.size();
@@ -527,12 +522,12 @@ public:
     return found;
   }
 
-  virtual OrthancStone::ISceneLayer* ExtractAnnotations(const std::string& sopInstanceUid,
-                                                        unsigned int frameNumber,
-                                                        double originX,
-                                                        double originY,
-                                                        double pixelSpacingX,
-                                                        double pixelSpacingY) const ORTHANC_OVERRIDE
+  OrthancStone::ISceneLayer* ExtractAnnotations(const std::string& sopInstanceUid,
+                                                unsigned int frameNumber,
+                                                double originX,
+                                                double originY,
+                                                double pixelSpacingX,
+                                                double pixelSpacingY) const
   {
     std::unique_ptr<OrthancStone::MacroSceneLayer> layer(new OrthancStone::MacroSceneLayer);
 
@@ -2997,11 +2992,13 @@ private:
 
     std::unique_ptr<OrthancStone::ISceneLayer> structuredReportAnnotations;
 
-    if (frames_.get() != NULL)
+    if (frames_.get() != NULL &&
+        frames_->GetType() == FramesCollectionType_DicomSR)
     {
-      structuredReportAnnotations.reset(frames_->ExtractAnnotations(instance.GetSopInstanceUid(), frameIndex,
-                                                                    layer->GetOriginX(), layer->GetOriginY(),
-                                                                    layer->GetPixelSpacingX(), layer->GetPixelSpacingY()));
+      const DicomStructuredReportFrames& sr = dynamic_cast<const DicomStructuredReportFrames&>(*frames_);
+      structuredReportAnnotations.reset(sr.ExtractAnnotations(instance.GetSopInstanceUid(), frameIndex,
+                                                              layer->GetOriginX(), layer->GetOriginY(),
+                                                              layer->GetPixelSpacingX(), layer->GetPixelSpacingY()));
     }
 
 

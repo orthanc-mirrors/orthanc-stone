@@ -1778,6 +1778,23 @@ $('.dropdown-menu').click(function(e) {
 document.onselectstart = new Function ('return false');
 
 
+
+function CallLoadOsirixAnnotations(xml, clear) {
+  /**
+   * XML files from OsiriX can be very large, so it is not possible to
+   * send them to WebAssembly as a "string" parameter, otherwise it
+   * may result in a stack overflow. We thus have to copy the
+   * JavaScript string into the WebAssembly heap.
+   * https://thewasmfrontier.hashnode.dev/working-with-string-in-webassembly
+   **/
+  var length = Module.lengthBytesUTF8(xml);
+  var pointer = stone.Allocate(length + 1);
+  Module.stringToUTF8(xml, pointer, length + 1);
+  stone.LoadOsiriXAnnotations(pointer, length + 1, clear);
+  stone.Deallocate(pointer);
+}
+
+
 window.addEventListener('message', function(e) {
   if ('type' in e.data) {
     if (e.data.type == 'show-osirix-annotations') {
@@ -1797,12 +1814,21 @@ window.addEventListener('message', function(e) {
         if ('clear' in e.data) {
           clear = e.data.clear;
         }
-        
-        app.LoadOsiriXAnnotations(e.data.xml, clear);
+
+        if ('xml' in e.data) {
+          CallLoadOsirixAnnotations(e.data.xml, clear);
+        } else if ('url' in e.data) {
+          axios.get(e.data.url)
+            .then(function(response) {
+              CallLoadOsirixAnnotations(response.data, clear);
+            });
+        } else {
+          console.error('Neither "xml", nor "url" was provided to load OsiriX annotations from');
+        }
       }
     }
     else {
-      console.log('Unknown type of dynamic action in the Stone Web viewer: ' + e.data.type);
+      console.error('Unknown type of dynamic action in the Stone Web viewer: ' + e.data.type);
     }
   }
 });

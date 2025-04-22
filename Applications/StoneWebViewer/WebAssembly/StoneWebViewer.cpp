@@ -519,6 +519,10 @@ public:
           (!structure.HasFrameNumber() ||
            structure.GetFrameNumber() == frameNumber))
       {
+#if 1
+        // Default color: green
+        const OrthancStone::Color color(0, 255, 0);
+#else
         OrthancStone::Color color(0, 0, 255);
 
         if (structure.HasProbabilityOfCancer())
@@ -532,6 +536,7 @@ public:
             color = OrthancStone::Color(0, 255, 0);
           }
         }
+#endif
 
         switch (structure.GetType())
         {

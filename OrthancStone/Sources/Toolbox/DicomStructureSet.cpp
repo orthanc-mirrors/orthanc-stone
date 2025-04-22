@@ -274,7 +274,7 @@ namespace OrthancStone
   void DicomStructureSet::Polygon::Project(std::list<Extent2D>& target,
                                            const CoordinateSystem3D& cuttingPlane,
                                            const Vector& estimatedNormal,
-                                           double estimatedSliceThickness) const
+                                           double estimatedSliceThickness)
   {
     CoordinateSystem3D geometry;
     double thickness = estimatedSliceThickness;
@@ -362,14 +362,33 @@ namespace OrthancStone
       return;  // Should never happen
     }
 
+    if (cachedProjectedSegments_.get() == NULL ||
+        !cachedGeometry_.Equals(geometry))
+    {
+      cachedGeometry_ = geometry;
+
+      cachedProjectedSegments_.reset(new std::vector<float>());
+      cachedProjectedSegments_->resize(2 * points_.size());
+
+      for (size_t i = 0; i < points_.size(); i++)
+      {
+        double x, y;
+        geometry.ProjectPoint(x, y, points_[i]);
+        (*cachedProjectedSegments_) [2 * i] = x;
+        (*cachedProjectedSegments_) [2 * i + 1] = y;
+      }
+    }
+
     std::vector<double> intersections;
     intersections.reserve(points_.size());
 
     for (size_t i = 0; i < points_.size(); i++)
     {
-      double segmentX1, segmentY1, segmentX2, segmentY2;
-      geometry.ProjectPoint(segmentX1, segmentY1, points_[i]);
-      geometry.ProjectPoint(segmentX2, segmentY2, points_[(i + 1) % points_.size()]);
+      const size_t next = (i + 1) % points_.size();
+      const double segmentX1 = (*cachedProjectedSegments_) [2 * i];
+      const double segmentY1 = (*cachedProjectedSegments_) [2 * i + 1];
+      const double segmentX2 = (*cachedProjectedSegments_) [2 * next];
+      const double segmentY2 = (*cachedProjectedSegments_) [2 * next + 1];
 
       double x, y;
       if (GeometryToolbox::IntersectLineAndSegment(x, y, cuttingX1, cuttingY1, cuttingX2, cuttingY2,

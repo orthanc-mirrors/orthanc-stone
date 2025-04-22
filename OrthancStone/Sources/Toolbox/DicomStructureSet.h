@@ -82,6 +82,9 @@ namespace OrthancStone
       double              sliceThickness_;  // In millimeters
       Points              points_;
 
+      CoordinateSystem3D                    cachedGeometry_;
+      std::unique_ptr< std::vector<float> > cachedProjectedSegments_;
+
       bool IsPointOnSliceIfAny(const Vector& v) const;
 
     public:
@@ -129,7 +132,7 @@ namespace OrthancStone
       void Project(std::list<Extent2D>& target,
                    const CoordinateSystem3D& cuttingPlane,
                    const Vector& estimatedNormal,
-                   double estimatedSliceThickness) const;
+                   double estimatedSliceThickness);
     };
 
     typedef std::list<Polygon*>  Polygons;

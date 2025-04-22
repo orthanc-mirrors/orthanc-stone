@@ -226,18 +226,6 @@ namespace OrthancStone
         geometry_ = geometry;
         projectionAlongNormal_ = GeometryToolbox::ProjectAlongNormal(geometry.GetOrigin(), geometry.GetNormal());
         sliceThickness_ = it->second.thickness_;
-
-        extent_.Clear();
-        
-        for (Points::const_iterator it2 = points_.begin(); it2 != points_.end(); ++it2)
-        {
-          if (IsPointOnSliceIfAny(*it2))
-          {
-            double x, y;
-            geometry.ProjectPoint2(x, y, *it2);
-            extent_.AddPoint(x, y);
-          }
-        }
         return true;
       }
     }
@@ -286,7 +274,7 @@ namespace OrthancStone
   void DicomStructureSet::Polygon::Project(std::list<Extent2D>& target,
                                            const CoordinateSystem3D& cuttingPlane,
                                            const Vector& estimatedNormal,
-                                           double estimatedSliceThickness) const
+                                           double estimatedSliceThickness)
   {
     CoordinateSystem3D geometry;
     double thickness = estimatedSliceThickness;
@@ -314,8 +302,11 @@ namespace OrthancStone
       bool found = false;
       for (size_t i = 1; i < points_.size(); i++)
       {
-        axisX = points_[1] - origin;
-        if (boost::numeric::ublas::norm_2(axisX) > 10.0 * std::numeric_limits<double>::epsilon())
+        axisX = points_[i] - origin;
+
+        bool isOpposite;  // Ignored
+        if (boost::numeric::ublas::norm_2(axisX) > 10.0 * std::numeric_limits<double>::epsilon() &&
+            !GeometryToolbox::IsParallelOrOpposite(isOpposite, axisX, estimatedNormal))
         {
           found = true;
           break;
@@ -371,14 +362,33 @@ namespace OrthancStone
       return;  // Should never happen
     }
 
+    if (cachedProjectedSegments_.get() == NULL ||
+        !cachedGeometry_.Equals(geometry))
+    {
+      cachedGeometry_ = geometry;
+
+      cachedProjectedSegments_.reset(new std::vector<float>());
+      cachedProjectedSegments_->resize(2 * points_.size());
+
+      for (size_t i = 0; i < points_.size(); i++)
+      {
+        double x, y;
+        geometry.ProjectPoint(x, y, points_[i]);
+        (*cachedProjectedSegments_) [2 * i] = x;
+        (*cachedProjectedSegments_) [2 * i + 1] = y;
+      }
+    }
+
     std::vector<double> intersections;
     intersections.reserve(points_.size());
 
     for (size_t i = 0; i < points_.size(); i++)
     {
-      double segmentX1, segmentY1, segmentX2, segmentY2;
-      geometry.ProjectPoint(segmentX1, segmentY1, points_[i]);
-      geometry.ProjectPoint(segmentX2, segmentY2, points_[(i + 1) % points_.size()]);
+      const size_t next = (i + 1) % points_.size();
+      const double segmentX1 = (*cachedProjectedSegments_) [2 * i];
+      const double segmentY1 = (*cachedProjectedSegments_) [2 * i + 1];
+      const double segmentX2 = (*cachedProjectedSegments_) [2 * next];
+      const double segmentY2 = (*cachedProjectedSegments_) [2 * next + 1];
 
       double x, y;
       if (GeometryToolbox::IntersectLineAndSegment(x, y, cuttingX1, cuttingY1, cuttingX2, cuttingY2,
@@ -432,14 +442,27 @@ namespace OrthancStone
   }
 
   
+  DicomStructureSet::Structure::~Structure()
+  {
+    for (Polygons::iterator it = polygons_.begin(); it != polygons_.end(); ++it)
+    {
+      assert(*it != NULL);
+      delete *it;
+    }
+  }
+
+
   const DicomStructureSet::Structure& DicomStructureSet::GetStructure(size_t index) const
   {
     if (index >= structures_.size())
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-
-    return structures_[index];
+    else
+    {
+      assert(structures_[index] != NULL);
+      return *structures_[index];
+    }
   }
 
 
@@ -449,8 +472,11 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
     }
-
-    return structures_[index];
+    else
+    {
+      assert(structures_[index] != NULL);
+      return *structures_[index];
+    }
   }
 
   void DicomStructureSet::Setup(const IDicomDataset& tags)
@@ -495,18 +521,19 @@ namespace OrthancStone
 
         roiNumbersIndex[roiNumber] = i;
 
-        structures_[i].name_ = reader.GetStringValue
+        structures_[i] = new Structure();
+        structures_[i]->name_ = reader.GetStringValue
           (Orthanc::DicomPath(DICOM_TAG_STRUCTURE_SET_ROI_SEQUENCE, i, DICOM_TAG_ROI_NAME), "No name");
-        structures_[i].interpretation_ = "No interpretation";
+        structures_[i]->interpretation_ = "No interpretation";
 
-        if (structureNamesIndex_.find(structures_[i].name_) == structureNamesIndex_.end())
+        if (structureNamesIndex_.find(structures_[i]->name_) == structureNamesIndex_.end())
         {
-          structureNamesIndex_[structures_[i].name_] = i;
+          structureNamesIndex_[structures_[i]->name_] = i;
         }
         else
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat,
-                                          "RT-STRUCT with twice the same name for a structure: " + structures_[i].name_);
+                                          "RT-STRUCT with twice the same name for a structure: " + structures_[i]->name_);
         }
       }
     }
@@ -544,7 +571,7 @@ namespace OrthancStone
             throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
           }
 
-          structures_[found->second].interpretation_ = interpretation;
+          structures_[found->second]->interpretation_ = interpretation;
         }
       }
     }
@@ -577,7 +604,7 @@ namespace OrthancStone
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
         }
 
-        Structure& target = structures_[found->second];
+        Structure& target = *structures_[found->second];
 
         Vector color;
         if (FastParseVector(color, tags, Orthanc::DicomPath(DICOM_TAG_ROI_CONTOUR_SEQUENCE, i,
@@ -685,8 +712,8 @@ namespace OrthancStone
             LOG(ERROR) << "WARNING. The following Dicom tag (Referenced SOP Instance UID) contains an empty value : // (3006,0039)[" << i << "] / (0x3006, 0x0040)[0] / (0x3006, 0x0016)[0] / (0x0008, 0x1155)";
           }
 
-          Polygon polygon(sopInstanceUid);
-          polygon.Reserve(countPoints);
+          std::unique_ptr<Polygon> polygon(new Polygon(sopInstanceUid));
+          polygon->Reserve(countPoints);
 
           for (size_t k = 0; k < countPoints; k++)
           {
@@ -694,10 +721,10 @@ namespace OrthancStone
             v[0] = points[3 * k];
             v[1] = points[3 * k + 1];
             v[2] = points[3 * k + 2];
-            polygon.AddPoint(v);
+            polygon->AddPoint(v);
           }
 
-          target.polygons_.push_back(polygon);
+          target.polygons_.push_back(polygon.release());
         }
       }
     }
@@ -722,29 +749,13 @@ namespace OrthancStone
 #endif
   
 
-  Vector DicomStructureSet::GetStructureCenter(size_t index) const
+  DicomStructureSet::~DicomStructureSet()
   {
-    const Structure& structure = GetStructure(index);
-
-    Vector center;
-    LinearAlgebra::AssignVector(center, 0, 0, 0);
-    if (structure.polygons_.empty())
+    for (size_t i = 0; i < structures_.size(); i++)
     {
-      return center;
+      assert(structures_[i] != NULL);
+      delete structures_[i];
     }
-
-    double n = static_cast<double>(structure.polygons_.size());
-
-    for (Polygons::const_iterator polygon = structure.polygons_.begin();
-         polygon != structure.polygons_.end(); ++polygon)
-    {
-      if (!polygon->GetPoints().empty())
-      {
-        center += polygon->GetPoints().front() / n;
-      }
-    }
-
-    return center;
   }
 
 
@@ -769,13 +780,14 @@ namespace OrthancStone
     
   void DicomStructureSet::GetReferencedInstances(std::set<std::string>& instances) const
   {
-    for (Structures::const_iterator structure = structures_.begin();
-         structure != structures_.end(); ++structure)
+    for (size_t i = 0; i < structures_.size(); i++)
     {
-      for (Polygons::const_iterator polygon = structure->polygons_.begin();
-           polygon != structure->polygons_.end(); ++polygon)
+      assert(structures_[i] != NULL);
+      for (Polygons::const_iterator polygon = structures_[i]->polygons_.begin();
+           polygon != structures_[i]->polygons_.end(); ++polygon)
       {
-        instances.insert(polygon->GetSopInstanceUid());
+        assert(*polygon != NULL);
+        instances.insert((*polygon)->GetSopInstanceUid());
       }
     }
   }
@@ -819,13 +831,15 @@ namespace OrthancStone
         
       referencedSlices_[sopInstanceUid] = ReferencedSlice(seriesInstanceUid, geometry, thickness);
 
-      for (Structures::iterator structure = structures_.begin();
-           structure != structures_.end(); ++structure)
+      for (size_t i = 0; i < structures_.size(); i++)
       {
-        for (Polygons::iterator polygon = structure->polygons_.begin();
-             polygon != structure->polygons_.end(); ++polygon)
+        assert(structures_[i] != NULL);
+
+        for (Polygons::iterator polygon = structures_[i]->polygons_.begin();
+             polygon != structures_[i]->polygons_.end(); ++polygon)
         {
-          polygon->UpdateReferencedSlice(referencedSlices_);
+          assert(*polygon != NULL);
+          (*polygon)->UpdateReferencedSlice(referencedSlices_);
         }
       }
     }
@@ -862,15 +876,16 @@ namespace OrthancStone
 
   void DicomStructureSet::CheckReferencedSlices()
   {
-    for (Structures::iterator structure = structures_.begin();
-         structure != structures_.end(); ++structure)
+    for (size_t i = 0; i < structures_.size(); i++)
     {
-      for (Polygons::iterator polygon = structure->polygons_.begin();
-           polygon != structure->polygons_.end(); ++polygon)
+      assert(structures_[i] != NULL);
+      for (Polygons::iterator polygon = structures_[i]->polygons_.begin();
+           polygon != structures_[i]->polygons_.end(); ++polygon)
       {
-        if (!polygon->UpdateReferencedSlice(referencedSlices_))
+        assert(*polygon != NULL);
+        if (!(*polygon)->UpdateReferencedSlice(referencedSlices_))
         {
-          std::string sopInstanceUid = polygon->GetSopInstanceUid();
+          std::string sopInstanceUid = (*polygon)->GetSopInstanceUid();
           if (Orthanc::Toolbox::StripSpaces(sopInstanceUid) == "")
           {
             LOG(ERROR) << "DicomStructureSet::CheckReferencedSlices(): "
@@ -924,9 +939,10 @@ namespace OrthancStone
       for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
-        const Points& points = polygon->GetPoints();
+        assert(*polygon != NULL);
+        const Points& points = (*polygon)->GetPoints();
         
-        if (polygon->IsOnSlice(cutting, GetEstimatedNormal(), GetEstimatedSliceThickness()) &&
+        if ((*polygon)->IsOnSlice(cutting, GetEstimatedNormal(), GetEstimatedSliceThickness()) &&
             !points.empty())
         {
           chains.push_back(std::vector<ScenePoint2D>());
@@ -990,7 +1006,8 @@ namespace OrthancStone
       for (Polygons::const_iterator polygon = structure.polygons_.begin();
            polygon != structure.polygons_.end(); ++polygon)
       {
-        polygon->Project(rectangles, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness());
+        assert(*polygon != NULL);
+        (*polygon)->Project(rectangles, cutting, GetEstimatedNormal(), GetEstimatedSliceThickness());
       }
 
       typedef std::list< std::vector<ScenePoint2D> >  Contours;
@@ -1044,12 +1061,13 @@ namespace OrthancStone
     // TODO - Could be optimized by adding a multimap on "Structure", mapping
     // from SOP Instance UID to polygons
     
-    for (Polygons::const_iterator it = structure.polygons_.begin();
-         it != structure.polygons_.end(); ++it)
+    for (Polygons::const_iterator polygon = structure.polygons_.begin();
+         polygon != structure.polygons_.end(); ++polygon)
     {
-      if (it->GetSopInstanceUid() == sopInstanceUid)
+      assert(*polygon != NULL);
+      if ((*polygon)->GetSopInstanceUid() == sopInstanceUid)
       {
-        target.push_back(it->GetPoints());
+        target.push_back((*polygon)->GetPoints());
       }
     }
   }
@@ -1066,13 +1084,16 @@ namespace OrthancStone
     unsigned int countPolygons = 0;
     for (size_t i = 0; i < structures_.size(); i++)
     {
-      const Polygons& polygons = structures_[i].polygons_;
+      assert(structures_[i] != NULL);
+      const Polygons& polygons = structures_[i]->polygons_;
 
-      for (Polygons::const_iterator it = polygons.begin(); it != polygons.end(); ++it)
+      for (Polygons::const_iterator polygon = polygons.begin(); polygon != polygons.end(); ++polygon)
       {
+        assert(*polygon != NULL);
+
         countPolygons++;
-        
-        const Points& points = it->GetPoints();
+
+        const Points& points = (*polygon)->GetPoints();
         
         if (points.size() >= 3)
         {
@@ -1149,11 +1170,13 @@ namespace OrthancStone
     
     for (size_t i = 0; i < structures_.size(); i++)
     {
-      const Polygons& polygons = structures_[i].polygons_;
+      assert(structures_[i] != NULL);
+      const Polygons& polygons = structures_[i]->polygons_;
 
-      for (Polygons::const_iterator it = polygons.begin(); it != polygons.end(); ++it)
+      for (Polygons::const_iterator polygon = polygons.begin(); polygon != polygons.end(); ++polygon)
       {
-        const Points& points = it->GetPoints();
+        assert(*polygon != NULL);
+        const Points& points = (*polygon)->GetPoints();
         polygonsProjection.push_back(GeometryToolbox::ProjectAlongNormal(points[0], estimatedNormal_));
       }
     }

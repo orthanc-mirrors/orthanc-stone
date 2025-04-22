@@ -72,7 +72,7 @@ namespace OrthancStone
     
     typedef std::vector<Vector>  Points;
 
-    class Polygon
+    class Polygon : public boost::noncopyable
     {
     private:
       std::string         sopInstanceUid_;
@@ -81,7 +81,9 @@ namespace OrthancStone
       double              projectionAlongNormal_;
       double              sliceThickness_;  // In millimeters
       Points              points_;
-      Extent2D            extent_;
+
+      CoordinateSystem3D                    cachedGeometry_;
+      std::unique_ptr< std::vector<float> > cachedProjectedSegments_;
 
       bool IsPointOnSliceIfAny(const Vector& v) const;
 
@@ -130,12 +132,12 @@ namespace OrthancStone
       void Project(std::list<Extent2D>& target,
                    const CoordinateSystem3D& cuttingPlane,
                    const Vector& estimatedNormal,
-                   double estimatedSliceThickness) const;
+                   double estimatedSliceThickness);
     };
 
-    typedef std::list<Polygon>  Polygons;
+    typedef std::list<Polygon*>  Polygons;
 
-    struct Structure
+    struct Structure : public boost::noncopyable
     {
       std::string   name_;
       std::string   interpretation_;
@@ -143,17 +145,17 @@ namespace OrthancStone
       uint8_t       red_;
       uint8_t       green_;
       uint8_t       blue_;
+
+      ~Structure();
     };
 
-    typedef std::vector<Structure>         Structures;
     typedef std::map<std::string, size_t>  StructureNamesIndex;
 
-    Structures        structures_;
-    ReferencedSlices  referencedSlices_;
-    Vector            estimatedNormal_;
-    double            estimatedSliceThickness_;
-    StructureNamesIndex  structureNamesIndex_;
-    
+    std::vector<Structure*>  structures_;
+    ReferencedSlices         referencedSlices_;
+    Vector                   estimatedNormal_;
+    double                   estimatedSliceThickness_;
+    StructureNamesIndex      structureNamesIndex_;
 
     void Setup(const IDicomDataset& dataset);
     
@@ -177,12 +179,12 @@ namespace OrthancStone
     explicit DicomStructureSet(Orthanc::ParsedDicomFile& instance);
 #endif
 
+    ~DicomStructureSet();
+
     size_t GetStructuresCount() const
     {
       return structures_.size();
     }
-
-    Vector GetStructureCenter(size_t index) const;
 
     const std::string& GetStructureName(size_t index) const;
 

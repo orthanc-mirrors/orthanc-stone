@@ -28,6 +28,15 @@
 #include <Images/ImageAccessor.h>
 
 
+static const int LAYER_TEXTURE = 0;
+static const int LAYER_OVERLAY = 1;
+static const int LAYER_ORIENTATION_MARKERS = 2;
+static const int LAYER_REFERENCE_LINES = 3;
+static const int LAYER_ANNOTATIONS_STONE = 5;
+static const int LAYER_ANNOTATIONS_OSIRIX = 4;
+static const int LAYER_STRUCTURED_REPORT = 6;
+
+
 #define DISPATCH_JAVASCRIPT_EVENT(name)                         \
   EM_ASM(                                                       \
     const customEvent = document.createEvent("CustomEvent");    \

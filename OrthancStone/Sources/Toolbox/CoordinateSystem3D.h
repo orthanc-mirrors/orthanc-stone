@@ -165,5 +165,7 @@ namespace OrthancStone
                                std::string& bottom /* out */,
                                std::string& left /* out */,
                                std::string& right /* out */) const;
+
+    bool Equals(const CoordinateSystem3D& other) const;
   };
 }

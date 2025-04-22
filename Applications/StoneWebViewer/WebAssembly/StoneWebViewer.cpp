@@ -73,14 +73,6 @@
 
 static const double PI = boost::math::constants::pi<double>();
 
-static const int LAYER_TEXTURE = 0;
-static const int LAYER_OVERLAY = 1;
-static const int LAYER_ORIENTATION_MARKERS = 2;
-static const int LAYER_REFERENCE_LINES = 3;
-static const int LAYER_ANNOTATIONS_STONE = 5;
-static const int LAYER_ANNOTATIONS_OSIRIX = 4;
-static const int LAYER_STRUCTURED_REPORT = 6;
-
 
 #if !defined(STONE_WEB_VIEWER_EXPORT)
 // We are not running ParseWebAssemblyExports.py, but we're compiling the wasm

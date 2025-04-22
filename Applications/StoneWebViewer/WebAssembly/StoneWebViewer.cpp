@@ -1282,11 +1282,8 @@ public:
     }
   }
 
-  IFramesCollection* GetSeriesFrames(FramesCollectionType& type,
-                                     const std::string& seriesInstanceUid) const
+  IFramesCollection* GetSeriesFrames(const std::string& seriesInstanceUid) const
   {
-    type = FramesCollectionType_None;
-
     OrthancStone::SeriesMetadataLoader::Accessor accessor(*metadataLoader_, seriesInstanceUid);
     
     if (accessor.IsComplete())
@@ -1295,7 +1292,6 @@ public:
       if (sr != structuredReports_.end())
       {
         assert(sr->second != NULL);
-        type = FramesCollectionType_DicomSR;
 
         try
         {
@@ -4597,8 +4593,7 @@ void WebAssemblyObserver::SignalDicomSRLoaded(const std::string& studyInstanceUi
     {
       it->second->ClearPendingSeriesInstanceUid();
 
-      FramesCollectionType type;
-      std::unique_ptr<IFramesCollection> frames(GetResourcesLoader().GetSeriesFrames(type, seriesInstanceUid));
+      std::unique_ptr<IFramesCollection> frames(GetResourcesLoader().GetSeriesFrames(seriesInstanceUid));
 
       if (frames.get() != NULL)
       {
@@ -4904,19 +4899,26 @@ extern "C"
   {
     try
     {
-      FramesCollectionType type;
-      std::unique_ptr<IFramesCollection> frames(GetResourcesLoader().GetSeriesFrames(type, seriesInstanceUid));
+      std::unique_ptr<IFramesCollection> frames(GetResourcesLoader().GetSeriesFrames(seriesInstanceUid));
 
       if (frames.get() != NULL)
       {
-        GetViewport(canvas)->ClearPendingSeriesInstanceUid();
+        switch (frames->GetType())
+        {
+          case FramesCollectionType_None:
+            GetViewport(canvas)->ClearPendingSeriesInstanceUid();
+            break;
+
+          case FramesCollectionType_DicomSR:
+            GetViewport(canvas)->SetPendingSeriesInstanceUid(seriesInstanceUid);
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        }
+
         GetViewport(canvas)->SetFrames(frames.release());
         return 1;
-      }
-      else if (type == FramesCollectionType_DicomSR)
-      {
-        GetViewport(canvas)->SetPendingSeriesInstanceUid(seriesInstanceUid);
-        return 0;
       }
       else
       {

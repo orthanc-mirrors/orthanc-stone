@@ -182,8 +182,6 @@ namespace OrthancStone
       return structures_.size();
     }
 
-    Vector GetStructureCenter(size_t index) const;
-
     const std::string& GetStructureName(size_t index) const;
 
     const std::string& GetStructureInterpretation(size_t index) const;

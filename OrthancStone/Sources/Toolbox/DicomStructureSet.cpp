@@ -722,32 +722,6 @@ namespace OrthancStone
 #endif
   
 
-  Vector DicomStructureSet::GetStructureCenter(size_t index) const
-  {
-    const Structure& structure = GetStructure(index);
-
-    Vector center;
-    LinearAlgebra::AssignVector(center, 0, 0, 0);
-    if (structure.polygons_.empty())
-    {
-      return center;
-    }
-
-    double n = static_cast<double>(structure.polygons_.size());
-
-    for (Polygons::const_iterator polygon = structure.polygons_.begin();
-         polygon != structure.polygons_.end(); ++polygon)
-    {
-      if (!polygon->GetPoints().empty())
-      {
-        center += polygon->GetPoints().front() / n;
-      }
-    }
-
-    return center;
-  }
-
-
   const std::string& DicomStructureSet::GetStructureName(size_t index) const
   {
     return GetStructure(index).name_;

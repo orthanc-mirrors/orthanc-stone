@@ -486,4 +486,24 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
+
+
+  bool CoordinateSystem3D::Equals(const CoordinateSystem3D& other) const
+  {
+    if (!IsValid() && !other.IsValid())
+    {
+      return true;
+    }
+    else if (IsValid() && other.IsValid())
+    {
+      // The normal is automatically computed by "CheckAndComputeNormal()" that is called in all the constructors
+      return (LinearAlgebra::IsCloseToZero(boost::numeric::ublas::norm_2(GetOrigin() - other.GetOrigin())) &&
+              LinearAlgebra::IsCloseToZero(boost::numeric::ublas::norm_2(GetAxisX() - other.GetAxisX())) &&
+              LinearAlgebra::IsCloseToZero(boost::numeric::ublas::norm_2(GetAxisY() - other.GetAxisY())));
+    }
+    else
+    {
+      return false;
+    }
+  }
 }

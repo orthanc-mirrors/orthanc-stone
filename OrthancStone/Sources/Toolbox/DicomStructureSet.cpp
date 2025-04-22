@@ -306,7 +306,7 @@ namespace OrthancStone
 
         bool isOpposite;  // Ignored
         if (boost::numeric::ublas::norm_2(axisX) > 10.0 * std::numeric_limits<double>::epsilon() &&
-            !GeometryToolbox::IsParallelOrOpposite(axisX, estimatedNormal))
+            !GeometryToolbox::IsParallelOrOpposite(isOpposite, axisX, estimatedNormal))
         {
           found = true;
           break;

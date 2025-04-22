@@ -302,8 +302,11 @@ namespace OrthancStone
       bool found = false;
       for (size_t i = 1; i < points_.size(); i++)
       {
-        axisX = points_[1] - origin;
-        if (boost::numeric::ublas::norm_2(axisX) > 10.0 * std::numeric_limits<double>::epsilon())
+        axisX = points_[i] - origin;
+
+        bool isOpposite;  // Ignored
+        if (boost::numeric::ublas::norm_2(axisX) > 10.0 * std::numeric_limits<double>::epsilon() &&
+            !GeometryToolbox::IsParallelOrOpposite(axisX, estimatedNormal))
         {
           found = true;
           break;

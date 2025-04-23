@@ -23,8 +23,10 @@
 
 #include "DicomStructuredReport.h"
 
+#include "StoneToolbox.h"
 #include "../Scene2D/ScenePoint2D.h"
 
+#include <ChunkedBuffer.h>
 #include <OrthancException.h>
 #include <SerializationToolbox.h>
 
@@ -310,23 +312,12 @@ namespace OrthancStone
   }
 
 
-  DicomStructuredReport::DicomStructuredReport(Orthanc::ParsedDicomFile& dicom)
+  void DicomStructuredReport::ReadTID1500(Orthanc::ParsedDicomFile& dicom)
   {
     DcmDataset& dataset = *dicom.GetDcmtkObject().getDataset();
 
-    studyInstanceUid_ = GetStringValue(dataset, DCM_StudyInstanceUID);
-    seriesInstanceUid_ = GetStringValue(dataset, DCM_SeriesInstanceUID);
-    sopInstanceUid_ = GetStringValue(dataset, DCM_SOPInstanceUID);
-
-    CheckStringValue(dataset, DCM_Modality, "SR");
     CheckStringValue(dataset, DCM_SOPClassUID, "1.2.840.10008.5.1.4.1.1.88.33");  // Comprehensive SR IOD
     CheckStringValue(dataset, DCM_ValueType, "CONTAINER");
-
-    if (!IsDicomConcept(dataset, "126000") /* Imaging measurement report */ ||
-        !IsDicomTemplate(dataset, "1500"))
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
-    }
 
     DcmSequenceOfItems& sequence = GetSequenceValue(dataset, DCM_CurrentRequestedProcedureEvidenceSequence);
 
@@ -507,6 +498,174 @@ namespace OrthancStone
   }
 
 
+  static bool ReadTextualReport(Json::Value& target,
+                                DcmItem& dataset)
+  {
+    target = Json::arrayValue;
+
+    if (dataset.tagExists(DCM_ContentSequence))
+    {
+      DcmSequenceOfItems& content = GetSequenceValue(dataset, DCM_ContentSequence);
+      for (unsigned long i = 0; i < content.card(); i++)
+      {
+        DcmItem* item = content.getItem(i);
+        if (item != NULL &&
+            item->tagExists(DCM_ValueType) &&
+            item->tagExists(DCM_ConceptNameCodeSequence))
+        {
+          const std::string valueType = GetStringValue(*item, DCM_ValueType);
+
+          DcmSequenceOfItems& concepts = GetSequenceValue(*item, DCM_ConceptNameCodeSequence);
+          if (concepts.card() == 1 &&
+              concepts.getItem(0) != NULL)
+          {
+            DcmItem& concept = *concepts.getItem(0);
+            if (concept.tagExists(DCM_CodeMeaning))
+            {
+              const std::string codeMeaning = GetStringValue(concept, DCM_CodeMeaning);
+
+              bool hasValue = false;
+              std::string value;
+
+              if (valueType == "TEXT" &&
+                  item->tagExists(DCM_TextValue))
+              {
+                value = GetStringValue(*item, DCM_TextValue);
+                hasValue = true;
+              }
+              else if (valueType == "UIDREF" &&
+                       item->tagExists(DCM_UID))
+              {
+                value = GetStringValue(*item, DCM_UID);
+                hasValue = true;
+              }
+              else if (valueType == "CODE" &&
+                       item->tagExists(DCM_ConceptCodeSequence))
+              {
+                DcmSequenceOfItems& codes = GetSequenceValue(*item, DCM_ConceptCodeSequence);
+                if (codes.card() == 1 &&
+                    codes.getItem(0) != NULL)
+                {
+                  DcmItem& code = *codes.getItem(0);
+                  if (code.tagExists(DCM_CodeMeaning))
+                  {
+                    value = GetStringValue(code, DCM_CodeMeaning);
+                    hasValue = true;
+                  }
+                }
+              }
+              else if (valueType == "NUM" &&
+                       item->tagExists(DCM_MeasuredValueSequence))
+              {
+                DcmSequenceOfItems& measurements = GetSequenceValue(*item, DCM_MeasuredValueSequence);
+                if (measurements.card() == 1 &&
+                    measurements.getItem(0) != NULL)
+                {
+                  DcmItem& measurement = *measurements.getItem(0);
+                  if (measurement.tagExists(DCM_NumericValue))
+                  {
+                    value = GetStringValue(measurement, DCM_NumericValue);
+
+                    if (measurement.tagExists(DCM_MeasurementUnitsCodeSequence))
+                    {
+                      DcmSequenceOfItems& units = GetSequenceValue(measurement, DCM_MeasurementUnitsCodeSequence);
+                      if (units.card() == 1 &&
+                          units.getItem(0) != NULL)
+                      {
+                        DcmItem& unit = *units.getItem(0);
+                        if (unit.tagExists(DCM_CodeValue) &&
+                            unit.tagExists(DCM_CodingSchemeDesignator))
+                        {
+                          const std::string& code = GetStringValue(unit, DCM_CodeValue);
+                          const std::string& scheme = GetStringValue(unit, DCM_CodingSchemeDesignator);
+                          if (scheme != "UCUM" ||
+                              code != "1")
+                          {
+                            // In UCUM, the "1" code means "no unit"
+                            value += " " + code;
+                          }
+                        }
+                      }
+                    }
+
+                    hasValue = true;
+                  }
+                }
+              }
+
+              if (!hasValue &&
+                  valueType != "CONTAINER")
+              {
+                value = "<" + valueType + ">";
+                hasValue = true;
+              }
+
+              Json::Value line = Json::arrayValue;
+              line.append(codeMeaning);
+
+              if (hasValue)
+              {
+                line.append(value);
+              }
+              else
+              {
+                line.append(Json::nullValue);
+              }
+
+              Json::Value children;
+              if (ReadTextualReport(children, *item))  // Recursive call
+              {
+                line.append(children);
+              }
+
+              target.append(line);
+            }
+          }
+        }
+      }
+
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+
+  DicomStructuredReport::DicomStructuredReport(Orthanc::ParsedDicomFile& dicom) :
+    isTID1500_(false)
+  {
+    StoneToolbox::ExtractMainDicomTags(mainDicomTags_, dicom);
+    StoneToolbox::CopyDicomTag(mainDicomTags_, dicom, Orthanc::DicomTag(0x0040, 0xa491));  // "Completion Flag"
+    StoneToolbox::CopyDicomTag(mainDicomTags_, dicom, Orthanc::DicomTag(0x0040, 0xa493));  // "Verification Flag"
+
+    DcmDataset& dataset = *dicom.GetDcmtkObject().getDataset();
+
+    studyInstanceUid_ = GetStringValue(dataset, DCM_StudyInstanceUID);
+    seriesInstanceUid_ = GetStringValue(dataset, DCM_SeriesInstanceUID);
+    sopInstanceUid_ = GetStringValue(dataset, DCM_SOPInstanceUID);
+
+    SopClassUid sopClassUid = StringToSopClassUid(GetStringValue(dataset, DCM_SOPClassUID));
+    if (sopClassUid != SopClassUid_ComprehensiveSR)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+    }
+
+    CheckStringValue(dataset, DCM_Modality, "SR");
+
+    ReadTextualReport(textualReport_, dataset);
+
+    if (IsDicomConcept(dataset, "126000") /* Imaging measurement report */ &&
+        IsDicomTemplate(dataset, "1500") &&
+        dataset.tagExists(DCM_CurrentRequestedProcedureEvidenceSequence))
+    {
+      ReadTID1500(dicom);
+      isTID1500_ = true;
+    }
+  }
+
+
   DicomStructuredReport::DicomStructuredReport(const DicomStructuredReport& other) :
     studyInstanceUid_(other.studyInstanceUid_),
     seriesInstanceUid_(other.seriesInstanceUid_),
@@ -627,5 +786,46 @@ namespace OrthancStone
       return (found->second->GetStudyInstanceUid() == studyInstanceUid &&
               found->second->GetSeriesInstanceUid() == seriesInstanceUid);
     }
+  }
+
+
+  static void Flatten(Orthanc::ChunkedBuffer& buffer,
+                      const Json::Value& node,
+                      const std::string& indent)
+  {
+    assert(node.type() == Json::arrayValue);
+    for (Json::ArrayIndex i = 0; i < node.size(); i++)
+    {
+      assert(node[i].type() == Json::arrayValue);
+      assert(node[i].size() == 2 || node[i].size() == 3);
+      assert(node[i][0].type() == Json::stringValue);
+      assert(node[i][1].type() == Json::stringValue || node[i][1].type() == Json::nullValue);
+
+      std::string line = indent + boost::lexical_cast<std::string>(i + 1) + ". " + node[i][0].asString();
+
+      if (node[i][1].type() == Json::stringValue)
+      {
+        line += ": " + node[i][1].asString();
+      }
+      else
+      {
+        assert(node[i][1].type() == Json::nullValue);
+      }
+
+      buffer.AddChunk(line + "\n");
+
+      if (node[i].size() == 3)
+      {
+        Flatten(buffer, node[i][2], indent + "     ");
+      }
+    }
+  }
+
+
+  void DicomStructuredReport::FlattenTextualReport(std::string& target) const
+  {
+    Orthanc::ChunkedBuffer buffer;
+    Flatten(buffer, textualReport_, "");
+    buffer.Flatten(target);
   }
 }

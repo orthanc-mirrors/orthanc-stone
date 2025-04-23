@@ -205,9 +205,15 @@ namespace OrthancStone
                       bool hasProbabilityOfCancer,
                       float probabilityOfCancer);
 
+    void ReadTID1500(Orthanc::ParsedDicomFile& dicom);
+
     std::string                                 studyInstanceUid_;
     std::string                                 seriesInstanceUid_;
     std::string                                 sopInstanceUid_;
+    Orthanc::DicomMap                           mainDicomTags_;
+    Json::Value                                 textualReport_;
+
+    bool                                        isTID1500_;
     std::map<std::string, ReferencedInstance*>  instancesInformation_;
     std::vector<std::string>                    orderedInstances_;
     std::deque<Structure*>                      structures_;
@@ -283,6 +289,21 @@ namespace OrthancStone
       return sopInstanceUid_;
     }
 
+    const Orthanc::DicomMap& GetMainDicomTags() const
+    {
+      return mainDicomTags_;
+    }
+
+    const Json::Value& GetTextualReport() const
+    {
+      return textualReport_;
+    }
+
+    bool IsTID1500() const
+    {
+      return isTID1500_;
+    }
+
     size_t GetReferencedInstancesCount() const
     {
       return orderedInstances_.size();
@@ -306,5 +327,7 @@ namespace OrthancStone
     bool IsReferencedInstance(const std::string& studyInstanceUid,
                               const std::string& seriesInstanceUid,
                               const std::string& sopInstanceUid) const;
+
+    void FlattenTextualReport(std::string& target) const;
   };
 }

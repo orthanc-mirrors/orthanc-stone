@@ -172,7 +172,7 @@ def Explore(node):
                         arg['type'] = "'string'"
                     elif argType == 'double':
                         arg['type'] = "'double'"
-                    elif argType == 'size_t':
+                    elif argType in [ 'size_t', 'std::size_t' ]:
                         arg['type'] = "'int'"
                     elif argType in [ 'const void *', 'void *' ]:
                         arg['type'] = "'int'"

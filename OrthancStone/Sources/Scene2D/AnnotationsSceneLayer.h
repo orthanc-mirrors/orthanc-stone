@@ -22,8 +22,9 @@
 
 
 #include "../Messages/IObservable.h"
-#include "Scene2D.h"
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"
+#include "Color.h"
+#include "Scene2D.h"
 
 namespace OrthancStone
 {
@@ -116,6 +117,8 @@ namespace OrthancStone
     SubLayers            subLayersToRemove_;
     Units                units_;
     int                  probedLayer_;
+    Color                color_;
+    Color                hoverColor_;
 
     void AddAnnotation(Annotation* annotation);
     
@@ -189,5 +192,25 @@ namespace OrthancStone
     void AddTextAnnotation(const std::string& label,
                            const ScenePoint2D& pointedPosition,
                            const ScenePoint2D& labelPosition);
+
+    const Color& GetColor() const
+    {
+      return color_;
+    }
+
+    void SetColor(const Color& color)
+    {
+      color_ = color;
+    }
+
+    const Color& GetHoverColor() const
+    {
+      return hoverColor_;
+    }
+
+    void SetHoverColor(const Color& color)
+    {
+      hoverColor_ = color;
+    }
   };
 }

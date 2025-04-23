@@ -405,6 +405,12 @@ private:
     }
   }
 
+  static OrthancStone::Color& GetColorInternal()
+  {
+    static OrthancStone::Color color_(0, 255, 0);  // Default color: green
+    return color_;
+  }
+
 public:
   DicomStructuredReportFrames(const OrthancStone::DicomStructuredReport& sr,
                               const OrthancStone::LoadedDicomResources& instances) :
@@ -512,10 +518,9 @@ public:
            structure.GetFrameNumber() == frameNumber))
       {
 #if 1
-        // Default color: green
-        const OrthancStone::Color color(0, 255, 0);
+        const OrthancStone::Color& color = GetColorInternal();
 #else
-        OrthancStone::Color color(0, 0, 255);
+        OrthancStone::Color color(GetColorInternal());
 
         if (structure.HasProbabilityOfCancer())
         {
@@ -565,6 +570,17 @@ public:
     }
 
     return layer.release();
+  }
+
+
+  static const OrthancStone::Color& GetAnnotationsColor()
+  {
+    return GetColorInternal();
+  }
+
+  static void SetAnnotationsColor(const OrthancStone::Color& color)
+  {
+    GetColorInternal() = color;
   }
 };
 
@@ -3210,6 +3226,8 @@ private:
 
     stoneAnnotations_.reset(new OrthancStone::AnnotationsSceneLayer(LAYER_ANNOTATIONS_STONE));
     stoneAnnotations_->SetProbedLayer(LAYER_TEXTURE);
+    stoneAnnotations_->SetColor(GetAnnotationsColorInternal());
+    stoneAnnotations_->SetHoverColor(GetHighlightedColorInternal());
   }
 
 
@@ -3345,6 +3363,18 @@ private:
     {
       observer_->SignalStoneTextAnnotationRequired(*this, message.GetPointedPosition(), message.GetLabelPosition());
     }
+  }
+
+  static OrthancStone::Color& GetAnnotationsColorInternal()
+  {
+    static OrthancStone::Color color_;
+    return color_;
+  }
+
+  static OrthancStone::Color& GetHighlightedColorInternal()
+  {
+    static OrthancStone::Color color_;
+    return color_;
   }
 
 public:
@@ -4169,6 +4199,18 @@ public:
   {
     return pendingSeriesInstanceUid_;
   }
+
+
+  static void SetAnnotationsColor(const OrthancStone::Color& color)
+  {
+    GetAnnotationsColorInternal() = color;
+  }
+
+
+  static void SetHighlightedColor(const OrthancStone::Color& color)
+  {
+    GetHighlightedColorInternal() = color;
+  }
 };
 
 
@@ -4240,11 +4282,22 @@ class OsiriXLayerSource : public ILayerSource
 private:
   // The coordinates of OsiriX annotations are expressed in 3D world coordinates
   OrthancStone::OsiriX::CollectionOfAnnotations  annotations_;
+  OrthancStone::Color                            color_;
 
 public:
+  OsiriXLayerSource() :
+    color_(0, 255, 0)
+  {
+  }
+
   OrthancStone::OsiriX::CollectionOfAnnotations& GetAnnotations()
   {
     return annotations_;
+  }
+
+  void SetColor(const OrthancStone::Color& color)
+  {
+    color_ = color;
   }
 
   virtual int GetDepth() const ORTHANC_OVERRIDE
@@ -4268,7 +4321,7 @@ public:
       // layer->Reserve(a.size());
 
       OrthancStone::OsiriXLayerFactory factory;
-      factory.SetColor(0, 255, 0);
+      factory.SetColor(color_);
 
       for (std::set<size_t>::const_iterator it = a.begin(); it != a.end(); ++it)
       {
@@ -4754,6 +4807,21 @@ public:
 };
 
 
+
+static void SetAnnotationsColor(const OrthancStone::Color& color)
+{
+  ViewerViewport::SetAnnotationsColor(color);
+  DicomStructuredReportFrames::SetAnnotationsColor(color);
+  osiriXLayerSource_->SetColor(color);
+}
+
+
+static void SetHighlightedColor(const OrthancStone::Color& color)
+{
+  ViewerViewport::SetHighlightedColor(color);
+}
+
+
 extern "C"
 {
   int main(int argc, char const *argv[]) 
@@ -4773,6 +4841,9 @@ extern "C"
     overlayLayerSource_.reset(new OverlayLayerSource);
     osiriXLayerSource_.reset(new OsiriXLayerSource);
     orientationMarkersSource_.reset(new OrientationMarkersSource);
+
+    SetAnnotationsColor(OrthancStone::Color(0x40, 0x82, 0xad));  // This was COLOR_PRIMITIVES until 2.6
+    SetHighlightedColor(OrthancStone::Color(0x40, 0xad, 0x79));  // This was COLOR_HOVER until 2.6
 
     for (size_t i = 0; pluginsInitializers_[i] != NULL; i++)
     {
@@ -5551,6 +5622,34 @@ extern "C"
     {
       GetViewport(canvas)->AddTextAnnotation(label, OrthancStone::ScenePoint2D(pointedX, pointedY),
                                              OrthancStone::ScenePoint2D(labelX, labelY));
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void SetAnnotationsColor(int red,
+                           int green,
+                           int blue)
+  {
+    try
+    {
+      OrthancStone::Color color(red, green, blue);
+      SetAnnotationsColor(color);
+    }
+    EXTERN_CATCH_EXCEPTIONS;
+  }
+
+
+  EMSCRIPTEN_KEEPALIVE
+  void SetHighlightedAnnotationsColor(int red,
+                                      int green,
+                                      int blue)
+  {
+    try
+    {
+      OrthancStone::Color color(red, green, blue);
+      SetHighlightedColor(color);
     }
     EXTERN_CATCH_EXCEPTIONS;
   }

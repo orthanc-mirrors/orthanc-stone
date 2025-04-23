@@ -1610,6 +1610,16 @@ window.addEventListener('StoneInitialized', function() {
     alert('Bad value for option "ShowInfoPanelAtStartup": ' + app.globalConfiguration.ShowInfoPanelAtStartup);
   }
 
+  var color = app.globalConfiguration['AnnotationsColor'];
+  if (color !== undefined) {
+    stone.SetAnnotationsColor(color[0], color[1], color[2]);
+  }
+
+  color = app.globalConfiguration['HighlightedAnnotationsColor'];
+  if (color !== undefined) {
+    stone.SetHighlightedAnnotationsColor(color[0], color[1], color[2]);
+  }
+
   console.warn('Stone properly initialized');
 
   app.stoneWebViewerVersion = stone.GetStoneWebViewerVersion();

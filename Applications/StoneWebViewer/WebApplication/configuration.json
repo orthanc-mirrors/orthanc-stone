@@ -151,18 +151,28 @@
       /* "Authorization" : "Bearer ${USER}" */
     },
 
+    /**
+     * Color that is used to draw the annotations, as a RGB
+     * triple. (New in Stone Web viewer 2.7)
+     **/
+    "AnnotationsColor" : [ 64, 130, 173 ],
 
     /**
-     * Define the the filename of the 'Download as Jpeg' screenshots.
-     * The template can either contain Patient, Study or Series tags 
+     * Color that is used to draw highlighted annotations, as a RGB
+     * triple. (New in Stone Web viewer 2.7)
+     **/
+    "HighlightedAnnotationsColor" : [ 64, 173, 121 ],
+
+    /**
+     * Define the the filename of the "Download as JPEG" screenshots.
+     * The template can either contain Patient, Study or Series tags
      * in the group,element form (e.g. {0008,103e}) or the DICOM tag
-     * common name (e.g. {SeriesDescription}).  A few Instance tags are
+     * common name (e.g. {SeriesDescription}). Some instance tags are
      * also available: {InstanceNumber}, {ContentDate}, {ContentTime}.
-     * {CurrentFrame} is also available although not a DICOM Tag.
-     * (New in Stone Web viewer 2.7).  In prior versions, the filename
-     * was always "StoneWebViewerScreenshot.jpg".
+     * {CurrentFrame} is also available although not a DICOM tag. In
+     * prior versions, the filename was always
+     * "StoneWebViewerScreenshot.jpg". (New in Stone Web viewer 2.7)
      **/
     "ScreenshotTemplate" : "{PatientID}-{PatientName}-{StudyDate}-{SeriesDescription}-{InstanceNumber}-{CurrentFrame}.jpg"
-
   }
 }

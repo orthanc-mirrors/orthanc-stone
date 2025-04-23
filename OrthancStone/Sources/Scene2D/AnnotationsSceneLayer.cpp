@@ -64,18 +64,92 @@ static const char* const VALUE_ELLIPSE_PROBE = "ellipse-probe";
 static const char* const VALUE_TEXT_ANNOTATION = "text";
 
 #if 0
-static OrthancStone::Color COLOR_PRIMITIVES(192, 192, 192);
-static OrthancStone::Color COLOR_HOVER(0, 255, 0);
-static OrthancStone::Color COLOR_TEXT(255, 0, 0);
-#else
+// Color codes that were used in Stone Web viewer <= 2.6
 static OrthancStone::Color COLOR_PRIMITIVES(0x40, 0x82, 0xad);
 static OrthancStone::Color COLOR_HOVER(0x40, 0xad, 0x79);
-static OrthancStone::Color COLOR_TEXT(0x4e, 0xde, 0x99);
+static OrthancStone::Color COLOR_TEXT(0x4e, 0xde, 0x99);   // This was replaced by COLOR_HOVER in 2.7
 #endif
 
 
 namespace OrthancStone
 {
+  class AnnotationsSceneLayer::Annotation : public boost::noncopyable
+  {
+  private:
+    typedef std::list<GeometricPrimitive*>  GeometricPrimitives;
+
+    AnnotationsSceneLayer&  that_;
+    GeometricPrimitives     primitives_;
+    Color                   color_;
+    Color                   hoverColor_;
+
+  public:
+    explicit Annotation(AnnotationsSceneLayer& that) :
+      that_(that),
+      color_(that.GetColor()),
+      hoverColor_(that.GetHoverColor())
+    {
+      that.AddAnnotation(this);
+    }
+
+    virtual ~Annotation()
+    {
+      for (GeometricPrimitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
+      {
+        that_.DeletePrimitive(*it);
+      }
+    }
+
+    AnnotationsSceneLayer& GetParentLayer() const
+    {
+      return that_;
+    }
+
+    GeometricPrimitive* AddPrimitive(GeometricPrimitive* primitive)
+    {
+      if (primitive == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+      else
+      {
+        assert(that_.primitives_.find(primitive) == that_.primitives_.end());
+        primitives_.push_back(primitive);  // For automated deallocation
+        that_.primitives_.insert(primitive);
+        return primitive;
+      }
+    }
+
+    const Color& GetColor() const
+    {
+      return color_;
+    }
+
+    const Color& GetHoverColor() const
+    {
+      return hoverColor_;
+    }
+
+    template <typename T>
+    T& AddTypedPrimitive(T* primitive)
+    {
+      AddPrimitive(primitive);
+      return *primitive;
+    }
+
+    virtual unsigned int GetHandlesCount() const = 0;
+
+    virtual Handle& GetHandle(unsigned int index) const = 0;
+
+    virtual void SignalMove(GeometricPrimitive& primitive,
+                            const Scene2D& scene) = 0;
+
+    virtual void UpdateProbe(const Scene2D& scene) = 0;
+
+    virtual void Serialize(Json::Value& target) = 0;
+  };
+
+
   class AnnotationsSceneLayer::GeometricPrimitive : public boost::noncopyable
   {
   private:
@@ -91,8 +165,8 @@ namespace OrthancStone
                        int depth) :
       modified_(true),
       parentAnnotation_(parentAnnotation),
-      color_(COLOR_PRIMITIVES),
-      hoverColor_(COLOR_HOVER),
+      color_(parentAnnotation.GetColor()),
+      hoverColor_(parentAnnotation.GetHoverColor()),
       isHover_(false),
       depth_(depth)
     {
@@ -181,69 +255,6 @@ namespace OrthancStone
                           const Scene2D& scene) = 0;
   };
     
-
-  class AnnotationsSceneLayer::Annotation : public boost::noncopyable
-  {
-  private:
-    typedef std::list<GeometricPrimitive*>  GeometricPrimitives;
-      
-    AnnotationsSceneLayer&  that_;
-    GeometricPrimitives     primitives_;
-      
-  public:
-    explicit Annotation(AnnotationsSceneLayer& that) :
-      that_(that)
-    {
-      that.AddAnnotation(this);
-    }
-      
-    virtual ~Annotation()
-    {
-      for (GeometricPrimitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
-      {
-        that_.DeletePrimitive(*it);
-      }
-    }
-
-    AnnotationsSceneLayer& GetParentLayer() const
-    {
-      return that_;
-    }
-
-    GeometricPrimitive* AddPrimitive(GeometricPrimitive* primitive)
-    {
-      if (primitive == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-      else
-      {
-        assert(that_.primitives_.find(primitive) == that_.primitives_.end());
-        primitives_.push_back(primitive);  // For automated deallocation
-        that_.primitives_.insert(primitive);
-        return primitive;
-      }
-    }
-
-    template <typename T>
-    T& AddTypedPrimitive(T* primitive)
-    {
-      AddPrimitive(primitive);
-      return *primitive;
-    }
-
-    virtual unsigned int GetHandlesCount() const = 0;
-
-    virtual Handle& GetHandle(unsigned int index) const = 0;
-
-    virtual void SignalMove(GeometricPrimitive& primitive,
-                            const Scene2D& scene) = 0;
-
-    virtual void UpdateProbe(const Scene2D& scene) = 0;
-
-    virtual void Serialize(Json::Value& target) = 0;
-  };
-
 
   class AnnotationsSceneLayer::Handle : public GeometricPrimitive
   {
@@ -1123,7 +1134,7 @@ namespace OrthancStone
       segment_(AddTypedPrimitive<Segment>(new Segment(*this, p1, p2))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
-      label_.SetColor(COLOR_TEXT);
+      label_.SetColor(that.GetHoverColor());
     }
 
     virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
@@ -1494,7 +1505,7 @@ namespace OrthancStone
       content.SetText("?");
 
       label_.SetContent(content);      
-      label_.SetColor(COLOR_TEXT);
+      label_.SetColor(that.GetHoverColor());
     }
 
     virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
@@ -1602,7 +1613,7 @@ namespace OrthancStone
       arc_(AddTypedPrimitive<Arc>(new Arc(*this, start, middle, end))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
-      label_.SetColor(COLOR_TEXT);
+      label_.SetColor(that.GetHoverColor());
       UpdateLabel();
     }
 
@@ -1793,7 +1804,7 @@ namespace OrthancStone
       circle_(AddTypedPrimitive<Circle>(new Circle(*this, p1, p2))),
       label_(AddTypedPrimitive<Text>(new Text(that, *this)))
     {
-      label_.SetColor(COLOR_TEXT);
+      label_.SetColor(that.GetHoverColor());
       UpdateLabel();
     }
 
@@ -2007,7 +2018,7 @@ namespace OrthancStone
       content.SetText("?");
 
       label_.SetContent(content);
-      label_.SetColor(COLOR_TEXT);
+      label_.SetColor(that.GetHoverColor());
     }
 
     virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
@@ -2264,7 +2275,7 @@ namespace OrthancStone
       content.SetText("?");
 
       label_.SetContent(content);
-      label_.SetColor(COLOR_TEXT);
+      label_.SetColor(that.GetHoverColor());
     }
 
     virtual unsigned int GetHandlesCount() const ORTHANC_OVERRIDE
@@ -2655,7 +2666,9 @@ namespace OrthancStone
     macroLayerIndex_(macroLayerIndex),
     polylineSubLayer_(0),  // dummy initialization
     units_(Units_Pixels),
-    probedLayer_(0)
+    probedLayer_(0),
+    color_(0, 255, 0),
+    hoverColor_(255, 0, 0)
   {
   }
     

@@ -76,6 +76,27 @@ namespace OrthancStone
   }
     
 
+  void GlyphAlphabet::Register(FontRenderer& renderer,
+                               const std::string& utf8)
+  {
+    size_t pos = 0;
+    while (pos < utf8.size())
+    {
+      uint32_t unicode;
+      size_t size;
+      Orthanc::Toolbox::Utf8ToUnicodeCharacter(unicode, size, utf8, pos);
+
+      if (unicode != '\r' &&
+          unicode != '\n')
+      {
+        Register(renderer, unicode);
+      }
+
+      pos += size;
+    }
+  }
+
+
 #if ORTHANC_ENABLE_LOCALE == 1
   bool GlyphAlphabet::GetUnicodeFromCodepage(uint32_t& unicode,
                                              unsigned int index,

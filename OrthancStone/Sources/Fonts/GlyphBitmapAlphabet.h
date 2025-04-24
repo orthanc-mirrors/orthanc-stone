@@ -53,8 +53,10 @@ namespace OrthancStone
     void LoadCodepage(FontRenderer& renderer,
                       Orthanc::Encoding codepage);
 #endif
-    
-    
+
     Orthanc::ImageAccessor* RenderText(const std::string& utf8) const;
+
+    Orthanc::ImageAccessor* RenderText(FontRenderer& font,
+                                       const std::string& utf8);
   };
 }

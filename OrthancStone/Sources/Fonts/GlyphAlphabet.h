@@ -88,6 +88,9 @@ namespace OrthancStone
     void Register(FontRenderer& renderer,
                   uint32_t unicode);
 
+    void Register(FontRenderer& renderer,
+                  const std::string& utf8);
+
 #if ORTHANC_ENABLE_LOCALE == 1
     static bool GetUnicodeFromCodepage(uint32_t& unicode,
                                        unsigned int index,

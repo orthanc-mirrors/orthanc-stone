@@ -112,4 +112,12 @@ namespace OrthancStone
 
     return bitmap.release();
   }
+
+
+  Orthanc::ImageAccessor* GlyphBitmapAlphabet::RenderText(FontRenderer& font,
+                                                          const std::string& utf8)
+  {
+    alphabet_.Register(font, utf8);
+    return RenderText(utf8);
+  }
 }

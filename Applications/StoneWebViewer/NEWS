@@ -1,6 +1,7 @@
 Pending changes in the mainline
 ===============================
 
+* Experimental support for DICOM SR, display of textual reports
 * Experimental support for DICOM SR "Measurement Report" (TID 1500 - only polylines)
 * Added "Print" and "Download" buttons in the PDF viewer toolbar
 * New configuration option "ScreenshotTemplate" to define the filename

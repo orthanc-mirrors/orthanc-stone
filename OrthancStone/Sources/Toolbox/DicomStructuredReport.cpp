@@ -641,6 +641,7 @@ namespace OrthancStone
     StoneToolbox::ExtractMainDicomTags(mainDicomTags_, dicom);
     StoneToolbox::CopyDicomTag(mainDicomTags_, dicom, Orthanc::DicomTag(0x0040, 0xa491));  // "Completion Flag"
     StoneToolbox::CopyDicomTag(mainDicomTags_, dicom, Orthanc::DicomTag(0x0040, 0xa493));  // "Verification Flag"
+    StoneToolbox::CopyDicomTag(mainDicomTags_, dicom, Orthanc::DICOM_TAG_SOP_CLASS_UID);
 
     DcmDataset& dataset = *dicom.GetDcmtkObject().getDataset();
 

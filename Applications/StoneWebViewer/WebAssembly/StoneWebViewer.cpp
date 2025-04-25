@@ -377,6 +377,7 @@ private:
   };
 
   std::unique_ptr<OrthancStone::DicomStructuredReport>  sr_;
+  OrthancStone::DicomInstanceParameters                 parameters_;
   std::vector<Frame*>                                   frames_;
 
   void Finalize()
@@ -414,7 +415,8 @@ private:
 public:
   DicomStructuredReportFrames(const OrthancStone::DicomStructuredReport& sr,
                               const OrthancStone::LoadedDicomResources& instances) :
-    sr_(new OrthancStone::DicomStructuredReport(sr))
+    sr_(new OrthancStone::DicomStructuredReport(sr)),
+    parameters_(sr.GetMainDicomTags())
   {
     std::list<OrthancStone::DicomStructuredReport::ReferencedFrame> tmp;
     sr_->ExportReferencedFrames(tmp);
@@ -448,23 +450,44 @@ public:
 
   virtual size_t GetFramesCount() const ORTHANC_OVERRIDE
   {
-    return frames_.size();
+    return frames_.size() + 1;
   }
 
   virtual const OrthancStone::DicomInstanceParameters& GetInstanceOfFrame(size_t frameIndex) const ORTHANC_OVERRIDE
   {
-    return GetFrame(frameIndex).GetParameters();
+    if (frameIndex == frames_.size())
+    {
+      return parameters_;
+    }
+    else
+    {
+      return GetFrame(frameIndex).GetParameters();
+    }
   }
 
   virtual unsigned int GetFrameNumberInInstance(size_t frameIndex) const ORTHANC_OVERRIDE
   {
-    return GetFrame(frameIndex).GetInformation().GetFrameNumber();
+    if (frameIndex == frames_.size())
+    {
+      return 0;
+    }
+    else
+    {
+      return GetFrame(frameIndex).GetInformation().GetFrameNumber();
+    }
   }
 
   virtual bool LookupFrame(size_t& frameIndex,
                            const std::string& sopInstanceUid,
                            unsigned int frameNumber) const ORTHANC_OVERRIDE
   {
+    if (sopInstanceUid == sr_->GetSopInstanceUid() &&
+        frameNumber == 0)
+    {
+      frameIndex = frames_.size();
+      return true;
+    }
+
     // TODO - Could be speeded up with an additional index
     for (size_t i = 0; i < frames_.size(); i++)
     {
@@ -2692,6 +2715,10 @@ private:
   std::list<ILayerSource*>  layerSources_;
 
 
+  // TODO - Share this with the compositor?
+  OrthancStone::FontRenderer  font_;
+
+
   void UpdateWindowing(WindowingState state,
                        const OrthancStone::Windowing& windowing)
   {
@@ -2832,8 +2859,12 @@ private:
      * (cf. LSD-479).
      **/
     
-    bool isMonochrome1 = (instance.GetImageInformation().GetPhotometricInterpretation() ==
-                          Orthanc::PhotometricInterpretation_Monochrome1);
+    bool isMonochrome1 = false;
+    if (instance.GetSopClassUid() != OrthancStone::SopClassUid_ComprehensiveSR)
+    {
+      isMonochrome1 = (instance.GetImageInformation().GetPhotometricInterpretation() ==
+                       Orthanc::PhotometricInterpretation_Monochrome1);
+    }
       
     std::unique_ptr<OrthancStone::TextureBaseSceneLayer> layer;
 
@@ -3116,7 +3147,17 @@ private:
       {
         try
         {
-          std::unique_ptr<Orthanc::ImageAccessor> frame(accessor->GetDicom().DecodeFrame(frameNumber));
+          std::unique_ptr<Orthanc::ImageAccessor> frame;
+          if (instance.GetSopClassUid() == OrthancStone::SopClassUid_ComprehensiveSR)
+          {
+            OrthancStone::DicomStructuredReport report(const_cast<Orthanc::ParsedDicomFile&>(accessor->GetDicom()));
+            frame.reset(report.Render(font_, OrthancStone::Color(255, 0, 0), OrthancStone::Color(0, 255, 0)));
+          }
+          else
+          {
+            frame.reset(accessor->GetDicom().DecodeFrame(frameNumber));
+          }
+
           SetFullDicomFrame::Apply(*this, accessor->GetDicom(), frame.release(), instance.GetSopInstanceUid(), frameNumber);
           return;  // Success
         }
@@ -3220,6 +3261,7 @@ private:
       std::string ttf;
       Orthanc::EmbeddedResources::GetFileResource(ttf, Orthanc::EmbeddedResources::UBUNTU_FONT);
       lock->GetCompositor().SetFont(0, ttf, 16 /* font size */, Orthanc::Encoding_Latin1);
+      font_.LoadFont(ttf, 16 /* font size */);
     }
     
     emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, OnWheel);

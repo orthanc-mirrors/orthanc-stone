@@ -25,6 +25,7 @@
 
 #include "../StoneException.h"
 
+#include <Images/Image.h>
 #include <Images/ImageProcessing.h>
 #include <Images/PixelTraits.h>
 
@@ -331,5 +332,33 @@ namespace OrthancStone
       default:
         return false;
     }
+  }
+
+
+  Orthanc::ImageAccessor* ImageToolbox::Colorize(const Orthanc::ImageAccessor& source,
+                                                 const OrthancStone::Color& color)
+  {
+    if (source.GetFormat() != Orthanc::PixelFormat_Grayscale8)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_IncompatibleImageFormat);
+    }
+
+    std::unique_ptr<Orthanc::ImageAccessor> result(new Orthanc::Image(Orthanc::PixelFormat_RGB24, source.GetWidth(), source.GetHeight(), false));
+
+    for (unsigned int y = 0; y < source.GetHeight(); y++)
+    {
+      uint8_t* q = reinterpret_cast<uint8_t *>(result->GetRow(y));
+      const uint8_t* p = reinterpret_cast<const uint8_t*>(source.GetConstRow(y));
+      for (unsigned int x = 0; x < source.GetWidth(); x++)
+      {
+        q[0] = (static_cast<uint16_t>(*p) * static_cast<uint16_t>(color.GetRed())) / static_cast<uint16_t>(255);
+        q[1] = (static_cast<uint16_t>(*p) * static_cast<uint16_t>(color.GetGreen())) / static_cast<uint16_t>(255);
+        q[2] = (static_cast<uint16_t>(*p) * static_cast<uint16_t>(color.GetBlue())) / static_cast<uint16_t>(255);
+        q += 3;
+        p ++;
+      }
+    }
+
+    return result.release();
   }
 }

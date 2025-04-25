@@ -25,6 +25,7 @@
 
 #include "../StoneEnumerations.h"
 #include "LinearAlgebra.h"
+#include "../Scene2D/Color.h"
 
 #include <Images/ImageAccessor.h>
 
@@ -80,5 +81,8 @@ namespace OrthancStone
   {
   public:
     static bool IsDecodingSupported(Orthanc::DicomTransferSyntax& transferSyntax);
-  };
+
+    static Orthanc::ImageAccessor* Colorize(const Orthanc::ImageAccessor& source,
+                                            const OrthancStone::Color& color);
+};
 }

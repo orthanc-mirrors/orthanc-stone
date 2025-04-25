@@ -31,6 +31,8 @@
 #  error Support for DCMTK must be enabled
 #endif
 
+#include "../Fonts/FontRenderer.h"
+#include "../Scene2D/Color.h"
 #include "../Scene2D/ScenePoint2D.h"
 
 #include <DicomParsing/ParsedDicomFile.h>
@@ -335,5 +337,9 @@ namespace OrthancStone
                               const std::string& sopInstanceUid) const;
 
     void FlattenTextualReport(std::string& target) const;
+
+    Orthanc::ImageAccessor* Render(FontRenderer& font,
+                                   const Color& highlightColor,
+                                   const Color& normalColor) const;
   };
 }

@@ -23,8 +23,10 @@
 
 #include "DicomStructuredReport.h"
 
-#include "StoneToolbox.h"
 #include "../Scene2D/ScenePoint2D.h"
+#include "../Fonts/GlyphBitmapAlphabet.h"
+#include "BitmapLayout.h"
+#include "StoneToolbox.h"
 
 #include <ChunkedBuffer.h>
 #include <OrthancException.h>
@@ -840,5 +842,184 @@ namespace OrthancStone
     Orthanc::ChunkedBuffer buffer;
     Flatten(buffer, textualReport_, "");
     buffer.Flatten(target);
+  }
+
+
+  namespace
+  {
+    class TextWriter : public boost::noncopyable
+    {
+    private:
+      BitmapLayout        layout_;
+      Color               highlightColor_;
+      Color               normalColor_;
+
+      FontRenderer&       font_;
+      GlyphBitmapAlphabet alphabet_;
+      int                 x_;
+      int                 y_;
+      unsigned int        maxHeight_;
+
+    public:
+      TextWriter(FontRenderer& font,
+                 const Color& highlightColor,
+                 const Color& normalColor) :
+        highlightColor_(highlightColor),
+        normalColor_(normalColor),
+        font_(font),
+        x_(0),
+        y_(0),
+        maxHeight_(0)
+      {
+      }
+
+      enum Move
+      {
+        Move_None,
+        Move_SmallInterline,
+        Move_LargeInterline
+      };
+
+      const Orthanc::ImageAccessor& Write(const std::string& s,
+                                          Move mode)
+      {
+        std::unique_ptr<Orthanc::ImageAccessor> block(alphabet_.RenderColorText(font_, s, highlightColor_, normalColor_));
+        const Orthanc::ImageAccessor& item = layout_.AddBlock(x_, y_, block.release());
+        maxHeight_ = std::max(maxHeight_, item.GetHeight());
+
+        switch (mode)
+        {
+          case Move_None:
+            break;
+
+          case Move_SmallInterline:
+            y_ += maxHeight_ + maxHeight_ / 4;
+            break;
+
+          case Move_LargeInterline:
+            y_ += maxHeight_ + maxHeight_;
+            break;
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+        }
+
+        return item;
+      }
+
+      void SetX(int x)
+      {
+        x_ = x;
+      }
+
+      unsigned int GetX() const
+      {
+        return x_;
+      }
+
+      Orthanc::ImageAccessor* Render(Orthanc::PixelFormat format) const
+      {
+        return layout_.Render(format);
+      }
+    };
+  }
+
+
+  static void Explore(TextWriter& writer,
+                      const Json::Value& node,
+                      unsigned int maxLineWidth)
+  {
+    assert(node.type() == Json::arrayValue);
+
+    const unsigned int x = writer.GetX();
+
+    for (Json::ArrayIndex i = 0; i < node.size(); i++)
+    {
+      assert(node[i].type() == Json::arrayValue);
+      assert(node[i].size() == 2 || node[i].size() == 3);
+      assert(node[i][0].type() == Json::stringValue);
+      assert(node[i][1].type() == Json::stringValue || node[i][1].type() == Json::nullValue);
+      assert(node[i].size() == 2 || node[i][2].type() == Json::arrayValue);
+
+      std::string s = "\021" + boost::lexical_cast<std::string>(i + 1) + ".  ";
+      const Orthanc::ImageAccessor& label = writer.Write(s, TextWriter::Move_None);
+
+      std::string text = "\021" + node[i][0].asString();
+
+      if (node[i][1].type() == Json::stringValue)
+      {
+        text += ":\022 " + node[i][1].asString();
+      }
+
+      std::string indented;
+      GlyphAlphabet::IndentUtf8(indented, text, maxLineWidth, false);
+
+      writer.SetX(x + label.GetWidth());
+      writer.Write(text, TextWriter::Move_SmallInterline);
+
+      if (node[i].size() == 3)
+      {
+        Explore(writer, node[i][2], std::max(60u, maxLineWidth - 10u));
+      }
+
+      writer.SetX(x);
+    }
+  }
+
+
+  Orthanc::ImageAccessor* DicomStructuredReport::Render(FontRenderer& font,
+                                                        const Color& highlightColor,
+                                                        const Color& normalColor) const
+  {
+    TextWriter writer(font, highlightColor, normalColor);
+
+    writer.Write(GetTitle(), TextWriter::Move_LargeInterline);
+
+    std::string s = GetMainDicomTags().GetStringValue(Orthanc::DICOM_TAG_SERIES_TIME, "", false);
+    size_t pos = s.find('.');
+    if (pos != std::string::npos)
+    {
+      s = s.substr(0, pos);
+    }
+
+    s = "\021Series Date Time:\022 " + GetMainDicomTags().GetStringValue(Orthanc::DICOM_TAG_SERIES_DATE, "", false) + " at " + s;
+    writer.Write(s, TextWriter::Move_LargeInterline);
+
+    writer.Write("\021Patient's name:\022 " +
+                 GetMainDicomTags().GetStringValue(Orthanc::DICOM_TAG_PATIENT_NAME, "", false),
+                 TextWriter::Move_SmallInterline);
+    writer.Write("\021Patient ID:\022 " +
+                 GetMainDicomTags().GetStringValue(Orthanc::DICOM_TAG_PATIENT_ID, "", false),
+                 TextWriter::Move_SmallInterline);
+    writer.Write("\021Patient's Birth Date:\022 " +
+                 GetMainDicomTags().GetStringValue(Orthanc::DICOM_TAG_PATIENT_BIRTH_DATE, "", false),
+                 TextWriter::Move_SmallInterline);
+    writer.Write("\021Patient's Sex:\022 " +
+                 GetMainDicomTags().GetStringValue(Orthanc::DICOM_TAG_PATIENT_SEX, "", false),
+                 TextWriter::Move_LargeInterline);
+
+    writer.Write("\021Study Description:\022 " +
+                 GetMainDicomTags().GetStringValue(Orthanc::DICOM_TAG_STUDY_DESCRIPTION, "", false),
+                 TextWriter::Move_SmallInterline);
+    writer.Write("\021Study ID:\022 " +
+                 GetMainDicomTags().GetStringValue(Orthanc::DICOM_TAG_STUDY_ID, "", false),
+                 TextWriter::Move_SmallInterline);
+    writer.Write("\021Accession Number:\022 " +
+                 GetMainDicomTags().GetStringValue(Orthanc::DICOM_TAG_ACCESSION_NUMBER, "", false),
+                 TextWriter::Move_SmallInterline);
+    writer.Write("\021Referring Physician's Name:\022 " +
+                 GetMainDicomTags().GetStringValue(Orthanc::DICOM_TAG_REFERRING_PHYSICIAN_NAME, "", false),
+                 TextWriter::Move_LargeInterline);
+
+    writer.Write("\021Completion Flag:\022 " +
+                 GetMainDicomTags().GetStringValue(Orthanc::DicomTag(0x0040, 0xa491), "", false),
+                 TextWriter::Move_SmallInterline);
+    writer.Write("\021Verification Flag:\022 " +
+                 GetMainDicomTags().GetStringValue(Orthanc::DicomTag(0x0040, 0xa493), "", false),
+                 TextWriter::Move_LargeInterline);
+
+    Explore(writer, GetTextualReport(), 160);
+
+    return writer.Render(Orthanc::PixelFormat_RGB24);
   }
 }

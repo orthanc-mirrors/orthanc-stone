@@ -654,6 +654,19 @@ namespace OrthancStone
 
     CheckStringValue(dataset, DCM_Modality, "SR");
 
+    title_ = mainDicomTags_.GetStringValue(Orthanc::DICOM_TAG_SERIES_DESCRIPTION, "?", false);
+
+    if (dataset.tagExists(DCM_ConceptNameCodeSequence))
+    {
+      DcmSequenceOfItems& concepts = GetSequenceValue(dataset, DCM_ConceptNameCodeSequence);
+      if (concepts.card() == 1 &&
+          concepts.getItem(0) != NULL &&
+          concepts.getItem(0)->tagExists(DCM_CodeMeaning))
+      {
+        title_ = GetStringValue(*concepts.getItem(0), DCM_CodeMeaning);
+      }
+    }
+
     ReadTextualReport(textualReport_, dataset);
 
     if (IsDicomConcept(dataset, "126000") /* Imaging measurement report */ &&

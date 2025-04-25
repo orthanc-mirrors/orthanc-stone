@@ -267,8 +267,7 @@ namespace OrthancStone
     size_t pos = 0;
     while (pos < source.size())
     {
-      if (source[pos] == ' ' ||
-          (ignoreDeviceControl && IsDeviceControlCharacter(source[pos])))
+      if (source[pos] == ' ')
       {
         pos++;
       }

@@ -292,4 +292,6 @@ TEST(GlyphAlphabet, Indent)
   OrthancStone::GlyphAlphabet::IndentUtf8(s, "X A\021B\022C\r\023D\024E Y", 11, false); ASSERT_EQ("X A\021B\022C\023D\024E\nY", s);
   OrthancStone::GlyphAlphabet::IndentUtf8(s, "X A\021B\022C\r\023D\024E Y", 12, false); ASSERT_EQ("X A\021B\022C\023D\024E\nY", s);
   OrthancStone::GlyphAlphabet::IndentUtf8(s, "X A\021B\022C\r\023D\024E Y", 13, false); ASSERT_EQ("X A\021B\022C\023D\024E Y", s);
+
+  OrthancStone::GlyphAlphabet::IndentUtf8(s, "\021Type:\022 Value", 20, false); ASSERT_EQ("\021Type:\022 Value", s);
 }

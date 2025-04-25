@@ -320,6 +320,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/StoneInitialization.cpp
 
   ${ORTHANC_STONE_ROOT}/Toolbox/AffineTransform2D.cpp
+  ${ORTHANC_STONE_ROOT}/Toolbox/BitmapLayout.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/BucketAccumulator1D.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/BucketAccumulator2D.cpp
   ${ORTHANC_STONE_ROOT}/Toolbox/CoordinateSystem3D.cpp

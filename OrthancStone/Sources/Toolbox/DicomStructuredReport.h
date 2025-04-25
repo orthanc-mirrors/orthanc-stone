@@ -210,6 +210,7 @@ namespace OrthancStone
     std::string                                 studyInstanceUid_;
     std::string                                 seriesInstanceUid_;
     std::string                                 sopInstanceUid_;
+    std::string                                 title_;
     Orthanc::DicomMap                           mainDicomTags_;
     Json::Value                                 textualReport_;
 
@@ -287,6 +288,11 @@ namespace OrthancStone
     const std::string& GetSopInstanceUid() const
     {
       return sopInstanceUid_;
+    }
+
+    const std::string& GetTitle() const
+    {
+      return title_;
     }
 
     const Orthanc::DicomMap& GetMainDicomTags() const

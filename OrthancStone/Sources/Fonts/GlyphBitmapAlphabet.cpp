@@ -25,6 +25,7 @@
 
 #include "TextBoundingBox.h"
 #include "../Toolbox/DynamicBitmap.h"
+#include "../Toolbox/ImageToolbox.h"
 
 #include <Images/Image.h>
 #include <Images/ImageProcessing.h>
@@ -38,6 +39,12 @@ namespace OrthancStone
     const GlyphBitmapAlphabet&  that_;
     int                         offsetX_;
     int                         offsetY_;
+    bool                        useColors_;
+    Color                       activeColor_;
+    Color                       color1_;
+    Color                       color2_;
+    Color                       color3_;
+    Color                       color4_;
       
   public:
     RenderTextVisitor(Orthanc::ImageAccessor&  target,
@@ -47,8 +54,22 @@ namespace OrthancStone
       target_(target),
       that_(that),
       offsetX_(offsetX),
-      offsetY_(offsetY)
+      offsetY_(offsetY),
+      useColors_(false)
     {
+    }
+
+    void SetColors(const Color& color1,
+                   const Color& color2,
+                   const Color& color3,
+                   const Color& color4)
+    {
+      useColors_ = true;
+      activeColor_ = color1;
+      color1_ = color1;
+      color2_ = color2;
+      color3_ = color3;
+      color4_ = color4;
     }
 
     virtual void Visit(uint32_t unicode,
@@ -70,7 +91,35 @@ namespace OrthancStone
              static_cast<unsigned int>(top) + height <= target_.GetHeight() &&
              width == glyph.GetBitmap().GetWidth() &&
              height == glyph.GetBitmap().GetHeight());
-        
+
+      if (useColors_)
+      {
+        if (unicode == 0x11)
+        {
+          activeColor_ = color1_;
+        }
+        else if (unicode == 0x12)
+        {
+          activeColor_ = color2_;
+        }
+        else if (unicode == 0x13)
+        {
+          activeColor_ = color3_;
+        }
+        else if (unicode == 0x14)
+        {
+          activeColor_ = color4_;
+        }
+        else
+        {
+          Orthanc::ImageAccessor region;
+          target_.GetRegion(region, left, top, width, height);
+
+          std::unique_ptr<Orthanc::ImageAccessor> colorized(ImageToolbox::Colorize(glyph.GetBitmap(), activeColor_));
+          Orthanc::ImageProcessing::Copy(region, *colorized);
+        }
+      }
+      else
       {
         Orthanc::ImageAccessor region;
         target_.GetRegion(region, left, top, width, height);
@@ -103,7 +152,7 @@ namespace OrthancStone
     std::unique_ptr<Orthanc::ImageAccessor> bitmap(
       new Orthanc::Image(Orthanc::PixelFormat_Grayscale8,
                          box.GetWidth(), box.GetHeight(),
-                         true /* force minimal pitch */));
+                         true /* force minimal pitch, to be used in OpenGL textures */));
 
     Orthanc::ImageProcessing::Set(*bitmap, 0);
 
@@ -119,5 +168,32 @@ namespace OrthancStone
   {
     alphabet_.Register(font, utf8);
     return RenderText(utf8);
+  }
+
+
+  Orthanc::ImageAccessor* GlyphBitmapAlphabet::RenderColorText(FontRenderer& font,
+                                                               const std::string& utf8,
+                                                               const Color color1,
+                                                               const Color color2,
+                                                               const Color color3,
+                                                               const Color color4)
+  {
+    alphabet_.Register(font, utf8);
+
+    TextBoundingBox box(alphabet_, utf8);
+
+    std::unique_ptr<Orthanc::ImageAccessor> bitmap(
+      new Orthanc::Image(Orthanc::PixelFormat_RGB24,
+                         box.GetWidth(), box.GetHeight(),
+                         true /* force minimal pitch, to be used in OpenGL textures */));
+
+    Orthanc::ImageProcessing::Set(*bitmap, 0);
+
+    RenderTextVisitor visitor(*bitmap, *this, -box.GetLeft(), -box.GetTop());
+    visitor.SetColors(color1, color2, color3, color4);
+
+    alphabet_.Apply(visitor, utf8);
+
+    return bitmap.release();
   }
 }

@@ -298,7 +298,7 @@ namespace OrthancStone
     std::unique_ptr<Orthanc::ImageAccessor> bitmap(
       new Orthanc::Image(Orthanc::PixelFormat_RGBA32,
                          box.GetWidth(), box.GetHeight(),
-                         true /* force minimal pitch */));
+                         true /* force minimal pitch, to be used in OpenGL textures */));
 
     Orthanc::ImageProcessing::Set(*bitmap, 0, 0, 0, 0);
 

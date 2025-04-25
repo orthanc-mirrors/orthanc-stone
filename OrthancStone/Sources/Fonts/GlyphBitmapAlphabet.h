@@ -25,6 +25,8 @@
 
 #include "GlyphAlphabet.h"
 
+#include "../Scene2D/Color.h"
+
 #include <Images/ImageAccessor.h>
 
 namespace OrthancStone
@@ -58,5 +60,12 @@ namespace OrthancStone
 
     Orthanc::ImageAccessor* RenderText(FontRenderer& font,
                                        const std::string& utf8);
+
+    Orthanc::ImageAccessor* RenderColorText(FontRenderer& font,
+                                            const std::string& utf8,
+                                            const Color color1 = Color(255, 255, 255),
+                                            const Color color2 = Color(0, 0, 0),
+                                            const Color color3 = Color(0, 0, 0),
+                                            const Color color4 = Color(0, 0, 0));
   };
 }

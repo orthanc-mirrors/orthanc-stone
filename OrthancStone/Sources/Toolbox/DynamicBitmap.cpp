@@ -26,8 +26,19 @@
 #include <Images/Image.h>
 #include <OrthancException.h>
 
+
 namespace OrthancStone
 {
+  DynamicBitmap::DynamicBitmap(Orthanc::ImageAccessor* bitmap) :
+    bitmap_(bitmap)
+  {
+    if (bitmap == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+  }
+
+
   DynamicBitmap::DynamicBitmap(const Orthanc::ImageAccessor& bitmap) :
     bitmap_(Orthanc::Image::Clone(bitmap))
   {
@@ -35,5 +46,14 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
+  }
+
+
+  DynamicBitmap::DynamicBitmap(Orthanc::PixelFormat format,
+                               unsigned int width,
+                               unsigned int height,
+                               bool forceMinimalPitch)
+  {
+    bitmap_.reset(new Orthanc::Image(format, width, height, forceMinimalPitch));
   }
 }

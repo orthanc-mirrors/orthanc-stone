@@ -106,5 +106,12 @@ namespace OrthancStone
 
     void Apply(ITextVisitor& visitor,
                const std::string& utf8) const;
+
+    static bool IsDeviceControlCharacter(uint32_t unicode);
+
+    static void IndentUtf8(std::string& target,
+                           const std::string& source,
+                           unsigned int maxLineWidth,
+                           bool ignoreDeviceControl /* whether DC1, DC2, DC3, and DC4 codes are used to change color */);
   };
 }

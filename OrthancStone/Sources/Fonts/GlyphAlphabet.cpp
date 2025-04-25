@@ -23,6 +23,8 @@
 
 #include "GlyphAlphabet.h"
 
+#include "../Toolbox/DynamicBitmap.h"
+
 #include <OrthancException.h>
 #include <Toolbox.h>
 
@@ -142,6 +144,8 @@ namespace OrthancStone
   void GlyphAlphabet::Apply(ITextVisitor& visitor,
                             const std::string& utf8) const
   {
+    DynamicBitmap empty(Orthanc::PixelFormat_Grayscale8, 0, 0, true);
+
     size_t pos = 0;
     int x = 0;
     int y = 0;
@@ -167,25 +171,168 @@ namespace OrthancStone
         size_t length;
         Orthanc::Toolbox::Utf8ToUnicodeCharacter(unicode, length, utf8, pos);
 
-        Content::const_iterator glyph = content_.find(unicode);
-
-        if (glyph != content_.end())
+        if (unicode == '\r' ||
+            IsDeviceControlCharacter(unicode))
         {
-          assert(glyph->second != NULL);
-          const Orthanc::IDynamicObject* payload =
-            (glyph->second->HasPayload() ? &glyph->second->GetPayload() : NULL);
+          /**
+           * This is a device control character, which is used to change the color of the text.
+           * Make sure that such a character is invisible (i.e., zero width and height).
+           **/
+          visitor.Visit(unicode, x, y, 0, 0, &empty);
+        }
+        else
+        {
+          Content::const_iterator glyph = content_.find(unicode);
+
+          if (glyph != content_.end())
+          {
+            assert(glyph->second != NULL);
+            const Orthanc::IDynamicObject* payload =
+              (glyph->second->HasPayload() ? &glyph->second->GetPayload() : NULL);
             
-          visitor.Visit(unicode,
-                        x + glyph->second->GetOffsetLeft(),
-                        y + glyph->second->GetOffsetTop(),
-                        glyph->second->GetWidth(),
-                        glyph->second->GetHeight(),
-                        payload);
-          x += glyph->second->GetAdvanceX();
+            visitor.Visit(unicode,
+                          x + glyph->second->GetOffsetLeft(),
+                          y + glyph->second->GetOffsetTop(),
+                          glyph->second->GetWidth(),
+                          glyph->second->GetHeight(),
+                          payload);
+            x += glyph->second->GetAdvanceX();
+          }
         }
         
         assert(length != 0);
         pos += length;
+      }
+    }
+  }
+
+
+  bool GlyphAlphabet::IsDeviceControlCharacter(uint32_t unicode)
+  {
+    return (unicode == 0x11 ||
+            unicode == 0x12 ||
+            unicode == 0x13 ||
+            unicode == 0x14);
+  }
+
+
+  static void Copy(std::string& target,
+                   const std::string& source,
+                   size_t start,
+                   size_t end,
+                   bool ignoreDeviceControl)
+  {
+    size_t i = start;
+    while (i < end)
+    {
+      uint32_t unicode;
+      size_t length;
+      Orthanc::Toolbox::Utf8ToUnicodeCharacter(unicode, length, source, i);
+      assert(length != 0);
+
+      if (unicode != '\r' &&
+          (!ignoreDeviceControl || !GlyphAlphabet::IsDeviceControlCharacter(unicode)))
+      {
+        for (size_t j = 0; j < length; j++)
+        {
+          target.push_back(source[i + j]);
+        }
+      }
+
+      i += length;
+    }
+
+    if (i != end)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+  }
+
+
+  void GlyphAlphabet::IndentUtf8(std::string& target,
+                                 const std::string& source,
+                                 unsigned int maxLineWidth,
+                                 bool ignoreDeviceControl /* whether DC1, DC2, DC3, and DC4 codes are used to change color */)
+  {
+    if (maxLineWidth == 0)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+
+    target.clear();
+    target.reserve(source.size());
+
+    unsigned int currentLineWidth = 0;
+
+    size_t pos = 0;
+    while (pos < source.size())
+    {
+      if (source[pos] == ' ' ||
+          (ignoreDeviceControl && IsDeviceControlCharacter(source[pos])))
+      {
+        pos++;
+      }
+      else if (source[pos] == '\n')
+      {
+        target.push_back('\n');
+        currentLineWidth = 0;
+        pos++;
+      }
+      else
+      {
+        // We are at the beginning of a word
+        size_t wordEnd = pos;
+        unsigned int wordLength = 0;  // Will be smaller than "wordEnd - pos" because of UTF8
+        while (wordEnd < source.size())
+        {
+          uint32_t unicode;
+          size_t length;
+          Orthanc::Toolbox::Utf8ToUnicodeCharacter(unicode, length, source, wordEnd);
+          assert(length != 0);
+
+          if (unicode == '\r' ||
+              (ignoreDeviceControl && IsDeviceControlCharacter(unicode)))
+          {
+            // Ignore carriage returns (and possibly device control characters)
+            wordEnd += length;
+          }
+          else if (unicode == '\n' ||
+                   unicode == ' ')
+          {
+            break;  // We found the end of the word
+          }
+          else
+          {
+            wordEnd += length;
+            wordLength ++;
+          }
+        }
+
+        if (wordLength != 0)
+        {
+          if (currentLineWidth == 0)
+          {
+            Copy(target, source, pos, wordEnd, ignoreDeviceControl);
+            currentLineWidth = wordLength;
+          }
+          else
+          {
+            if (currentLineWidth + wordLength + 1 <= maxLineWidth)
+            {
+              target.push_back(' ');
+              Copy(target, source, pos, wordEnd, ignoreDeviceControl);
+              currentLineWidth += wordLength + 1;
+            }
+            else
+            {
+              target.push_back('\n');
+              Copy(target, source, pos, wordEnd, ignoreDeviceControl);
+              currentLineWidth = wordLength;
+            }
+          }
+        }
+
+        pos = wordEnd;
       }
     }
   }

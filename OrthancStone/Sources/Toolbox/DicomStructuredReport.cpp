@@ -21,6 +21,11 @@
  **/
 
 
+// Necessary for "std::max()" to work on Visual Studio
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "DicomStructuredReport.h"
 
 #include "../Scene2D/ScenePoint2D.h"

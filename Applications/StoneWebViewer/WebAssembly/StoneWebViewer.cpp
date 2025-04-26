@@ -3007,6 +3007,10 @@ private:
                                                                      layer->GetOriginX(), layer->GetOriginY(),
                                                                      layer->GetPixelSpacingX(), layer->GetPixelSpacingY()));
     }
+    else
+    {
+      holder.AddLayer(LAYER_STRUCTURED_REPORT, NULL);
+    }
 
     holder.AddLayer(LAYER_TEXTURE, layer.release());
 

@@ -896,7 +896,7 @@ private:
           GetSharedObserver(), PRIORITY_NORMAL, OrthancStone::ParseDicomFromWadoCommand::Create(
             source_, message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), sopInstanceUid,
             false /* no transcoding */, Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
-            new InstanceInfo(message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), sopInstanceUid, Action_ComprehensiveSR)));
+            new InstanceInfo(message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), sopInstanceUid, Action_StructuredReport)));
         return;
       }
     }
@@ -951,7 +951,7 @@ private:
   enum Action
   {
     Action_Pdf,
-    Action_ComprehensiveSR,
+    Action_StructuredReport,
     Action_ReferencedInstance
   };
 
@@ -1021,7 +1021,7 @@ private:
           break;
         }
 
-        case Action_ComprehensiveSR:
+        case Action_StructuredReport:
         {
           try
           {

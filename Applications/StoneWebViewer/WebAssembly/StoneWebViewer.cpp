@@ -3022,7 +3022,17 @@ private:
       if (fitNextContent_)
       {
         lock->RefreshCanvasSize();
-        lock->GetCompositor().FitContent(scene);
+
+        if (instance.GetSopClassUid() == OrthancStone::SopClassUid_ComprehensiveSR)
+        {
+          // Fit to the width of the textual report
+          scene.FitTopContent(lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight(), 0.1);
+        }
+        else
+        {
+          lock->GetCompositor().FitContent(scene);
+        }
+
         stoneAnnotations_->Render(scene);
         fitNextContent_ = false;
       }
@@ -3151,7 +3161,7 @@ private:
           if (instance.GetSopClassUid() == OrthancStone::SopClassUid_ComprehensiveSR)
           {
             OrthancStone::DicomStructuredReport report(const_cast<Orthanc::ParsedDicomFile&>(accessor->GetDicom()));
-            frame.reset(report.Render(font_, OrthancStone::Color(255, 0, 0), OrthancStone::Color(0, 255, 0)));
+            frame.reset(report.Render(font_, GetHighlightedColorInternal(), GetAnnotationsColorInternal()));
           }
           else
           {

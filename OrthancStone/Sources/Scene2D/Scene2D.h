@@ -121,6 +121,10 @@ namespace OrthancStone
     void FitContent(unsigned int canvasWidth,
                     unsigned int canvasHeight);
 
+    void FitTopContent(unsigned int canvasWidth,
+                       unsigned int canvasHeight,
+                       double topMargin /* In percents */);
+
     void GetBoundingBox(Extent2D& target) const;
 
     void RotateViewport(double angle,

@@ -65,9 +65,77 @@ namespace OrthancStone
     {
       return SopClassUid_DicomSeg;
     }
+    else if (s == "1.2.840.10008.5.1.4.1.1.88.11")
+    {
+      return SopClassUid_BasicTextSR;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.88.22")
+    {
+      return SopClassUid_EnhancedSR;
+    }
     else if (s == "1.2.840.10008.5.1.4.1.1.88.33")
     {
       return SopClassUid_ComprehensiveSR;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.88.34")
+    {
+      return SopClassUid_Comprehensive3DSR;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.88.35")
+    {
+      return SopClassUid_ExtensibleSR;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.88.50")
+    {
+      return SopClassUid_MammographyCADSR;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.88.65")
+    {
+      return SopClassUid_ChestCADSR;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.88.67")
+    {
+      return SopClassUid_XRayRadiationDoseSR;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.88.68")
+    {
+      return SopClassUid_RadiopharmaceuticalRadiationDoseSR;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.88.69")
+    {
+      return SopClassUid_ColonCADSR;
+    }
+    else if (s == "1.2.840.10008.5.1.4.1.1.88.70")
+    {
+      return SopClassUid_ImplantationPlanSR;
+    }
+    else if (s == "1.2.840.10008.5.​1.​4.​1.​1.​88.​71")
+    {
+      return SopClassUid_AcquisitionContextSR;
+    }
+    else if (s == "1.2.840.10008.5.​1.​4.​1.​1.​88.​72")
+    {
+      return SopClassUid_SimplifiedAdultEchoSR;
+    }
+    else if (s == "1.2.840.10008.5.​1.​4.​1.​1.​88.​73")
+    {
+      return SopClassUid_PatientRadiationDoseSR;
+    }
+    else if (s == "1.2.840.10008.5.​1.​4.​1.​1.​88.​74")
+    {
+      return SopClassUid_PlannedImagingAgentAdministrationSR;
+    }
+    else if (s == "1.2.840.10008.5.​1.​4.​1.​1.​88.​75")
+    {
+      return SopClassUid_PerformedImagingAgentAdministrationSR;
+    }
+    else if (s == "1.2.840.10008.5.​1.​4.​1.​1.​88.​76")
+    {
+      return SopClassUid_EnhancedXRayRadiationDoseSR;
+    }
+    else if (s == "1.2.840.10008.5.​1.​4.​1.​1.​88.​77")
+    {
+      return SopClassUid_WaveformAnnotationSR;
     }
     else
     {
@@ -222,11 +290,40 @@ namespace OrthancStone
       case SopClassUid_VideoPhotographicImageStorage:
         return SeriesThumbnailType_Video;
 
-      case SopClassUid_ComprehensiveSR:
-        return SeriesThumbnailType_StructuredReport;
-
       default:
-        return SeriesThumbnailType_Unsupported;
+        break;
     }
+
+    if (IsStructuredReport(sopClassUid))
+    {
+      return SeriesThumbnailType_StructuredReport;
+    }
+    else
+    {
+      return SeriesThumbnailType_Unsupported;
+    }
+  }
+
+
+  bool IsStructuredReport(SopClassUid sopClassUid)
+  {
+    return (sopClassUid == SopClassUid_BasicTextSR ||
+            sopClassUid == SopClassUid_EnhancedSR ||
+            sopClassUid == SopClassUid_ComprehensiveSR ||
+            sopClassUid == SopClassUid_Comprehensive3DSR ||
+            sopClassUid == SopClassUid_ExtensibleSR ||
+            sopClassUid == SopClassUid_MammographyCADSR ||
+            sopClassUid == SopClassUid_ChestCADSR ||
+            sopClassUid == SopClassUid_XRayRadiationDoseSR ||
+            sopClassUid == SopClassUid_RadiopharmaceuticalRadiationDoseSR ||
+            sopClassUid == SopClassUid_ColonCADSR ||
+            sopClassUid == SopClassUid_ImplantationPlanSR ||
+            sopClassUid == SopClassUid_AcquisitionContextSR ||
+            sopClassUid == SopClassUid_SimplifiedAdultEchoSR ||
+            sopClassUid == SopClassUid_PatientRadiationDoseSR ||
+            sopClassUid == SopClassUid_PlannedImagingAgentAdministrationSR ||
+            sopClassUid == SopClassUid_PerformedImagingAgentAdministrationSR ||
+            sopClassUid == SopClassUid_EnhancedXRayRadiationDoseSR ||
+            sopClassUid == SopClassUid_WaveformAnnotationSR);
   }
 }

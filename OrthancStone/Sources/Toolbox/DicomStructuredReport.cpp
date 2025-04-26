@@ -651,8 +651,9 @@ namespace OrthancStone
     seriesInstanceUid_ = GetStringValue(dataset, DCM_SeriesInstanceUID);
     sopInstanceUid_ = GetStringValue(dataset, DCM_SOPInstanceUID);
 
-    SopClassUid sopClassUid = StringToSopClassUid(GetStringValue(dataset, DCM_SOPClassUID));
-    if (sopClassUid != SopClassUid_ComprehensiveSR)
+    std::string sopClassUidString = GetStringValue(dataset, DCM_SOPClassUID);
+    SopClassUid sopClassUid = StringToSopClassUid(sopClassUidString);
+    if (!IsStructuredReport(sopClassUid))
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
     }
@@ -674,7 +675,8 @@ namespace OrthancStone
 
     ReadTextualReport(textualReport_, dataset);
 
-    if (IsDicomConcept(dataset, "126000") /* Imaging measurement report */ &&
+    if (sopClassUid == SopClassUid_ComprehensiveSR &&
+        IsDicomConcept(dataset, "126000") /* Imaging measurement report */ &&
         IsDicomTemplate(dataset, "1500") &&
         dataset.tagExists(DCM_CurrentRequestedProcedureEvidenceSequence))
     {

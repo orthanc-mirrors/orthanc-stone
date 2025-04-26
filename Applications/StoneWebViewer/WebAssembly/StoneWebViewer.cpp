@@ -889,7 +889,7 @@ private:
       std::string sopInstanceUid, sopClassUid;
       if (message.GetInstance(i).LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
           message.GetInstance(i).LookupStringValue(sopClassUid, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) &&
-          OrthancStone::StringToSopClassUid(sopClassUid) == OrthancStone::SopClassUid_ComprehensiveSR)
+          OrthancStone::IsStructuredReport(OrthancStone::StringToSopClassUid(sopClassUid)))
       {
         std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
         lock->Schedule(
@@ -2860,7 +2860,7 @@ private:
      **/
     
     bool isMonochrome1 = false;
-    if (instance.GetSopClassUid() != OrthancStone::SopClassUid_ComprehensiveSR)
+    if (!OrthancStone::IsStructuredReport(instance.GetSopClassUid()))
     {
       isMonochrome1 = (instance.GetImageInformation().GetPhotometricInterpretation() ==
                        Orthanc::PhotometricInterpretation_Monochrome1);
@@ -3027,7 +3027,7 @@ private:
       {
         lock->RefreshCanvasSize();
 
-        if (instance.GetSopClassUid() == OrthancStone::SopClassUid_ComprehensiveSR)
+        if (OrthancStone::IsStructuredReport(instance.GetSopClassUid()))
         {
           // Fit to the width of the textual report
           scene.FitTopContent(lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight(), 0.1);
@@ -3162,7 +3162,7 @@ private:
         try
         {
           std::unique_ptr<Orthanc::ImageAccessor> frame;
-          if (instance.GetSopClassUid() == OrthancStone::SopClassUid_ComprehensiveSR)
+          if (OrthancStone::IsStructuredReport(instance.GetSopClassUid()))
           {
             OrthancStone::DicomStructuredReport report(const_cast<Orthanc::ParsedDicomFile&>(accessor->GetDicom()));
             frame.reset(report.Render(font_, GetHighlightedColorInternal(), GetAnnotationsColorInternal()));

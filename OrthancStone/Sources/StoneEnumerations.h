@@ -106,6 +106,8 @@ namespace OrthancStone
     KeyboardKeys_F12 = 123,
   };
 
+
+  // https://dicom.nema.org/medical/dicom/current/output/chtml/part04/sect_b.5.html
   enum SopClassUid
   {
     SopClassUid_Other,
@@ -117,7 +119,26 @@ namespace OrthancStone
     SopClassUid_VideoMicroscopicImageStorage,
     SopClassUid_VideoPhotographicImageStorage,
     SopClassUid_DicomSeg,
-    SopClassUid_ComprehensiveSR
+
+    // All the possible DICOM-SR
+    SopClassUid_BasicTextSR,
+    SopClassUid_EnhancedSR,
+    SopClassUid_ComprehensiveSR,
+    SopClassUid_Comprehensive3DSR,
+    SopClassUid_ExtensibleSR,
+    SopClassUid_MammographyCADSR,
+    SopClassUid_ChestCADSR,
+    SopClassUid_XRayRadiationDoseSR,
+    SopClassUid_RadiopharmaceuticalRadiationDoseSR,
+    SopClassUid_ColonCADSR,
+    SopClassUid_ImplantationPlanSR,
+    SopClassUid_AcquisitionContextSR,
+    SopClassUid_SimplifiedAdultEchoSR,
+    SopClassUid_PatientRadiationDoseSR,
+    SopClassUid_PlannedImagingAgentAdministrationSR,
+    SopClassUid_PerformedImagingAgentAdministrationSR,
+    SopClassUid_EnhancedXRayRadiationDoseSR,
+    SopClassUid_WaveformAnnotationSR
   };
 
   enum SeriesThumbnailType
@@ -184,4 +205,6 @@ namespace OrthancStone
                                 unsigned int border = 0);
 
   SeriesThumbnailType GetSeriesThumbnailType(SopClassUid sopClassUid);
+
+  bool IsStructuredReport(SopClassUid sopClassUid);
 }

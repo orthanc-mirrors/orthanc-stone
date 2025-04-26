@@ -36,6 +36,8 @@
 #include <dcmtk/dcmdata/dcsequen.h>
 #include <dcmtk/dcmdata/dcfilefo.h>
 
+#include <algorithm>  // For std::max()
+
 
 static std::string FormatTag(const DcmTagKey& key)
 {

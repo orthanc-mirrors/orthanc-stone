@@ -179,11 +179,13 @@ namespace OrthancStone
                        double y)
     {
       /**
-       * The default threshold was relaxed in releases > 2.6 of the
-       * Stone Web viewer, as it might be the source of an issue with
-       * arm64, ppc64el, riscv64, and s390x, cf. Debian #110404
+       * As most input is read as single-precision numbers, we take the
+       * epsilon machine for float32 into consideration to compare numbers.
+       *
+       * NB: This threshold *might* (but not sure!) be the source of an
+       * issue with arm64, ppc64el, riscv64, and s390x, cf. Debian #110404
        **/
-      return IsNear(x, y, 100.0 * std::numeric_limits<double>::epsilon());
+      return IsNear(x, y, 10.0 * std::numeric_limits<float>::epsilon());
     }
 
     inline bool IsCloseToZero(double x)

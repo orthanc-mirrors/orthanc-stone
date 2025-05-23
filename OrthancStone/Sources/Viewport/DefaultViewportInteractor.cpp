@@ -25,11 +25,14 @@
 #include "../Scene2D/GrayscaleWindowingSceneTracker.h"
 #include "../Scene2D/MagnifyingGlassTracker.h"
 #include "../Scene2D/PanSceneTracker.h"
+#include "../Scene2D/PinchZoomTracker.h"
 #include "../Scene2D/RotateSceneTracker.h"
 #include "../Scene2D/ZoomSceneTracker.h"
 #include "../Scene2DViewport/ViewportController.h"
 
 #include <OrthancException.h>
+
+#include <emscripten.h>
 
 namespace OrthancStone
 {
@@ -108,6 +111,17 @@ namespace OrthancStone
       case MouseButton_Right:
         action = rightButtonAction_;
         break;
+
+      case MouseButton_None:
+        if (event.GetPositionsCount() == 1 ||
+            event.GetPositionsCount() == 2)
+        {
+          return new PinchZoomTracker(viewport, event);
+        }
+        else
+        {
+          return NULL;
+        }
 
       default:
         return NULL;

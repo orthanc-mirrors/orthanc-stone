@@ -932,6 +932,8 @@ private:
       studies_, PRIORITY_HIGH, source_, Orthanc::ResourceType_Study, filter, tags,
       new Orthanc::SingleValueObject<Orthanc::ResourceType>(Orthanc::ResourceType_Study));
 
+    pending_++;
+
     // Secondly, load the series
     if (!seriesInstanceUid.empty())
     {
@@ -944,7 +946,7 @@ private:
       series_, PRIORITY_HIGH, source_, Orthanc::ResourceType_Series, filter, tags,
       new Orthanc::SingleValueObject<Orthanc::ResourceType>(Orthanc::ResourceType_Series));
 
-    pending_ += 2;
+    pending_++;
   }
 
 
@@ -1426,7 +1428,7 @@ public:
         std::string sopClassUid, sopInstanceUid;
         if (accessor.GetInstance(i).LookupStringValue(sopClassUid, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) &&
             accessor.GetInstance(i).LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
-            sopClassUid == "1.2.840.10008.5.1.4.1.1.104.1")
+            OrthancStone::StringToSopClassUid(sopClassUid) == OrthancStone::SopClassUid_EncapsulatedPdf)
         {
           std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
           lock->Schedule(

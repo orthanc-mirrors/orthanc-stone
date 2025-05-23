@@ -1,6 +1,7 @@
 Pending changes in the mainline
 ===============================
 
+* Added support for pinch/zoom and panning gestures
 * Experimental support for DICOM SR, display of textual reports
 * Experimental support for DICOM SR "Measurement Report" (TID 1500 - only polylines)
 * Added "Print" and "Download" buttons in the PDF viewer toolbar

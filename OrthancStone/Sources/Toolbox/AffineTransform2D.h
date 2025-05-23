@@ -93,6 +93,11 @@ namespace OrthancStone
     static AffineTransform2D CreateScaling(double sx,
                                            double sy);
 
+    static AffineTransform2D CreateScaling(double s)
+    {
+      return CreateScaling(s, s);
+    }
+
     static AffineTransform2D CreateRotation(double angle); // CW rotation in radians
 
     static AffineTransform2D CreateRotation(double angle, // CW rotation in radians

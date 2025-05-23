@@ -74,6 +74,8 @@ namespace OrthancStone
     
     static EM_BOOL OnMouseUp(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData);
 
+    static EM_BOOL OnTouch(int eventType, const EmscriptenTouchEvent *mouseEvent, void *userData);
+
   protected:
     void Invalidate();
     

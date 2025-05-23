@@ -276,6 +276,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Scene2D/MacroSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/MagnifyingGlassTracker.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/PanSceneTracker.cpp
+  ${ORTHANC_STONE_ROOT}/Scene2D/PinchZoomTracker.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/PointerEvent.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/PolylineSceneLayer.cpp
   ${ORTHANC_STONE_ROOT}/Scene2D/RotateSceneTracker.cpp

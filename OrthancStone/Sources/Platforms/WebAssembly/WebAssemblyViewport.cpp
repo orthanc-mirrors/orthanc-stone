@@ -330,6 +330,57 @@ namespace OrthancStone
   {
   }
 
+  EM_BOOL WebAssemblyViewport::OnTouch(int eventType,
+                                       const EmscriptenTouchEvent *touchEvent,
+                                       void *userData)
+  {
+    WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
+
+    if (that->compositor_.get() != NULL &&
+        that->interactor_.get() != NULL)
+    {
+      const ICompositor& compositor = *that->compositor_;
+
+      PointerEvent event;
+      for (int i = 0; i < touchEvent->numTouches; i++)
+      {
+        event.AddPosition(compositor.GetPixelCenterCoordinates(touchEvent->touches[i].targetX, touchEvent->touches[i].targetY));
+      }
+
+      switch (eventType)
+      {
+        case EMSCRIPTEN_EVENT_TOUCHSTART:
+          that->controller_->HandleMousePress(*that->interactor_, event,
+                                              that->compositor_->GetCanvasWidth(),
+                                              that->compositor_->GetCanvasHeight());
+          that->Invalidate();
+          break;
+
+        case EMSCRIPTEN_EVENT_TOUCHMOVE:
+          if (that->controller_->HasActiveTracker() &&
+              that->controller_->HandleMouseMove(event))
+          {
+            that->Invalidate();
+          }
+          break;
+
+        case EMSCRIPTEN_EVENT_TOUCHEND:
+        case EMSCRIPTEN_EVENT_TOUCHCANCEL:
+          if (that->controller_->HasActiveTracker())
+          {
+            that->controller_->HandleMouseRelease(event);
+            that->Invalidate();
+          }
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    return true;
+  }
+
   void WebAssemblyViewport::PostConstructor()
   {
     boost::shared_ptr<IViewport> viewport = shared_from_this();
@@ -385,6 +436,11 @@ namespace OrthancStone
                                       reinterpret_cast<void*>(this),
                                       false,
                                       OnMouseUp);
+
+      emscripten_set_touchstart_callback(canvasCssSelector_.c_str(), reinterpret_cast<void*>(this), false, OnTouch);
+      emscripten_set_touchend_callback(canvasCssSelector_.c_str(), reinterpret_cast<void*>(this), false, OnTouch);
+      emscripten_set_touchmove_callback(canvasCssSelector_.c_str(), reinterpret_cast<void*>(this), false, OnTouch);
+      emscripten_set_touchcancel_callback(canvasCssSelector_.c_str(), reinterpret_cast<void*>(this), false, OnTouch);
     }
   }
 

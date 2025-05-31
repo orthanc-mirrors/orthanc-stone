@@ -32,7 +32,6 @@
 
 #include <OrthancException.h>
 
-#include <emscripten.h>
 
 namespace OrthancStone
 {

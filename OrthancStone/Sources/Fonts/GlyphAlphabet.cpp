@@ -113,7 +113,12 @@ namespace OrthancStone
     character.resize(1);
     character[0] = static_cast<unsigned char>(index);
     
+#if ORTHANC_FRAMEWORK_VERSION_IS_ABOVE(1, 12, 9)
+    std::string utf8 = Orthanc::Toolbox::ConvertToUtf8(character, encoding, false /* no code extensions */,
+                                                       false /* don't skip backslashes */);
+#else
     std::string utf8 = Orthanc::Toolbox::ConvertToUtf8(character, encoding, false /* no code extensions */);
+#endif
       
     if (utf8.empty())
     {

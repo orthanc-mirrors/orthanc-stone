@@ -24,8 +24,6 @@ Improvements
 
 * Display GSPS layers (Grayscale Softcopy Presentation State).
 
-* Use "ImagerPixelSpacing" (0018,1164) tag if "PixelSpacing" is missing
-
 * Override which tags are displayed in the image information in the
   top-left, top-right and bottom-right pannels.
 

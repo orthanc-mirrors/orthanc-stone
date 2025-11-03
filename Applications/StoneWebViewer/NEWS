@@ -12,12 +12,14 @@ Pending changes in the mainline
 * New configuration options "AnnotationsColor" and "HighlightedAnnotationsColor"
   to change the color of annotations
 
+
 Maintenance
 -----------
 
 * Automatically stretch to whole range for images without windowing preset
 * Improved support of the (0028,9132) tag for Philips multiframe images
 * Fix loading of US images with a negative PhyiscalDeltaX value
+* Use "ImagerPixelSpacing" (0018,1164) tag if "PixelSpacing" is missing
 
 
 Version 2.6 (2024-08-31)

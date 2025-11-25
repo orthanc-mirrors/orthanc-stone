@@ -310,8 +310,17 @@ namespace OrthancStone
                          const Orthanc::DicomMap& dicom)
     {
       Vector v;
-
       if (LinearAlgebra::ParseVector(v, dicom, Orthanc::DICOM_TAG_PIXEL_SPACING) &&
+          v.size() >= 2 &&
+          v[0] > 0 &&
+          v[1] > 0)
+      {
+        // WARNING: X/Y are swapped (Y comes first)
+        spacingX = v[1];
+        spacingY = v[0];
+        return true;
+      }
+      else if (LinearAlgebra::ParseVector(v, dicom, Orthanc::DICOM_TAG_IMAGER_PIXEL_SPACING) &&
           v.size() >= 2 &&
           v[0] > 0 &&
           v[1] > 0)

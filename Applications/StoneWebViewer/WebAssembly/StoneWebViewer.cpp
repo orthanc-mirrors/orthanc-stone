@@ -574,10 +574,10 @@ public:
 
               OrthancStone::PolylineSceneLayer::Chain chain;
               chain.resize(source.GetSize());
-              for (size_t i = 0; i < source.GetSize(); i++)
+              for (size_t j = 0; j < source.GetSize(); j++)
               {
-                chain[i] = OrthancStone::ScenePoint2D(x + source.GetPoint(i).GetX() * pixelSpacingX,
-                                                      y + source.GetPoint(i).GetY() * pixelSpacingY);
+                chain[j] = OrthancStone::ScenePoint2D(x + source.GetPoint(j).GetX() * pixelSpacingX,
+                                                      y + source.GetPoint(j).GetY() * pixelSpacingY);
               }
 
               target->AddChain(chain, false, color.GetRed(), color.GetGreen(), color.GetBlue());

@@ -24,6 +24,7 @@
 #include "DicomWebDataset.h"
 
 #include <OrthancException.h>
+#include <SerializationToolbox.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -169,8 +170,7 @@ namespace OrthancStone
         result = (*value) [0][ALPHABETIC].asString();
         return true;
       }
-      else if ((vr == "DS" ||
-                vr == "FD" ||
+      else if ((vr == "FD" ||
                 vr == "FL") &&
                (*value) [0].isDouble())
       {
@@ -185,8 +185,7 @@ namespace OrthancStone
         result = boost::lexical_cast<std::string>((*value) [0].asUInt64());
         return true;
       }
-      else if ((vr == "IS" ||
-                vr == "SL" ||
+      else if ((vr == "SL" ||
                 vr == "SS" ||
                 vr == "SV") &&
                (*value) [0].isInt64())
@@ -194,10 +193,40 @@ namespace OrthancStone
         result = boost::lexical_cast<std::string>((*value) [0].asInt64());
         return true;
       }
-      else
+      else if (vr == "DS")
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented, "Unsupported value representation: " + vr);
+        const Json::Value& a = (*value) [0];
+        double b;
+        if (a.isString() &&
+            Orthanc::SerializationToolbox::ParseDouble(b, a.asString()))
+        {
+          result = boost::lexical_cast<std::string>(b);
+          return true;
+        }
+        else if (a.isDouble())
+        {
+          result = boost::lexical_cast<std::string>(a.asDouble());
+          return true;
+        }
       }
+      else if (vr == "IS")
+      {
+        const Json::Value& a = (*value) [0];
+        int64_t b;
+        if (a.isString() &&
+            Orthanc::SerializationToolbox::ParseInteger64(b, a.asString()))
+        {
+          result = boost::lexical_cast<std::string>(b);
+          return true;
+        }
+        else if (a.isInt64())
+        {
+          result = boost::lexical_cast<std::string>(a.asInt64());
+          return true;
+        }
+      }
+
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented, "Unsupported value representation: " + vr);
     }
     else if (value->type() == Json::arrayValue &&
              vr == "SQ")

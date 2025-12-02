@@ -32,7 +32,7 @@ namespace OrthancStone
   void BasicFetchingStrategy::Schedule(unsigned int item,
                                        unsigned int quality)
   {
-    assert(item < GetItemsCount() &&
+    assert(item < sorter_->GetItemsCount() &&
            quality <= maxQuality_);
       
     if (nextQuality_[item] <= quality)
@@ -57,7 +57,7 @@ namespace OrthancStone
 
     nextQuality_.resize(sorter_->GetItemsCount(), 0);   // Does not change along calls to "SetCurrent()"
       
-    SetCurrent(initialItem);
+    SetCurrentInternal(initialItem);
   }
 
 
@@ -93,7 +93,7 @@ namespace OrthancStone
   }
 
   
-  void BasicFetchingStrategy::SetCurrent(unsigned int item)
+  void BasicFetchingStrategy::SetCurrentInternal(unsigned int item)
   {
     // TODO - This function is O(N) complexity where "N" is the
     // number of items times the max quality. Could use a LRU index.
@@ -103,7 +103,7 @@ namespace OrthancStone
     std::vector<unsigned int> v;
     sorter_->Sort(v, item);
 
-    assert(v.size() == GetItemsCount());
+    assert(v.size() == sorter_->GetItemsCount());
 
     if (v.size() == 0)
     {

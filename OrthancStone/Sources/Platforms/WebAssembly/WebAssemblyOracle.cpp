@@ -56,7 +56,7 @@ namespace OrthancStone
   public:
     TimeoutContext(WebAssemblyOracle& oracle,
                    boost::weak_ptr<IObserver> receiver,
-                   IOracleCommand* command) :
+                   SleepOracleCommand* command) :
       oracle_(oracle),
       receiver_(receiver)
     {
@@ -66,7 +66,7 @@ namespace OrthancStone
       }
       else
       {
-        command_.reset(dynamic_cast<SleepOracleCommand*>(command));
+        command_.reset(command);
       }
     }
 
@@ -770,7 +770,7 @@ namespace OrthancStone
       {
         unsigned int timeoutMS = dynamic_cast<SleepOracleCommand*>(command)->GetDelay();
         emscripten_set_timeout(TimeoutContext::Callback, timeoutMS,
-                               new TimeoutContext(*this, receiver, protection.release()));
+                               new TimeoutContext(*this, receiver, dynamic_cast<SleepOracleCommand*>(protection.release())));
         break;
       }
             

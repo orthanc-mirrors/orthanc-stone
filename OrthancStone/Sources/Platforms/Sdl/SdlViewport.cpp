@@ -241,7 +241,7 @@ namespace OrthancStone
       }
     }
 
-    sdlSurface_ = SDL_CreateRGBSurfaceFrom((void*)(compositor.GetCanvas().GetBuffer()), width, height, 32,
+    sdlSurface_ = SDL_CreateRGBSurfaceFrom(const_cast<void*>(compositor.GetCanvas().GetBuffer()), width, height, 32,
                                            compositor.GetCanvas().GetPitch(), rmask, gmask, bmask, 0);
     if (!sdlSurface_)
     {

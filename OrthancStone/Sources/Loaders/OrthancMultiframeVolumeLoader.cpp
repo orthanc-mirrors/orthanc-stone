@@ -399,7 +399,7 @@ namespace OrthancStone
     }
     else
     {
-      ImageBuffer3D& target = volume_->GetPixelData();
+      const ImageBuffer3D& target = volume_->GetPixelData();
 
       const uint64_t width = target.GetWidth();
       const uint64_t height = target.GetHeight();

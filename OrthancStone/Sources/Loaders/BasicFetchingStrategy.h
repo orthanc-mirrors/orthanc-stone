@@ -69,7 +69,9 @@ namespace OrthancStone
 
     void Schedule(unsigned int item,
                   unsigned int quality);
-    
+
+    void SetCurrentInternal(unsigned int item);
+
   public:
     BasicFetchingStrategy(IFetchingItemsSorter* sorter,   // Takes ownership
                           unsigned int maxQuality,
@@ -92,7 +94,10 @@ namespace OrthancStone
     virtual bool GetNext(unsigned int& item,
                          unsigned int& quality) ORTHANC_OVERRIDE;
     
-    virtual void SetCurrent(unsigned int item) ORTHANC_OVERRIDE;
+    virtual void SetCurrent(unsigned int item) ORTHANC_OVERRIDE
+    {
+      SetCurrentInternal(item);
+    }
 
     virtual void RecycleFurthest(unsigned int& item) ORTHANC_OVERRIDE;
   };

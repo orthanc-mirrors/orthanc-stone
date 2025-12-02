@@ -97,7 +97,7 @@ namespace OrthancStone
       std::stringstream ss;
       ss << "Cannot set current OpenGL context. SDL error text: " << errText;
       std::string errStr = ss.str();
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, errStr.c_str());
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError, errStr);
     }
 
     // This makes our buffer swap synchronized with the monitor's vertical refresh

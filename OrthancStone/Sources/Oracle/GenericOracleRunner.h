@@ -72,7 +72,7 @@ namespace OrthancStone
       rootDirectory_ = rootDirectory;
     }
 
-    const std::string GetRootDirectory() const
+    const std::string& GetRootDirectory() const
     {
       return rootDirectory_;
     }

@@ -83,7 +83,7 @@ namespace OrthancStone
     WebAssemblyViewport& that_;
 
   public:
-    WasmLock(WebAssemblyViewport& that) :
+    explicit WasmLock(WebAssemblyViewport& that) :
       that_(that)
     {
     }

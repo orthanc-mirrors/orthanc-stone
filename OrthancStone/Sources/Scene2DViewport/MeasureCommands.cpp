@@ -95,8 +95,8 @@ namespace OrthancStone
     mementoOriginal_(measureTool->CreateMemento())
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    GetMeasureTool()->Disable();
-    lock->GetController().RemoveMeasureTool(GetMeasureTool());
+    measureTool_->Disable();
+    lock->GetController().RemoveMeasureTool(measureTool_);
   }
 
   EditMeasureCommand::EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool,

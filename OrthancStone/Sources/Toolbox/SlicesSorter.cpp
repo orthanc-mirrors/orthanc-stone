@@ -188,14 +188,12 @@ namespace OrthancStone
   }
   
     
-  bool SlicesSorter::SelectNormal(Vector& normal) const
+  bool SlicesSorter::SelectNormal(Vector& targetNormal) const
   {
     std::vector<Vector>  normalCandidates;
     std::vector<unsigned int>  normalCount;
 
-    bool found = false;
-
-    for (size_t i = 0; !found && i < GetSlicesCount(); i++)
+    for (size_t i = 0; i < GetSlicesCount(); i++)
     {
       const Vector& normal = GetSlice(i).GetGeometry().GetNormal();
 
@@ -209,23 +207,19 @@ namespace OrthancStone
         }
       }
 
-      if (add)
+      if (add &&
+          normalCount.size() <= 2)
       {
-        if (normalCount.size() > 2)
-        {
-          // To get linear-time complexity in (*). This heuristics
-          // allows the series to have one single frame that is
-          // not parallel to the others (such a frame could be a
-          // generated preview)
-          found = false;
-        }
-        else
-        {
-          normalCandidates.push_back(normal);
-          normalCount.push_back(1);
-        }
+        // To get linear-time complexity in (*). This heuristics
+        // allows the series to have one single frame that is
+        // not parallel to the others (such a frame could be a
+        // generated preview)
+        normalCandidates.push_back(normal);
+        normalCount.push_back(1);
       }
     }
+
+    bool found = false;
 
     for (size_t i = 0; !found && i < normalCandidates.size(); i++)
     {
@@ -233,7 +227,7 @@ namespace OrthancStone
       if (count == GetSlicesCount() ||
           count + 1 == GetSlicesCount())
       {
-        normal = normalCandidates[i];
+        targetNormal = normalCandidates[i];
         found = true;
       }
     }

@@ -49,7 +49,7 @@ namespace OrthancStone
 
     void FilterNormal(const Vector& normal);
     
-    bool SelectNormal(Vector& normal) const;
+    bool SelectNormal(Vector& targetNormal) const;
 
   public:
     SlicesSorter() : hasNormal_(false)

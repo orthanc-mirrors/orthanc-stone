@@ -3923,7 +3923,7 @@ TEST(GenericToolbox, TestStringToDoubleHardNeg_lexical_cast_vs_StringToDouble)
 
     {
       boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
-      for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
+      for (size_t j = 0; j < NUM_TIMINGS_CONVS; ++j)
       {
         ok = StringToDouble(r, txt);
       }
@@ -3933,7 +3933,7 @@ TEST(GenericToolbox, TestStringToDoubleHardNeg_lexical_cast_vs_StringToDouble)
 
     {
       boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
-      for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
+      for (size_t j = 0; j < NUM_TIMINGS_CONVS; ++j)
       {
         try
         {
@@ -4136,7 +4136,7 @@ TEST(GenericToolbox, TestStringToDoubleHardNegScientific_lexical_cast_vs_StringT
 
     {
       boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
-      for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
+      for (size_t j = 0; j < NUM_TIMINGS_CONVS; ++j)
       {
         ok = StringToDouble(r, txt);
       }
@@ -4146,7 +4146,7 @@ TEST(GenericToolbox, TestStringToDoubleHardNegScientific_lexical_cast_vs_StringT
 
     {
       boost::posix_time::ptime start = boost::posix_time::microsec_clock::local_time();
-      for (size_t i = 0; i < NUM_TIMINGS_CONVS; ++i)
+      for (size_t j = 0; j < NUM_TIMINGS_CONVS; ++j)
       {
         try
         {

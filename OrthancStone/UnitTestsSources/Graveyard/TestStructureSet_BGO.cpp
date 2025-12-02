@@ -131,7 +131,7 @@ class SliceProcessor :
   public OrthancStone::DicomStructureSetLoader::IInstanceLookupHandler
 {
 public:
-  SliceProcessor(OrthancStone::DicomStructureSetLoader& structLoader) : structLoader_(structLoader)
+  explicit SliceProcessor(OrthancStone::DicomStructureSetLoader& structLoader) : structLoader_(structLoader)
   {
   }
 

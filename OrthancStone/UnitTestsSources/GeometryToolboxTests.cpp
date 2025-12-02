@@ -722,19 +722,19 @@ TEST(VolumeImageGeometry, Basic)
         const float sy = 2.0f;
         const float sz = 3.0f;
         
-        Vector p = g.GetCoordinates(xx, yy, zz);
+        Vector pp = g.GetCoordinates(xx, yy, zz);
 
         Vector q = (g.GetAxialGeometry().MapSliceToWorldCoordinates(
                       static_cast<double>(x) * sx,
                       static_cast<double>(y) * sy) +
                     z * sz * g.GetAxialGeometry().GetNormal());
-        ASSERT_TRUE(IsEqualVectorL1(p, q));
+        ASSERT_TRUE(IsEqualVectorL1(pp, q));
         
         q = (g.GetCoronalGeometry().MapSliceToWorldCoordinates(
                static_cast<double>(x) * sx,
                static_cast<double>(g.GetDepth() - 1 - z) * sz) +
              y * sy * g.GetCoronalGeometry().GetNormal());
-        ASSERT_TRUE(IsEqualVectorL1(p, q));
+        ASSERT_TRUE(IsEqualVectorL1(pp, q));
 
         /**
          * WARNING: In sagittal geometry, the normal points to
@@ -745,7 +745,7 @@ TEST(VolumeImageGeometry, Basic)
                static_cast<double>(y) * sy,
                static_cast<double>(g.GetDepth() - 1 - z) * sz) +
              x * sx * (-g.GetSagittalGeometry().GetNormal()));
-        ASSERT_TRUE(IsEqualVectorL1(p, q));
+        ASSERT_TRUE(IsEqualVectorL1(pp, q));
       }
     }
   }
@@ -754,9 +754,9 @@ TEST(VolumeImageGeometry, Basic)
   ASSERT_EQ(1, (int) VolumeProjection_Coronal);
   ASSERT_EQ(2, (int) VolumeProjection_Sagittal);
   
-  for (int p = 0; p < 3; p++)
+  for (int projectionInt = 0; projectionInt < 3; projectionInt++)
   {
-    VolumeProjection projection = (VolumeProjection) p;
+    VolumeProjection projection = (VolumeProjection) projectionInt;
     const CoordinateSystem3D& s = g.GetProjectionGeometry(projection);
     
     ASSERT_THROW(g.GetProjectionSlice(projection, g.GetProjectionDepth(projection)), Orthanc::OrthancException);

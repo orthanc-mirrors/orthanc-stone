@@ -69,14 +69,25 @@ namespace OrthancStone
     return app_.lock();
   }
 
+  static void DisplayInfoTextInternal(TextSceneLayer& layer,
+                                      const std::string& msgS,
+                                      const Scene2D& scene,
+                                      const ICompositor& compositor)
+  {
+    // position the fixed info text in the upper right corner
+    layer.SetText(msgS);
+    double cX = compositor.GetCanvasWidth() * (-0.5);
+    double cY = compositor.GetCanvasHeight() * (-0.5);
+    scene.GetCanvasToSceneTransform().Apply(cX, cY);
+    layer.SetPosition(cX, cY);
+  }
+
   void RtViewerView::DisplayInfoText()
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+
     ViewportController& controller = lock->GetController();
     Scene2D& scene = controller.GetScene();
-
-    // do not try to use stuff too early!
-    const ICompositor& compositor = lock->GetCompositor();
 
     std::stringstream msg;
 
@@ -87,30 +98,24 @@ namespace OrthancStone
     }
     std::string msgS = msg.str();
 
-    TextSceneLayer* layerP = NULL;
     if (scene.HasLayer(FIXED_INFOTEXT_LAYER_ZINDEX))
     {
       TextSceneLayer& layer = dynamic_cast<TextSceneLayer&>(
         scene.GetLayer(FIXED_INFOTEXT_LAYER_ZINDEX));
-      layerP = &layer;
+      DisplayInfoTextInternal(layer, msgS, scene, lock->GetCompositor());
     }
     else
     {
       std::unique_ptr<TextSceneLayer> layer(new TextSceneLayer);
-      layerP = layer.get();
       layer->SetColor(0, 255, 0);
       layer->SetFontIndex(1);
       layer->SetBorder(20);
       layer->SetAnchor(BitmapAnchor_TopLeft);
       //layer->SetPosition(0,0);
+      DisplayInfoTextInternal(*layer, msgS, scene, lock->GetCompositor());
       scene.SetLayer(FIXED_INFOTEXT_LAYER_ZINDEX, layer.release());
     }
-    // position the fixed info text in the upper right corner
-    layerP->SetText(msgS.c_str());
-    double cX = compositor.GetCanvasWidth() * (-0.5);
-    double cY = compositor.GetCanvasHeight() * (-0.5);
-    scene.GetCanvasToSceneTransform().Apply(cX, cY);
-    layerP->SetPosition(cX, cY);
+
     lock->Invalidate();
   }
 

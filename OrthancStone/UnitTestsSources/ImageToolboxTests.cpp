@@ -31,11 +31,9 @@
 #include <Images/Image.h>
 #include <Images/PixelTraits.h>
 
-#include "stdint.h"
-
-#include <gtest/gtest.h>
-
 #include <cmath>
+#include <gtest/gtest.h>
+#include <stdint.h>
 
 
 TEST(ImageToolbox, SimpleHisto_Grayscale8_BinSize1)

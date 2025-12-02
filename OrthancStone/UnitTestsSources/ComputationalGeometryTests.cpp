@@ -45,7 +45,7 @@ namespace
     int value_;
     
   public:
-    CounterFactory(int value) :
+    explicit CounterFactory(int value) :
       value_(value)
     {
     }
@@ -62,7 +62,7 @@ namespace
     int increment_;
 
   public:
-    IncrementVisitor(int increment) :
+    explicit IncrementVisitor(int increment) :
       increment_(increment)
     {
     }

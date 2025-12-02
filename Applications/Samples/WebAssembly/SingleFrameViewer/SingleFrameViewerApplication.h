@@ -374,11 +374,11 @@ namespace OrthancStone
           Orthanc::DicomMap filter;
           filter.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, studyInstanceUid, false);
           
-          std::set<Orthanc::DicomTag> tags;
-          
           {
             std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
             
+            std::set<Orthanc::DicomTag> tags;
+
             resourcesLoader_->ScheduleQido(loadedStudies_, PRIORITY_ADD_RESOURCES, source_,
                                            Orthanc::ResourceType_Study, filter, tags, CreatePayload(Type_DicomWeb));
             

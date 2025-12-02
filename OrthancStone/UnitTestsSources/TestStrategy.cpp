@@ -52,7 +52,7 @@ namespace
       }
     }
 
-    bool HasFinished(OrthancStone::BasicFetchingStrategy& strategy)
+    bool HasFinished(const OrthancStone::BasicFetchingStrategy& strategy)
     {
       for (unsigned int i = 0; i < strategy.GetItemsCount(); i++)
       {

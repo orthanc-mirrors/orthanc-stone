@@ -62,7 +62,7 @@ TEST(PixelTestPatterns, SimpleRedHGradient)
   ASSERT_EQ(391u, sizeof(bin2c_SimpleRedBlueHGradient_png));
   ASSERT_EQ(390u, contents.size());
 
-  char* resultPngBytes = &(contents[0]);
+  const char* resultPngBytes = &(contents[0]);
 
   int result = memcmp(resultPngBytes, bin2c_SimpleRedBlueHGradient_png, 390);
   ASSERT_EQ(0, result);
@@ -98,7 +98,7 @@ TEST(PixelTestPatterns, SimpleRedBlueVGradient)
   ASSERT_EQ(400u, sizeof(bin2c_SimpleRedBlueVGradient_png));
   ASSERT_EQ(399u, contents.size());
 
-  char* resultPngBytes = &(contents[0]);
+  const char* resultPngBytes = &(contents[0]);
 
   int result = memcmp(resultPngBytes, bin2c_SimpleRedBlueVGradient_png, 399);
   ASSERT_EQ(0, result);
@@ -127,15 +127,15 @@ TEST(PixelTestPatterns, MultiGradient)
 
   // H:R->K, V:G->W, H:B->K
 
-  //                    R   G   B   K   C   M   Y   W
-  uint8_t startR[NCELLS] = {255,000,000,000,000,255,255,255};
-  uint8_t startG[NCELLS] = {000,255,000,000,255,000,255,255};
-  uint8_t startB[NCELLS] = {000,000,255,000,255,255,000,255};
+  //                              R   G   B   K   C   M   Y   W
+  const uint8_t startR[NCELLS] = {255,000,000,000,000,255,255,255};
+  const uint8_t startG[NCELLS] = {000,255,000,000,255,000,255,255};
+  const uint8_t startB[NCELLS] = {000,000,255,000,255,255,000,255};
   
-  //                  K   W   K   W   W   K   W   K
-  uint8_t eeendR[NCELLS] = {000,255,000,255,255,000,255,000};
-  uint8_t eeendG[NCELLS] = {000,255,000,255,255,000,255,000 };
-  uint8_t eeendB[NCELLS] = {000,255,000,255,255,000,255,000 };
+  //                              K   W   K   W   W   K   W   K
+  const uint8_t eeendR[NCELLS] = {000,255,000,255,255,000,255,000};
+  const uint8_t eeendG[NCELLS] = {000,255,000,255,255,000,255,000 };
+  const uint8_t eeendB[NCELLS] = {000,255,000,255,255,000,255,000 };
 
   for(size_t slot = 0; slot < NCELLS; ++slot)
   {
@@ -161,7 +161,7 @@ TEST(PixelTestPatterns, MultiGradient)
   ASSERT_EQ(774u, sizeof(bin2c_MultiGradient_png));
   ASSERT_EQ(773u, contents.size());
 
-  char* resultPngBytes = &(contents[0]);
+  const char* resultPngBytes = &(contents[0]);
 
   int result = memcmp(resultPngBytes, bin2c_MultiGradient_png, 773);
   ASSERT_EQ(0, result);

@@ -13,8 +13,11 @@ cat <<EOF > /tmp/cppcheck-suppressions.txt
 assertWithSideEffect:../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.cpp:341
 assertWithSideEffect:../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.cpp:342
 constParameterPointer:../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyOracle.cpp:59
+constParameterPointer:../../RenderingPlugin/Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h:1020
 constVariableReference:../../OrthancStone/Sources/Scene2D/GrayscaleWindowingSceneTracker.cpp:53
+knownConditionTrueFalse:../../Applications/StoneWebViewer/Plugin/Plugin.cpp:99
 knownConditionTrueFalse:../../OrthancStone/Sources/Toolbox/ImageGeometry.cpp:184
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1813
 unusedStructMember:../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyOracle.cpp:293
 EOF
 
@@ -61,20 +64,12 @@ ${CPPCHECK} -j8 --enable=all --quiet --std=c++03 \
             -I${HOME}/Subversion/orthanc/OrthancFramework/Sources \
             -I${HOME}/Subversion/orthanc/OrthancServer/Plugins/Include/ \
             \
+            ../../Applications/Samples \
+            ../../Applications/StoneWebViewer \
             ../../OrthancStone/Sources \
+            ../../OrthancStone/UnitTestsSources \
+            ../../RenderingPlugin/Sources \
+            \
+            -i ../../OrthancStone/UnitTestsSources/SortedFramesTests.cpp
             \
             2>&1
-
-
-#            \
-#            ../../Applications/Samples \
-#            ../../Applications/StoneWebViewer \
-#            ../../RenderingPlugin/Sources \
-#            \
-#            -i ../../Applications/Samples/RtViewerPlugin/i \
-#            -i ../../Applications/Samples/Sdl/i \
-#            -i ../../Applications/Samples/WebAssembly/i \
-#            -i ../../Applications/StoneWebViewer/Plugin/i \
-#            -i ../../Applications/StoneWebViewer/WebAssembly/StoneModule/i \
-#            -i ../../Applications/StoneWebViewer/WebAssembly/i \
-#            -i ../../Applications/StoneWebViewer/WebAssembly/debug/ \

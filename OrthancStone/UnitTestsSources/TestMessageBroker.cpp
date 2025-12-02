@@ -42,7 +42,7 @@ namespace {
 
       int payload_;
 
-      MyCustomMessage(int payload) :
+      explicit MyCustomMessage(int payload) :
         payload_(payload)
       {
       }

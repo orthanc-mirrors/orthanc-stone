@@ -50,6 +50,11 @@ namespace OrthancStone
 
     virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer) ORTHANC_OVERRIDE;
 
+    void ResetSceneInternal()
+    {
+      helper_.reset(new Internals::CompositorHelper(*this));
+    }
+
   public:
     CairoCompositor(unsigned int canvasWidth,
                     unsigned int canvasHeight);
@@ -88,7 +93,7 @@ namespace OrthancStone
 
     virtual void ResetScene() ORTHANC_OVERRIDE
     {
-      helper_.reset(new Internals::CompositorHelper(*this));
+      ResetSceneInternal();
     }
 
     Orthanc::ImageAccessor* RenderText(size_t fontIndex,

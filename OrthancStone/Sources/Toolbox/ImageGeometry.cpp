@@ -136,7 +136,7 @@ namespace OrthancStone
             bool HasOffsetX,
             bool HasOffsetY>
   static void ApplyAffineTransformToRow(typename Reader::PixelType* p,
-                                        Reader& reader,
+                                        const Reader& reader,
                                         unsigned int x1,
                                         unsigned int x2,
                                         float positionX,

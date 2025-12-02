@@ -98,7 +98,7 @@ namespace OrthancStone
   CairoCompositor::CairoCompositor(unsigned int canvasWidth,
                                    unsigned int canvasHeight)
   {
-    ResetScene();
+    ResetSceneInternal();
     canvas_.SetSize(canvasWidth, canvasHeight, false);
   }
 

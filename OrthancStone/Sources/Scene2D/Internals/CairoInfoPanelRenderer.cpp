@@ -29,7 +29,7 @@ namespace OrthancStone
 {
   namespace Internals
   {
-    void CairoInfoPanelRenderer::Update(const ISceneLayer& layer)
+    void CairoInfoPanelRenderer::UpdateInternal(const ISceneLayer& layer)
     {
       const InfoPanelSceneLayer& l = dynamic_cast<const InfoPanelSceneLayer&>(layer);
 

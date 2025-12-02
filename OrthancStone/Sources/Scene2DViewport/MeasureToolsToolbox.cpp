@@ -297,7 +297,7 @@ namespace OrthancStone
   for the actual text
   */
   void SetTextLayerOutlineProperties(
-    Scene2D& scene
+    const Scene2D& scene
     , boost::shared_ptr<LayerHolder> layerHolder
     , const char* text
     , ScenePoint2D p
@@ -330,7 +330,6 @@ namespace OrthancStone
                               TEXT_OUTLINE_COLOR_BLUE);
         }
 
-        ScenePoint2D textAnchor;
         int offIndex = i - startingLayerIndex;
         ORTHANC_ASSERT(offIndex >= 0 && offIndex < 5);
         textLayer->SetPosition(
@@ -341,7 +340,7 @@ namespace OrthancStone
   }
 #else
   void SetTextLayerProperties(
-    Scene2D& scene
+    const Scene2D& scene
     , boost::shared_ptr<LayerHolder> layerHolder
     , const char* text
     , ScenePoint2D p
@@ -352,8 +351,6 @@ namespace OrthancStone
     {
       textLayer->SetText(text);
       textLayer->SetColor(TEXT_COLOR_RED, TEXT_COLOR_GREEN, TEXT_COLOR_BLUE);
-
-      ScenePoint2D textAnchor;
       textLayer->SetPosition(p.GetX(), p.GetY());
     }
   }

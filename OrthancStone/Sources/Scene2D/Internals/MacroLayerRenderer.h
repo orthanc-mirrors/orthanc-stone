@@ -39,12 +39,14 @@ namespace OrthancStone
 
       void Clear();
       
+      void UpdateInternal(const ISceneLayer& layer);
+
     public:
       MacroLayerRenderer(Internals::CompositorHelper::IRendererFactory& factory,
                          const ISceneLayer& layer) :
         factory_(factory)
       {
-        Update(layer);
+        UpdateInternal(layer);
       }
       
       virtual ~MacroLayerRenderer()
@@ -56,7 +58,10 @@ namespace OrthancStone
                           unsigned int canvasWidth,
                           unsigned int canvasHeight) ORTHANC_OVERRIDE;
       
-      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE;
+      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE
+      {
+        UpdateInternal(layer);
+      }
     };
   }
 }

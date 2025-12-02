@@ -989,7 +989,7 @@ namespace OrthancStone
     size_t pos = s.find('.');
     if (pos != std::string::npos)
     {
-      s = s.substr(0, pos);
+      s.resize(pos);
     }
 
     s = "\021Series Date Time:\022 " + GetMainDicomTags().GetStringValue(Orthanc::DICOM_TAG_SERIES_DATE, "", false) + " at " + s;

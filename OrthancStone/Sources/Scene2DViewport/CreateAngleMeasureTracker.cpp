@@ -36,7 +36,7 @@ namespace OrthancStone
     
     {    
       std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-      Scene2D& scene = lock->GetController().GetScene();
+      const Scene2D& scene = lock->GetController().GetScene();
       point = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
     }
     

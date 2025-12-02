@@ -163,7 +163,7 @@ namespace OrthancStone
 
   uint64_t ImageBuffer3D::GetEstimatedMemorySize() const
   {
-    return image_.GetPitch() * image_.GetHeight() * Orthanc::GetBytesPerPixel(format_);
+    return static_cast<uint64_t>(image_.GetPitch()) * image_.GetHeight() * Orthanc::GetBytesPerPixel(format_);
   }
 
 
@@ -305,6 +305,19 @@ namespace OrthancStone
 
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+  }
+
+
+  ImageBuffer3D::SliceWriter::~SliceWriter()
+  {
+    try
+    {
+      Flush();
+    }
+    catch (Orthanc::OrthancException& e)
+    {
+      LOG(ERROR) << "Exception in destructor: " << e.What();
     }
   }
 

@@ -30,7 +30,7 @@ namespace OrthancStone
 {
   namespace Internals
   {
-    void CairoFloatTextureRenderer::Update(const ISceneLayer& layer)
+    void CairoFloatTextureRenderer::UpdateInternal(const ISceneLayer& layer)
     {
       const FloatTextureSceneLayer& l = dynamic_cast<const FloatTextureSceneLayer&>(layer);
 

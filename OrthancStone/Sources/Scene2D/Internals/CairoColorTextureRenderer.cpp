@@ -33,11 +33,11 @@ namespace OrthancStone
                                                          const ISceneLayer& layer) :
       target_(target)
     {
-      Update(layer);
+      UpdateInternal(layer);
     }
 
     
-    void CairoColorTextureRenderer::Update(const ISceneLayer& layer)
+    void CairoColorTextureRenderer::UpdateInternal(const ISceneLayer& layer)
     {
       const ColorTextureSceneLayer& l = dynamic_cast<const ColorTextureSceneLayer&>(layer);
 

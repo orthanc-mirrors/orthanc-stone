@@ -53,6 +53,11 @@ namespace OrthancStone
 
     virtual Internals::CompositorHelper::ILayerRenderer* Create(const ISceneLayer& layer) ORTHANC_OVERRIDE;
 
+    void ResetSceneInternal()
+    {
+      helper_.reset(new Internals::CompositorHelper(*this));
+    }
+
   public:
     explicit OpenGLCompositor(OpenGL::IOpenGLContext& context);
 
@@ -62,7 +67,7 @@ namespace OrthancStone
 
     virtual void ResetScene() ORTHANC_OVERRIDE
     {
-      helper_.reset(new Internals::CompositorHelper(*this));
+      ResetSceneInternal();
     }
 
     void SetFont(size_t index, const GlyphBitmapAlphabet& dict);

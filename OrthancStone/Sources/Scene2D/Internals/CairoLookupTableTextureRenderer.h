@@ -39,15 +39,20 @@ namespace OrthancStone
       AffineTransform2D       textureTransform_;
       bool                    isLinearInterpolation_;
     
+      void UpdateInternal(const ISceneLayer& layer);
+
     public:
       CairoLookupTableTextureRenderer(ICairoContextProvider& target,
                                       const ISceneLayer& layer) :
         target_(target)
       {
-        Update(layer);
+        UpdateInternal(layer);
       }
 
-      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE;
+      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE
+      {
+        UpdateInternal(layer);
+      }
     
       virtual void Render(const AffineTransform2D& transform,
                           unsigned int canvasWidth,

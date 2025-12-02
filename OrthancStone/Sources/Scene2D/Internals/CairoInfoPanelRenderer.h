@@ -40,6 +40,8 @@ namespace OrthancStone
       bool                   isLinearInterpolation_;
       bool                   applySceneRotation_;
 
+      void UpdateInternal(const ISceneLayer& layer);
+
     public:
       CairoInfoPanelRenderer(ICairoContextProvider& target,
                              const ISceneLayer& layer) :
@@ -48,10 +50,13 @@ namespace OrthancStone
         applySceneRotation_(false)
 
       {
-        Update(layer);
+        UpdateInternal(layer);
       }
 
-      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE;
+      virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE
+      {
+        UpdateInternal(layer);
+      }
       
       virtual void Render(const AffineTransform2D& transform,
                           unsigned int canvasWidth,

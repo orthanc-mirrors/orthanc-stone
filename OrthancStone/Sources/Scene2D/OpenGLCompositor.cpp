@@ -150,7 +150,7 @@ namespace OrthancStone
     canvasWidth_(0),
     canvasHeight_(0)
   {
-    ResetScene();
+    ResetSceneInternal();
   }
 
   OpenGLCompositor::~OpenGLCompositor()

@@ -12,6 +12,10 @@ fi
 cat <<EOF > /tmp/cppcheck-suppressions.txt
 assertWithSideEffect:../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.cpp:341
 assertWithSideEffect:../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.cpp:342
+constParameterPointer:../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyOracle.cpp:59
+constVariableReference:../../OrthancStone/Sources/Scene2D/GrayscaleWindowingSceneTracker.cpp:53
+knownConditionTrueFalse:../../OrthancStone/Sources/Toolbox/ImageGeometry.cpp:184
+unusedStructMember:../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyOracle.cpp:293
 EOF
 
 CPPCHECK_BUILD_DIR=/tmp/cppcheck-build-dir-stone-2.7.1/

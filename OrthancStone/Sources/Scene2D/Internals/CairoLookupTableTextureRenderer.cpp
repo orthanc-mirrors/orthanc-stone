@@ -32,7 +32,7 @@ namespace OrthancStone
 {
   namespace Internals
   {
-    void CairoLookupTableTextureRenderer::Update(const ISceneLayer& layer)
+    void CairoLookupTableTextureRenderer::UpdateInternal(const ISceneLayer& layer)
     {
       const LookupTableTextureSceneLayer& l = dynamic_cast<const LookupTableTextureSceneLayer&>(layer);
 

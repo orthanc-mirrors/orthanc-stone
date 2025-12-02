@@ -52,7 +52,7 @@ namespace OrthancStone
     }
     
       
-    void MacroLayerRenderer::Update(const ISceneLayer& layer)
+    void MacroLayerRenderer::UpdateInternal(const ISceneLayer& layer)
     {
       const MacroSceneLayer& macro = dynamic_cast<const MacroSceneLayer&>(layer);
       

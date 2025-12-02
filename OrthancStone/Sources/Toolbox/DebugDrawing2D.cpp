@@ -23,6 +23,8 @@
 
 #include "DebugDrawing2D.h"
 
+#include <OrthancException.h>
+
 #include <stdio.h>
 
 
@@ -125,6 +127,11 @@ namespace OrthancStone
     }
 
     FILE* fp = fopen(path.c_str(), "w");
+    if (fp == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_CannotWriteFile);
+    }
+
     fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n");
     fprintf(fp, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n");
     fprintf(fp, "<svg width=\"%f\" height=\"%f\" viewBox=\"0 0 %f %f\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n", ww, hh, extent_.GetWidth(), extent_.GetHeight());

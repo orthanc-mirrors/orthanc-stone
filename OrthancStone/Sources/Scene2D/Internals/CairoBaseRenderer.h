@@ -38,6 +38,11 @@ namespace OrthancStone
       ICairoContextProvider&      target_;
       std::unique_ptr<ISceneLayer>  layer_;
 
+      void UpdateInternal(const ISceneLayer& layer)
+      {
+        layer_.reset(layer.Clone());
+      }
+
     protected:
       template<typename T>
       const T& GetLayer() const
@@ -55,12 +60,12 @@ namespace OrthancStone
                         const ISceneLayer& layer) :
         target_(target)
       {
-        Update(layer);
+        UpdateInternal(layer);
       }
 
       virtual void Update(const ISceneLayer& layer) ORTHANC_OVERRIDE
       {
-        layer_.reset(layer.Clone());
+        UpdateInternal(layer);
       }
     };
   }

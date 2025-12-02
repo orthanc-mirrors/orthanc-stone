@@ -77,12 +77,12 @@ namespace OrthancStone
         z = MIN_ZOOM + (MAX_ZOOM - MIN_ZOOM) * (dy + 1.0) / 2.0;
       }
 
-      double zoom = pow(2.0, z);
-
       ViewportLocker locker(viewport_);
     
       if (locker.IsValid())
       {
+        const double zoom = pow(2.0, z);
+
         locker.GetController().SetSceneToCanvasTransform(
           AffineTransform2D::Combine(
             AffineTransform2D::CreateScaling(zoom, zoom),

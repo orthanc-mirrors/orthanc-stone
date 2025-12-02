@@ -240,10 +240,7 @@ namespace OrthancStone
                   VolumeProjection projection,
                   unsigned int slice);
 
-      ~SliceWriter()
-      {
-        Flush();
-      }
+      ~SliceWriter();
 
       const Orthanc::ImageAccessor& GetAccessor() const
       {

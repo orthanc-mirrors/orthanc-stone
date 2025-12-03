@@ -279,9 +279,12 @@ Vue.component('viewport', {
       var seriesInstanceUid = newVal.series.tags[SERIES_INSTANCE_UID];
       stone.SpeedUpFetchSeriesMetadata(studyInstanceUid, seriesInstanceUid);
 
-      if (newVal.series.type == stone.ThumbnailType.IMAGE ||
-          newVal.series.type == stone.ThumbnailType.STRUCTURED_REPORT ||
-          newVal.series.type == stone.ThumbnailType.NO_PREVIEW) {
+      if (newVal.series.type == stone.ThumbnailType.LOADING) {
+        // Ignore
+      }
+      else if (newVal.series.type == stone.ThumbnailType.IMAGE ||
+               newVal.series.type == stone.ThumbnailType.STRUCTURED_REPORT ||
+               newVal.series.type == stone.ThumbnailType.NO_PREVIEW) {
         if (newVal.series.complete) {
           this.status = 'ready';
           
@@ -990,6 +993,43 @@ var app = new Vue({
       this.FitContent();
     },
 
+    UpdateSeriesAndViewports: function(seriesInstanceUid, series) {
+      if (seriesInstanceUid in this.seriesIndex) {
+        var index = this.seriesIndex[seriesInstanceUid];
+
+        // https://fr.vuejs.org/2016/02/06/common-gotchas/#Why-isn%E2%80%99t-the-DOM-updating
+        this.$set(this.series, index, series);
+
+        if ('tags' in this.viewport1Content.series &&
+            this.viewport1Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          var content = this.viewport1Content.series;
+          content.series = series;
+          this.viewport1Content = content;
+        }
+
+        if ('tags' in this.viewport2Content.series &&
+            this.viewport2Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          var content = this.viewport2Content.series;
+          content.series = series;
+          this.viewport2Content = content;
+        }
+
+        if ('tags' in this.viewport3Content.series &&
+            this.viewport3Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          var content = this.viewport3Content.series;
+          content.series = series;
+          this.viewport3Content = content;
+        }
+
+        if ('tags' in this.viewport4Content.series &&
+            this.viewport4Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
+          var content = this.viewport4Content.series;
+          content.series = series;
+          this.viewport4Content = content;
+        }
+      }
+    },
+
     UpdateSeriesThumbnail: function(seriesInstanceUid) {
       if (seriesInstanceUid in this.seriesIndex) {
         var index = this.seriesIndex[seriesInstanceUid];
@@ -1002,8 +1042,7 @@ var app = new Vue({
           series.thumbnail = stone.GetStringBuffer();
         }
 
-        // https://fr.vuejs.org/2016/02/06/common-gotchas/#Why-isn%E2%80%99t-the-DOM-updating
-        this.$set(this.series, index, series);
+        this.UpdateSeriesAndViewports(seriesInstanceUid, series);
       }
     },
 
@@ -1031,28 +1070,7 @@ var app = new Vue({
           }
         }
 
-        // https://fr.vuejs.org/2016/02/06/common-gotchas/#Why-isn%E2%80%99t-the-DOM-updating
-        this.$set(this.series, index, series);
-
-        if ('tags' in this.viewport1Content.series &&
-            this.viewport1Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport1Content.series, series);
-        }
-
-        if ('tags' in this.viewport2Content.series &&
-            this.viewport2Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport2Content.series, series);
-        }
-
-        if ('tags' in this.viewport3Content.series &&
-            this.viewport3Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport3Content.series, series);
-        }
-
-        if ('tags' in this.viewport4Content.series &&
-            this.viewport4Content.series.tags[SERIES_INSTANCE_UID] == seriesInstanceUid) {
-          this.$set(this.viewport4Content.series, series);
-        }
+        this.UpdateSeriesAndViewports(seriesInstanceUid, series);
       }
     },
 

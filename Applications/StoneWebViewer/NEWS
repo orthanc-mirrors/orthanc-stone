@@ -20,6 +20,7 @@ Maintenance
 * Improved support of the (0028,9132) tag for Philips multiframe images
 * Use "ImagerPixelSpacing" (0018,1164) tag if "PixelSpacing" is missing
 * Added safeguard against US images containing regions with negative "PhysicalDeltaX" value
+* Fix compatibility of videos with DICOMweb plugin >= 1.19
 
 
 Version 2.6 (2024-08-31)

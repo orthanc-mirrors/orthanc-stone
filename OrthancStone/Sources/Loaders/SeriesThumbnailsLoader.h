@@ -135,17 +135,16 @@ namespace OrthancStone
 
   private:
     class Handler;
-    class DicomWebSopClassHandler;
-    class DicomWebThumbnailHandler;
     class ThumbnailInformation;
-    class OrthancSopClassHandler;
-    class SelectOrthancInstanceHandler;
-    class DicomWebGetOneInstanceInSeriesHandler;
 
-#if ORTHANC_ENABLE_DCMTK == 1
-    class SelectDicomWebInstanceHandler;
-#endif
-    
+    // To load from an Orthanc server
+    class OrthancSopClassHandler;
+    class OrthancSelectInstanceHandler;
+
+    // To load from a DICOMweb server
+    class DicomWebThumbnailHandler;
+    class DicomWebSelectInstanceHandler;
+
     // Maps a "Series Instance UID" to a thumbnail
     typedef std::map<std::string, Thumbnail*>  Thumbnails;
 

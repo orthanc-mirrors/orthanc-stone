@@ -418,6 +418,121 @@ namespace OrthancStone
   };
 
     
+  class SeriesThumbnailsLoader::DicomWebGetOneInstanceInSeriesHandler : public SeriesThumbnailsLoader::Handler
+  {
+  private:
+    void LogError() const
+    {
+      LOG(ERROR) << "Cannot download one instance from series: " << GetSeriesInstanceUid();
+    }
+
+  public:
+    DicomWebGetOneInstanceInSeriesHandler(boost::shared_ptr<SeriesThumbnailsLoader> loader,
+                                          const DicomSource& source,
+                                          const std::string& studyInstanceUid,
+                                          const std::string& seriesInstanceUid) :
+      Handler(loader, source, studyInstanceUid, seriesInstanceUid)
+    {
+    }
+
+    virtual void HandleSuccess(const std::string& body,
+                               const std::map<std::string, std::string>& headers) ORTHANC_OVERRIDE
+    {
+      Json::Value instances;
+
+      if (!Orthanc::Toolbox::ReadJson(instances, body) ||
+          instances.type() != Json::arrayValue)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NetworkProtocol);
+      }
+      else if (instances.empty())
+      {
+        LogError();
+      }
+      else
+      {
+        Orthanc::DicomMap instance;
+        instance.FromDicomWeb(instances[0]);
+
+        std::unique_ptr<IOracleCommand> command;
+
+        std::string sopInstanceUid;
+        std::string sopClassUid;
+        if (instance.LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
+            instance.LookupStringValue(sopClassUid, Orthanc::DICOM_TAG_SOP_CLASS_UID, false))
+        {
+          switch (StringToSopClassUid(sopClassUid))
+          {
+          case SopClassUid_VideoEndoscopicImageStorage:
+          case SopClassUid_VideoMicroscopicImageStorage:
+          case SopClassUid_VideoPhotographicImageStorage:
+            GetLoader()->AcquireThumbnail(GetSource(), GetStudyInstanceUid(),
+                                          GetSeriesInstanceUid(), new Thumbnail(SeriesThumbnailType_Video));
+            break;
+
+          case SopClassUid_EncapsulatedPdf:
+            GetLoader()->AcquireThumbnail(GetSource(), GetStudyInstanceUid(),
+                                          GetSeriesInstanceUid(), new Thumbnail(SeriesThumbnailType_Pdf));
+            break;
+
+          default:
+            if (GetSource().HasDicomWebRendered())
+            {
+              LOG(ERROR) << "OOOOO";
+              // By default, rely on server-side rendering
+
+              const std::string uri = ("/studies/" + GetStudyInstanceUid() +
+                                       "/series/" + GetSeriesInstanceUid() + "/rendered");
+
+              std::map<std::string, std::string> arguments, headers;
+              arguments["viewport"] = (boost::lexical_cast<std::string>(GetLoader()->width_) + "," +
+                                       boost::lexical_cast<std::string>(GetLoader()->height_));
+
+              // Needed to set this header explicitly, as long as emscripten
+              // does not include macro "EMSCRIPTEN_FETCH_RESPONSE_HEADERS"
+              // https://github.com/emscripten-core/emscripten/pull/8486
+              headers["Accept"] = Orthanc::MIME_JPEG;
+
+              command.reset(GetSource().CreateDicomWebCommand(
+                              uri, arguments, headers, new DicomWebThumbnailHandler(
+                                GetLoader()->GetSharedObserver(), GetSource(), GetStudyInstanceUid(), GetSeriesInstanceUid())));
+            }
+            else
+            {
+#if ORTHANC_ENABLE_DCMTK == 1
+              command.reset(ParseDicomFromWadoCommand::Create(
+                              GetSource(), GetStudyInstanceUid(), GetSeriesInstanceUid(), sopInstanceUid, false,
+                              Orthanc::DicomTransferSyntax_LittleEndianExplicit /* useless, as no transcoding */,
+                              new ThumbnailInformation(
+                                GetSource(), GetStudyInstanceUid(), GetSeriesInstanceUid())));
+#else
+              throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                              "Stone of Orthanc was built without support to decode DICOM images");
+#endif
+            }
+
+            break;
+          }
+
+          if (command.get() != NULL)
+          {
+            GetLoader()->Schedule(command.release());
+          }
+        }
+        else
+        {
+          LogError();
+        }
+      }
+    }
+
+    virtual void HandleError() ORTHANC_OVERRIDE
+    {
+      LogError();
+    }
+  };
+
+
 #if ORTHANC_ENABLE_DCMTK == 1
   class SeriesThumbnailsLoader::SelectDicomWebInstanceHandler : public SeriesThumbnailsLoader::Handler
   {
@@ -682,6 +797,21 @@ namespace OrthancStone
 
     if (source.IsDicomWeb())
     {
+      {
+        std::map<std::string, std::string> arguments, headers;
+        arguments["0020000D"] = studyInstanceUid;
+        arguments["0020000E"] = seriesInstanceUid;
+        arguments["includefield"] = "00080016";  // SOP Class UID
+        arguments["limit"] = "1";
+
+        std::unique_ptr<IOracleCommand> command(
+          source.CreateDicomWebCommand(
+            "/instances", arguments, headers, new DicomWebGetOneInstanceInSeriesHandler(
+              GetSharedObserver(), source, studyInstanceUid, seriesInstanceUid)));
+        Schedule(command.release());
+      }
+
+#if 0
       if (!source.HasDicomWebRendered())
       {
 #if ORTHANC_ENABLE_DCMTK == 1
@@ -721,6 +851,7 @@ namespace OrthancStone
               GetSharedObserver(), source, studyInstanceUid, seriesInstanceUid)));
         Schedule(command.release());
       }
+#endif
 
       scheduledSeries_.insert(seriesInstanceUid);
     }

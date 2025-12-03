@@ -140,6 +140,7 @@ namespace OrthancStone
     class ThumbnailInformation;
     class OrthancSopClassHandler;
     class SelectOrthancInstanceHandler;
+    class DicomWebGetOneInstanceInSeriesHandler;
 
 #if ORTHANC_ENABLE_DCMTK == 1
     class SelectDicomWebInstanceHandler;

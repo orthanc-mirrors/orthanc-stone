@@ -258,19 +258,42 @@ namespace OrthancStone
         dataset.GetSequenceSize(size, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS)) &&
         size >= 1)
     {
-      int directionX, directionY;
+      bool found = false;
       double deltaX, deltaY;
 
-      if (reader.GetIntegerValue(directionX, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
-                                                                0, DICOM_TAG_PHYSICAL_UNITS_X_DIRECTION)) &&
-          reader.GetIntegerValue(directionY, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
-                                                                0, DICOM_TAG_PHYSICAL_UNITS_Y_DIRECTION)) &&
-          reader.GetDoubleValue(deltaX, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
-                                                           0, DICOM_TAG_PHYSICAL_DELTA_X)) &&
-          reader.GetDoubleValue(deltaY, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
-                                                           0, DICOM_TAG_PHYSICAL_DELTA_Y)) &&
-          directionX == 0x0003 &&  // Centimeters
-          directionY == 0x0003)    // Centimeters
+      for (size_t j = 0; j < size; j++)
+      {
+        int directionX, directionY;
+        double dx, dy;
+
+        // TODO: We only keep one region expressed in centimeters, but there might be multiple US regions.
+        if (reader.GetIntegerValue(directionX, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                                  j, DICOM_TAG_PHYSICAL_UNITS_X_DIRECTION)) &&
+            reader.GetIntegerValue(directionY, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                                  j, DICOM_TAG_PHYSICAL_UNITS_Y_DIRECTION)) &&
+            reader.GetDoubleValue(dx, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                         j, DICOM_TAG_PHYSICAL_DELTA_X)) &&
+            reader.GetDoubleValue(dy, Orthanc::DicomPath(DICOM_TAG_SEQUENCE_OF_ULTRASOUND_REGIONS,
+                                                         j, DICOM_TAG_PHYSICAL_DELTA_Y)) &&
+            directionX == 0x0003 &&  // Centimeters
+            directionY == 0x0003)    // Centimeters
+        {
+          if (found)
+          {
+            LOG(ERROR) << "Image with multiple US regions expressed in centimeters, annotations will use pixels";
+            found = false;
+            break;
+          }
+          else
+          {
+            found = true;
+            deltaX = dx;
+            deltaY = dy;
+          }
+        }
+      }
+
+      if (found)
       {
         // Scene coordinates are expressed in millimeters => multiplication by 10
         SetPixelSpacing(10.0 * deltaX, 10.0 * deltaY);

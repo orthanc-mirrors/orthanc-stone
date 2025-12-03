@@ -18,7 +18,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-set(STONE_WEB_VIEWER_VERSION "mainline")
+set(STONE_WEB_VIEWER_VERSION "3.0")
 
 if (STONE_WEB_VIEWER_VERSION STREQUAL "mainline")
   set(ORTHANC_FRAMEWORK_DEFAULT_VERSION "mainline")

@@ -81,8 +81,6 @@ static const double PI = boost::math::constants::pi<double>();
 #endif
 
 
-#define FIX_LSD_479  1
-
 
 enum STONE_WEB_VIEWER_EXPORT ThumbnailType
 {
@@ -2388,30 +2386,6 @@ private:
         
         params.EnrichUsingDicomWeb(message.GetResources()->GetSourceJson(0));
 
-        if (params.HasPixelSpacing())
-        {
-          GetViewport().centralPixelSpacingX_ = params.GetPixelSpacingX();
-          GetViewport().centralPixelSpacingY_ = params.GetPixelSpacingY();
-          GetViewport().stoneAnnotations_->SetUnits(OrthancStone::Units_Millimeters);
-        }
-        else
-        {
-          GetViewport().centralPixelSpacingX_ = 1;
-          GetViewport().centralPixelSpacingY_ = 1;
-          GetViewport().stoneAnnotations_->SetUnits(OrthancStone::Units_Pixels);
-        }
-
-        if (!OrthancStone::LinearAlgebra::IsNear(params.GetPixelSpacingX(), 0) &&
-            !OrthancStone::LinearAlgebra::IsNear(params.GetPixelSpacingY(), 0) &&
-            params.GetWidth() != 0 &&
-            params.GetHeight() != 0)
-        {
-          GetViewport().centralPhysicalWidth_ = (params.GetPixelSpacingX() *
-                                                 static_cast<double>(params.GetWidth()));
-          GetViewport().centralPhysicalHeight_ = (params.GetPixelSpacingY() *
-                                                  static_cast<double>(params.GetHeight()));
-        }
-
         GetViewport().windowingPresets_.resize(params.GetWindowingPresetsCount());
 
         for (size_t i = 0; i < params.GetWindowingPresetsCount(); i++)
@@ -2713,10 +2687,6 @@ private:
   bool                                         serverSideTranscoding_;
   OrthancStone::Vector                         synchronizationOffset_;
   bool                                         synchronizationEnabled_;
-  double                                       centralPhysicalWidth_;   // LSD-479
-  double                                       centralPhysicalHeight_;
-  double                                       centralPixelSpacingX_;
-  double                                       centralPixelSpacingY_;
 
   bool         hasFocusOnInstance_;
   std::string  focusSopInstanceUid_;
@@ -2957,11 +2927,13 @@ private:
     {
       pixelSpacingX = instance.GetPixelSpacingX();
       pixelSpacingY = instance.GetPixelSpacingY();
+      stoneAnnotations_->SetUnits(OrthancStone::Units_Millimeters);
     }
     else
     {
-      pixelSpacingX = centralPixelSpacingX_;
-      pixelSpacingY = centralPixelSpacingY_;
+      pixelSpacingX = 1;
+      pixelSpacingY = 1;
+      stoneAnnotations_->SetUnits(OrthancStone::Units_Pixels);
     }
 
     // This hack has been introduced to fix an issue where the first US image of a series had negative PhysicalDeltaX value 
@@ -2970,36 +2942,14 @@ private:
     // overwritten later on...
     if (pixelSpacingX < 0 || pixelSpacingY < 0)
     {
-      LOG(ERROR) << "Pixel spacings are invalid: " << pixelSpacingX << " " << pixelSpacingY << " setting dummy values to 1000, 1000 -> measures might be invalid !";
+      LOG(ERROR) << "Pixel spacings are invalid: " << pixelSpacingX << " " << pixelSpacingY
+                 << " setting dummy values to 1000, 1000 -> measures will be invalid!";
       pixelSpacingX = 1000;
       pixelSpacingY = 1000;
+      stoneAnnotations_->SetUnits(OrthancStone::Units_Pixels);
     }
 
     layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
-
-    if (0 /* FIX_LSD_479 */)
-    {
-      /**
-       * Some series contain a first instance (secondary capture) that
-       * is completely different from others wrt. to resolution and
-       * pixel spacing. We make sure to rescale each frame to fit in a
-       * square that corresponds to the extent of the frame in the
-       * middle of the series.
-       **/
-      double physicalWidth = pixelSpacingX * static_cast<double>(frame.GetWidth()); 
-      double physicalHeight = pixelSpacingY * static_cast<double>(frame.GetHeight());
-
-      // On numerical instability, don't try further processing
-      if (!OrthancStone::LinearAlgebra::IsCloseToZero(physicalWidth) &&
-          !OrthancStone::LinearAlgebra::IsCloseToZero(physicalHeight))
-      {
-        double scale = std::max(centralPhysicalWidth_ / physicalWidth,
-                                centralPhysicalHeight_ / physicalHeight);
-        layer->SetPixelSpacing(pixelSpacingX * scale, pixelSpacingY * scale);
-        layer->SetOrigin((centralPhysicalWidth_ - physicalWidth * scale) / 2.0,
-                         (centralPhysicalHeight_ - physicalHeight * scale) / 2.0);
-      }
-    }
 
     StoneAnnotationsRegistry::GetInstance().Load(*stoneAnnotations_, instance.GetSopInstanceUid(), frameIndex);
 
@@ -3299,10 +3249,6 @@ private:
     focusFrameNumber_(0),
     synchronizationOffset_(OrthancStone::LinearAlgebra::CreateVector(0, 0, 0)),
     synchronizationEnabled_(false),
-    centralPhysicalWidth_(1),
-    centralPhysicalHeight_(1),
-    centralPixelSpacingX_(1),
-    centralPixelSpacingY_(1),
     linearInterpolation_(linearInterpolation)
   {
     if (!framesCache_)
@@ -3599,9 +3545,6 @@ public:
       observer_->SignalFrameUpdated(*this, cursor_->GetCurrentIndex(),
                                     frames_->GetFramesCount(), DisplayedFrameQuality_None, 0, "", "");
     }
-
-    centralPhysicalWidth_ = 1;
-    centralPhysicalHeight_ = 1;
 
     if (frames_->GetFramesCount() != 0)
     {

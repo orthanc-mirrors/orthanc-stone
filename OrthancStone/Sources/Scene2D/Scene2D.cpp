@@ -307,13 +307,20 @@ namespace OrthancStone
 
     if (!extent.IsEmpty())
     {
-      double zoom = static_cast<double>(canvasWidth) / extent.GetWidth();
+      if (extent.GetWidth() < extent.GetHeight())
+        {
+          double zoom = static_cast<double>(canvasWidth) / extent.GetWidth();
 
-      AffineTransform2D t1 = AffineTransform2D::CreateOffset(-extent.GetCenterX(), -extent.GetY1());
-      AffineTransform2D t2 = AffineTransform2D::CreateScaling(zoom, zoom);
-      AffineTransform2D t3 = AffineTransform2D::CreateOffset(0, static_cast<double>(canvasHeight) * (topMargin - 0.5));
+          AffineTransform2D t1 = AffineTransform2D::CreateOffset(-extent.GetCenterX(), -extent.GetY1());
+          AffineTransform2D t2 = AffineTransform2D::CreateScaling(zoom, zoom);
+          AffineTransform2D t3 = AffineTransform2D::CreateOffset(0, static_cast<double>(canvasHeight) * (topMargin - 0.5));
 
-      SetSceneToCanvasTransform(AffineTransform2D::Combine(t3, t2, t1));
+          SetSceneToCanvasTransform(AffineTransform2D::Combine(t3, t2, t1));
+        }
+      else
+      {
+        FitContent(canvasWidth, canvasHeight);
+      }
     }
   }
 

@@ -1,7 +1,11 @@
 Pending changes in the mainline
 ===============================
 
-* Added support to display DICOM-SR as textual reports
+
+Version 3.0 (2025-12-03)
+========================
+
+* Added support for displaying DICOM-SR as textual reports
 * Added support for pinch/zoom and panning gestures
 * Experimental support for DICOM-SR "Measurement Report" (TID 1500 - only polylines)
 * Added "Print" and "Download" buttons in the PDF viewer toolbar

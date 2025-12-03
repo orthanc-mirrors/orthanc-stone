@@ -364,7 +364,7 @@ namespace OrthancStone
     }
 
     virtual void HandleSuccess(const std::string& body,
-                               const std::map<std::string, std::string>& headers) ORTHANC_OVERRIDE
+                               const std::map<std::string, std::string>& unusedHeaders) ORTHANC_OVERRIDE
     {
       Json::Value instances;
 

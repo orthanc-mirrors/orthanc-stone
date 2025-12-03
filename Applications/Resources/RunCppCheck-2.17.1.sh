@@ -17,11 +17,11 @@ constParameterPointer:../../RenderingPlugin/Resources/Orthanc/Plugins/OrthancPlu
 constVariableReference:../../OrthancStone/Sources/Scene2D/GrayscaleWindowingSceneTracker.cpp:53
 knownConditionTrueFalse:../../Applications/StoneWebViewer/Plugin/Plugin.cpp:99
 knownConditionTrueFalse:../../OrthancStone/Sources/Toolbox/ImageGeometry.cpp:184
-stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1813
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1828
 unusedStructMember:../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyOracle.cpp:293
 EOF
 
-CPPCHECK_BUILD_DIR=/tmp/cppcheck-build-dir-stone-2.7.1/
+CPPCHECK_BUILD_DIR=/tmp/cppcheck-build-dir-stone-2.17.1/
 mkdir -p ${CPPCHECK_BUILD_DIR}
 
 ${CPPCHECK} -j8 --enable=all --quiet --std=c++03 \

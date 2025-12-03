@@ -33,8 +33,8 @@ assertWithSideEffect:../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeL
 assertWithSideEffect:../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.cpp:342
 constParameter:../../RenderingPlugin/Sources/Plugin.cpp:778
 stlFindInsert:../../Applications/Samples/WebAssembly/SingleFrameViewer/SingleFrameViewerApplication.h
-stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1080
-stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1813
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1095
+stlFindInsert:../../Applications/StoneWebViewer/WebAssembly/StoneWebViewer.cpp:1828
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/Internals/CairoFloatTextureRenderer.cpp
 unpreciseMathCall:../../OrthancStone/Sources/Scene2D/LookupTableTextureSceneLayer.cpp
 unreadVariable:../../OrthancStone/Sources/Platforms/Sdl/SdlViewport.cpp:159
@@ -42,7 +42,11 @@ unreadVariable:../../OrthancStone/Sources/Platforms/Sdl/SdlViewport.cpp:213
 unusedFunction
 EOF
 
-${CPPCHECK} --enable=all --quiet --std=c++11 \
+CPPCHECK_BUILD_DIR=/tmp/cppcheck-build-dir-stone-2.1/
+mkdir -p ${CPPCHECK_BUILD_DIR}
+
+${CPPCHECK} -j8 --enable=all --quiet --std=c++11 \
+            --cppcheck-build-dir=${CPPCHECK_BUILD_DIR} \
             --suppressions-list=/tmp/cppcheck-suppressions.txt \
             -DHAS_ORTHANC_EXCEPTION=1 \
             -DORTHANC_BUILDING_FRAMEWORK_LIBRARY=1 \

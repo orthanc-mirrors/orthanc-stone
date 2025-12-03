@@ -443,4 +443,18 @@ namespace OrthancStone
                                       "Sort() has not been called");
     }
   }
+
+
+  void SortedFrames::EnrichInstance(const std::string& sopInstanceUid,
+                                    const IDicomDataset& dicom)
+  {
+    size_t index;
+    if (LookupSopInstanceUid(index, sopInstanceUid))
+    {
+      DicomInstanceParameters* instance = instances_[index];
+      assert(instance != NULL);
+
+      instance->InjectSequenceTags(dicom);
+    }
+  }
 }

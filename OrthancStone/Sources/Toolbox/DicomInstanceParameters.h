@@ -77,8 +77,6 @@ namespace OrthancStone
     std::unique_ptr<Orthanc::DicomMap>               tags_;
     std::unique_ptr<Orthanc::DicomImageInformation>  imageInformation_;  // Lazy evaluation
 
-    void InjectSequenceTags(const IDicomDataset& dataset);
-
   public:
     explicit DicomInstanceParameters(const DicomInstanceParameters& other);
 
@@ -264,5 +262,7 @@ namespace OrthancStone
 
     bool LookupPerFrameWindowing(Windowing& windowing,
                                  unsigned int frame) const;
+
+    void InjectSequenceTags(const IDicomDataset& dataset);
   };
 }

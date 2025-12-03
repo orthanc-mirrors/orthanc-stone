@@ -23,7 +23,9 @@
 
 #include "ParsedDicomDataset.h"
 
-#include <dcmtk/dcmdata/dcfilefo.h>
+#include <Logging.h>
+#include <DicomParsing/FromDcmtkBridge.h>
+
 
 namespace OrthancStone
 {
@@ -31,7 +33,7 @@ namespace OrthancStone
                              const Orthanc::DicomPath& path)
   {
     DcmItem* node = dicom.GetDcmtkObject().getDataset();
-      
+
     for (size_t i = 0; i < path.GetPrefixLength(); i++)
     {
       const Orthanc::DicomTag& tmp = path.GetPrefixTag(i);
@@ -70,12 +72,17 @@ namespace OrthancStone
     {
       DcmTagKey tag(path.GetFinalTag().GetGroup(), path.GetFinalTag().GetElement());
 
-      const char* s = NULL;
-      if (node->findAndGetString(tag, s).good() &&
-          s != NULL)
+      DcmElement* element = NULL;
+      if (node->findAndGetElement(tag, element).good() &&
+          element != NULL)
       {
-        result.assign(s);
-        return true;
+        // Leverage the Orthanc framework to convert any VR as a string
+        const Orthanc::ValueRepresentation vr = Orthanc::FromDcmtkBridge::LookupValueRepresentation(path.GetFinalTag());
+        const std::set<Orthanc::DicomTag> ignoreTagLength;
+        std::unique_ptr<Orthanc::DicomValue> value(
+          Orthanc::FromDcmtkBridge::ConvertLeafElement(
+            *element, Orthanc::DicomToJsonFlags_None, 0, Orthanc::Encoding_Ascii, false, ignoreTagLength, vr));
+        return value->CopyToString(result, false /* no binary */);
       }
     }
 

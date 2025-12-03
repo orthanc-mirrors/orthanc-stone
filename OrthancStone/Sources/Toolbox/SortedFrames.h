@@ -154,5 +154,8 @@ namespace OrthancStone
     bool FindClosestFrame(size_t& frameIndex,
                           const Vector& point,
                           double maximumDistance) const;
+
+    void EnrichInstance(const std::string& sopInstanceUid,
+                        const IDicomDataset& dicom);
   };
 }

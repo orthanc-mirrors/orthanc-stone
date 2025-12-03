@@ -56,6 +56,7 @@
 #include "../../../OrthancStone/Sources/Toolbox/DicomStructuredReport.h"
 #include "../../../OrthancStone/Sources/Toolbox/GeometryToolbox.h"
 #include "../../../OrthancStone/Sources/Toolbox/OsiriX/CollectionOfAnnotations.h"
+#include "../../../OrthancStone/Sources/Toolbox/ParsedDicomDataset.h"
 #include "../../../OrthancStone/Sources/Toolbox/SortedFrames.h"
 #include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 
@@ -275,6 +276,9 @@ public:
                                 const OrthancStone::Vector& point,
                                 double maximumDistance) const = 0;
 
+  virtual void EnrichInstance(const std::string& sopInstanceUid,
+                              Orthanc::ParsedDicomFile& dicom) = 0;
+
   static OrthancStone::CoordinateSystem3D GetFrameGeometry(const IFramesCollection& frames,
                                                            size_t frameIndex)
   {
@@ -333,6 +337,13 @@ public:
                                 double maximumDistance) const ORTHANC_OVERRIDE
   {
     return frames_->FindClosestFrame(frameIndex, point, maximumDistance);
+  }
+
+  virtual void EnrichInstance(const std::string& sopInstanceUid,
+                              Orthanc::ParsedDicomFile& dicom) ORTHANC_OVERRIDE
+  {
+    OrthancStone::ParsedDicomDataset dataset(dicom);
+    frames_->EnrichInstance(sopInstanceUid, dataset);
   }
 };
 
@@ -604,6 +615,12 @@ public:
   static void SetAnnotationsColor(const OrthancStone::Color& color)
   {
     GetColorInternal() = color;
+  }
+
+  virtual void EnrichInstance(const std::string& sopInstanceUid,
+                              Orthanc::ParsedDicomFile& dicom) ORTHANC_OVERRIDE
+  {
+    // Not useful in this case
   }
 };
 
@@ -2559,6 +2576,8 @@ private:
     
     virtual void Handle(const OrthancStone::ParseDicomSuccessMessage& message) const ORTHANC_OVERRIDE
     {
+      GetViewport().frames_->EnrichInstance(sopInstanceUid_, message.GetDicom());
+
       std::unique_ptr<Orthanc::ImageAccessor> frame;
       
       try
@@ -2956,7 +2975,9 @@ private:
       pixelSpacingY = 1000;
     }
 
-    if (FIX_LSD_479)
+    layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
+
+    if (0 /* FIX_LSD_479 */)
     {
       /**
        * Some series contain a first instance (secondary capture) that
@@ -2968,13 +2989,9 @@ private:
       double physicalWidth = pixelSpacingX * static_cast<double>(frame.GetWidth()); 
       double physicalHeight = pixelSpacingY * static_cast<double>(frame.GetHeight());
 
-      if (OrthancStone::LinearAlgebra::IsCloseToZero(physicalWidth) ||
-          OrthancStone::LinearAlgebra::IsCloseToZero(physicalHeight))
-      {
-        // Numerical instability, don't try further processing
-        layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
-      }
-      else
+      // On numerical instability, don't try further processing
+      if (!OrthancStone::LinearAlgebra::IsCloseToZero(physicalWidth) &&
+          !OrthancStone::LinearAlgebra::IsCloseToZero(physicalHeight))
       {
         double scale = std::max(centralPhysicalWidth_ / physicalWidth,
                                 centralPhysicalHeight_ / physicalHeight);
@@ -2982,10 +2999,6 @@ private:
         layer->SetOrigin((centralPhysicalWidth_ - physicalWidth * scale) / 2.0,
                          (centralPhysicalHeight_ - physicalHeight * scale) / 2.0);
       }
-    }
-    else
-    {
-      layer->SetPixelSpacing(pixelSpacingX, pixelSpacingY);
     }
 
     StoneAnnotationsRegistry::GetInstance().Load(*stoneAnnotations_, instance.GetSopInstanceUid(), frameIndex);
@@ -3014,12 +3027,33 @@ private:
       holder.AddLayer(LAYER_STRUCTURED_REPORT, NULL);
     }
 
+    const unsigned int currentWidth = layer->GetTexture().GetWidth();
+    const unsigned int currentHeight = layer->GetTexture().GetHeight();
     holder.AddLayer(LAYER_TEXTURE, layer.release());
 
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
 
       OrthancStone::Scene2D& scene = lock->GetController().GetScene();
+
+      bool hasPreviousSize = false;
+      unsigned int previousWidth, previousHeight;
+      OrthancStone::Extent2D previousExtent;
+      if (scene.HasLayer(LAYER_TEXTURE))
+      {
+        const OrthancStone::ISceneLayer& previousLayer = scene.GetLayer(LAYER_TEXTURE);
+        previousLayer.GetBoundingBox(previousExtent);
+        if (!previousExtent.IsEmpty() &&
+            (previousLayer.GetType() == OrthancStone::ISceneLayer::Type_ColorTexture ||
+             previousLayer.GetType() == OrthancStone::ISceneLayer::Type_FloatTexture ||
+             previousLayer.GetType() == OrthancStone::ISceneLayer::Type_LookupTableTexture))
+        {
+          const OrthancStone::TextureBaseSceneLayer& texture = dynamic_cast<const OrthancStone::TextureBaseSceneLayer&>(previousLayer);
+          hasPreviousSize = true;
+          previousWidth = texture.GetTexture().GetWidth();
+          previousHeight = texture.GetTexture().GetHeight();
+        }
+      }
 
       holder.Commit(scene);
 
@@ -3039,8 +3073,23 @@ private:
           lock->GetCompositor().FitContent(scene);
         }
 
-        stoneAnnotations_->Render(scene);
+        //stoneAnnotations_->Render(scene);
         fitNextContent_ = false;
+      }
+      else if (hasPreviousSize)
+      {
+        if (currentWidth == previousWidth &&
+            currentHeight == previousHeight)
+        {
+          // This is notably useful for US images, where the width/height is constant
+          // across the series, while the zoom level varies (cf. Michael Vitale)
+          scene.PreserveExtent(LAYER_TEXTURE, previousExtent);
+        }
+        else
+        {
+          // This supersedes the (incorrect) FIX_LSD_479 that broke pixel spacing in annotations
+          lock->GetCompositor().FitContent(scene);
+        }
       }
         
       //lock->GetCompositor().Refresh(scene);

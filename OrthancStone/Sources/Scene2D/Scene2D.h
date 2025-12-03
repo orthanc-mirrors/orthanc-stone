@@ -136,5 +136,8 @@ namespace OrthancStone
 
     void FlipViewportY(unsigned int canvasWidth,
                        unsigned int canvasHeight);
+
+    void PreserveExtent(int depth,
+                        const Extent2D& previousExtent);
   };
 }

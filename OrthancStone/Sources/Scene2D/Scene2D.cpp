@@ -25,6 +25,8 @@
 
 #include <OrthancException.h>
 
+#include "ScenePoint2D.h"
+
 
 namespace OrthancStone
 {
@@ -353,5 +355,28 @@ namespace OrthancStone
       AffineTransform2D::CreateFlipY(),
       GetSceneToCanvasTransform());
     FitContent(transform, canvasWidth, canvasHeight);
+  }
+
+
+  void Scene2D::PreserveExtent(int depth,
+                               const Extent2D& previousExtent)
+  {
+    if (!previousExtent.IsEmpty() &&
+        HasLayer(depth))
+    {
+      Extent2D currentExtent;
+      GetLayer(depth).GetBoundingBox(currentExtent);
+
+      if (!currentExtent.IsEmpty())
+      {
+        AffineTransform2D t1 = GetSceneToCanvasTransform();
+        AffineTransform2D t2 = AffineTransform2D::CreateOffset(-previousExtent.GetCenterX(), -previousExtent.GetCenterY());
+        AffineTransform2D t3 = AffineTransform2D::CreateScaling(previousExtent.GetWidth() / currentExtent.GetWidth(),
+                                                                previousExtent.GetHeight() / currentExtent.GetHeight());
+        AffineTransform2D t4 = AffineTransform2D::CreateOffset(currentExtent.GetCenterX(), currentExtent.GetCenterY());
+
+        SetSceneToCanvasTransform(AffineTransform2D::Combine(t1, t2, t3, t4));
+      }
+    }
   }
 }

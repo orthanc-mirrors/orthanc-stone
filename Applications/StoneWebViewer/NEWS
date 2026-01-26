@@ -1,6 +1,14 @@
 Pending changes in the mainline
 ===============================
 
+Maintenance
+-----------
+
+* Experimental: When an authorization token is passed in the url, downloads and videos are now re-using the token
+  as a url argument to allow native download by the browser instead of using blobs which might
+  be limited by the browser memory.
+
+
 
 Version 3.0 (2025-12-03)
 ========================

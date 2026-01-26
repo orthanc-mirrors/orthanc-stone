@@ -53,9 +53,8 @@ var MOUSE_TOOL_CREATE_RECTANGLE_PROBE = 11;  // New in 2.4
 var MOUSE_TOOL_CREATE_TEXT_ANNOTATION = 12;  // New in 2.4
 var MOUSE_TOOL_MAGNIFYING_GLASS = 13;        // New in 2.4
 
-var hasAuthorizationToken = false;
+var authorizationToken = null;
 var axiosHeaders = {};
-
 
 function getParameterFromUrl(key) {
   var url = window.location.search.substring(1);
@@ -156,26 +155,38 @@ function RefreshTooltips()
 
 function TriggerDownloadFromUri(uri, filename, mime)
 {
-  if (hasAuthorizationToken) {
-    axios.get(uri, {
-      headers: axiosHeaders,
-      responseType: 'arraybuffer'
-    })
-      .then(function(response) {
-        const blob = new Blob([ response.data ], { type: mime });
-        const url = URL.createObjectURL(blob);
+  if (authorizationToken) {
+    if (false)  // old code used up to v3.0 but sometimes limited by the memory available in the browser
+    {
+      axios.get(uri, {
+        headers: axiosHeaders,
+        responseType: 'arraybuffer'
+      })
+        .then(function(response) {
+          const blob = new Blob([ response.data ], { type: mime });
+          const url = URL.createObjectURL(blob);
 
-        //window.open(url, '_blank');
+          //window.open(url, '_blank');
 
-        // https://stackoverflow.com/a/19328891
+          // https://stackoverflow.com/a/19328891
+          var a = document.createElement("a");
+          document.body.appendChild(a);
+          a.style = "display: none";
+          a.href = url;
+          a.download = filename;
+          a.click();
+          window.URL.revokeObjectURL(url);
+        });
+      }
+      else
+      {
         var a = document.createElement("a");
         document.body.appendChild(a);
         a.style = "display: none";
-        a.href = url;
+        a.href = uri + (uri.includes('?') ? '&' : '?') + "token=" + authorizationToken; 
         a.download = filename;
         a.click();
-        window.URL.revokeObjectURL(url);
-      });
+      }
 
   } else {
     // This version was used in Stone Web viewer <= 2.4, but doesn't
@@ -341,15 +352,22 @@ Vue.component('viewport', {
               else {
                 var uri = that.globalConfiguration.OrthancApiRoot + '/instances/' + response.data[0] + '/frames/0/raw';
 
-                if (hasAuthorizationToken) {
-                  axios.get(uri, {
-                    headers: axiosHeaders,
-                    responseType: 'arraybuffer'
-                  })
-                    .then(function(response) {
-                      const blob = new Blob([ response.data ]);
-                      that.videoUri = URL.createObjectURL(blob);
-                    });
+                if (authorizationToken) {
+                  if (false)   // old code used up to v3.0 but sometimes limited by the memory available in the browser
+                  {
+                    axios.get(uri, {
+                      headers: axiosHeaders,
+                      responseType: 'arraybuffer'
+                    })
+                      .then(function(response) {
+                        const blob = new Blob([ response.data ]);
+                        that.videoUri = URL.createObjectURL(blob);
+                      });
+                  }
+                  else
+                  {
+                    that.videoUri = uri + (uri.includes('?') ? '&' : '?') + "token=" + authorizationToken; 
+                  }
                 } else {
                   that.videoUri = uri;
                 }
@@ -1595,7 +1613,7 @@ window.addEventListener('StoneInitialized', function() {
   // Bearer token is new in Stone Web viewer 2.0
   var token = getParameterFromUrl('token');
   if (token !== undefined) {
-    hasAuthorizationToken = true;
+    authorizationToken = token;
     stone.AddHttpHeader('Authorization', 'Bearer ' + token);
     axiosHeaders['Authorization'] = 'Bearer ' + token;
   }

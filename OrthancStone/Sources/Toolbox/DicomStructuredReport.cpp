@@ -42,6 +42,7 @@
 #include <dcmtk/dcmdata/dcfilefo.h>
 
 #include <algorithm>  // For std::max()
+#include <boost/lexical_cast.hpp>
 
 
 static std::string FormatTag(const DcmTagKey& key)

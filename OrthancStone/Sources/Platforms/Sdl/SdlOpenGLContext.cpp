@@ -72,7 +72,7 @@ namespace OrthancStone
         GLenum err = glewInit();
         if (GLEW_OK != err)
         {
-          LOG(ERROR) << std::string(glewGetErrorString(err));
+          LOG(ERROR) << reinterpret_cast<const char*>(glewGetErrorString(err));
           throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
                                           "Cannot initialize glew");
         }

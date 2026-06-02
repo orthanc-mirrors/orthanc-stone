@@ -81,7 +81,11 @@ namespace OrthancStone
         const std::set<Orthanc::DicomTag> ignoreTagLength;
         std::unique_ptr<Orthanc::DicomValue> value(
           Orthanc::FromDcmtkBridge::ConvertLeafElement(
-            *element, Orthanc::DicomToJsonFlags_None, 0, Orthanc::Encoding_Ascii, false, ignoreTagLength, vr));
+            *element, Orthanc::DicomToJsonFlags_None, 0,
+#if ORTHANC_FRAMEWORK_VERSION_IS_ABOVE(1, 12, 12)
+            0, /* maxBinaryArrayLength: introduced by https://orthanc.uclouvain.be/hg/orthanc/rev/5f1e9d5cfb52 */
+#endif
+            Orthanc::Encoding_Ascii, false, ignoreTagLength, vr));
         return value->CopyToString(result, false /* no binary */);
       }
     }

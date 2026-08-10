@@ -171,7 +171,7 @@ float OrthancStone::GeometryToolbox::ComputeBilinearInterpolationUnitSquare(floa
   // This function only works within the unit square
   assert(x >= 0 && y >= 0 && x <= 1 && y <= 1);
 
-  // https://en.wikipedia.org/wiki/Bilinear_interpolation#Unit_square
+  // https://en.wikipedia.org/wiki/Bilinear_interpolation#On_the_unit_square
   return (f00 * (1.0f - x) * (1.0f - y) +
           f01 * x * (1.0f - y) +
           f10 * (1.0f - x) * y +

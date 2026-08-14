@@ -105,6 +105,7 @@ add_executable(UnitTests
 
   # Tests that are not compatible with WebAssembly
 
+  # ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/DataSourceTests.cpp
   # ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/FileStorageTests.cpp
   # ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/JobsTests.cpp
   # ${ORTHANC_FRAMEWORK_ROOT}/../UnitTestsSources/MemoryCacheTests.cpp

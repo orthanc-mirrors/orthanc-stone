@@ -59,6 +59,7 @@ SET(ENABLE_LOCALE ON)  # Necessary for text rendering
 SET(ENABLE_MODULE_JOBS OFF)
 SET(ENABLE_PUGIXML ON) # Necessary for OsiriX annotations
 SET(ORTHANC_SANDBOXED ON)
+SET(ORTHANC_ENABLE_THREADS OFF)  # Compatibility with Orthanc framework >= 1.13.0
 
 # this will set up the build system for Stone of Orthanc and will
 # populate the ORTHANC_STONE_SOURCES CMake variable

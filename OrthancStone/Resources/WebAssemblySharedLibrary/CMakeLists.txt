@@ -68,6 +68,7 @@ SET(ENABLE_DCMTK_TRANSCODING OFF)
 SET(ENABLE_GOOGLE_TEST OFF)
 SET(ENABLE_LOCALE ON)  # Necessary for text rendering
 SET(ORTHANC_SANDBOXED ON)
+SET(ORTHANC_ENABLE_THREADS OFF)  # Compatibility with Orthanc framework >= 1.13.0
 
 include(${CMAKE_SOURCE_DIR}/../OrthancStoneWebAssemblyConfiguration.cmake)
 

@@ -62,6 +62,7 @@ SET(ENABLE_LUA ON)     # Necessary for the tests of the Orthanc framework
 SET(ENABLE_MODULE_JOBS OFF)
 SET(ENABLE_PUGIXML ON) # Necessary for the tests of the Orthanc framework
 SET(ORTHANC_SANDBOXED ON)
+SET(ORTHANC_ENABLE_THREADS OFF)  # Compatibility with Orthanc framework >= 1.13.0
 
 # this will set up the build system for Stone of Orthanc and will
 # populate the ORTHANC_STONE_SOURCES CMake variable

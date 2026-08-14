@@ -104,10 +104,17 @@ if (ENABLE_WEB_CLIENT)
 endif()
 
 
-if (ENABLE_THREADS)
-  add_definitions(-DORTHANC_ENABLE_THREADS=1)
+if (DEFINED ORTHANC_ENABLE_THREADS)   # Compatibility with Orthanc framework >= 1.13.0
+  if ((ORTHANC_ENABLE_THREADS AND NOT ENABLE_THREADS) OR
+      (NOT ORTHANC_ENABLE_THREADS AND ENABLE_THREADS))
+    message(FATAL_ERROR "Mismatch between ORTHANC_ENABLE_THREADS and ENABLE_THREADS")
+  endif()
 else()
-  add_definitions(-DORTHANC_ENABLE_THREADS=0)
+  if (ENABLE_THREADS)
+    add_definitions(-DORTHANC_ENABLE_THREADS=1)
+  else()
+    add_definitions(-DORTHANC_ENABLE_THREADS=0)
+  endif()
 endif()
 
 

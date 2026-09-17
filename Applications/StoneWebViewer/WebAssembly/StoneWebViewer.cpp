@@ -4872,6 +4872,35 @@ static void SetHighlightedColor(const OrthancStone::Color& color)
 }
 
 
+
+// TODO Refactoring
+#include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyEnvironment.h"
+#include "../../../OrthancStone/Sources/Oracle/SleepOracleCommand.h"
+
+static OrthancStone::WebAssemblyEnvironment  environment_;
+static OrthancStone::New::WebAssemblyOracle  oracle_(environment_);
+
+class Toto : public OrthancStone::IOracleClient
+{
+public:
+  virtual void HandleSuccessFromOracle(const OrthancStone::IOracleCommand& command,
+                                       const Orthanc::IDynamicObject& result)
+  {
+    LOG(ERROR) << "success!";
+  }
+
+  virtual void HandleErrorFromOracle(const OrthancStone::IOracleCommand& command,
+                                     const Orthanc::OrthancException& error)
+  {
+    LOG(ERROR) << "error!";
+  }
+};
+
+static boost::shared_ptr<Toto> toto_(new Toto);
+// END TODO Refactoring
+
+
+
 extern "C"
 {
   int main(int argc, char const *argv[]) 
@@ -4905,6 +4934,10 @@ extern "C"
     }
 
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");
+
+
+    // TODO Refactoring
+    oracle_.Submit(toto_, new OrthancStone::SleepOracleCommand(2000));
   }
 
 

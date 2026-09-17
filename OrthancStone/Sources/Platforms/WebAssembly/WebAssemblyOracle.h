@@ -35,6 +35,7 @@
 
 #include "../../Messages/IObservable.h"
 #include "../../Messages/IMessageEmitter.h"
+#include "../../Oracle/IEnvironment.h"
 #include "../../Oracle/IOracle.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1
@@ -153,4 +154,25 @@ namespace OrthancStone
       bool HasPixelData() const;
     };    
   };
+
+
+  namespace New
+  {
+    class WebAssemblyOracle : public IOracle
+    {
+    private:
+      class TimeoutCallback;
+
+      IEnvironment&  environment_;
+
+    public:
+      WebAssemblyOracle(IEnvironment& environment) :
+        environment_(environment)
+      {
+      }
+
+      virtual void Submit(const boost::shared_ptr<IOracleClient>& client,
+                          IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
+    };
+  }
 }

@@ -432,4 +432,61 @@ namespace OrthancStone
       }
     }
   }
+
+
+
+  namespace New
+  {
+    class ThreadedOracle::SleepRunnable : public Orthanc::IRunnable
+    {
+    private:
+
+
+    public:
+      virtual void Run() ORTHANC_OVERRIDE
+      {
+      }
+    };
+
+
+    ThreadedOracle::ThreadedOracle(IEnvironment& environment,
+                                   unsigned int countWorkers) :
+      environment_(environment),
+      sleepingThread_(new SleepRunnable, 50 /* milliseconds */)
+    {
+      threadPool_.SetThreadsCount(countWorkers);
+      threadPool_.SetDequeueTimeout(50);
+    }
+
+
+    void ThreadedOracle::Submit(const boost::shared_ptr<IOracleClient>& client,
+                                IOracleCommand* command /* takes ownership */)
+    {
+      std::unique_ptr<IOracleCommand> protection(command);
+
+      if (command == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+
+      try
+      {
+        switch (command->GetType())
+        {
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                            "Command type not implemented by the Threaded Oracle: " +
+                                            boost::lexical_cast<std::string>(command->GetType()));
+        }
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        environment_.NotifyOracleError(client, protection.release(), e);
+      }
+      catch (...)
+      {
+        environment_.NotifyOracleError(client, protection.release(), Orthanc::OrthancException(Orthanc::ErrorCode_InternalError));
+      }
+    }
+  }
 }

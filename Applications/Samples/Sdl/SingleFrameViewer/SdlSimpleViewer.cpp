@@ -54,6 +54,39 @@ static std::string instanceId;
 static int frameIndex = 0;
 
 
+
+// TODO Refactoring
+#include "../../../../OrthancStone/Sources/Platforms/Native/NativeEnvironment.h"
+#include "../../../../OrthancStone/Sources/Oracle/SleepOracleCommand.h"
+#include "../../../../OrthancStone/Sources/Oracle/ThreadedOracle.h"
+
+static OrthancStone::NativeEnvironment  environment_;
+static OrthancStone::New::ThreadedOracle oracle_(environment_, 4 /* threads */);
+
+
+class Toto : public OrthancStone::IOracleClient
+{
+public:
+  virtual void HandleSuccessFromOracle(const OrthancStone::IOracleCommand& command,
+                                       const Orthanc::IDynamicObject& result)
+  {
+    LOG(ERROR) << "success!";
+  }
+
+  virtual void HandleErrorFromOracle(const OrthancStone::IOracleCommand& command,
+                                     const Orthanc::OrthancException& error)
+  {
+    LOG(ERROR) << "error!";
+  }
+};
+
+static boost::shared_ptr<Toto> toto_(new Toto);
+// END TODO Refactoring
+
+
+
+
+
 static void ProcessOptions(int argc, char* argv[])
 {
   namespace po = boost::program_options;
@@ -181,6 +214,8 @@ int main(int argc, char* argv[])
 
       context.StartOracle();
 
+      environment_.Start();
+
       {
         {
           std::string font;
@@ -261,6 +296,11 @@ int main(int argc, char* argv[])
               {
                 switch (event.key.keysym.sym)
                 {
+                  case SDLK_b:
+                    // TODO Refactoring
+                    oracle_.Submit(toto_, new OrthancStone::SleepOracleCommand(1000));
+                    break;
+
                   case SDLK_f:
                     viewport->ToggleMaximize();
                     break;
@@ -519,6 +559,8 @@ int main(int argc, char* argv[])
           }
         }
         context.StopOracle();
+
+        environment_.Stop();
       }
     }
 

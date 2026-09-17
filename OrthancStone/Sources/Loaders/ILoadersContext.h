@@ -70,6 +70,7 @@ namespace OrthancStone
                             int priority,
                             IOracleCommand* command /* Takes ownership */) = 0;
 
+    private:
       /**
        * Cancel all the commands that are waiting in the
        * "OracleScheduler" queue and that are linked to the given
@@ -91,6 +92,9 @@ namespace OrthancStone
        **/
       virtual void CancelAllRequests() = 0;
 
+    public:
+      // TODO Refactoring - Remove this
+
       /**
        * Add a reference to the given observer in the Stone loaders
        * context. This can be used to match the lifetime of a loader
@@ -102,6 +106,7 @@ namespace OrthancStone
        **/
       virtual void AddLoader(boost::shared_ptr<IObserver> loader) = 0;
 
+    private:
       /**
        * Returns the number of commands that were scheduled and
        * processed using the "Schedule()" method. By "processed"

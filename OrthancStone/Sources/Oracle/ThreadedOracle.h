@@ -42,11 +42,14 @@
 #  include "../Toolbox/ParsedDicomCache.h"
 #endif
 
-#include "IOracle.h"
-#include "GenericOracleRunner.h"
 #include "../Messages/IMessageEmitter.h"
+#include "../Platforms/Native/RunnableThread.h"
+#include "GenericOracleRunner.h"
+#include "IEnvironment.h"
+#include "IOracle.h"
 
 #include <MultiThreading/SharedMessageQueue.h>
+#include <MultiThreading/ThreadPool.h>
 
 
 namespace OrthancStone
@@ -112,4 +115,38 @@ namespace OrthancStone
     virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
                           IOracleCommand* command) ORTHANC_OVERRIDE;
   };
+
+
+  namespace New
+  {
+    class ThreadedOracle : public IOracle
+    {
+    private:
+      class SleepCommands;
+      class SleepRunnable;
+
+      IEnvironment&        environment_;
+      RunnableThread       sleepingThread_;
+      Orthanc::ThreadPool  threadPool_;
+
+    public:
+      ThreadedOracle(IEnvironment& environment,
+                     unsigned int countWorkers);
+
+      void Start()
+      {
+        sleepingThread_.Start();
+        threadPool_.Start();
+      }
+
+      void Stop()
+      {
+        threadPool_.Stop();
+        sleepingThread_.Stop();
+      }
+
+      virtual void Submit(const boost::shared_ptr<IOracleClient>& client,
+                          IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
+    };
+  }
 }

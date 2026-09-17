@@ -23,44 +23,50 @@
 
 #pragma once
 
-#include "../Messages/IObserver.h"
-#include "IOracleCommand.h"
-#include "IOracleClient.h"
+#include <OrthancFramework.h>   // Needed before IRunnable in Orthanc <= 1.13.0
 
-#include <OrthancException.h>
+#include <MultiThreading/IRunnable.h>
 
-#include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
+
 
 namespace OrthancStone
 {
-  class IOracle : public boost::noncopyable
+  // This is a thread that periodically executes a runnable
+  class RunnableThread : public boost::noncopyable
   {
-  public:
-    virtual ~IOracle()
+  private:
+    enum State
     {
+      State_Initialization,
+      State_Running,
+      State_Done
+    };
+
+    static void Worker(RunnableThread* that);
+
+    void StopInternal(bool throws);
+
+    boost::mutex                         mutex_;
+    std::unique_ptr<Orthanc::IRunnable>  runnable_;
+    unsigned int                         timeResolution_;
+    volatile State                       state_;
+    boost::thread                        thread_;
+
+  public:
+    RunnableThread(Orthanc::IRunnable* runnable,
+                   unsigned int timeResolution);
+
+    ~RunnableThread()
+    {
+      StopInternal(false /* no exception in destructors */);
     }
 
-    /**
-     * Returns "true" iff the command has actually been queued. If
-     * "false" is returned, the command has been freed, and it won't
-     * be processed (this is the case if the oracle is stopped).
-     **/
-    virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
-                          IOracleCommand* command) = 0;  // Takes ownership
-  };
+    void Start();
 
-
-  namespace New
-  {
-    class IOracle : public boost::noncopyable
+    void Stop()
     {
-    public:
-      virtual ~IOracle()
-      {
-      }
-
-      virtual void Submit(const boost::shared_ptr<IOracleClient>& client,
-                          IOracleCommand* command /* takes ownership */) = 0;
-    };
-  }
+      StopInternal(true);
+    }
+  };
 }

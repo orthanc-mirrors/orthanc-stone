@@ -48,6 +48,7 @@ add_definitions(
 
 list(APPEND ORTHANC_STONE_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/../../Sources/Platforms/WebAssembly/WebAssemblyCairoViewport.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/../../Sources/Platforms/WebAssembly/WebAssemblyEnvironment.cpp
   ${CMAKE_CURRENT_LIST_DIR}/../../Sources/Platforms/WebAssembly/WebAssemblyLoadersContext.cpp
   ${CMAKE_CURRENT_LIST_DIR}/../../Sources/Platforms/WebAssembly/WebAssemblyOracle.cpp
   ${CMAKE_CURRENT_LIST_DIR}/../../Sources/Platforms/WebAssembly/WebAssemblyViewport.cpp

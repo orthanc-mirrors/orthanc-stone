@@ -875,4 +875,84 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
+
+
+
+  namespace New
+  {
+    class WebAssemblyOracle::TimeoutCallback
+    {
+    private:
+      IEnvironment&                        environment_;
+      boost::weak_ptr<IOracleClient>       client_;
+      std::unique_ptr<SleepOracleCommand>  command_;
+
+    public:
+      TimeoutCallback(IEnvironment& environment,
+                      const boost::weak_ptr<IOracleClient>& client,
+                      SleepOracleCommand* command) :
+        environment_(environment),
+        client_(client),
+        command_(command)
+      {
+        if (command == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+      }
+
+      void Notify()
+      {
+        assert(environment_.get() != NULL);
+        assert(command_.get() != NULL);
+        environment_.NotifyOracleSuccess(client_, command_.release(), new Orthanc::IDynamicObject);
+      }
+
+      static void Callback(void *userData)
+      {
+        std::unique_ptr<TimeoutCallback> callback(reinterpret_cast<TimeoutCallback*>(userData));
+        callback->Notify();
+      }
+    };
+
+
+    void WebAssemblyOracle::Submit(const boost::shared_ptr<IOracleClient>& client,
+                                   IOracleCommand* command /* takes ownership */)
+    {
+      // TODO Refactoring - Use "priority"
+
+      std::unique_ptr<IOracleCommand> protection(command);
+
+      if (command == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+
+      try
+      {
+        switch (command->GetType())
+        {
+          case IOracleCommand::Type_Sleep:
+          {
+            unsigned int timeoutMS = dynamic_cast<SleepOracleCommand*>(command)->GetDelay();
+            emscripten_set_timeout(TimeoutCallback::Callback, timeoutMS,
+                                   new TimeoutCallback(environment_, client, dynamic_cast<SleepOracleCommand*>(protection.release())));
+            break;
+          }
+
+          default:
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                            "Command type not implemented by the WebAssembly Oracle: " + command->GetType());
+        }
+      }
+      catch (Orthanc::OrthancException& e)
+      {
+        environment_.NotifyOracleError(client, protection.release(), e);
+      }
+      catch (...)
+      {
+        environment_.NotifyOracleError(client, protection.release(), Orthanc::OrthancException(Orthanc::ErrorCode_InternalError));
+      }
+    }
+  }
 }

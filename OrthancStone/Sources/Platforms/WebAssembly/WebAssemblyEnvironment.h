@@ -23,44 +23,19 @@
 
 #pragma once
 
-#include "../Messages/IObserver.h"
-#include "IOracleCommand.h"
-#include "IOracleClient.h"
-
-#include <OrthancException.h>
-
-#include <boost/shared_ptr.hpp>
+#include "../../Oracle/IEnvironment.h"
 
 namespace OrthancStone
 {
-  class IOracle : public boost::noncopyable
+  class WebAssemblyEnvironment : public IEnvironment
   {
   public:
-    virtual ~IOracle()
-    {
-    }
+    virtual void NotifyOracleSuccess(const boost::weak_ptr<IOracleClient>& client,
+                                     IOracleCommand* command /* takes ownership */,
+                                     Orthanc::IDynamicObject* result /* takes ownership */) ORTHANC_OVERRIDE;
 
-    /**
-     * Returns "true" iff the command has actually been queued. If
-     * "false" is returned, the command has been freed, and it won't
-     * be processed (this is the case if the oracle is stopped).
-     **/
-    virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
-                          IOracleCommand* command) = 0;  // Takes ownership
+    virtual void NotifyOracleError(const boost::weak_ptr<IOracleClient>& client,
+                                   IOracleCommand* command /* takes ownership */,
+                                   const Orthanc::OrthancException& error) ORTHANC_OVERRIDE;
   };
-
-
-  namespace New
-  {
-    class IOracle : public boost::noncopyable
-    {
-    public:
-      virtual ~IOracle()
-      {
-      }
-
-      virtual void Submit(const boost::shared_ptr<IOracleClient>& client,
-                          IOracleCommand* command /* takes ownership */) = 0;
-    };
-  }
 }

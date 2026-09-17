@@ -25,6 +25,7 @@
 
 #include <OrthancFramework.h>   // Needed before IRunnable in Orthanc <= 1.13.0
 
+#include <Compatibility.h>
 #include <MultiThreading/IRunnable.h>
 
 #include <boost/thread.hpp>

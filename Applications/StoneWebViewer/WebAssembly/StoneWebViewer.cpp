@@ -4878,7 +4878,7 @@ static void SetHighlightedColor(const OrthancStone::Color& color)
 #include "../../../OrthancStone/Sources/Oracle/SleepOracleCommand.h"
 
 static OrthancStone::WebAssemblyEnvironment  environment_;
-static OrthancStone::New::WebAssemblyOracle  oracle_(environment_);
+static OrthancStone::New::WebAssemblyOracle  oracle_;
 
 class Toto : public OrthancStone::IOracleClient
 {
@@ -4937,7 +4937,7 @@ extern "C"
 
 
     // TODO Refactoring
-    oracle_.Submit(toto_, new OrthancStone::SleepOracleCommand(2000));
+    oracle_.Submit(environment_, toto_, new OrthancStone::SleepOracleCommand(2000));
   }
 
 

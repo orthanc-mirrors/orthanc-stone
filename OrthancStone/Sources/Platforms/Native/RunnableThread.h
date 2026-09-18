@@ -69,5 +69,10 @@ namespace OrthancStone
     {
       StopInternal(true);
     }
+
+    Orthanc::IRunnable& GetRunnable() const
+    {
+      return *runnable_;
+    }
   };
 }

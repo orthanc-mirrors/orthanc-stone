@@ -266,6 +266,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Oracle/GetOrthancImageCommand.cpp
   ${ORTHANC_STONE_ROOT}/Oracle/GetOrthancWebViewerJpegCommand.cpp
   ${ORTHANC_STONE_ROOT}/Oracle/HttpCommand.cpp
+  ${ORTHANC_STONE_ROOT}/Oracle/OracleCallback.cpp
   ${ORTHANC_STONE_ROOT}/Oracle/OracleCommandBase.cpp
   ${ORTHANC_STONE_ROOT}/Oracle/OrthancRestApiCommand.cpp
   ${ORTHANC_STONE_ROOT}/Oracle/ParseDicomFromFileCommand.cpp

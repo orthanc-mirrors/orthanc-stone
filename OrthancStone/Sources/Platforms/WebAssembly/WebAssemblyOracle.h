@@ -160,18 +160,9 @@ namespace OrthancStone
   {
     class WebAssemblyOracle : public IOracle
     {
-    private:
-      class TimeoutCallback;
-
-      IEnvironment&  environment_;
-
     public:
-      WebAssemblyOracle(IEnvironment& environment) :
-        environment_(environment)
-      {
-      }
-
-      virtual void Submit(const boost::shared_ptr<IOracleClient>& client,
+      virtual void Submit(IEnvironment& environment,
+                          const boost::shared_ptr<IOracleClient>& client,
                           IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
     };
   }

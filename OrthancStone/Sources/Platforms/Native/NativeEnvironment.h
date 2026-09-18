@@ -39,7 +39,7 @@ namespace OrthancStone
     class SuccessCompletion;
     class ErrorCompletion;
 
-    boost::mutex                 mutex_;  // Main mutex of the application, to go single-threaded
+    boost::recursive_mutex       mutex_;  // Main mutex of the application, to go single-threaded
     Orthanc::SharedMessageQueue  oracleQueue_;
     RunnableThread               oracleThread_;
 

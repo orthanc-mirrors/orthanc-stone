@@ -23,6 +23,7 @@
 
 #include "ThreadedOracle.h"
 
+#include "OracleCallback.h"
 #include "SleepOracleCommand.h"
 
 #include <Logging.h>
@@ -132,7 +133,7 @@ namespace OrthancStone
       const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
 
       Content  stillSleeping;
-        
+
       for (Content::iterator it = content_.begin(); it != content_.end(); ++it)
       {
         if (*it != NULL &&
@@ -440,18 +441,91 @@ namespace OrthancStone
     class ThreadedOracle::SleepRunnable : public Orthanc::IRunnable
     {
     private:
+      class Item : public boost::noncopyable
+      {
+      private:
+        OracleCallback            callback_;
+        boost::posix_time::ptime  expiration_;
 
+      public:
+        Item(IEnvironment& environment,
+             const boost::shared_ptr<IOracleClient>& client,
+             SleepOracleCommand* command) :
+          callback_(environment, client, command)
+        {
+          expiration_ = (boost::posix_time::microsec_clock::local_time() +
+                         boost::posix_time::milliseconds(command->GetDelay()));
+        }
+
+        const boost::posix_time::ptime& GetExpirationTime() const
+        {
+          return expiration_;
+        }
+
+        OracleCallback& GetCallback()
+        {
+          return callback_;
+        }
+      };
+
+      typedef std::list<Item*>  Content;
+
+      boost::mutex  mutex_;
+      Content       content_;
 
     public:
+      ~SleepRunnable()
+      {
+        for (Content::iterator it = content_.begin(); it != content_.end(); ++it)
+        {
+          if (*it != NULL)
+          {
+            delete *it;
+          }
+        }
+      }
+
+
+      void Add(IEnvironment& environment,
+               const boost::shared_ptr<IOracleClient>& client,
+               SleepOracleCommand* command /* takes ownership */)
+      {
+        boost::mutex::scoped_lock lock(mutex_);
+        content_.push_back(new Item(environment, client, command));
+      }
+
+
+      // Awakes expired sleeps
       virtual void Run() ORTHANC_OVERRIDE
       {
+        boost::mutex::scoped_lock lock(mutex_);
+
+        const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+
+        Content  stillSleeping;
+
+        for (Content::iterator it = content_.begin(); it != content_.end(); ++it)
+        {
+          if (*it != NULL &&
+              (*it)->GetExpirationTime() <= now)
+          {
+            (*it)->GetCallback().NotifySuccess(new Orthanc::IDynamicObject);
+            delete *it;
+            *it = NULL;
+          }
+          else
+          {
+            stillSleeping.push_back(*it);
+          }
+        }
+
+        // Compact the still-sleeping commands
+        content_ = stillSleeping;
       }
     };
 
 
-    ThreadedOracle::ThreadedOracle(IEnvironment& environment,
-                                   unsigned int countWorkers) :
-      environment_(environment),
+    ThreadedOracle::ThreadedOracle(unsigned int countWorkers) :
       sleepingThread_(new SleepRunnable, 50 /* milliseconds */)
     {
       threadPool_.SetThreadsCount(countWorkers);
@@ -459,12 +533,28 @@ namespace OrthancStone
     }
 
 
-    void ThreadedOracle::Submit(const boost::shared_ptr<IOracleClient>& client,
+    void ThreadedOracle::Start()
+    {
+      sleepingThread_.Start();
+      threadPool_.Start();
+    }
+
+
+    void ThreadedOracle::Stop()
+    {
+      threadPool_.Stop();
+      sleepingThread_.Stop();
+    }
+
+
+    void ThreadedOracle::Submit(IEnvironment& environment,
+                                const boost::shared_ptr<IOracleClient>& client,
                                 IOracleCommand* command /* takes ownership */)
     {
       std::unique_ptr<IOracleCommand> protection(command);
 
-      if (command == NULL)
+      if (!client ||
+          command == NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
@@ -473,6 +563,13 @@ namespace OrthancStone
       {
         switch (command->GetType())
         {
+          case IOracleCommand::Type_Sleep:
+          {
+            SleepRunnable& runnable = dynamic_cast<SleepRunnable&>(sleepingThread_.GetRunnable());
+            runnable.Add(environment, client, dynamic_cast<SleepOracleCommand*>(protection.release()));
+            break;
+          }
+
           default:
             throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
                                             "Command type not implemented by the Threaded Oracle: " +
@@ -481,11 +578,11 @@ namespace OrthancStone
       }
       catch (Orthanc::OrthancException& e)
       {
-        environment_.NotifyOracleError(client, protection.release(), e);
+        environment.NotifyOracleError(client, protection.release(), e);
       }
       catch (...)
       {
-        environment_.NotifyOracleError(client, protection.release(), Orthanc::OrthancException(Orthanc::ErrorCode_InternalError));
+        environment.NotifyOracleError(client, protection.release(), Orthanc::OrthancException(Orthanc::ErrorCode_InternalError));
       }
     }
   }

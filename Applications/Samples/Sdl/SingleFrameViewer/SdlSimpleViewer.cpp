@@ -61,7 +61,7 @@ static int frameIndex = 0;
 #include "../../../../OrthancStone/Sources/Oracle/ThreadedOracle.h"
 
 static OrthancStone::NativeEnvironment  environment_;
-static OrthancStone::New::ThreadedOracle oracle_(environment_, 4 /* threads */);
+static OrthancStone::New::ThreadedOracle oracle_(4 /* threads */);
 
 
 class Toto : public OrthancStone::IOracleClient
@@ -215,6 +215,7 @@ int main(int argc, char* argv[])
       context.StartOracle();
 
       environment_.Start();
+      oracle_.Start();
 
       {
         {
@@ -298,7 +299,7 @@ int main(int argc, char* argv[])
                 {
                   case SDLK_b:
                     // TODO Refactoring
-                    oracle_.Submit(toto_, new OrthancStone::SleepOracleCommand(1000));
+                    oracle_.Submit(environment_, toto_, new OrthancStone::SleepOracleCommand(1000));
                     break;
 
                   case SDLK_f:
@@ -560,6 +561,7 @@ int main(int argc, char* argv[])
         }
         context.StopOracle();
 
+        oracle_.Stop();
         environment_.Stop();
       }
     }

@@ -23,46 +23,24 @@
 
 #pragma once
 
-#include "../Messages/IObserver.h"
 #include "IEnvironment.h"
-#include "IOracleClient.h"
-#include "IOracleCommand.h"
-
-#include <OrthancException.h>
-
-#include <boost/shared_ptr.hpp>
 
 namespace OrthancStone
 {
-  class IOracle : public boost::noncopyable
+  class OracleCallback : public boost::noncopyable
   {
+  private:
+    IEnvironment&                    environment_;
+    boost::weak_ptr<IOracleClient>   client_;
+    std::unique_ptr<IOracleCommand>  command_;
+
   public:
-    virtual ~IOracle()
-    {
-    }
+    OracleCallback(IEnvironment& environment,
+                   const boost::shared_ptr<IOracleClient>& client,
+                   IOracleCommand* command /* takes ownership */);
 
-    /**
-     * Returns "true" iff the command has actually been queued. If
-     * "false" is returned, the command has been freed, and it won't
-     * be processed (this is the case if the oracle is stopped).
-     **/
-    virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
-                          IOracleCommand* command) = 0;  // Takes ownership
+    void NotifySuccess(Orthanc::IDynamicObject* result);
+
+    void NotifyError(const Orthanc::OrthancException& error);
   };
-
-
-  namespace New
-  {
-    class IOracle : public boost::noncopyable
-    {
-    public:
-      virtual ~IOracle()
-      {
-      }
-
-      virtual void Submit(IEnvironment& environment,
-                          const boost::shared_ptr<IOracleClient>& client,
-                          IOracleCommand* command /* takes ownership */) = 0;
-    };
-  }
 }

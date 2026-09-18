@@ -122,30 +122,20 @@ namespace OrthancStone
     class ThreadedOracle : public IOracle
     {
     private:
-      class SleepCommands;
       class SleepRunnable;
 
-      IEnvironment&        environment_;
       RunnableThread       sleepingThread_;
       Orthanc::ThreadPool  threadPool_;
 
     public:
-      ThreadedOracle(IEnvironment& environment,
-                     unsigned int countWorkers);
+      ThreadedOracle(unsigned int countWorkers);
 
-      void Start()
-      {
-        sleepingThread_.Start();
-        threadPool_.Start();
-      }
+      void Start();
 
-      void Stop()
-      {
-        threadPool_.Stop();
-        sleepingThread_.Stop();
-      }
+      void Stop();
 
-      virtual void Submit(const boost::shared_ptr<IOracleClient>& client,
+      virtual void Submit(IEnvironment& environment,
+                          const boost::shared_ptr<IOracleClient>& client,
                           IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
     };
   }

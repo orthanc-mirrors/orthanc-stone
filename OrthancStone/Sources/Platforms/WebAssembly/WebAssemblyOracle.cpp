@@ -29,6 +29,7 @@
 #  include <Oracle/WebAssemblyOracle_Includes.h>
 #endif
 
+#include "../../Oracle/OracleCallback.h"
 #include "../../Toolbox/StoneToolbox.h"
 
 #include <OrthancException.h>
@@ -880,43 +881,15 @@ namespace OrthancStone
 
   namespace New
   {
-    class WebAssemblyOracle::TimeoutCallback
+    static void TimeoutCallback(void *userData)
     {
-    private:
-      IEnvironment&                        environment_;
-      boost::weak_ptr<IOracleClient>       client_;
-      std::unique_ptr<SleepOracleCommand>  command_;
-
-    public:
-      TimeoutCallback(IEnvironment& environment,
-                      const boost::weak_ptr<IOracleClient>& client,
-                      SleepOracleCommand* command) :
-        environment_(environment),
-        client_(client),
-        command_(command)
-      {
-        if (command == NULL)
-        {
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-        }
-      }
-
-      void Notify()
-      {
-        assert(environment_.get() != NULL);
-        assert(command_.get() != NULL);
-        environment_.NotifyOracleSuccess(client_, command_.release(), new Orthanc::IDynamicObject);
-      }
-
-      static void Callback(void *userData)
-      {
-        std::unique_ptr<TimeoutCallback> callback(reinterpret_cast<TimeoutCallback*>(userData));
-        callback->Notify();
-      }
-    };
+      std::unique_ptr<OracleCallback> callback(reinterpret_cast<OracleCallback*>(userData));
+      callback->NotifySuccess(new Orthanc::IDynamicObject);
+    }
 
 
-    void WebAssemblyOracle::Submit(const boost::shared_ptr<IOracleClient>& client,
+    void WebAssemblyOracle::Submit(IEnvironment& environment,
+                                   const boost::shared_ptr<IOracleClient>& client,
                                    IOracleCommand* command /* takes ownership */)
     {
       // TODO Refactoring - Use "priority"
@@ -935,23 +908,24 @@ namespace OrthancStone
           case IOracleCommand::Type_Sleep:
           {
             unsigned int timeoutMS = dynamic_cast<SleepOracleCommand*>(command)->GetDelay();
-            emscripten_set_timeout(TimeoutCallback::Callback, timeoutMS,
-                                   new TimeoutCallback(environment_, client, dynamic_cast<SleepOracleCommand*>(protection.release())));
+            emscripten_set_timeout(TimeoutCallback, timeoutMS,
+                                   new OracleCallback(environment, client, dynamic_cast<SleepOracleCommand*>(protection.release())));
             break;
           }
 
           default:
             throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
-                                            "Command type not implemented by the WebAssembly Oracle: " + command->GetType());
+                                            "Command type not implemented by the WebAssembly Oracle: " +
+                                            boost::lexical_cast<std::string>(command->GetType()));
         }
       }
       catch (Orthanc::OrthancException& e)
       {
-        environment_.NotifyOracleError(client, protection.release(), e);
+        environment.NotifyOracleError(client, protection.release(), e);
       }
       catch (...)
       {
-        environment_.NotifyOracleError(client, protection.release(), Orthanc::OrthancException(Orthanc::ErrorCode_InternalError));
+        environment.NotifyOracleError(client, protection.release(), Orthanc::OrthancException(Orthanc::ErrorCode_InternalError));
       }
     }
   }

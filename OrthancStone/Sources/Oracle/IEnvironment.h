@@ -37,9 +37,15 @@ namespace OrthancStone
     {
     }
 
+    /**
+     * NB: "command" and "result" must be pointers so that they can be
+     * queued, in order to uncouple the worker threads of the oracle
+     * from the mutex of the native environment. Check out
+     * "NativeEnvironment.cpp".
+     **/
     virtual void NotifyOracleSuccess(const boost::weak_ptr<IOracleClient>& client,
                                      IOracleCommand* command /* takes ownership */,
-                                     Orthanc::IDynamicObject* result /* takes ownership */) = 0;
+                                     IMessage* result /* takes ownership */) = 0;
 
     virtual void NotifyOracleError(const boost::weak_ptr<IOracleClient>& client,
                                    IOracleCommand* command /* takes ownership */,

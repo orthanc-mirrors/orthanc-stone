@@ -32,7 +32,7 @@ namespace OrthancStone
   public:
     virtual void NotifyOracleSuccess(const boost::weak_ptr<IOracleClient>& client,
                                      IOracleCommand* command /* takes ownership */,
-                                     Orthanc::IDynamicObject* result /* takes ownership */) ORTHANC_OVERRIDE;
+                                     IMessage* result /* takes ownership */) ORTHANC_OVERRIDE;
 
     virtual void NotifyOracleError(const boost::weak_ptr<IOracleClient>& client,
                                    IOracleCommand* command /* takes ownership */,

@@ -884,7 +884,9 @@ namespace OrthancStone
     static void TimeoutCallback(void *userData)
     {
       std::unique_ptr<OracleCallback> callback(reinterpret_cast<OracleCallback*>(userData));
-      callback->NotifySuccess(new Orthanc::IDynamicObject);
+
+      const SleepOracleCommand& command = dynamic_cast<const SleepOracleCommand&>(callback->GetCommand());  // TODO Refactoring - Remove this
+      callback->NotifySuccess(new SleepOracleCommand::TimeoutMessage(command));
     }
 
 

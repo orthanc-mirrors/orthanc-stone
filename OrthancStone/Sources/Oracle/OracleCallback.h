@@ -39,8 +39,10 @@ namespace OrthancStone
                    const boost::shared_ptr<IOracleClient>& client,
                    IOracleCommand* command /* takes ownership */);
 
-    void NotifySuccess(Orthanc::IDynamicObject* result);
+    void NotifySuccess(IMessage* result);
 
     void NotifyError(const Orthanc::OrthancException& error);
+
+    const IOracleCommand& GetCommand() const;  // TODO Refactoring - Remove this
   };
 }

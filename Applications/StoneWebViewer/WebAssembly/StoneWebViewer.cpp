@@ -4882,13 +4882,13 @@ class Toto : public OrthancStone::IOracleClient
 {
 public:
   virtual void HandleSuccessFromOracle(const OrthancStone::IOracleCommand& command,
-                                       const Orthanc::IDynamicObject& result)
+                                       const OrthancStone::IMessage& result) ORTHANC_OVERRIDE
   {
     LOG(ERROR) << "success!";
   }
 
   virtual void HandleErrorFromOracle(const OrthancStone::IOracleCommand& command,
-                                     const Orthanc::OrthancException& error)
+                                     const Orthanc::OrthancException& error) ORTHANC_OVERRIDE
   {
     LOG(ERROR) << "error!";
   }

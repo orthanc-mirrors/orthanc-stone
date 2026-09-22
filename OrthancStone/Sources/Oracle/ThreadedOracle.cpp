@@ -509,7 +509,8 @@ namespace OrthancStone
           if (*it != NULL &&
               (*it)->GetExpirationTime() <= now)
           {
-            (*it)->GetCallback().NotifySuccess(new Orthanc::IDynamicObject);
+            const SleepOracleCommand& command = dynamic_cast<const SleepOracleCommand&>((*it)->GetCallback().GetCommand()); // TODO Refactoring - Remove this
+            (*it)->GetCallback().NotifySuccess(new SleepOracleCommand::TimeoutMessage(command));
             delete *it;
             *it = NULL;
           }

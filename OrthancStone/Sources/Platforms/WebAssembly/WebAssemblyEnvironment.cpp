@@ -27,10 +27,10 @@ namespace OrthancStone
 {
   void WebAssemblyEnvironment::NotifyOracleSuccess(const boost::weak_ptr<IOracleClient>& client,
                                                    IOracleCommand* command /* takes ownership */,
-                                                   Orthanc::IDynamicObject* result /* takes ownership */)
+                                                   IMessage* result /* takes ownership */)
   {
     std::unique_ptr<IOracleCommand> protection(command);
-    std::unique_ptr<Orthanc::IDynamicObject> protection2(result);
+    std::unique_ptr<IMessage> protection2(result);
 
     if (command == NULL ||
         result == NULL)

@@ -41,9 +41,9 @@ namespace OrthancStone
   }
 
 
-  void OracleCallback::NotifySuccess(Orthanc::IDynamicObject* result)
+  void OracleCallback::NotifySuccess(IMessage* result)
   {
-    std::unique_ptr<Orthanc::IDynamicObject> protection(result);
+    std::unique_ptr<IMessage> protection(result);
 
     if (command_.get() == NULL)
     {
@@ -65,6 +65,19 @@ namespace OrthancStone
     else
     {
       environment_.NotifyOracleError(client_, command_.release(), error);
+    }
+  }
+
+
+  const IOracleCommand& OracleCallback::GetCommand() const
+  {
+    if (command_.get() == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      return *command_;
     }
   }
 }

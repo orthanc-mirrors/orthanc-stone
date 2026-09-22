@@ -63,7 +63,7 @@ class Toto : public OrthancStone::IOracleClient
 {
 public:
   virtual void HandleSuccessFromOracle(const OrthancStone::IOracleCommand& command,
-                                       const Orthanc::IDynamicObject& result)
+                                       const OrthancStone::IMessage& result)
   {
     LOG(ERROR) << "success!";
   }

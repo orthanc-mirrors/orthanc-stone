@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "../Messages/IMessage.h"
 #include "IOracleCommand.h"
 
 #include <OrthancException.h>
@@ -38,7 +39,7 @@ namespace OrthancStone
     }
 
     virtual void HandleSuccessFromOracle(const IOracleCommand& command,
-                                         const Orthanc::IDynamicObject& result) = 0;
+                                         const IMessage& result) = 0;
 
     virtual void HandleErrorFromOracle(const IOracleCommand& command,
                                        const Orthanc::OrthancException& error) = 0;

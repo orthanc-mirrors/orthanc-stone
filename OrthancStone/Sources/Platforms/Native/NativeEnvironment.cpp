@@ -51,12 +51,12 @@ namespace OrthancStone
   class NativeEnvironment::SuccessCompletion : public Completion
   {
   private:
-    std::unique_ptr<Orthanc::IDynamicObject> result_;
+    std::unique_ptr<IMessage>  result_;
 
   public:
     SuccessCompletion(const boost::weak_ptr<IOracleClient>& client,
                       IOracleCommand* command /* takes ownership */,
-                      Orthanc::IDynamicObject* result /* takes ownership */) :
+                      IMessage* result /* takes ownership */) :
       Completion(client, command),
       result_(result)
     {
@@ -135,7 +135,7 @@ namespace OrthancStone
 
   void NativeEnvironment::NotifyOracleSuccess(const boost::weak_ptr<IOracleClient>& client,
                                               IOracleCommand* command /* takes ownership */,
-                                              Orthanc::IDynamicObject* result /* takes ownership */)
+                                              IMessage* result /* takes ownership */)
   {
     oracleQueue_.Enqueue(new SuccessCompletion(client, command, result));
   }

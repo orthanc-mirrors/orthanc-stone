@@ -56,13 +56,8 @@ static int frameIndex = 0;
 
 
 // TODO Refactoring
-#include "../../../../OrthancStone/Sources/Platforms/Native/NativeEnvironment.h"
 #include "../../../../OrthancStone/Sources/Oracle/SleepOracleCommand.h"
-#include "../../../../OrthancStone/Sources/Oracle/ThreadedOracle.h"
-
-static OrthancStone::NativeEnvironment  environment_;
-static OrthancStone::New::ThreadedOracle oracle_(4 /* threads */);
-
+#include "../../../../OrthancStone/Sources/StoneApplication.h"
 
 class Toto : public OrthancStone::IOracleClient
 {
@@ -183,11 +178,13 @@ enum ActiveTool
  **/
 int main(int argc, char* argv[])
 {
+  int status = 0;
+
+  OrthancStone::StoneInitialize();
+  OrthancStone::SdlWindow::GlobalInitialize();
+
   try
   {
-    OrthancStone::StoneInitialize();
-    OrthancStone::SdlWindow::GlobalInitialize();
-    
     ProcessOptions(argc, argv);
 
     //Orthanc::Logging::EnableInfoLevel(true);
@@ -213,9 +210,6 @@ int main(int argc, char* argv[])
       context.SetOrthancParameters(orthancWebService);
 
       context.StartOracle();
-
-      environment_.Start();
-      oracle_.Start();
 
       {
         {
@@ -299,7 +293,7 @@ int main(int argc, char* argv[])
                 {
                   case SDLK_b:
                     // TODO Refactoring
-                    oracle_.Submit(environment_, toto_, new OrthancStone::SleepOracleCommand(1000));
+                    OrthancStone::StoneApplication::GetInstance().Submit(toto_, new OrthancStone::SleepOracleCommand(1000));
                     break;
 
                   case SDLK_f:
@@ -560,34 +554,32 @@ int main(int argc, char* argv[])
           }
         }
         context.StopOracle();
-
-        oracle_.Stop();
-        environment_.Stop();
       }
     }
-
-    OrthancStone::SdlWindow::GlobalFinalize();
-    OrthancStone::StoneFinalize();
-    return 0;
   }
   catch (Orthanc::OrthancException& e)
   {
     LOG(ERROR) << "OrthancException: " << e.What();
-    return -1;
+    status = -1;
   }
   catch (OrthancStone::StoneException& e)
   {
     LOG(ERROR) << "StoneException: " << e.What();
-    return -1;
+    status = -1;
   }
   catch (std::runtime_error& e)
   {
     LOG(ERROR) << "Runtime error: " << e.what();
-    return -1;
+    status = -1;
   }
   catch (...)
   {
     LOG(ERROR) << "Native exception";
-    return -1;
+    status = -1;
   }
+
+  OrthancStone::SdlWindow::GlobalFinalize();
+  OrthancStone::StoneFinalize();
+
+  return status;
 }

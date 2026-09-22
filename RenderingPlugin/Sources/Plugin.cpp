@@ -959,11 +959,7 @@ extern "C"
   {
     OrthancPlugins::SetGlobalContext(context);
 
-#if ORTHANC_FRAMEWORK_VERSION_IS_ABOVE(1, 7, 2)
-    Orthanc::Logging::InitializePluginContext(context);
-#else
-    Orthanc::Logging::Initialize(context);
-#endif
+    OrthancStone::InitializeStone(context);
 
     /* Check the version of the Orthanc core */
     if (OrthancPluginCheckVersion(context) == 0)

@@ -52,6 +52,7 @@
 #include "../../../OrthancStone/Sources/Scene2D/TextSceneLayer.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
 #include "../../../OrthancStone/Sources/StoneException.h"
+#include "../../../OrthancStone/Sources/StoneInitialization.h"
 #include "../../../OrthancStone/Sources/Toolbox/DicomInstanceParameters.h"
 #include "../../../OrthancStone/Sources/Toolbox/DicomStructuredReport.h"
 #include "../../../OrthancStone/Sources/Toolbox/GeometryToolbox.h"
@@ -4874,11 +4875,8 @@ static void SetHighlightedColor(const OrthancStone::Color& color)
 
 
 // TODO Refactoring
-#include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyEnvironment.h"
 #include "../../../OrthancStone/Sources/Oracle/SleepOracleCommand.h"
-
-static OrthancStone::WebAssemblyEnvironment  environment_;
-static OrthancStone::New::WebAssemblyOracle  oracle_;
+#include "../../../OrthancStone/Sources/StoneApplication.h"
 
 class Toto : public OrthancStone::IOracleClient
 {
@@ -4906,7 +4904,8 @@ extern "C"
   int main(int argc, char const *argv[]) 
   {
     printf("Initializing Stone\n");
-    Orthanc::InitializeFramework("", true);
+    OrthancStone::StoneInitialize();
+
     Orthanc::Logging::EnableInfoLevel(true);
     //Orthanc::Logging::EnableTraceLevel(true);
 
@@ -4937,7 +4936,7 @@ extern "C"
 
 
     // TODO Refactoring
-    oracle_.Submit(environment_, toto_, new OrthancStone::SleepOracleCommand(2000));
+    OrthancStone::StoneApplication::GetInstance().Submit(toto_, new OrthancStone::SleepOracleCommand(2000));
   }
 
 

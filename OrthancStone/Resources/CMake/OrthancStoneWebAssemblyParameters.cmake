@@ -27,6 +27,8 @@
 
 include(${CMAKE_CURRENT_LIST_DIR}/OrthancStoneParameters.cmake)
 
+set(TARGET_PLATFORM_WASM ON CACHE INTERNAL "")
+
 
 #####################################################################
 ## CMake parameters tunable by the user

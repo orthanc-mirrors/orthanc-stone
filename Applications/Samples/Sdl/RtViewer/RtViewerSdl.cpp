@@ -460,25 +460,25 @@ boost::weak_ptr<OrthancStone::RtViewerApp> g_app;
  **/
 int main(int argc, char* argv[])
 {
-  using namespace OrthancStone;
-
-  StoneInitialize();
+  OrthancStone::StoneInitialize();
   OrthancStone::SdlWindow::GlobalInitialize();
+
+  int status = 0;
 
   try
   {
-    boost::shared_ptr<RtViewerApp> app = RtViewerApp::Create();
+    boost::shared_ptr<OrthancStone::RtViewerApp> app = OrthancStone::RtViewerApp::Create();
     g_app = app;
     app->RunSdl(argc,argv);
   }
   catch (Orthanc::OrthancException& e)
   {
     LOG(ERROR) << "EXCEPTION: " << e.What();
+    status = 1;
   }
   
   OrthancStone::SdlWindow::GlobalFinalize();
-  StoneFinalize();
+  OrthancStone::StoneFinalize();
 
-  return 0;
+  return status;
 }
-

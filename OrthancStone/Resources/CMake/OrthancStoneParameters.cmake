@@ -66,6 +66,9 @@ endif()
 ## CMake parameters tunable by the user
 #####################################################################
 
+set(TARGET_PLATFORM_WASM OFF CACHE INTERNAL "Target WebAssembly")
+set(TARGET_PLATFORM_NATIVE OFF CACHE INTERNAL "Target native environment")
+
 set(ENABLE_OPENGL ON CACHE BOOL "Enable support of OpenGL")
 
 # Advanced parameters to fine-tune linking against system libraries

@@ -79,6 +79,11 @@ if (ORTHANC_SANDBOXED)
   if (ENABLE_SSL)
     message(FATAL_ERROR "Cannot enable SSL in sandboxed environments")
   endif()
+
+else()
+  if (TARGET_PLATFORM_WASM)
+    message(FATAL_ERROR "WebAssembly is a sandboxed environments")
+  endif()
 endif()
 
 
@@ -170,6 +175,14 @@ add_definitions(
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-DCHECK_OBSERVERS_MESSAGES)
+endif()
+
+if (TARGET_PLATFORM_NATIVE)
+  add_definitions(-DORTHANC_STONE_TARGET_PLATFORM_NATIVE=1)
+endif()
+
+if (TARGET_PLATFORM_WASM)
+  add_definitions(-DORTHANC_STONE_TARGET_PLATFORM_WASM=1)
 endif()
 
 
@@ -327,6 +340,8 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/OneGesturePointerTracker.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/UndoStack.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/ViewportController.cpp
+
+  ${ORTHANC_STONE_ROOT}/StoneApplication.cpp
   ${ORTHANC_STONE_ROOT}/StoneEnumerations.cpp
   ${ORTHANC_STONE_ROOT}/StoneInitialization.cpp
 
@@ -377,7 +392,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Wrappers/CairoSurface.cpp
 
   ${PLATFORM_SOURCES}
-  ${APPLICATIONS_SOURCES}
   ${ORTHANC_CORE_SOURCES}
   ${ORTHANC_DICOM_SOURCES}
 

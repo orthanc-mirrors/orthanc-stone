@@ -413,7 +413,7 @@ The code requires a loader (object that )
 Initialize:
 
 ```
-Orthanc::Logging::Initialize();
+OrthancStone::StoneInitialize();
 Orthanc::Logging::EnableInfoLevel(true);
 ```
 Call, in WASM:

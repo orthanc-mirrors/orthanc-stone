@@ -46,6 +46,7 @@
 #  include <DicomParsing/FromDcmtkBridge.h>
 #endif
 
+#include "StoneApplication.h"
 #include "Toolbox/LinearAlgebra.h"
 
 #include <Logging.h>
@@ -61,28 +62,20 @@ namespace OrthancStone
   {
     if (pluginContext != NULL)
     {
+#if ORTHANC_FRAMEWORK_VERSION_IS_ABOVE(1, 7, 2)
       Orthanc::Logging::InitializePluginContext(pluginContext);
+#else
+      Orthanc::Logging::Initialize(context);
+#endif
     }
     else
     {
       Orthanc::Logging::Initialize();
     }
 
-#if ORTHANC_ENABLE_SSL == 1
-    // Must be before curl
-    Orthanc::Toolbox::InitializeOpenSsl();
-#endif
-
-#if ORTHANC_ENABLE_CURL == 1
-    Orthanc::HttpClient::GlobalInitialize();
-#  if ORTHANC_ENABLE_SSL == 1
-    Orthanc::HttpClient::ConfigureSsl(false, "");
-#  endif
-#endif
+    Orthanc::InitializeFramework("", true);
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    Orthanc::FromDcmtkBridge::InitializeDictionary(true);
-    Orthanc::FromDcmtkBridge::InitializeCodecs();
 #  if DCMTK_VERSION_NUMBER <= 360
     OFLog::configure(OFLogger::FATAL_LOG_LEVEL);
 #  else
@@ -139,23 +132,15 @@ namespace OrthancStone
         }
       }
     }
+
+    StoneApplication::Initialize();
   }
   
 
   void StoneFinalize()
   {
-#if ORTHANC_ENABLE_DCMTK == 1
-    Orthanc::FromDcmtkBridge::FinalizeCodecs();
-#endif
+    StoneApplication::Finalize();
 
-#if ORTHANC_ENABLE_CURL == 1
-    Orthanc::HttpClient::GlobalFinalize();
-#endif
-
-#if ORTHANC_ENABLE_SSL == 1
-    Orthanc::Toolbox::FinalizeOpenSsl();
-#endif
-
-    Orthanc::Logging::Finalize();
+    Orthanc::FinalizeFramework();
   }
 }

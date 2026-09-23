@@ -138,16 +138,14 @@ namespace OrthancStone
   }
 
 
-  static void RunInternal(boost::weak_ptr<IObserver> receiver,
-                          IMessageEmitter& emitter,
+  static void RunInternal(IOracleCallback& callback,
                           const HttpCommand& command)
   {
     std::string answer;
     Orthanc::HttpClient::HttpHeaders answerHeaders;
     RunHttpCommand(answer, answerHeaders, command);
     
-    HttpCommand::SuccessMessage message(command, answerHeaders, answer);
-    emitter.EmitMessage(receiver, message);
+    callback.NotifySuccess(new HttpCommand::SuccessMessage(command, answerHeaders, answer));
   }
 
   
@@ -175,8 +173,7 @@ namespace OrthancStone
   }
 
   
-  static void RunInternal(boost::weak_ptr<IObserver> receiver,
-                          IMessageEmitter& emitter,
+  static void RunInternal(IOracleCallback& callback,
                           const Orthanc::WebServiceParameters& orthanc,
                           const OrthancRestApiCommand& command)
   {
@@ -184,13 +181,11 @@ namespace OrthancStone
     Orthanc::HttpClient::HttpHeaders answerHeaders;
     RunOrthancRestApiCommand(answer, answerHeaders, orthanc, command);
 
-    OrthancRestApiCommand::SuccessMessage message(command, answerHeaders, answer);
-    emitter.EmitMessage(receiver, message);
+    callback.NotifySuccess(new OrthancRestApiCommand::SuccessMessage(command, answerHeaders, answer));
   }
 
 
-  static void RunInternal(boost::weak_ptr<IObserver> receiver,
-                          IMessageEmitter& emitter,
+  static void RunInternal(IOracleCallback& callback,
                           const Orthanc::WebServiceParameters& orthanc,
                           const GetOrthancImageCommand& command)
   {
@@ -206,12 +201,11 @@ namespace OrthancStone
 
     DecodeAnswer(answer, answerHeaders);
 
-    command.ProcessHttpAnswer(receiver, emitter, answer, answerHeaders);
+    command.ProcessHttpAnswer(callback, answer, answerHeaders);
   }
 
 
-  static void RunInternal(boost::weak_ptr<IObserver> receiver,
-                          IMessageEmitter& emitter,
+  static void RunInternal(IOracleCallback& callback,
                           const Orthanc::WebServiceParameters& orthanc,
                           const GetOrthancWebViewerJpegCommand& command)
   {
@@ -227,7 +221,7 @@ namespace OrthancStone
 
     DecodeAnswer(answer, answerHeaders);
 
-    command.ProcessHttpAnswer(receiver, emitter, answer);
+    command.ProcessHttpAnswer(callback, answer);
   }
 
 
@@ -251,8 +245,7 @@ namespace OrthancStone
   }
 
 
-  static void RunInternal(boost::weak_ptr<IObserver> receiver,
-                          IMessageEmitter& emitter,
+  static void RunInternal(IOracleCallback& callback,
                           const std::string& root,
                           const ReadFileCommand& command)
   {
@@ -262,8 +255,7 @@ namespace OrthancStone
     std::string content;
     Orthanc::SystemToolbox::ReadFile(content, path, true /* log */);
 
-    ReadFileCommand::SuccessMessage message(command, content);
-    emitter.EmitMessage(receiver, message);
+    callback.NotifySuccess(new ReadFileCommand::SuccessMessage(command, content));
   }
 
 
@@ -335,8 +327,7 @@ namespace OrthancStone
   }
 
   
-  static void RunInternal(boost::weak_ptr<IObserver> receiver,
-                          IMessageEmitter& emitter,
+  static void RunInternal(IOracleCallback& callback,
                           boost::shared_ptr<ParsedDicomCache> cache,
                           const std::string& root,
                           const ParseDicomFromFileCommand& command)
@@ -351,9 +342,8 @@ namespace OrthancStone
            reader.HasPixelData()))
       {
         // Reuse the DICOM file from the cache
-        ParseDicomSuccessMessage message(command, command.GetSource(), reader.GetDicom(),
-                                         reader.GetFileSize(), reader.HasPixelData());
-        emitter.EmitMessage(receiver, message);
+        callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), reader.GetDicom(),
+                                                            reader.GetFileSize(), reader.HasPixelData()));
         return;
       }
     }
@@ -367,12 +357,8 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotEnoughMemory);
     }
     
-    {
-      ParseDicomSuccessMessage message
-        (command, command.GetSource(), *parsed,
-         static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
-      emitter.EmitMessage(receiver, message);
-    }
+    callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), *parsed,
+                                                        static_cast<size_t>(fileSize), command.IsPixelDataIncluded()));
 
     if (cache)
     {
@@ -388,8 +374,7 @@ namespace OrthancStone
   }
 
   
-  static void RunInternal(boost::weak_ptr<IObserver> receiver,
-                          IMessageEmitter& emitter,
+  static void RunInternal(IOracleCallback& callback,
                           boost::shared_ptr<ParsedDicomCache> cache,
                           const Orthanc::WebServiceParameters& orthanc,
                           const ParseDicomFromWadoCommand& command)
@@ -401,9 +386,8 @@ namespace OrthancStone
           reader.HasPixelData())
       {
         // Reuse the DICOM file from the cache
-        ParseDicomSuccessMessage message(command, command.GetSource(), reader.GetDicom(),
-                                         reader.GetFileSize(), reader.HasPixelData());
-        emitter.EmitMessage(receiver, message);
+        callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), reader.GetDicom(),
+                                                            reader.GetFileSize(), reader.HasPixelData()));
         return;
       }
     }
@@ -429,11 +413,8 @@ namespace OrthancStone
     size_t fileSize;
     std::unique_ptr<Orthanc::ParsedDicomFile> parsed(ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, answerHeaders));
 
-    {
-      ParseDicomSuccessMessage message(command, command.GetSource(), *parsed, fileSize,
-                                       true /* pixel data always is included in WADO-RS */);
-      emitter.EmitMessage(receiver, message);
-    }
+    callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), *parsed, fileSize,
+                                                        true /* pixel data always is included in WADO-RS */));
 
     if (cache)
     {
@@ -444,57 +425,55 @@ namespace OrthancStone
 #endif
 
 
-  void GenericOracleRunner::Run(boost::weak_ptr<IObserver> receiver,
-                                IMessageEmitter& emitter,
-                                const IOracleCommand& command)
+  void GenericOracleRunner::Run(IOracleCallback& callback)
   {
     Orthanc::ErrorCode error = Orthanc::ErrorCode_Success;
     
     try
     {
-      switch (command.GetType())
+      switch (callback.GetCommand().GetType())
       {
         case IOracleCommand::Type_Sleep:
           throw Orthanc::OrthancException(Orthanc::ErrorCode_BadParameterType,
                                           "Sleep command cannot be executed by the runner");
 
         case IOracleCommand::Type_Http:
-          RunInternal(receiver, emitter, dynamic_cast<const HttpCommand&>(command));
+          RunInternal(callback, dynamic_cast<const HttpCommand&>(callback.GetCommand()));
           break;
 
         case IOracleCommand::Type_OrthancRestApi:
-          RunInternal(receiver, emitter, orthanc_,
-                      dynamic_cast<const OrthancRestApiCommand&>(command));
+          RunInternal(callback, orthanc_,
+                      dynamic_cast<const OrthancRestApiCommand&>(callback.GetCommand()));
           break;
 
         case IOracleCommand::Type_GetOrthancImage:
-          RunInternal(receiver, emitter, orthanc_,
-                      dynamic_cast<const GetOrthancImageCommand&>(command));
+          RunInternal(callback, orthanc_,
+                      dynamic_cast<const GetOrthancImageCommand&>(callback.GetCommand()));
           break;
 
         case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-          RunInternal(receiver, emitter, orthanc_,
-                      dynamic_cast<const GetOrthancWebViewerJpegCommand&>(command));
+          RunInternal(callback, orthanc_,
+                      dynamic_cast<const GetOrthancWebViewerJpegCommand&>(callback.GetCommand()));
           break;
 
         case IOracleCommand::Type_ReadFile:
-          RunInternal(receiver, emitter, rootDirectory_,
-                      dynamic_cast<const ReadFileCommand&>(command));
+          RunInternal(callback, rootDirectory_,
+                      dynamic_cast<const ReadFileCommand&>(callback.GetCommand()));
           break;
 
         case IOracleCommand::Type_ParseDicomFromFile:
         case IOracleCommand::Type_ParseDicomFromWado:
 #if ORTHANC_ENABLE_DCMTK == 1
-          switch (command.GetType())
+          switch (callback.GetCommand().GetType())
           {
             case IOracleCommand::Type_ParseDicomFromFile:
-              RunInternal(receiver, emitter, dicomCache_, rootDirectory_,
-                          dynamic_cast<const ParseDicomFromFileCommand&>(command));
+              RunInternal(callback, dicomCache_, rootDirectory_,
+                          dynamic_cast<const ParseDicomFromFileCommand&>(callback.GetCommand()));
               break;
 
             case IOracleCommand::Type_ParseDicomFromWado:
-              RunInternal(receiver, emitter, dicomCache_, orthanc_,
-                          dynamic_cast<const ParseDicomFromWadoCommand&>(command));
+              RunInternal(callback, dicomCache_, orthanc_,
+                          dynamic_cast<const ParseDicomFromWadoCommand&>(callback.GetCommand()));
               break;
 
             default:
@@ -523,8 +502,7 @@ namespace OrthancStone
 
     if (error != Orthanc::ErrorCode_Success)
     {
-      OracleCommandExceptionMessage message(command, error);
-      emitter.EmitMessage(receiver, message);
+      callback.NotifyError(Orthanc::OrthancException(error));
     }
   }
 }

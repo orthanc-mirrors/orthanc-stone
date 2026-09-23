@@ -23,6 +23,8 @@
 
 #include "OracleCallback.h"
 
+#include "OracleCommandExceptionMessage.h"
+
 
 namespace OrthancStone
 {
@@ -69,7 +71,42 @@ namespace OrthancStone
   }
 
 
-  const IOracleCommand& OracleCallback::GetCommand() const
+  OldOracleCallback::OldOracleCallback(IOracleCommand* command,
+                                       boost::weak_ptr<IObserver> receiver,
+                                       IMessageEmitter& emitter) :
+    command_(command),
+    receiver_(receiver),
+    emitter_(emitter)
+  {
+    if (command == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+  }
+
+
+  void OldOracleCallback::NotifySuccess(IMessage* message /* takes ownership */)
+  {
+    std::unique_ptr<IMessage> protection(message);
+    emitter_.EmitMessage(receiver_, *protection);
+  }
+
+
+  void OldOracleCallback::NotifyError(const Orthanc::OrthancException& error)
+  {
+    if (command_.get() == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      OracleCommandExceptionMessage message(*command_, error);
+      emitter_.EmitMessage(receiver_, message);
+    }
+  }
+
+
+  const IOracleCommand& OldOracleCallback::GetCommand() const
   {
     if (command_.get() == NULL)
     {

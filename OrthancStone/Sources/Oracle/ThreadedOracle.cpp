@@ -31,60 +31,31 @@
 
 namespace OrthancStone
 {
-  class ThreadedOracle::Item : public Orthanc::IDynamicObject
-  {
-  private:
-    boost::weak_ptr<IObserver>      receiver_;
-    std::unique_ptr<IOracleCommand>   command_;
-
-  public:
-    Item(boost::weak_ptr<IObserver> receiver,
-         IOracleCommand* command) :
-      receiver_(receiver),
-      command_(command)
-    {
-      if (command == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-    }
-
-    boost::weak_ptr<IObserver> GetReceiver()
-    {
-      return receiver_;
-    }
-
-    IOracleCommand& GetCommand()
-    {
-      assert(command_.get() != NULL);
-      return *command_;
-    }
-  };
-
-
   class ThreadedOracle::SleepingCommands : public boost::noncopyable
   {
   private:
     class Item
     {
     private:
-      boost::weak_ptr<IObserver>         receiver_;
-      std::unique_ptr<SleepOracleCommand>  command_;
-      boost::posix_time::ptime           expiration_;
+      std::unique_ptr<OldOracleCallback>  callback_;
+      boost::posix_time::ptime            expiration_;
+
+      const SleepOracleCommand& GetCommand() const
+      {
+        return dynamic_cast<const SleepOracleCommand&>(callback_->GetCommand());
+      }
 
     public:
-      Item(boost::weak_ptr<IObserver> receiver,
-           SleepOracleCommand* command) :
-        receiver_(receiver),
-        command_(command)
+      explicit Item(OldOracleCallback* callback) :
+        callback_(callback)
       {
-        if (command == NULL)
+        if (callback == NULL)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
         }
 
         expiration_ = (boost::posix_time::microsec_clock::local_time() + 
-                       boost::posix_time::milliseconds(command_->GetDelay()));
+                       boost::posix_time::milliseconds(GetCommand().GetDelay()));
       }
 
       const boost::posix_time::ptime& GetExpirationTime() const
@@ -94,10 +65,7 @@ namespace OrthancStone
 
       void Awake(IMessageEmitter& emitter)
       {
-        assert(command_.get() != NULL);
-
-        SleepOracleCommand::TimeoutMessage message(*command_);
-        emitter.EmitMessage(receiver_, message);
+        callback_->NotifySuccess(new SleepOracleCommand::TimeoutMessage(GetCommand()));
       }
     };
 
@@ -118,12 +86,10 @@ namespace OrthancStone
       }
     }
 
-    void Add(boost::weak_ptr<IObserver> receiver,
-             SleepOracleCommand* command)   // Takes ownership
+    void Add(OldOracleCallback* callback /* takes ownership */)
     {
       boost::mutex::scoped_lock lock(mutex_);
-
-      content_.push_back(new Item(receiver, command));
+      content_.push_back(new Item(callback));
     }
 
     void AwakeExpired(IMessageEmitter& emitter)
@@ -161,20 +127,11 @@ namespace OrthancStone
 
     if (object.get() != NULL)
     {
-      Item& item = dynamic_cast<Item&>(*object);
+      std::unique_ptr<OldOracleCallback> item(dynamic_cast<OldOracleCallback*>(object.release()));
 
-      if (item.GetCommand().GetType() == IOracleCommand::Type_Sleep)
+      if (item->GetCommand().GetType() == IOracleCommand::Type_Sleep)
       {
-        SleepOracleCommand& command = dynamic_cast<SleepOracleCommand&>(item.GetCommand());
-          
-        std::unique_ptr<SleepOracleCommand> copy(new SleepOracleCommand(command.GetDelay()));
-          
-        if (command.HasPayload())
-        {
-          copy->AcquirePayload(command.ReleasePayload());
-        }
-          
-        sleepingCommands_->Add(item.GetReceiver(), copy.release());
+        sleepingCommands_->Add(item.release());
       }
       else
       {
@@ -193,7 +150,7 @@ namespace OrthancStone
 #endif
         }
 
-        runner.Run(item.GetReceiver(), emitter_, item.GetCommand());
+        runner.Run(*item);
       }
     }
   }
@@ -415,7 +372,7 @@ namespace OrthancStone
   bool ThreadedOracle::Schedule(boost::shared_ptr<IObserver> receiver,
                                 IOracleCommand* command)
   {
-    std::unique_ptr<Item> item(new Item(receiver, command));
+    std::unique_ptr<OldOracleCallback> item(new OldOracleCallback(command, receiver, emitter_));
 
     {
       boost::mutex::scoped_lock lock(mutex_);

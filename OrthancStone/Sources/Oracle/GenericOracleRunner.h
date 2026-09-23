@@ -34,7 +34,7 @@
 #endif
 
 #include "IOracleCommand.h"
-#include "../Messages/IMessageEmitter.h"
+#include "OracleCallback.h"
 
 #include <Enumerations.h>  // For ORTHANC_OVERRIDE
 #include <WebServiceParameters.h>
@@ -84,8 +84,6 @@ namespace OrthancStone
     }
 #endif
 
-    void Run(boost::weak_ptr<IObserver> receiver,
-             IMessageEmitter& emitter,
-             const IOracleCommand& command);
+    void Run(IOracleCallback& callback);
   };
 }

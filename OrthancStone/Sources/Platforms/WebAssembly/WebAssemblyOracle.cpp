@@ -134,16 +134,29 @@ namespace OrthancStone
 
     void EmitException(const Orthanc::OrthancException& exception)
     {
-      assert(command_.get() != NULL);
-      OracleCommandExceptionMessage message(*command_, exception);
-      oracle_.EmitMessage(receiver_, message);
+      if (command_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        OracleCommandExceptionMessage message(*command_, exception);
+        oracle_.EmitMessage(receiver_, message);
+      }
     }
 
     void ProcessFetchResult(const std::string& answer,
                             const HttpHeaders& headers)
     {
-      assert(command_.get() != NULL);
-      oracle_.ProcessFetchResult(receiver_, answer, headers, *command_);
+      if (command_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        OldOracleCallback callback(command_.release(), receiver_, oracle_);
+        oracle_.ProcessFetchResult(callback, answer, headers);
+      }
     }
 
     static void SuccessCallback(emscripten_fetch_t *fetch)
@@ -472,54 +485,49 @@ namespace OrthancStone
   };
 
 
-  void WebAssemblyOracle::ProcessFetchResult(boost::weak_ptr<IObserver>& receiver,
+  void WebAssemblyOracle::ProcessFetchResult(IOracleCallback& callback,
                                              const std::string& answer,
-                                             const HttpHeaders& headers,
-                                             const IOracleCommand& command)
+                                             const HttpHeaders& headers)
   {
-    switch (command.GetType())
+    switch (callback.GetCommand().GetType())
     {
       case IOracleCommand::Type_Http:
       {
-        HttpCommand::SuccessMessage message(dynamic_cast<const HttpCommand&>(command), headers, answer);
-        EmitMessage(receiver, message);
+        callback.NotifySuccess(new HttpCommand::SuccessMessage(
+                                 dynamic_cast<const HttpCommand&>(callback.GetCommand()), headers, answer));
         break;
       }
 
       case IOracleCommand::Type_OrthancRestApi:
       {
         LOG(TRACE) << "WebAssemblyOracle::FetchContext::SuccessCallback. About to call EmitMessage(message);";
-        OrthancRestApiCommand::SuccessMessage message
-          (dynamic_cast<const OrthancRestApiCommand&>(command), headers, answer);
-        EmitMessage(receiver, message);
+        callback.NotifySuccess(new OrthancRestApiCommand::SuccessMessage(
+                                 dynamic_cast<const OrthancRestApiCommand&>(callback.GetCommand()), headers, answer));
         break;
       }
 
       case IOracleCommand::Type_GetOrthancImage:
       {
-        dynamic_cast<const GetOrthancImageCommand&>(command).ProcessHttpAnswer(receiver, *this, answer, headers);
+        dynamic_cast<const GetOrthancImageCommand&>(callback.GetCommand()).ProcessHttpAnswer(callback, answer, headers);
         break;
       }
 
       case IOracleCommand::Type_GetOrthancWebViewerJpeg:
       {
-        dynamic_cast<const GetOrthancWebViewerJpegCommand&>(command).ProcessHttpAnswer(receiver, *this, answer);
+        dynamic_cast<const GetOrthancWebViewerJpegCommand&>(callback.GetCommand()).ProcessHttpAnswer(callback, answer);
         break;
       }
 
       case IOracleCommand::Type_ParseDicomFromWado:
       {
 #if ORTHANC_ENABLE_DCMTK == 1
-        const ParseDicomFromWadoCommand& c = dynamic_cast<const ParseDicomFromWadoCommand&>(command);
+        const ParseDicomFromWadoCommand& c = dynamic_cast<const ParseDicomFromWadoCommand&>(callback.GetCommand());
               
         size_t fileSize;
         std::unique_ptr<Orthanc::ParsedDicomFile> dicom
           (ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, headers));
 
-        {
-          ParseDicomSuccessMessage message(c, c.GetSource(), *dicom, fileSize, true);
-          EmitMessage(receiver, message);
-        }
+        callback.NotifySuccess(new ParseDicomSuccessMessage(c, c.GetSource(), *dicom, fileSize, true));
 
         if (dicomCache_.get())
         {
@@ -534,7 +542,7 @@ namespace OrthancStone
 
       default:
         LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle (in SuccessCallback): "
-                   << command.GetType();
+                   << callback.GetCommand().GetType();
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
   }

@@ -33,6 +33,8 @@
 #  error This file can only compiled for WebAssembly
 #endif
 
+#include "../../Oracle/OracleCallback.h"   // TODO Refactoring
+
 #include "../../Messages/IObservable.h"
 #include "../../Messages/IMessageEmitter.h"
 #include "../../Oracle/IEnvironment.h"
@@ -93,10 +95,9 @@ namespace OrthancStone
     std::unique_ptr<ParsedDicomCache>  dicomCache_;
 #endif
 
-    void ProcessFetchResult(boost::weak_ptr<IObserver>& receiver,
+    void ProcessFetchResult(IOracleCallback& callback,
                             const std::string& answer,
-                            const HttpHeaders& headers,
-                            const IOracleCommand& command);
+                            const HttpHeaders& headers);
 
   public:
     WebAssemblyOracle() :

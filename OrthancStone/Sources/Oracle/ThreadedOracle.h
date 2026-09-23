@@ -64,7 +64,6 @@ namespace OrthancStone
       State_Stopped
     };
 
-    class Item;
     class SleepingCommands;
 
     IMessageEmitter&                     emitter_;

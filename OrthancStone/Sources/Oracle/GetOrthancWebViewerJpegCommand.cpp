@@ -65,8 +65,7 @@ namespace OrthancStone
   }
 
 
-  void GetOrthancWebViewerJpegCommand::ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
-                                                         IMessageEmitter& emitter,
+  void GetOrthancWebViewerJpegCommand::ProcessHttpAnswer(IOracleCallback& callback,
                                                          const std::string& answer) const
   {
     // This code comes from older "OrthancSlicesLoader::ParseSliceImageJpeg()"
@@ -134,8 +133,7 @@ namespace OrthancStone
       }
       else
       {
-        SuccessMessage message(*this, *reader);
-        emitter.EmitMessage(receiver, message);
+        callback.NotifySuccess(new SuccessMessage(*this, *reader));
         return;
       }
     }
@@ -153,8 +151,7 @@ namespace OrthancStone
       }
       else
       {
-        SuccessMessage message(*this, *reader);
-        emitter.EmitMessage(receiver, message);
+        callback.NotifySuccess(new SuccessMessage(*this, *reader));
         return;
       }
     }
@@ -196,7 +193,6 @@ namespace OrthancStone
       Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling, true);
     }
 
-    SuccessMessage message(*this, *image);
-    emitter.EmitMessage(receiver, message);
+    callback.NotifySuccess(new SuccessMessage(*this, *image));
   }
 }

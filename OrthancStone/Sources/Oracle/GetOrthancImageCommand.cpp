@@ -82,8 +82,7 @@ namespace OrthancStone
   }
 
 
-  void GetOrthancImageCommand::ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
-                                                 IMessageEmitter& emitter,
+  void GetOrthancImageCommand::ProcessHttpAnswer(IOracleCallback& callback,
                                                  const std::string& answer,
                                                  const HttpHeaders& answerHeaders) const
   {
@@ -186,7 +185,6 @@ namespace OrthancStone
     //}
 
 
-    SuccessMessage message(*this, *image, contentType);
-    emitter.EmitMessage(receiver, message);
+    callback.NotifySuccess(new SuccessMessage(*this, *image, contentType));
   }
 }

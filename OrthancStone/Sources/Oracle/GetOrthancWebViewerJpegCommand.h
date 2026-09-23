@@ -26,6 +26,8 @@
 #include "../Messages/IMessageEmitter.h"
 #include "OracleCommandBase.h"
 
+#include "OracleCallback.h"   // TODO Refactoring
+
 #include <Images/ImageAccessor.h>
 
 #include <map>
@@ -149,8 +151,7 @@ namespace OrthancStone
 
     std::string GetUri() const;
 
-    void ProcessHttpAnswer(boost::weak_ptr<IObserver> receiver,
-                           IMessageEmitter& emitter,
+    void ProcessHttpAnswer(IOracleCallback& callback,
                            const std::string& answer) const;
   };
 }

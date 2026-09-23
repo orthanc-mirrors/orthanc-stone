@@ -65,7 +65,6 @@ namespace OrthancStone
   private:
     typedef std::map<std::string, std::string>  HttpHeaders;
     
-    class TimeoutContext;
     class FetchContext;
     class FetchCommand;
 

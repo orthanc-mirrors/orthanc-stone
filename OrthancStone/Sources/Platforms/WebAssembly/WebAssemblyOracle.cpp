@@ -47,45 +47,14 @@ static unsigned int BUCKET_SOP = 1;
 
 namespace OrthancStone
 {
-  class WebAssemblyOracle::TimeoutContext
+  static void TimeoutCallback(void *userData)
   {
-  private:
-    WebAssemblyOracle&                 oracle_;
-    boost::weak_ptr<IObserver>         receiver_;
-    std::unique_ptr<SleepOracleCommand>  command_;
+    std::unique_ptr<IOracleCallback> callback(reinterpret_cast<IOracleCallback*>(userData));
 
-  public:
-    TimeoutContext(WebAssemblyOracle& oracle,
-                   boost::weak_ptr<IObserver> receiver,
-                   SleepOracleCommand* command) :
-      oracle_(oracle),
-      receiver_(receiver)
-    {
-      if (command == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-      else
-      {
-        command_.reset(command);
-      }
-    }
+    const SleepOracleCommand& command = dynamic_cast<const SleepOracleCommand&>(callback->GetCommand());  // TODO Refactoring - Remove this
+    callback->NotifySuccess(new SleepOracleCommand::TimeoutMessage(command));
+  }
 
-    void EmitMessage()
-    {      
-      assert(command_.get() != NULL);
-
-      SleepOracleCommand::TimeoutMessage message(*command_);
-      oracle_.EmitMessage(receiver_, message);
-    }
-
-    static void Callback(void *userData)
-    {
-      std::unique_ptr<TimeoutContext> context(reinterpret_cast<TimeoutContext*>(userData));
-      context->EmitMessage();
-    }
-  };
-    
 
   /**
      This object is created on the heap for every http request.
@@ -100,14 +69,14 @@ namespace OrthancStone
   {
   private:
     std::unique_ptr<IOracleCallback>  callback_;
-    WebAssemblyOracle&                oracle_;
+    WebAssemblyOracle&                oracle_;  // TODO Refactoring - Remove this
     std::string                       expectedContentType_;
 
   public:
     FetchContext(WebAssemblyOracle& oracle,
                  boost::weak_ptr<IObserver> receiver,
-                 IOracleCommand* command,
-                 const std::string& expectedContentType) :
+                 IOracleCommand* command /* takes ownership */,
+                 const std::string& expectedContentType) :   // TODO Refactoring - Remove this flavor
       callback_(new OldOracleCallback(command, receiver, oracle)),
       oracle_(oracle),
       expectedContentType_(expectedContentType)
@@ -117,6 +86,19 @@ namespace OrthancStone
         // Calling "receiver.lock()" is expensive, hence the quick check if TRACE is enabled
         LOG(TRACE) << "WebAssemblyOracle::FetchContext::FetchContext() | "
                    << "receiver address = " << std::hex << receiver.lock().get();
+      }
+    }
+
+    FetchContext(WebAssemblyOracle& oracle,
+                 IOracleCallback* callback /* takes ownership */,
+                 const std::string& expectedContentType) :
+      callback_(callback),
+      oracle_(oracle),
+      expectedContentType_(expectedContentType)
+    {
+      if (callback == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
     }
 
@@ -273,9 +255,8 @@ namespace OrthancStone
   class WebAssemblyOracle::FetchCommand : public boost::noncopyable
   {
   private:
-    WebAssemblyOracle&             oracle_;
-    boost::weak_ptr<IObserver>     receiver_;
-    std::unique_ptr<IOracleCommand>  command_;
+    WebAssemblyOracle&                oracle_;  // TODO Refactoring - Remove this
+    std::unique_ptr<IOracleCallback>  callback_;
     Orthanc::HttpMethod            method_;
     std::string                    url_;
     std::string                    body_;
@@ -288,16 +269,14 @@ namespace OrthancStone
 
   public:
     FetchCommand(WebAssemblyOracle& oracle,
-                 boost::weak_ptr<IObserver> receiver,
-                 IOracleCommand* command) :
+                 IOracleCallback* callback) :
       oracle_(oracle),
-      receiver_(receiver),
-      command_(command),
+      callback_(callback),
       method_(Orthanc::HttpMethod_Get),
       timeout_(0),
       hasCredentials_(false)
     {
-      if (command == NULL)
+      if (callback == NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
@@ -361,10 +340,10 @@ namespace OrthancStone
 
     void Execute()
     {
-      if (command_.get() == NULL)
+      if (callback_.get() == NULL)
       {
         // Cannot call Execute() twice
-        LOG(ERROR) << "WebAssemblyOracle::Execute(): (command_.get() == NULL)";
+        LOG(ERROR) << "WebAssemblyOracle::Execute(): (callback_.get() == NULL)";
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
       }
 
@@ -447,7 +426,7 @@ namespace OrthancStone
           attr.requestDataSize = body_.size();
           attr.requestData = requestData;
         }
-        attr.userData = new FetchContext(oracle_, receiver_, command_.release(), expectedContentType);
+        attr.userData = new FetchContext(oracle_, callback_.release(), expectedContentType);
 
         // Must be the last call to prevent memory leak on error
         emscripten_fetch(&attr, url_.c_str());
@@ -548,7 +527,7 @@ namespace OrthancStone
   void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   HttpCommand* command)
   {
-    FetchCommand fetch(*this, receiver, command);
+    FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
     
     fetch.SetMethod(command->GetMethod());
     fetch.SetUrl(command->GetUrl());
@@ -574,7 +553,7 @@ namespace OrthancStone
     {
       //LOG(TRACE) << "*********** WebAssemblyOracle::Execute.";
       //LOG(TRACE) << "WebAssemblyOracle::Execute | command = " << command;
-      FetchCommand fetch(*this, receiver, command);
+      FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
 
       fetch.SetMethod(command->GetMethod());
       SetOrthancUrl(fetch, command->GetUri());
@@ -623,7 +602,7 @@ namespace OrthancStone
   void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   GetOrthancImageCommand* command)
   {
-    FetchCommand fetch(*this, receiver, command);
+    FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
 
     SetOrthancUrl(fetch, command->GetUri());
     fetch.AddHttpHeaders(command->GetHttpHeaders());
@@ -636,7 +615,7 @@ namespace OrthancStone
   void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
                                   GetOrthancWebViewerJpegCommand* command)
   {
-    FetchCommand fetch(*this, receiver, command);
+    FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
 
     SetOrthancUrl(fetch, command->GetUri());
     fetch.AddHttpHeaders(command->GetHttpHeaders());
@@ -674,7 +653,7 @@ namespace OrthancStone
         const HttpCommand& rest =
           dynamic_cast<const HttpCommand&>(protection->GetRestCommand());
         
-        FetchCommand fetch(*this, receiver, protection.release());
+        FetchCommand fetch(*this, new OldOracleCallback(protection.release(), receiver, *this));
     
         fetch.SetMethod(rest.GetMethod());
         fetch.SetUrl(rest.GetUrl());
@@ -697,7 +676,7 @@ namespace OrthancStone
         const OrthancRestApiCommand& rest =
           dynamic_cast<const OrthancRestApiCommand&>(protection->GetRestCommand());
         
-        FetchCommand fetch(*this, receiver, protection.release());
+        FetchCommand fetch(*this, new OldOracleCallback(protection.release(), receiver, *this));
 
         fetch.SetMethod(rest.GetMethod());
         SetOrthancUrl(fetch, rest.GetUri());
@@ -755,8 +734,8 @@ namespace OrthancStone
       case IOracleCommand::Type_Sleep:
       {
         unsigned int timeoutMS = dynamic_cast<SleepOracleCommand*>(command)->GetDelay();
-        emscripten_set_timeout(TimeoutContext::Callback, timeoutMS,
-                               new TimeoutContext(*this, receiver, dynamic_cast<SleepOracleCommand*>(protection.release())));
+        std::unique_ptr<IOracleCallback> callback(new OldOracleCallback(protection.release(), receiver, *this));
+        emscripten_set_timeout(TimeoutCallback, timeoutMS, callback.release());
         break;
       }
             
@@ -874,15 +853,6 @@ namespace OrthancStone
 
   namespace New
   {
-    static void TimeoutCallback(void *userData)
-    {
-      std::unique_ptr<OracleCallback> callback(reinterpret_cast<OracleCallback*>(userData));
-
-      const SleepOracleCommand& command = dynamic_cast<const SleepOracleCommand&>(callback->GetCommand());  // TODO Refactoring - Remove this
-      callback->NotifySuccess(new SleepOracleCommand::TimeoutMessage(command));
-    }
-
-
     void WebAssemblyOracle::Submit(IEnvironment& environment,
                                    const boost::shared_ptr<IOracleClient>& client,
                                    IOracleCommand* command /* takes ownership */)

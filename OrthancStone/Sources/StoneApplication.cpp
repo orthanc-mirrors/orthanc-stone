@@ -45,7 +45,7 @@ namespace OrthancStone
   {
   private:
     WebAssemblyEnvironment  environment_;
-    New::WebAssemblyOracle  oracle_;
+    WebAssemblyOracle       oracle_;
 
   public:
     IEnvironment& GetEnvironment()

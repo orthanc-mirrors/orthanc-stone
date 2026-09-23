@@ -94,6 +94,8 @@ namespace OrthancStone
                             const std::string& answer,
                             const HttpHeaders& headers);
 
+    void Submit(IOracleCallback* callback);
+
   public:
     WebAssemblyOracle() :
       isLocalOrthanc_(false)
@@ -154,16 +156,4 @@ namespace OrthancStone
       bool HasPixelData() const;
     };    
   };
-
-
-  namespace New
-  {
-    class WebAssemblyOracle : public IOracle
-    {
-    public:
-      virtual void Submit(IEnvironment& environment,
-                          const boost::shared_ptr<IOracleClient>& client,
-                          IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
-    };
-  }
 }

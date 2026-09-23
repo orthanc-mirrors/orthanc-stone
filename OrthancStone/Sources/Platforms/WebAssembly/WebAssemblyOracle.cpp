@@ -706,54 +706,55 @@ namespace OrthancStone
   }
 
 
-  bool WebAssemblyOracle::Schedule(boost::shared_ptr<IObserver> receiver,
-                                   IOracleCommand* command)
+  void WebAssemblyOracle::Submit(IOracleCallback* callback)
   {
-    LOG(TRACE) << "WebAssemblyOracle::Schedule : receiver = "
-               << std::hex << receiver.get();
+    std::unique_ptr<IOracleCallback> protection(callback);
 
-    std::unique_ptr<IOracleCallback> callback(new OldOracleCallback(command, receiver, *this));
+    if (callback == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
 
-    switch (command->GetType())
+    switch (protection->GetCommand().GetType())
     {
       case IOracleCommand::Type_Http:
       {
-        FetchCommand fetch(*this, callback.release());
+        FetchCommand fetch(*this, protection.release());
         ExecuteHttpCommand(fetch);
         break;
       }
         
       case IOracleCommand::Type_OrthancRestApi:
       {
-        FetchCommand fetch(*this, callback.release());
+        FetchCommand fetch(*this, protection.release());
         ExecuteOrthancRestApiCommand(fetch);
         break;
       }
         
       case IOracleCommand::Type_GetOrthancImage:
       {
-        FetchCommand fetch(*this, callback.release());
+        FetchCommand fetch(*this, protection.release());
         ExecuteGetOrthancImageCommand(fetch);
         break;
       }
 
       case IOracleCommand::Type_GetOrthancWebViewerJpeg:
       {
-        FetchCommand fetch(*this, callback.release());
+        FetchCommand fetch(*this, protection.release());
         ExecuteGetOrthancWebViewerJpegCommand(fetch);
         break;
       }
             
       case IOracleCommand::Type_Sleep:
       {
-        unsigned int timeoutMS = dynamic_cast<SleepOracleCommand*>(command)->GetDelay();
-        emscripten_set_timeout(TimeoutCallback, timeoutMS, callback.release());
+        unsigned int timeoutMS = dynamic_cast<const SleepOracleCommand&>(protection->GetCommand()).GetDelay();
+        emscripten_set_timeout(TimeoutCallback, timeoutMS, protection.release());
         break;
       }
             
       case IOracleCommand::Type_ParseDicomFromWado:
 #if ORTHANC_ENABLE_DCMTK == 1
-        ExecuteParseDicomFromWadoCommand(callback.release());
+        ExecuteParseDicomFromWadoCommand(protection.release());
 #else
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
                                         "DCMTK must be enabled to parse DICOM files");
@@ -762,9 +763,19 @@ namespace OrthancStone
             
       default:
         LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle (in Schedule): "
-                   << command->GetType();
+                   << protection->GetCommand().GetType();
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
+  }
+
+
+  bool WebAssemblyOracle::Schedule(boost::shared_ptr<IObserver> receiver,
+                                   IOracleCommand* command)
+  {
+    LOG(TRACE) << "WebAssemblyOracle::Schedule : receiver = "
+               << std::hex << receiver.get();
+
+    Submit(new OldOracleCallback(command, receiver, *this));
 
     return true;
   }
@@ -774,7 +785,7 @@ namespace OrthancStone
                                  const boost::shared_ptr<IOracleClient>& client,
                                  IOracleCommand* command /* takes ownership */)
   {
-    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);  // TODO Refactoring
+    Submit(new OracleCallback(environment, client, command));
   }
 
 
@@ -858,52 +869,6 @@ namespace OrthancStone
 #endif
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-
-
-
-  namespace New
-  {
-    void WebAssemblyOracle::Submit(IEnvironment& environment,
-                                   const boost::shared_ptr<IOracleClient>& client,
-                                   IOracleCommand* command /* takes ownership */)
-    {
-      // TODO Refactoring - Use "priority"
-
-      std::unique_ptr<IOracleCommand> protection(command);
-
-      if (command == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-
-      try
-      {
-        switch (command->GetType())
-        {
-          case IOracleCommand::Type_Sleep:
-          {
-            unsigned int timeoutMS = dynamic_cast<SleepOracleCommand*>(command)->GetDelay();
-            emscripten_set_timeout(TimeoutCallback, timeoutMS,
-                                   new OracleCallback(environment, client, dynamic_cast<SleepOracleCommand*>(protection.release())));
-            break;
-          }
-
-          default:
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
-                                            "Command type not implemented by the WebAssembly Oracle: " +
-                                            boost::lexical_cast<std::string>(command->GetType()));
-        }
-      }
-      catch (Orthanc::OrthancException& e)
-      {
-        environment.NotifyOracleError(client, protection.release(), e);
-      }
-      catch (...)
-      {
-        environment.NotifyOracleError(client, protection.release(), Orthanc::OrthancException(Orthanc::ErrorCode_InternalError));
-      }
     }
   }
 }

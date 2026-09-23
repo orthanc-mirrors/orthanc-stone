@@ -75,11 +75,9 @@ namespace OrthancStone
     
     void ExecuteOrthancRestApiCommand(FetchCommand& fetch);
     
-    void Execute(FetchCommand& fetch,
-                 GetOrthancImageCommand* command);    
+    void ExecuteGetOrthancImageCommand(FetchCommand& fetch);
     
-    void Execute(FetchCommand& fetch,
-                 GetOrthancWebViewerJpegCommand* command);
+    void ExecuteGetOrthancWebViewerJpegCommand(FetchCommand& fetch);
     
     void Execute(boost::weak_ptr<IObserver> receiver,
                  ParseDicomFromWadoCommand* command);

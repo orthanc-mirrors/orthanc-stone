@@ -68,27 +68,11 @@ namespace OrthancStone
   class WebAssemblyOracle::FetchContext : public boost::noncopyable
   {
   private:
-    std::unique_ptr<IOracleCallback>  callback_;
     WebAssemblyOracle&                oracle_;  // TODO Refactoring - Remove this
+    std::unique_ptr<IOracleCallback>  callback_;
     std::string                       expectedContentType_;
 
   public:
-    FetchContext(WebAssemblyOracle& oracle,
-                 boost::weak_ptr<IObserver> receiver,
-                 IOracleCommand* command /* takes ownership */,
-                 const std::string& expectedContentType) :   // TODO Refactoring - Remove this flavor
-      callback_(new OldOracleCallback(command, receiver, oracle)),
-      oracle_(oracle),
-      expectedContentType_(expectedContentType)
-    {
-      if (Orthanc::Logging::IsTraceLevelEnabled())
-      {
-        // Calling "receiver.lock()" is expensive, hence the quick check if TRACE is enabled
-        LOG(TRACE) << "WebAssemblyOracle::FetchContext::FetchContext() | "
-                   << "receiver address = " << std::hex << receiver.lock().get();
-      }
-    }
-
     FetchContext(WebAssemblyOracle& oracle,
                  IOracleCallback* callback /* takes ownership */,
                  const std::string& expectedContentType) :
@@ -623,23 +607,25 @@ namespace OrthancStone
   }
     
     
-  void WebAssemblyOracle::Execute(FetchCommand& fetch,
-                                  GetOrthancImageCommand* command)
+  void WebAssemblyOracle::ExecuteGetOrthancImageCommand(FetchCommand& fetch)
   {
-    SetOrthancUrl(fetch, command->GetUri());
-    fetch.AddHttpHeaders(command->GetHttpHeaders());
-    fetch.SetTimeout(command->GetTimeout());
+    const GetOrthancImageCommand& command = dynamic_cast<const GetOrthancImageCommand&>(fetch.GetCallback().GetCommand());
+
+    SetOrthancUrl(fetch, command.GetUri());
+    fetch.AddHttpHeaders(command.GetHttpHeaders());
+    fetch.SetTimeout(command.GetTimeout());
       
     fetch.Execute();
   }
     
     
-  void WebAssemblyOracle::Execute(FetchCommand& fetch,
-                                  GetOrthancWebViewerJpegCommand* command)
+  void WebAssemblyOracle::ExecuteGetOrthancWebViewerJpegCommand(FetchCommand& fetch)
   {
-    SetOrthancUrl(fetch, command->GetUri());
-    fetch.AddHttpHeaders(command->GetHttpHeaders());
-    fetch.SetTimeout(command->GetTimeout());
+    const GetOrthancWebViewerJpegCommand& command = dynamic_cast<const GetOrthancWebViewerJpegCommand&>(fetch.GetCallback().GetCommand());
+
+    SetOrthancUrl(fetch, command.GetUri());
+    fetch.AddHttpHeaders(command.GetHttpHeaders());
+    fetch.SetTimeout(command.GetTimeout());
       
     fetch.Execute();
   }
@@ -751,15 +737,15 @@ namespace OrthancStone
         
       case IOracleCommand::Type_GetOrthancImage:
       {
-        FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
-        Execute(fetch, dynamic_cast<GetOrthancImageCommand*>(protection.release()));
+        FetchCommand fetch(*this, new OldOracleCallback(protection.release(), receiver, *this));
+        ExecuteGetOrthancImageCommand(fetch);
         break;
       }
 
       case IOracleCommand::Type_GetOrthancWebViewerJpeg:
       {
-        FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
-        Execute(fetch, dynamic_cast<GetOrthancWebViewerJpegCommand*>(protection.release()));
+        FetchCommand fetch(*this, new OldOracleCallback(protection.release(), receiver, *this));
+        ExecuteGetOrthancWebViewerJpegCommand(fetch);
         break;
       }
             

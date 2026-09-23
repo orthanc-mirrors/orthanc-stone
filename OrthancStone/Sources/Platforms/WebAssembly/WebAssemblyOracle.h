@@ -79,8 +79,7 @@ namespace OrthancStone
     
     void ExecuteGetOrthancWebViewerJpegCommand(FetchCommand& fetch);
     
-    void Execute(boost::weak_ptr<IObserver> receiver,
-                 ParseDicomFromWadoCommand* command);
+    void ExecuteParseDicomFromWadoCommand(IOracleCallback* callback);
 
     IObservable                    oracleObservable_;
     bool                           isLocalOrthanc_;

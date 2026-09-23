@@ -51,12 +51,6 @@
 
 namespace OrthancStone
 {
-  class GetOrthancImageCommand;
-  class GetOrthancWebViewerJpegCommand;
-  class HttpCommand;
-  class OrthancRestApiCommand;
-  class ParseDicomFromWadoCommand;
-  
   class WebAssemblyOracle :
     public IOracle,   // TODO Refactoring - Remove old flavor
     public IMessageEmitter,  // TODO Refactoring - Remove old flavor

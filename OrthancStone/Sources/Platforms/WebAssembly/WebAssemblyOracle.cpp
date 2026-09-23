@@ -185,22 +185,26 @@ namespace OrthancStone
        * IMPORTANT NOTE: the receiver might be dead. This is prevented 
        * by the object responsible for zombie check, later on.
        **/
-      try
+      if (context.get() == NULL)
       {
-        if (context.get() == NULL)
-        {
-          LOG(ERROR) << "WebAssemblyOracle::FetchContext::SuccessCallback: (context.get() == NULL)";
-          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-        }
-        else
+        LOG(ERROR) << "WebAssemblyOracle::FetchContext::SuccessCallback: (context.get() == NULL)";
+      }
+      else
+      {
+        try
         {
           context->ProcessFetchResult(answer, headers);
         }
-      }
-      catch (Orthanc::OrthancException& e)
-      {
-        LOG(INFO) << "Error while processing a fetch answer in the oracle: " << e.What();
-        context->EmitException(e);
+        catch (Orthanc::OrthancException& e)
+        {
+          LOG(INFO) << "Error while processing a fetch answer in the oracle: " << e.What();
+          context->EmitException(e);
+        }
+        catch (...)
+        {
+          LOG(INFO) << "Native error while processing a fetch answer in the oracle";
+          context->EmitException(Orthanc::OrthancException(Orthanc::ErrorCode_InternalError));
+        }
       }
     }
 

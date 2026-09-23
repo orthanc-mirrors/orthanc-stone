@@ -25,6 +25,9 @@
 
 #include "OracleCommandExceptionMessage.h"
 
+#include <Logging.h>
+#include <OrthancException.h>
+
 
 namespace OrthancStone
 {
@@ -45,28 +48,50 @@ namespace OrthancStone
 
   void OracleCallback::NotifySuccess(IMessage* result)
   {
-    std::unique_ptr<IMessage> protection(result);
+    try
+    {
+      std::unique_ptr<IMessage> protection(result);
 
-    if (command_.get() == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      if (command_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        environment_.NotifyOracleSuccess(client_, command_.release(), protection.release());
+      }
     }
-    else
+    catch (Orthanc::OrthancException& e)
     {
-      environment_.NotifyOracleSuccess(client_, command_.release(), protection.release());
+      LOG(ERROR) << "Exception during NotifySuccess(): " << e.What();
+    }
+    catch (...)
+    {
+      LOG(ERROR) << "Native exception during NotifySuccess()";
     }
   }
 
 
   void OracleCallback::NotifyError(const Orthanc::OrthancException& error)
   {
-    if (command_.get() == NULL)
+    try
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      if (command_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        environment_.NotifyOracleError(client_, command_.release(), error);
+      }
     }
-    else
+    catch (Orthanc::OrthancException& e)
     {
-      environment_.NotifyOracleError(client_, command_.release(), error);
+      LOG(ERROR) << "Exception during NotifyError(): " << e.What();
+    }
+    catch (...)
+    {
+      LOG(ERROR) << "Native exception during NotifyError()";
     }
   }
 
@@ -87,21 +112,43 @@ namespace OrthancStone
 
   void OldOracleCallback::NotifySuccess(IMessage* message /* takes ownership */)
   {
-    std::unique_ptr<IMessage> protection(message);
-    emitter_.EmitMessage(receiver_, *protection);
+    try
+    {
+      std::unique_ptr<IMessage> protection(message);
+      emitter_.EmitMessage(receiver_, *protection);
+    }
+    catch (Orthanc::OrthancException& e)
+    {
+      LOG(ERROR) << "Exception during NotifySuccess(): " << e.What();
+    }
+    catch (...)
+    {
+      LOG(ERROR) << "Native exception during NotifySuccess()";
+    }
   }
 
 
   void OldOracleCallback::NotifyError(const Orthanc::OrthancException& error)
   {
-    if (command_.get() == NULL)
+    try
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      if (command_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        OracleCommandExceptionMessage message(*command_, error);
+        emitter_.EmitMessage(receiver_, message);
+      }
     }
-    else
+    catch (Orthanc::OrthancException& e)
     {
-      OracleCommandExceptionMessage message(*command_, error);
-      emitter_.EmitMessage(receiver_, message);
+      LOG(ERROR) << "Exception during NotifyError(): " << e.What();
+    }
+    catch (...)
+    {
+      LOG(ERROR) << "Native exception during NotifyError()";
     }
   }
 

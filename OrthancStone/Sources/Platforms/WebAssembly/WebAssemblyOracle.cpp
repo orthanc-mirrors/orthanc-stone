@@ -524,11 +524,9 @@ namespace OrthancStone
   }
     
 
-  void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
+  void WebAssemblyOracle::Execute(FetchCommand& fetch,
                                   HttpCommand* command)
   {
-    FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
-    
     fetch.SetMethod(command->GetMethod());
     fetch.SetUrl(command->GetUrl());
     fetch.AddHttpHeaders(command->GetHttpHeaders());
@@ -546,14 +544,13 @@ namespace OrthancStone
   }
   
 
-  void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
+  void WebAssemblyOracle::Execute(FetchCommand& fetch,
                                   OrthancRestApiCommand* command)
   {
     try
     {
       //LOG(TRACE) << "*********** WebAssemblyOracle::Execute.";
       //LOG(TRACE) << "WebAssemblyOracle::Execute | command = " << command;
-      FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
 
       fetch.SetMethod(command->GetMethod());
       SetOrthancUrl(fetch, command->GetUri());
@@ -599,11 +596,9 @@ namespace OrthancStone
   }
     
     
-  void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
+  void WebAssemblyOracle::Execute(FetchCommand& fetch,
                                   GetOrthancImageCommand* command)
   {
-    FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
-
     SetOrthancUrl(fetch, command->GetUri());
     fetch.AddHttpHeaders(command->GetHttpHeaders());
     fetch.SetTimeout(command->GetTimeout());
@@ -612,11 +607,9 @@ namespace OrthancStone
   }
     
     
-  void WebAssemblyOracle::Execute(boost::weak_ptr<IObserver> receiver,
+  void WebAssemblyOracle::Execute(FetchCommand& fetch,
                                   GetOrthancWebViewerJpegCommand* command)
   {
-    FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
-
     SetOrthancUrl(fetch, command->GetUri());
     fetch.AddHttpHeaders(command->GetHttpHeaders());
     fetch.SetTimeout(command->GetTimeout());
@@ -716,20 +709,32 @@ namespace OrthancStone
     switch (command->GetType())
     {
       case IOracleCommand::Type_Http:
-        Execute(receiver, dynamic_cast<HttpCommand*>(protection.release()));
+      {
+        FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
+        Execute(fetch, dynamic_cast<HttpCommand*>(protection.release()));
         break;
+      }
         
       case IOracleCommand::Type_OrthancRestApi:
-        Execute(receiver, dynamic_cast<OrthancRestApiCommand*>(protection.release()));
+      {
+        FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
+        Execute(fetch, dynamic_cast<OrthancRestApiCommand*>(protection.release()));
         break;
+      }
         
       case IOracleCommand::Type_GetOrthancImage:
-        Execute(receiver, dynamic_cast<GetOrthancImageCommand*>(protection.release()));
+      {
+        FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
+        Execute(fetch, dynamic_cast<GetOrthancImageCommand*>(protection.release()));
         break;
+      }
 
       case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-        Execute(receiver, dynamic_cast<GetOrthancWebViewerJpegCommand*>(protection.release()));
-        break;          
+      {
+        FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
+        Execute(fetch, dynamic_cast<GetOrthancWebViewerJpegCommand*>(protection.release()));
+        break;
+      }
             
       case IOracleCommand::Type_Sleep:
       {

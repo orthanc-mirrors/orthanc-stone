@@ -59,7 +59,7 @@ namespace OrthancStone
   
   class WebAssemblyOracle :
     public IOracle,   // TODO Refactoring - Remove old flavor
-    public IMessageEmitter,
+    public IMessageEmitter,  // TODO Refactoring - Remove old flavor
     public New::IOracle
   {
   private:
@@ -71,16 +71,16 @@ namespace OrthancStone
     void SetOrthancUrl(FetchCommand& command,
                        const std::string& uri) const;
 
-    void Execute(boost::weak_ptr<IObserver> receiver,
+    void Execute(FetchCommand& fetch,
                  HttpCommand* command);    
     
-    void Execute(boost::weak_ptr<IObserver> receiver,
+    void Execute(FetchCommand& fetch,
                  OrthancRestApiCommand* command);    
     
-    void Execute(boost::weak_ptr<IObserver> receiver,
+    void Execute(FetchCommand& fetch,
                  GetOrthancImageCommand* command);    
     
-    void Execute(boost::weak_ptr<IObserver> receiver,
+    void Execute(FetchCommand& fetch,
                  GetOrthancWebViewerJpegCommand* command);
     
     void Execute(boost::weak_ptr<IObserver> receiver,
@@ -110,8 +110,7 @@ namespace OrthancStone
     {
       oracleObservable_.EmitMessage(observer, message);
     }
-
-    // TODO Refactoring - Remove old flavor
+    
     virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
                           IOracleCommand* command) ORTHANC_OVERRIDE;
 

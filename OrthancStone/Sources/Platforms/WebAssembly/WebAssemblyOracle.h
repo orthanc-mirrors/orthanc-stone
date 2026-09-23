@@ -58,8 +58,9 @@ namespace OrthancStone
   class ParseDicomFromWadoCommand;
   
   class WebAssemblyOracle :
-    public IOracle,
-    public IMessageEmitter
+    public IOracle,   // TODO Refactoring - Remove old flavor
+    public IMessageEmitter,
+    public New::IOracle
   {
   private:
     typedef std::map<std::string, std::string>  HttpHeaders;
@@ -70,7 +71,7 @@ namespace OrthancStone
 
     void SetOrthancUrl(FetchCommand& command,
                        const std::string& uri) const;
-    
+
     void Execute(boost::weak_ptr<IObserver> receiver,
                  HttpCommand* command);    
     
@@ -110,9 +111,14 @@ namespace OrthancStone
     {
       oracleObservable_.EmitMessage(observer, message);
     }
-    
+
+    // TODO Refactoring - Remove old flavor
     virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
                           IOracleCommand* command) ORTHANC_OVERRIDE;
+
+    virtual void Submit(IEnvironment& environment,
+                        const boost::shared_ptr<IOracleClient>& client,
+                        IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
 
     IObservable& GetOracleObservable()
     {

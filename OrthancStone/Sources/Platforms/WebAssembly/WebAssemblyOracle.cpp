@@ -99,19 +99,17 @@ namespace OrthancStone
   class WebAssemblyOracle::FetchContext : public boost::noncopyable
   {
   private:
-    WebAssemblyOracle&             oracle_;
-    boost::weak_ptr<IObserver>     receiver_;
-    std::unique_ptr<IOracleCommand>  command_;
-    std::string                    expectedContentType_;
+    std::unique_ptr<IOracleCallback>  callback_;
+    WebAssemblyOracle&                oracle_;
+    std::string                       expectedContentType_;
 
   public:
     FetchContext(WebAssemblyOracle& oracle,
                  boost::weak_ptr<IObserver> receiver,
                  IOracleCommand* command,
                  const std::string& expectedContentType) :
+      callback_(new OldOracleCallback(command, receiver, oracle)),
       oracle_(oracle),
-      receiver_(receiver),
-      command_(command),
       expectedContentType_(expectedContentType)
     {
       if (Orthanc::Logging::IsTraceLevelEnabled())
@@ -119,11 +117,6 @@ namespace OrthancStone
         // Calling "receiver.lock()" is expensive, hence the quick check if TRACE is enabled
         LOG(TRACE) << "WebAssemblyOracle::FetchContext::FetchContext() | "
                    << "receiver address = " << std::hex << receiver.lock().get();
-      }
-
-      if (command == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
     }
 
@@ -134,29 +127,13 @@ namespace OrthancStone
 
     void EmitException(const Orthanc::OrthancException& exception)
     {
-      if (command_.get() == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else
-      {
-        OracleCommandExceptionMessage message(*command_, exception);
-        oracle_.EmitMessage(receiver_, message);
-      }
+      callback_->NotifyError(exception);
     }
 
     void ProcessFetchResult(const std::string& answer,
                             const HttpHeaders& headers)
     {
-      if (command_.get() == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
-      else
-      {
-        OldOracleCallback callback(command_.release(), receiver_, oracle_);
-        oracle_.ProcessFetchResult(callback, answer, headers);
-      }
+      oracle_.ProcessFetchResult(*callback_, answer, headers);
     }
 
     static void SuccessCallback(emscripten_fetch_t *fetch)
@@ -799,6 +776,14 @@ namespace OrthancStone
     }
 
     return true;
+  }
+
+
+  void WebAssemblyOracle::Submit(IEnvironment& environment,
+                                 const boost::shared_ptr<IOracleClient>& client,
+                                 IOracleCommand* command /* takes ownership */)
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);  // TODO Refactoring
   }
 
 

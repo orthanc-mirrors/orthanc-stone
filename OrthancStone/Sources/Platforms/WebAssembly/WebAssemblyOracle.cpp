@@ -259,7 +259,8 @@ namespace OrthancStone
     std::unique_ptr<IOracleCallback>  callback_;
     Orthanc::HttpMethod            method_;
     std::string                    url_;
-    std::string                    body_;
+    size_t                         bodySize_;
+    void*                          bodyData_;
     HttpHeaders                    headers_;
     unsigned int                   timeout_;
     std::string                    expectedContentType_;
@@ -267,18 +268,47 @@ namespace OrthancStone
     std::string                    username_;
     std::string                    password_;
 
+    void ClearBody()
+    {
+      if (bodyData_ != NULL)
+      {
+        free(bodyData_);
+        bodySize_ = 0;
+        bodyData_ = NULL;
+      }
+    }
+
   public:
     FetchCommand(WebAssemblyOracle& oracle,
                  IOracleCallback* callback) :
       oracle_(oracle),
       callback_(callback),
       method_(Orthanc::HttpMethod_Get),
+      bodySize_(0),
+      bodyData_(NULL),
       timeout_(0),
       hasCredentials_(false)
     {
       if (callback == NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+    }
+
+    ~FetchCommand()
+    {
+      ClearBody();
+    }
+
+    const IOracleCallback& GetCallback() const
+    {
+      if (callback_.get() == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        return *callback_;
       }
     }
 
@@ -302,9 +332,21 @@ namespace OrthancStone
       return url_;
     }
 
-    void SetBody(std::string& body /* will be swapped */)
+    void SetBody(const std::string& body)
     {
-      body_.swap(body);
+      ClearBody();
+
+      if (!body.empty())
+      {
+        bodyData_ = malloc(body.size());
+        if (bodyData_ == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotEnoughMemory);
+        }
+
+        bodySize_ = body.size();
+        memcpy(bodyData_, body.c_str(), body.size());
+      }
     }
 
     void AddHttpHeaders(const HttpHeaders& headers)
@@ -412,31 +454,18 @@ namespace OrthancStone
         
       headers.push_back(NULL);  // Termination of the array of HTTP headers
 
+      attr.userData = new FetchContext(oracle_, callback_.release(), expectedContentType);
+
       attr.requestHeaders = &headers[0];
+      attr.requestDataSize = bodySize_;
+      attr.requestData = reinterpret_cast<const char*>(bodyData_);
 
-      char* requestData = NULL;
-      if (!body_.empty())
-        requestData = reinterpret_cast<char*>(malloc(body_.size()));
-        
-      try 
-      {
-        if (!body_.empty())
-        {
-          memcpy(requestData, &(body_[0]), body_.size());
-          attr.requestDataSize = body_.size();
-          attr.requestData = requestData;
-        }
-        attr.userData = new FetchContext(oracle_, callback_.release(), expectedContentType);
+      // Detach the body, it will be freed by emscripten_fetch()
+      bodySize_ = NULL;
+      bodyData_ = NULL;
 
-        // Must be the last call to prevent memory leak on error
-        emscripten_fetch(&attr, url_.c_str());
-      }        
-      catch(...)
-      {
-        if(requestData != NULL)
-          free(requestData);
-        throw;
-      }
+      // Must be the last call to prevent memory leak on error
+      emscripten_fetch(&attr, url_.c_str());
     }
   };
 
@@ -524,45 +553,43 @@ namespace OrthancStone
   }
     
 
-  void WebAssemblyOracle::Execute(FetchCommand& fetch,
-                                  HttpCommand* command)
+  void WebAssemblyOracle::ExecuteHttpCommand(FetchCommand& fetch)
   {
-    fetch.SetMethod(command->GetMethod());
-    fetch.SetUrl(command->GetUrl());
-    fetch.AddHttpHeaders(command->GetHttpHeaders());
-    fetch.SetTimeout(command->GetTimeout());
-    
-    if (command->GetMethod() == Orthanc::HttpMethod_Post ||
-        command->GetMethod() == Orthanc::HttpMethod_Put)
+    const HttpCommand& command = dynamic_cast<const HttpCommand&>(fetch.GetCallback().GetCommand());
+
+    fetch.SetMethod(command.GetMethod());
+    fetch.SetUrl(command.GetUrl());
+    fetch.AddHttpHeaders(command.GetHttpHeaders());
+    fetch.SetTimeout(command.GetTimeout());
+
+    if (command.GetMethod() == Orthanc::HttpMethod_Post ||
+        command.GetMethod() == Orthanc::HttpMethod_Put)
     {
-      std::string body;
-      command->SwapBody(body);
-      fetch.SetBody(body);
+      fetch.SetBody(command.GetBody());
     }
     
     fetch.Execute();
   }
   
 
-  void WebAssemblyOracle::Execute(FetchCommand& fetch,
-                                  OrthancRestApiCommand* command)
+  void WebAssemblyOracle::ExecuteOrthancRestApiCommand(FetchCommand& fetch)
   {
+    const OrthancRestApiCommand& command = dynamic_cast<const OrthancRestApiCommand&>(fetch.GetCallback().GetCommand());
+
     try
     {
       //LOG(TRACE) << "*********** WebAssemblyOracle::Execute.";
       //LOG(TRACE) << "WebAssemblyOracle::Execute | command = " << command;
 
-      fetch.SetMethod(command->GetMethod());
-      SetOrthancUrl(fetch, command->GetUri());
-      fetch.AddHttpHeaders(command->GetHttpHeaders());
-      fetch.SetTimeout(command->GetTimeout());
+      fetch.SetMethod(command.GetMethod());
+      SetOrthancUrl(fetch, command.GetUri());
+      fetch.AddHttpHeaders(command.GetHttpHeaders());
+      fetch.SetTimeout(command.GetTimeout());
 
-      if (command->GetMethod() == Orthanc::HttpMethod_Post ||
-          command->GetMethod() == Orthanc::HttpMethod_Put)
+      if (command.GetMethod() == Orthanc::HttpMethod_Post ||
+          command.GetMethod() == Orthanc::HttpMethod_Put)
       {
-        std::string body;
-        command->SwapBody(body);
-        fetch.SetBody(body);
+        fetch.SetBody(command.GetBody());
       }
 
       fetch.Execute();
@@ -710,15 +737,15 @@ namespace OrthancStone
     {
       case IOracleCommand::Type_Http:
       {
-        FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
-        Execute(fetch, dynamic_cast<HttpCommand*>(protection.release()));
+        FetchCommand fetch(*this, new OldOracleCallback(protection.release(), receiver, *this));
+        ExecuteHttpCommand(fetch);
         break;
       }
         
       case IOracleCommand::Type_OrthancRestApi:
       {
-        FetchCommand fetch(*this, new OldOracleCallback(command, receiver, *this));
-        Execute(fetch, dynamic_cast<OrthancRestApiCommand*>(protection.release()));
+        FetchCommand fetch(*this, new OldOracleCallback(protection.release(), receiver, *this));
+        ExecuteOrthancRestApiCommand(fetch);
         break;
       }
         

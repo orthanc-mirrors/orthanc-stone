@@ -120,11 +120,6 @@ namespace OrthancStone
 
     void SetBody(const Json::Value& json);
 
-    void SwapBody(std::string& body)
-    {
-      body_.swap(body);
-    }
-
     void SetHttpHeaders(const HttpHeaders& headers)
     {
       headers_ = headers;

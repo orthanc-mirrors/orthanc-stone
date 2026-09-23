@@ -71,11 +71,9 @@ namespace OrthancStone
     void SetOrthancUrl(FetchCommand& command,
                        const std::string& uri) const;
 
-    void Execute(FetchCommand& fetch,
-                 HttpCommand* command);    
+    static void ExecuteHttpCommand(FetchCommand& fetch);
     
-    void Execute(FetchCommand& fetch,
-                 OrthancRestApiCommand* command);    
+    void ExecuteOrthancRestApiCommand(FetchCommand& fetch);
     
     void Execute(FetchCommand& fetch,
                  GetOrthancImageCommand* command);    

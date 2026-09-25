@@ -25,6 +25,7 @@
 #include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyLoadersContext.h"
 #include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
 #include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewportsRegistry.h"
+#include "../../../../OrthancStone/Sources/StoneApplication.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
 
@@ -80,7 +81,6 @@ extern "C"
     try
     {
       OrthancStone::StoneInitialize();
-      OrthancStone::StoneApplication::Initialize();
 
       Orthanc::Logging::EnableInfoLevel(true);
       //Orthanc::Logging::EnableTraceLevel(true);
@@ -91,9 +91,13 @@ extern "C"
                    << "." << __EMSCRIPTEN_tiny__;
 
       LOG(INFO) << "Endianness: " << Orthanc::EnumerationToString(Orthanc::Toolbox::DetectEndianness());
-      context_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
-      context_->SetLocalOrthanc("..");
-      context_->SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
+
+      OrthancStone::StoneApplication::Configuration configuration;
+      configuration.SetLocalOrthancRoot("..");
+      configuration.SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
+
+      OrthancStone::StoneApplication::Initialize(configuration);
+      context_.reset(new OrthancStone::WebAssemblyLoadersContext(configuration, 1, 4, 1));
   
       DISPATCH_JAVASCRIPT_EVENT("WasmModuleInitialized");
     }

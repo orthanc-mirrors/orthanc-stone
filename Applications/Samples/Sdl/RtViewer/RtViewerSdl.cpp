@@ -144,14 +144,6 @@ namespace OrthancStone
     ProcessOptions(argc, argv);
 
     /**
-    Create the shared loaders context
-    */
-    loadersContext_.reset(new GenericLoadersContext(1, 4, 1));
-
-    // we are in SDL --> downcast to concrete type
-    boost::shared_ptr<GenericLoadersContext> loadersContext = boost::dynamic_pointer_cast<GenericLoadersContext>(loadersContext_);
-
-    /**
       Url of the Orthanc instance
       Typically, in a native application (Qt, SDL), it will be an absolute URL like "http://localhost:8042". In 
       wasm on the browser, it could be an absolute URL, provided you do not have cross-origin problems, or a relative
@@ -160,6 +152,8 @@ namespace OrthancStone
       leading to the main Orthanc root URL)
     */
     std::string orthancUrl = arguments_["orthanc"];
+
+    StoneApplication::Configuration configuration;
 
     {
       Orthanc::WebServiceParameters p;
@@ -176,8 +170,18 @@ namespace OrthancStone
       {
         ORTHANC_ASSERT(!HasArgument("password"));
       }
-      loadersContext->SetOrthancParameters(p);
+      configuration.SetRemoteOrthancParameters(p);
     }
+
+    OrthancStone::StoneApplication::Initialize(configuration);
+
+    /**
+    Create the shared loaders context
+    */
+    loadersContext_.reset(new GenericLoadersContext(configuration, 1, 4, 1));
+
+    // we are in SDL --> downcast to concrete type
+    boost::shared_ptr<GenericLoadersContext> loadersContext = boost::dynamic_pointer_cast<GenericLoadersContext>(loadersContext_);
 
     loadersContext->StartOracle();
 
@@ -462,7 +466,6 @@ boost::weak_ptr<OrthancStone::RtViewerApp> g_app;
 int main(int argc, char* argv[])
 {
   OrthancStone::StoneInitialize();
-  OrthancStone::StoneApplication::Initialize();
   OrthancStone::SdlWindow::GlobalInitialize();
 
   int status = 0;

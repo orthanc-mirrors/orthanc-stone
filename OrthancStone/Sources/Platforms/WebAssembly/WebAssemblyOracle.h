@@ -35,10 +35,11 @@
 
 #include "../../Oracle/OracleCallback.h"   // TODO Refactoring
 
-#include "../../Messages/IObservable.h"
 #include "../../Messages/IMessageEmitter.h"
+#include "../../Messages/IObservable.h"
 #include "../../Oracle/IEnvironment.h"
 #include "../../Oracle/IOracle.h"
+#include "../../StoneApplication.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1
 #  include "../../Toolbox/ParsedDicomCache.h"
@@ -75,10 +76,8 @@ namespace OrthancStone
     
     void ExecuteParseDicomFromWadoCommand(IOracleCallback* callback);
 
-    IObservable                    oracleObservable_;
-    bool                           isLocalOrthanc_;
-    std::string                    localOrthancRoot_;
-    Orthanc::WebServiceParameters  remoteOrthanc_;
+    StoneApplication::Configuration  configuration_;
+    IObservable                      oracleObservable_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
     std::unique_ptr<ParsedDicomCache>  dicomCache_;
@@ -91,10 +90,7 @@ namespace OrthancStone
     void Submit(IOracleCallback* callback);
 
   public:
-    WebAssemblyOracle() :
-      isLocalOrthanc_(false)
-    {
-    }
+    WebAssemblyOracle(const StoneApplication::Configuration& configuration);
     
     virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
                              const IMessage& message) ORTHANC_OVERRIDE
@@ -113,20 +109,6 @@ namespace OrthancStone
     {
       return oracleObservable_;
     }
-
-    void SetLocalOrthanc(const std::string& root)
-    {
-      isLocalOrthanc_ = true;
-      localOrthancRoot_ = root;
-    }
-
-    void SetRemoteOrthanc(const Orthanc::WebServiceParameters& orthanc)
-    {
-      isLocalOrthanc_ = false;
-      remoteOrthanc_ = orthanc;
-    }
-
-    void SetDicomCacheSize(size_t size);
 
     class CachedInstanceAccessor : public boost::noncopyable
     {

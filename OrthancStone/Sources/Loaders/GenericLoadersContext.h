@@ -32,6 +32,7 @@
 
 namespace OrthancStone
 {
+  // TODO Refactoring - Remove this class
   class GenericLoadersContext : 
     public ILoadersContext,
     private IMessageEmitter
@@ -57,19 +58,14 @@ namespace OrthancStone
                              const IMessage& message) ORTHANC_OVERRIDE;
 
   public:
-    GenericLoadersContext(unsigned int maxHighPriority,
+    GenericLoadersContext(const StoneApplication::Configuration& configuration,
+                          unsigned int maxHighPriority,
                           unsigned int maxStandardPriority,
                           unsigned int maxLowPriority);
 
     virtual ~GenericLoadersContext();
    
     virtual ILock* Lock() ORTHANC_OVERRIDE;
-
-    void SetOrthancParameters(const Orthanc::WebServiceParameters& parameters);
-
-    void SetRootDirectory(const std::string& root);
-    
-    void SetDicomCacheSize(size_t size);
 
     void StartOracle();
 

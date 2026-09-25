@@ -181,7 +181,6 @@ int main(int argc, char* argv[])
   int status = 0;
 
   OrthancStone::StoneInitialize();
-  OrthancStone::StoneApplication::Initialize();
   OrthancStone::SdlWindow::GlobalInitialize();
 
   try
@@ -204,11 +203,14 @@ int main(int argc, char* argv[])
       boost::shared_ptr<OrthancStone::UndoStack> undoStack(new OrthancStone::UndoStack);
 #endif
 
-      OrthancStone::GenericLoadersContext context(1, 4, 1);
-
       Orthanc::WebServiceParameters orthancWebService;
       orthancWebService.SetUrl(orthancUrl);
-      context.SetOrthancParameters(orthancWebService);
+
+      OrthancStone::StoneApplication::Configuration configuration;
+      configuration.SetRemoteOrthancParameters(orthancWebService);
+
+      OrthancStone::GenericLoadersContext context(configuration, 1, 4, 1);
+      OrthancStone::StoneApplication::Initialize(configuration);
 
       context.StartOracle();
 

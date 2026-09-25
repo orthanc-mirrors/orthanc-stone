@@ -442,22 +442,22 @@ namespace OrthancStone
           break;
 
         case IOracleCommand::Type_OrthancRestApi:
-          RunInternal(callback, orthanc_,
+          RunInternal(callback, configuration_.GetRemoteOrthancParameters(),
                       dynamic_cast<const OrthancRestApiCommand&>(callback.GetCommand()));
           break;
 
         case IOracleCommand::Type_GetOrthancImage:
-          RunInternal(callback, orthanc_,
+          RunInternal(callback, configuration_.GetRemoteOrthancParameters(),
                       dynamic_cast<const GetOrthancImageCommand&>(callback.GetCommand()));
           break;
 
         case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-          RunInternal(callback, orthanc_,
+          RunInternal(callback, configuration_.GetRemoteOrthancParameters(),
                       dynamic_cast<const GetOrthancWebViewerJpegCommand&>(callback.GetCommand()));
           break;
 
         case IOracleCommand::Type_ReadFile:
-          RunInternal(callback, rootDirectory_,
+          RunInternal(callback, configuration_.GetRootDirectory(),
                       dynamic_cast<const ReadFileCommand&>(callback.GetCommand()));
           break;
 
@@ -467,12 +467,12 @@ namespace OrthancStone
           switch (callback.GetCommand().GetType())
           {
             case IOracleCommand::Type_ParseDicomFromFile:
-              RunInternal(callback, dicomCache_, rootDirectory_,
+              RunInternal(callback, dicomCache_, configuration_.GetRootDirectory(),
                           dynamic_cast<const ParseDicomFromFileCommand&>(callback.GetCommand()));
               break;
 
             case IOracleCommand::Type_ParseDicomFromWado:
-              RunInternal(callback, dicomCache_, orthanc_,
+              RunInternal(callback, dicomCache_, configuration_.GetRemoteOrthancParameters(),
                           dynamic_cast<const ParseDicomFromWadoCommand&>(callback.GetCommand()));
               break;
 

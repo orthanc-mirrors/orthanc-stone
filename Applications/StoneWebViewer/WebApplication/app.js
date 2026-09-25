@@ -1595,21 +1595,11 @@ window.addEventListener('StoneInitialized', function() {
    **/
 
   stone.Setup(Module);
-  stone.SetDicomWebRoot(app.globalConfiguration.DicomWebRoot,
-                        true /* assume "/rendered" is available in DICOMweb (could be a configuration option) */);
+  stone.Configure(JSON.stringify(app.globalConfiguration));
+
   stone.SetSoftwareRendering(app.settingSoftwareRendering);
   stone.SetLinearInterpolation(app.settingLinearInterpolation);
 
-  if ('DicomCacheSize' in app.globalConfiguration) {
-    stone.SetDicomCacheSize(app.globalConfiguration.DicomCacheSize);
-  }
-
-  // Calls to "stone.AddHttpHeader()" must be after "stone.SetDicomWebRoot()",
-  // and before "stone.SetSkipSeriesFromModalities()"
-  for (var header in app.globalConfiguration.DicomWebHttpHeaders) {
-    stone.AddHttpHeader(header, app.globalConfiguration.DicomWebHttpHeaders[header]);
-  }
-  
   // Bearer token is new in Stone Web viewer 2.0
   var token = getParameterFromUrl('token');
   if (token !== undefined) {
@@ -1632,10 +1622,6 @@ window.addEventListener('StoneInitialized', function() {
    * Calls to "stone.XXX()" can be reordered after this point.
    **/
   
-  if ('SkipSeriesFromModalities' in app.globalConfiguration) {
-    stone.SetSkipSeriesFromModalities(JSON.stringify(app.globalConfiguration.SkipSeriesFromModalities));
-  }
-  
   if (app.globalConfiguration.ShowInfoPanelAtStartup == 'Always') {
     app.modalNotDiagnostic = true;
   } else if (app.globalConfiguration.ShowInfoPanelAtStartup == 'Never') {
@@ -1644,16 +1630,6 @@ window.addEventListener('StoneInitialized', function() {
     app.modalNotDiagnostic = app.settingNotDiagnostic;
   } else {
     alert('Bad value for option "ShowInfoPanelAtStartup": ' + app.globalConfiguration.ShowInfoPanelAtStartup);
-  }
-
-  var color = app.globalConfiguration['AnnotationsColor'];
-  if (color !== undefined) {
-    stone.SetAnnotationsColor(color[0], color[1], color[2]);
-  }
-
-  color = app.globalConfiguration['HighlightedAnnotationsColor'];
-  if (color !== undefined) {
-    stone.SetHighlightedAnnotationsColor(color[0], color[1], color[2]);
   }
 
   console.warn('Stone properly initialized');

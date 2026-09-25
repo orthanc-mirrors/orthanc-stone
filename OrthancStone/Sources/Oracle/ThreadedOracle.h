@@ -44,8 +44,8 @@
 
 #include "../Messages/IMessageEmitter.h"
 #include "../Platforms/Native/RunnableThread.h"
+#include "../StoneApplication.h"
 #include "GenericOracleRunner.h"
-#include "IEnvironment.h"
 #include "IOracle.h"
 
 #include <MultiThreading/SharedMessageQueue.h>
@@ -66,16 +66,14 @@ namespace OrthancStone
 
     class SleepingCommands;
 
+    StoneApplication::Configuration      configuration_;
     IMessageEmitter&                     emitter_;
-    Orthanc::WebServiceParameters        orthanc_;
-    std::string                          rootDirectory_;
     Orthanc::SharedMessageQueue          queue_;
     State                                state_;
     boost::mutex                         mutex_;
     std::vector<boost::thread*>          workers_;
     boost::shared_ptr<SleepingCommands>  sleepingCommands_;
     boost::thread                        sleepingWorker_;
-    unsigned int                         sleepingTimeResolution_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
     boost::shared_ptr<ParsedDicomCache>  dicomCache_;
@@ -90,19 +88,10 @@ namespace OrthancStone
     void StopInternal();
 
   public:
-    explicit ThreadedOracle(IMessageEmitter& emitter);
+    ThreadedOracle(const StoneApplication::Configuration& configuration,
+                   IMessageEmitter& emitter);
 
-    virtual ~ThreadedOracle();
-
-    void SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc);
-
-    void SetRootDirectory(const std::string& rootDirectory);
-
-    void SetThreadsCount(unsigned int count);
-
-    void SetSleepingTimeResolution(unsigned int milliseconds);
-
-    void SetDicomCacheSize(size_t size);
+    virtual ~ThreadedOracle() ORTHANC_OVERRIDE;
 
     void Start();
 
@@ -118,16 +107,19 @@ namespace OrthancStone
 
   namespace New
   {
-    class ThreadedOracle : public IOracle
+    class ThreadedOracle :
+      public ::OrthancStone::IOracle,  // TODO Refactoring - Remove this
+      public ::OrthancStone::New::IOracle
     {
     private:
       class SleepRunnable;
 
-      RunnableThread       sleepingThread_;
-      Orthanc::ThreadPool  threadPool_;
+      StoneApplication::Configuration  configuration_;
+      RunnableThread                   sleepingThread_;
+      Orthanc::ThreadPool              threadPool_;
 
     public:
-      ThreadedOracle(unsigned int countWorkers);
+      ThreadedOracle(const StoneApplication::Configuration& configuration);
 
       void Start();
 
@@ -136,6 +128,9 @@ namespace OrthancStone
       virtual void Submit(IEnvironment& environment,
                           const boost::shared_ptr<IOracleClient>& client,
                           IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
+
+      virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
+                            IOracleCommand* command) ORTHANC_OVERRIDE;
     };
   }
 }

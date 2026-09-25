@@ -40,6 +40,82 @@
 
 namespace OrthancStone
 {
+  StoneApplication::Configuration::Configuration() :
+    isLocalOrthanc_(false),
+    rootDirectory_("."),
+    oracleThreadsCount_(4),
+    workersTimeResolution_(50),  // By default, time resolution of 50ms
+    dicomCacheSize_(0)  // By default, no DICOM cache
+  {
+  }
+
+
+  void StoneApplication::Configuration::SetRemoteOrthancParameters(const Orthanc::WebServiceParameters& orthanc)
+  {
+    isLocalOrthanc_ = false;
+    remoteOrthanc_ = orthanc;
+  }
+
+
+  const Orthanc::WebServiceParameters& StoneApplication::Configuration::GetRemoteOrthancParameters() const
+  {
+    if (isLocalOrthanc_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      return remoteOrthanc_;
+    }
+  }
+
+
+  void StoneApplication::Configuration::SetLocalOrthancRoot(const std::string& root)
+  {
+    isLocalOrthanc_ = true;
+    localOrthancRoot_ = root;
+  }
+
+
+  const std::string& StoneApplication::Configuration::GetLocalOrthancRoot() const
+  {
+    if (isLocalOrthanc_)
+    {
+      return localOrthancRoot_;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+  }
+
+
+  void StoneApplication::Configuration::SetOracleThreadsCount(unsigned int count)
+  {
+    if (count == 0)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      oracleThreadsCount_ = count;
+    }
+  }
+
+
+  void StoneApplication::Configuration::SetWorkersTimeResolution(unsigned int milliseconds)
+  {
+    if (milliseconds == 0)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+    }
+    else
+    {
+      workersTimeResolution_ = milliseconds;
+    }
+  }
+
+
 #if ORTHANC_STONE_TARGET_PLATFORM_WASM == 1
   class StoneApplication::PImpl
   {
@@ -48,6 +124,11 @@ namespace OrthancStone
     WebAssemblyOracle       oracle_;
 
   public:
+    PImpl(const Configuration& configuration) :
+      oracle_(configuration)
+    {
+    }
+
     IEnvironment& GetEnvironment()
     {
       return environment_;
@@ -77,8 +158,8 @@ namespace OrthancStone
     New::ThreadedOracle  oracle_;
 
   public:
-    PImpl(unsigned int oracleThreads) :
-      oracle_(oracleThreads)
+    PImpl(const Configuration& configuration) :
+      oracle_(configuration)
     {
     }
 
@@ -109,14 +190,13 @@ namespace OrthancStone
 
   static Orthanc::Mutex                     applicationMutex_;
   static std::unique_ptr<StoneApplication>  application_;
-  static unsigned int                       threadsCount_ = 4;
 
-  StoneApplication::StoneApplication()
+  StoneApplication::StoneApplication(const Configuration& configuration)
   {
 #if ORTHANC_STONE_TARGET_PLATFORM_WASM == 1
-    pimpl_ = new PImpl;
+    pimpl_ = new PImpl(configuration);
 #elif ORTHANC_STONE_TARGET_PLATFORM_NATIVE == 1
-    pimpl_ = new PImpl(threadsCount_);
+    pimpl_ = new PImpl(configuration);
 #else
 #   error Support your platform here
 #endif
@@ -143,13 +223,13 @@ namespace OrthancStone
   }
 
 
-  void StoneApplication::Initialize()
+  void StoneApplication::Initialize(const Configuration& configuration)
   {
     Orthanc::Mutex::ScopedLock lock(applicationMutex_);
 
     if (application_.get() == NULL)
     {
-      application_.reset(new StoneApplication);
+      application_.reset(new StoneApplication(configuration));
       application_->pimpl_->Start();
     }
     else
@@ -183,19 +263,5 @@ namespace OrthancStone
   {
     assert(pimpl_ != NULL);
     pimpl_->GetOracle().Submit(pimpl_->GetEnvironment(), client, command);
-  }
-
-
-  void StoneApplication::SetThreadsCount(unsigned int count)
-  {
-    if (count == 0)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-    else
-    {
-      Orthanc::Mutex::ScopedLock lock(applicationMutex_);
-      threadsCount_ = count;
-    }
   }
 }

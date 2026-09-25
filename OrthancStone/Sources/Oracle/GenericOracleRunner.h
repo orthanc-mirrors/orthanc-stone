@@ -33,6 +33,7 @@
 #  include "../Toolbox/ParsedDicomCache.h"
 #endif
 
+#include "../StoneApplication.h"
 #include "IOracleCommand.h"
 #include "OracleCallback.h"
 
@@ -44,37 +45,16 @@ namespace OrthancStone
   class GenericOracleRunner : public boost::noncopyable
   {
   private:
-    Orthanc::WebServiceParameters  orthanc_;
-    std::string                    rootDirectory_;
+    StoneApplication::Configuration  configuration_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
     boost::shared_ptr<ParsedDicomCache>  dicomCache_;
 #endif
 
   public:
-    GenericOracleRunner() :
-      rootDirectory_(".")
+    GenericOracleRunner(const StoneApplication::Configuration& configuration) :
+      configuration_(configuration)
     {
-    }
-
-    void SetOrthanc(const Orthanc::WebServiceParameters& orthanc)
-    {
-      orthanc_ = orthanc;
-    }
-
-    const Orthanc::WebServiceParameters& GetOrthanc() const
-    {
-      return orthanc_;
-    }
-
-    void SetRootDirectory(const std::string& rootDirectory)
-    {
-      rootDirectory_ = rootDirectory;
-    }
-
-    const std::string& GetRootDirectory() const
-    {
-      return rootDirectory_;
     }
 
 #if ORTHANC_ENABLE_DCMTK == 1

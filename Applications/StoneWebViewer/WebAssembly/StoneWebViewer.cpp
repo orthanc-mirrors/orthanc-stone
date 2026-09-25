@@ -26,15 +26,6 @@
 #include <emscripten.h>
 
 
-// Orthanc framework includes
-#include <Cache/MemoryObjectCache.h>
-#include <DicomFormat/DicomArray.h>
-#include <DicomParsing/ParsedDicomFile.h>
-#include <Images/Image.h>
-#include <Images/ImageProcessing.h>
-#include <Images/JpegReader.h>
-#include <Logging.h>
-
 // Stone includes
 #include "../../../OrthancStone/Sources/Loaders/DicomResourcesLoader.h"
 #include "../../../OrthancStone/Sources/Loaders/SeriesMetadataLoader.h"
@@ -65,6 +56,16 @@
 #include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyCairoViewport.h"
 #include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyLoadersContext.h"
 #include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
+
+// Orthanc framework includes
+#include <Cache/MemoryObjectCache.h>
+#include <DicomFormat/DicomArray.h>
+#include <DicomParsing/ParsedDicomFile.h>
+#include <Images/Image.h>
+#include <Images/ImageProcessing.h>
+#include <Images/JpegReader.h>
+#include <Logging.h>
+#include <SerializationToolbox.h>
 
 
 #include <algorithm>
@@ -4898,6 +4899,44 @@ static boost::shared_ptr<Toto> toto_(new Toto);
 // END TODO Refactoring
 
 
+static bool ParseColor(uint8_t& red,
+                       uint8_t& green,
+                       uint8_t& blue,
+                       const Json::Value& configuration,
+                       const std::string& key)
+{
+  if (configuration.isMember(key))
+  {
+    const Json::Value& value = configuration[key];
+
+    if (value.isArray() &&
+        value.size() == 3 &&
+        value[0].isIntegral() &&
+        value[1].isIntegral() &&
+        value[2].isIntegral() &&
+        value[0].asInt() >= 0 &&
+        value[0].asInt() <= 255 &&
+        value[1].asInt() >= 0 &&
+        value[1].asInt() <= 255 &&
+        value[2].asInt() >= 0 &&
+        value[2].asInt() <= 255)
+    {
+      red = static_cast<uint8_t>(value[0].asInt());
+      green = static_cast<uint8_t>(value[1].asInt());
+      blue = static_cast<uint8_t>(value[2].asInt());
+      return true;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+    }
+  }
+  else
+  {
+    return 0;
+  }
+}
+
 
 extern "C"
 {
@@ -4906,16 +4945,11 @@ extern "C"
     printf("Initializing Stone\n");
     OrthancStone::StoneInitialize();
 
-    OrthancStone::StoneApplication::Initialize();
-
     Orthanc::Logging::EnableInfoLevel(true);
     //Orthanc::Logging::EnableTraceLevel(true);
 
     LOG(INFO) << "Using DCMTK version: " << DCMTK_VERSION_NUMBER;
 
-    context_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
-    context_->SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
-    
     framesCache_.reset(new FramesCache);
     instancesCache_.reset(new InstancesCache);
     overlayLayerSource_.reset(new OverlayLayerSource);
@@ -4943,28 +4977,63 @@ extern "C"
 
 
   EMSCRIPTEN_KEEPALIVE
-  void SetDicomWebRoot(const char* uri,
-                       int useRendered)
+  void Configure(const char* globalConfiguration)
   {
     try
     {
-      source_.SetDicomWebSource(uri);
-      source_.SetDicomWebRendered(useRendered != 0);
-    }
-    EXTERN_CATCH_EXCEPTIONS;
-  }
-  
+      Json::Value parsed;
+      if (Orthanc::Toolbox::ReadJson(parsed, globalConfiguration))
+      {
+        OrthancStone::StoneApplication::Configuration configuration;
 
-  EMSCRIPTEN_KEEPALIVE
-  void SetDicomWebThroughOrthanc(const char* orthancRoot,
-                                 const char* serverName,
-                                 int hasRendered)
-  {
-    try
-    {
-      context_->SetLocalOrthanc(orthancRoot);
-      source_.SetDicomWebThroughOrthancSource(serverName);
-      source_.SetDicomWebRendered(hasRendered != 0);
+        source_.SetDicomWebSource(Orthanc::SerializationToolbox::ReadString(parsed, "DicomWebRoot"));
+        source_.SetDicomWebRendered(true);  // assume "/rendered" is available in DICOMweb (could be a configuration option)
+
+        // Another possibility:
+        // configuration.SetLocalOrthancRoot(orthancRoot); source_.SetDicomWebThroughOrthancSource(serverName);
+
+        unsigned int size = Orthanc::SerializationToolbox::ReadUnsignedInteger(parsed, "DicomCacheSize", 0);
+        configuration.SetDicomCacheSize(size * 1024 * 1024);  // The size is expressed in MB in the configuration file
+
+        static const char* const KEY_DICOM_WEB_HEADERS = "DicomWebHttpHeaders";
+        if (parsed.isMember(KEY_DICOM_WEB_HEADERS))
+        {
+          std::map<std::string, std::string> headers;
+          Orthanc::SerializationToolbox::ReadMapOfStrings(headers, parsed, KEY_DICOM_WEB_HEADERS);
+
+          for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
+          {
+            source_.AddHttpHeader(it->first, it->second);
+          }
+        }
+
+        uint8_t r, g, b;
+        if (ParseColor(r, g, b, parsed, "AnnotationsColor"))
+        {
+          SetAnnotationsColor(OrthancStone::Color(r, g, b));
+        }
+
+        if (ParseColor(r, g, b, parsed, "HighlightedAnnotationsColor"))
+        {
+          SetHighlightedColor(OrthancStone::Color(r, g, b));
+        }
+
+        context_.reset(new OrthancStone::WebAssemblyLoadersContext(configuration, 1, 4, 1));
+
+        static const char* const KEY_SKIP_SERIES = "SkipSeriesFromModalities";
+        if (parsed.isMember(KEY_SKIP_SERIES))
+        {
+          std::vector<std::string> modalities;
+          Orthanc::SerializationToolbox::ReadArrayOfStrings(modalities, parsed, KEY_SKIP_SERIES);
+          GetResourcesLoader().SetSkipSeriesFromModalities(modalities);
+        }
+
+        OrthancStone::StoneApplication::Initialize(configuration);
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadFileFormat);
+      }
     }
     EXTERN_CATCH_EXCEPTIONS;
   }
@@ -4981,50 +5050,6 @@ extern "C"
     EXTERN_CATCH_EXCEPTIONS;
   }
   
-
-  EMSCRIPTEN_KEEPALIVE
-  void SetDicomCacheSize(int sizeMB)
-  {
-    try
-    {
-      if (sizeMB == 0)
-      {
-        LOG(WARNING) << "The DICOM cache is disabled";
-      }
-      else
-      {
-        LOG(INFO) << "The DICOM cache size is set to " << sizeMB << "MB";
-      }
-
-      if (sizeMB >= 0)
-      {
-        context_->SetDicomCacheSize(sizeMB * 1024 * 1024);
-      }
-    }
-    EXTERN_CATCH_EXCEPTIONS;
-  }
-  
-
-  EMSCRIPTEN_KEEPALIVE
-  void SetSkipSeriesFromModalities(const char* value)
-  {
-    try
-    {
-      LOG(WARNING) << "SetSkipSeriesFromModalities " << value;
-      
-      Json::Value modalities;
-      Orthanc::Toolbox::ReadJson(modalities, value);
-      std::vector<std::string> skipSeriesFromModalities;
-
-      for (Json::Value::ArrayIndex i = 0; i < modalities.size(); i++)
-      {
-        skipSeriesFromModalities.push_back(modalities[i].asString());
-      }
-      GetResourcesLoader().SetSkipSeriesFromModalities(skipSeriesFromModalities);
-    }
-    EXTERN_CATCH_EXCEPTIONS;
-  }
-
 
   EMSCRIPTEN_KEEPALIVE
   void FetchAllStudies()
@@ -5706,34 +5731,6 @@ extern "C"
     {
       GetViewport(canvas)->AddTextAnnotation(label, OrthancStone::ScenePoint2D(pointedX, pointedY),
                                              OrthancStone::ScenePoint2D(labelX, labelY));
-    }
-    EXTERN_CATCH_EXCEPTIONS;
-  }
-
-
-  EMSCRIPTEN_KEEPALIVE
-  void SetAnnotationsColor(int red,
-                           int green,
-                           int blue)
-  {
-    try
-    {
-      OrthancStone::Color color(red, green, blue);
-      SetAnnotationsColor(color);
-    }
-    EXTERN_CATCH_EXCEPTIONS;
-  }
-
-
-  EMSCRIPTEN_KEEPALIVE
-  void SetHighlightedAnnotationsColor(int red,
-                                      int green,
-                                      int blue)
-  {
-    try
-    {
-      OrthancStone::Color color(red, green, blue);
-      SetHighlightedColor(color);
     }
     EXTERN_CATCH_EXCEPTIONS;
   }

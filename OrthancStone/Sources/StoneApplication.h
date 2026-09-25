@@ -25,23 +25,89 @@
 
 #include "Oracle/IEnvironment.h"
 
-#include <string>
+#include <WebServiceParameters.h>
 
 
 namespace OrthancStone
 {
   class StoneApplication : public boost::noncopyable
   {
+  public:
+    class Configuration
+    {
+    private:
+      bool                            isLocalOrthanc_;
+      Orthanc::WebServiceParameters   remoteOrthanc_;
+      std::string                     localOrthancRoot_;
+      std::string                     rootDirectory_;
+      unsigned int                    oracleThreadsCount_;
+      unsigned int                    workersTimeResolution_;
+      size_t                          dicomCacheSize_;
+
+    public:
+      Configuration();
+
+      bool IsLocalOrthanc() const
+      {
+        return isLocalOrthanc_;
+      }
+
+      void SetRemoteOrthancParameters(const Orthanc::WebServiceParameters& orthanc);
+
+      const Orthanc::WebServiceParameters& GetRemoteOrthancParameters() const;
+
+      // Using a local Orthanc only makes sense for WebAssembly, if it
+      // is Orthanc that serves the Web application
+      void SetLocalOrthancRoot(const std::string& root);
+
+      const std::string& GetLocalOrthancRoot() const;
+
+      void SetRootDirectory(const std::string& root)
+      {
+        rootDirectory_ = root;
+      }
+
+      const std::string& GetRootDirectory() const
+      {
+        return rootDirectory_;
+      }
+
+      void SetOracleThreadsCount(unsigned int count);
+
+      unsigned int GetOracleThreadsCount() const
+      {
+        return oracleThreadsCount_;
+      }
+
+      void SetWorkersTimeResolution(unsigned int milliseconds);
+
+      unsigned int GetWorkersTimeResolution() const
+      {
+        return workersTimeResolution_;
+      }
+
+      // Setting the cache size to zero disables it
+      void SetDicomCacheSize(size_t size)
+      {
+        dicomCacheSize_ = size;
+      }
+
+      size_t GetDicomCacheSize() const
+      {
+        return dicomCacheSize_;
+      }
+    };
+
   private:
     class PImpl;
     PImpl* pimpl_;
 
-    StoneApplication();
+    StoneApplication(const Configuration& configuration);
 
   public:
-    static StoneApplication& GetInstance();
+    static void Initialize(const Configuration& configuration);
 
-    static void Initialize();
+    static StoneApplication& GetInstance();
 
     static void Finalize();
 
@@ -51,7 +117,5 @@ namespace OrthancStone
 
     void Submit(const boost::shared_ptr<IOracleClient>& client,
                 IOracleCommand* command /* takes ownership */);
-
-    static void SetThreadsCount(unsigned int count);
   };
 }

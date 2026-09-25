@@ -135,20 +135,14 @@ namespace OrthancStone
       }
       else
       {
-        GenericOracleRunner runner;
-
-        {
-          boost::mutex::scoped_lock lock(mutex_);
-          runner.SetOrthanc(orthanc_);
-          runner.SetRootDirectory(rootDirectory_);
+        GenericOracleRunner runner(configuration_);
 
 #if ORTHANC_ENABLE_DCMTK == 1
-          if (dicomCache_)
-          {
-            runner.SetDicomCache(dicomCache_);
-          }
-#endif
+        if (dicomCache_)
+        {
+          runner.SetDicomCache(dicomCache_);
         }
+#endif
 
         runner.Run(*item);
       }
@@ -191,7 +185,7 @@ namespace OrthancStone
 
       that->sleepingCommands_->AwakeExpired(that->emitter_);
 
-      boost::this_thread::sleep(boost::posix_time::milliseconds(that->sleepingTimeResolution_));
+      boost::this_thread::sleep(boost::posix_time::milliseconds(that->configuration_.GetWorkersTimeResolution()));
     }
   }
 
@@ -232,14 +226,23 @@ namespace OrthancStone
   }
 
 
-  ThreadedOracle::ThreadedOracle(IMessageEmitter& emitter) :
+  ThreadedOracle::ThreadedOracle(const StoneApplication::Configuration& configuration,
+                                 IMessageEmitter& emitter) :
+    configuration_(configuration),
     emitter_(emitter),
-    rootDirectory_("."),
     state_(State_Setup),
     workers_(4),
-    sleepingCommands_(new SleepingCommands),
-    sleepingTimeResolution_(50)  // By default, time resolution of 50ms
+    sleepingCommands_(new SleepingCommands)
   {
+    if (configuration.GetDicomCacheSize() == 0)
+    {
+      LOG(WARNING) << "The DICOM cache is disabled";
+    }
+    else
+    {
+      LOG(INFO) << "The DICOM cache size is set to " << configuration.GetDicomCacheSize() << " bytes";
+      dicomCache_.reset(new ParsedDicomCache(configuration.GetDicomCacheSize()));
+    }
   }
 
 
@@ -266,85 +269,6 @@ namespace OrthancStone
   }
 
   
-  void ThreadedOracle::SetOrthancParameters(const Orthanc::WebServiceParameters& orthanc)
-  {
-    boost::mutex::scoped_lock lock(mutex_);
-    orthanc_ = orthanc;
-  }
-
-
-  void ThreadedOracle::SetRootDirectory(const std::string& rootDirectory)
-  {
-    boost::mutex::scoped_lock lock(mutex_);
-    rootDirectory_ = rootDirectory;
-  }
-
-
-  void ThreadedOracle::SetThreadsCount(unsigned int count)
-  {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    if (count == 0)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-    else if (state_ != State_Setup)
-    {
-      LOG(ERROR) << "ThreadedOracle::SetThreadsCount(): (state_ != State_Setup)";
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      workers_.resize(count);
-    }
-  }
-
-
-  void ThreadedOracle::SetSleepingTimeResolution(unsigned int milliseconds)
-  {
-    boost::mutex::scoped_lock lock(mutex_);
-
-    if (milliseconds == 0)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
-    }
-    else if (state_ != State_Setup)
-    {
-      LOG(ERROR) << "ThreadedOracle::SetSleepingTimeResolution(): (state_ != State_Setup)";
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      sleepingTimeResolution_ = milliseconds;
-    }
-  }
-
-
-  void ThreadedOracle::SetDicomCacheSize(size_t size)
-  {
-#if ORTHANC_ENABLE_DCMTK == 1
-    boost::mutex::scoped_lock lock(mutex_);
-
-    if (state_ != State_Setup)
-    {
-      LOG(ERROR) << "ThreadedOracle::SetDicomCacheSize(): (state_ != State_Setup)";
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      if (size == 0)
-      {
-        dicomCache_.reset();
-      }
-      else
-      {
-        dicomCache_.reset(new ParsedDicomCache(size));
-      }
-    }
-#endif
-  }
-
-
   void ThreadedOracle::Start()
   {
     boost::mutex::scoped_lock lock(mutex_);
@@ -483,11 +407,12 @@ namespace OrthancStone
     };
 
 
-    ThreadedOracle::ThreadedOracle(unsigned int countWorkers) :
-      sleepingThread_(new SleepRunnable, 50 /* milliseconds */)
+    ThreadedOracle::ThreadedOracle(const StoneApplication::Configuration& configuration) :
+      configuration_(configuration),
+      sleepingThread_(new SleepRunnable, configuration.GetWorkersTimeResolution())
     {
-      threadPool_.SetThreadsCount(countWorkers);
-      threadPool_.SetDequeueTimeout(50);
+      threadPool_.SetThreadsCount(configuration.GetOracleThreadsCount());
+      threadPool_.SetDequeueTimeout(configuration.GetWorkersTimeResolution());
     }
 
 
@@ -517,31 +442,22 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
 
-      try
+      if (command->GetType() == IOracleCommand::Type_Sleep)
       {
-        switch (command->GetType())
-        {
-          case IOracleCommand::Type_Sleep:
-          {
-            SleepRunnable& runnable = dynamic_cast<SleepRunnable&>(sleepingThread_.GetRunnable());
-            runnable.Add(environment, client, dynamic_cast<SleepOracleCommand*>(protection.release()));
-            break;
-          }
+        SleepRunnable& runnable = dynamic_cast<SleepRunnable&>(sleepingThread_.GetRunnable());
+        runnable.Add(environment, client, dynamic_cast<SleepOracleCommand*>(protection.release()));
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      }
+    }
 
-          default:
-            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
-                                            "Command type not implemented by the Threaded Oracle: " +
-                                            boost::lexical_cast<std::string>(command->GetType()));
-        }
-      }
-      catch (Orthanc::OrthancException& e)
-      {
-        environment.NotifyOracleError(client, protection.release(), e);
-      }
-      catch (...)
-      {
-        environment.NotifyOracleError(client, protection.release(), Orthanc::OrthancException(Orthanc::ErrorCode_InternalError));
-      }
+
+    bool ThreadedOracle::Schedule(boost::shared_ptr<IObserver> receiver,
+                                  IOracleCommand* command)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
   }
 }

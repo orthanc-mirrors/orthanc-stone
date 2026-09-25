@@ -31,6 +31,7 @@
 
 namespace OrthancStone
 {
+  // TODO Refactoring - Remove this class
   class WebAssemblyLoadersContext : public ILoadersContext
   {
   private:
@@ -41,24 +42,10 @@ namespace OrthancStone
     std::list< boost::shared_ptr<IObserver> >  loaders_;
     
   public:
-    WebAssemblyLoadersContext(unsigned int maxHighPriority,
+    WebAssemblyLoadersContext(const StoneApplication::Configuration& configuration,
+                              unsigned int maxHighPriority,
                               unsigned int maxStandardPriority,
                               unsigned int maxLowPriority);
-
-    void SetLocalOrthanc(const std::string& root)
-    {
-      oracle_.SetLocalOrthanc(root);
-    }
-
-    void SetRemoteOrthanc(const Orthanc::WebServiceParameters& orthanc)
-    {
-      oracle_.SetRemoteOrthanc(orthanc);
-    }
-
-    void SetDicomCacheSize(size_t size)
-    {
-      oracle_.SetDicomCacheSize(size);
-    }
 
     WebAssemblyOracle::CachedInstanceAccessor* AccessCachedInstance(const std::string& sopInstanceUid)
     {

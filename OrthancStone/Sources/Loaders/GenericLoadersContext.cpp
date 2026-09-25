@@ -93,11 +93,12 @@ namespace OrthancStone
   }
 
 
-  GenericLoadersContext::GenericLoadersContext(unsigned int maxHighPriority,
+  GenericLoadersContext::GenericLoadersContext(const StoneApplication::Configuration& configuration,
+                                               unsigned int maxHighPriority,
                                                unsigned int maxStandardPriority,
                                                unsigned int maxLowPriority)
   {
-    oracle_.reset(new ThreadedOracle(*this));
+    oracle_.reset(new ThreadedOracle(configuration, *this));
     scheduler_ = OracleScheduler::Create(*oracle_, oracleObservable_, *this,
                                          maxHighPriority, maxStandardPriority, maxLowPriority);
 
@@ -114,27 +115,6 @@ namespace OrthancStone
                  << ", processed commands: " << scheduler_->GetTotalProcessed();
     scheduler_.reset();
     //LOG(INFO) << "counter: " << scheduler_.use_count();
-  }
-
-  
-  void GenericLoadersContext::SetOrthancParameters(const Orthanc::WebServiceParameters& parameters)
-  {
-    boost::recursive_mutex::scoped_lock lock(mutex_);
-    oracle_->SetOrthancParameters(parameters);
-  }
-
-  
-  void GenericLoadersContext::SetRootDirectory(const std::string& root)
-  {
-    boost::recursive_mutex::scoped_lock lock(mutex_);
-    oracle_->SetRootDirectory(root);
-  }
-
-  
-  void GenericLoadersContext::SetDicomCacheSize(size_t size)
-  {
-    boost::recursive_mutex::scoped_lock lock(mutex_);
-    oracle_->SetDicomCacheSize(size);
   }
 
   

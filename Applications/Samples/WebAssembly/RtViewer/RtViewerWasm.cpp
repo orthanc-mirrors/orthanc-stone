@@ -26,6 +26,7 @@
 // Stone of Orthanc includes
 #include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyLoadersContext.h"
 #include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
+#include "../../../../OrthancStone/Sources/StoneApplication.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
 
@@ -141,18 +142,25 @@ namespace OrthancStone
 
   void RtViewerApp::RunWasm()
   {
-    loadersContext_.reset(new WebAssemblyLoadersContext(1, 4, 1));
+    StoneApplication::Configuration configuration;
+
+    if (HasArgument("orthanc"))
+    {
+      configuration.SetLocalOrthancRoot(GetArgument("orthanc"));
+    }
+    else
+    {
+      configuration.SetLocalOrthancRoot("..");
+    }
+
+    configuration.SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
+
+    OrthancStone::StoneApplication::Initialize(configuration);
+    loadersContext_.reset(new WebAssemblyLoadersContext(configuration, 1, 4, 1));
 
     // we are in WASM --> downcast to concrete type
     boost::shared_ptr<WebAssemblyLoadersContext> loadersContext = 
       boost::dynamic_pointer_cast<WebAssemblyLoadersContext>(loadersContext_);
-
-    if (HasArgument("orthanc"))
-      loadersContext->SetLocalOrthanc(GetArgument("orthanc"));
-    else 
-      loadersContext->SetLocalOrthanc("..");
-
-    loadersContext->SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
 
     CreateLoaders();
     
@@ -178,7 +186,6 @@ extern "C"
     try
     {
       OrthancStone::StoneInitialize();
-      OrthancStone::StoneApplication::Initialize();
 
       //Orthanc::Logging::EnableTraceLevel(true);
       Orthanc::Logging::EnableInfoLevel(true);

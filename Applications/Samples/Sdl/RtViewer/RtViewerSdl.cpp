@@ -29,6 +29,7 @@
 #include "../../../../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
 #include "../../../../OrthancStone/Sources/OpenGL/OpenGLIncludes.h"
 #include "../../../../OrthancStone/Sources/Platforms/Sdl/SdlOpenGLContext.h"
+#include "../../../../OrthancStone/Sources/StoneApplication.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
 
@@ -461,6 +462,7 @@ boost::weak_ptr<OrthancStone::RtViewerApp> g_app;
 int main(int argc, char* argv[])
 {
   OrthancStone::StoneInitialize();
+  OrthancStone::StoneApplication::Initialize();
   OrthancStone::SdlWindow::GlobalInitialize();
 
   int status = 0;
@@ -478,6 +480,7 @@ int main(int argc, char* argv[])
   }
   
   OrthancStone::SdlWindow::GlobalFinalize();
+  OrthancStone::StoneApplication::Finalize();
   OrthancStone::StoneFinalize();
 
   return status;

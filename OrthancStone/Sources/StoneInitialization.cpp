@@ -46,7 +46,6 @@
 #  include <DicomParsing/FromDcmtkBridge.h>
 #endif
 
-#include "StoneApplication.h"
 #include "Toolbox/LinearAlgebra.h"
 
 #include <Logging.h>
@@ -132,15 +131,11 @@ namespace OrthancStone
         }
       }
     }
-
-    StoneApplication::Initialize();
   }
   
 
   void StoneFinalize()
   {
-    StoneApplication::Finalize();
-
     Orthanc::FinalizeFramework();
   }
 }

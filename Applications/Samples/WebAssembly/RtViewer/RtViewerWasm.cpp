@@ -178,6 +178,7 @@ extern "C"
     try
     {
       OrthancStone::StoneInitialize();
+      OrthancStone::StoneApplication::Initialize();
 
       //Orthanc::Logging::EnableTraceLevel(true);
       Orthanc::Logging::EnableInfoLevel(true);

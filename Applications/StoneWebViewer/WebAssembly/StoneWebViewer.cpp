@@ -4906,6 +4906,8 @@ extern "C"
     printf("Initializing Stone\n");
     OrthancStone::StoneInitialize();
 
+    OrthancStone::StoneApplication::Initialize();
+
     Orthanc::Logging::EnableInfoLevel(true);
     //Orthanc::Logging::EnableTraceLevel(true);
 

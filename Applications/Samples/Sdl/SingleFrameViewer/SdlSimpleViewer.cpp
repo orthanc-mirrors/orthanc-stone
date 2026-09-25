@@ -181,6 +181,7 @@ int main(int argc, char* argv[])
   int status = 0;
 
   OrthancStone::StoneInitialize();
+  OrthancStone::StoneApplication::Initialize();
   OrthancStone::SdlWindow::GlobalInitialize();
 
   try
@@ -579,6 +580,7 @@ int main(int argc, char* argv[])
   }
 
   OrthancStone::SdlWindow::GlobalFinalize();
+  OrthancStone::StoneApplication::Finalize();
   OrthancStone::StoneFinalize();
 
   return status;

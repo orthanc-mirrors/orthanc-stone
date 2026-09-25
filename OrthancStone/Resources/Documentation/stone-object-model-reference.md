@@ -414,6 +414,7 @@ Initialize:
 
 ```
 OrthancStone::StoneInitialize();
+OrthancStone::StoneApplication::Initialize();
 Orthanc::Logging::EnableInfoLevel(true);
 ```
 Call, in WASM:

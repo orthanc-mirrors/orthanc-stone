@@ -222,10 +222,9 @@ int main(int argc, char* argv[])
       OrthancStone::StoneApplication::Configuration configuration;
       configuration.SetRemoteOrthancParameters(orthancWebService);
 
-      OrthancStone::GenericLoadersContext context(configuration, 1, 4, 1);
       OrthancStone::StoneApplication::Initialize(configuration);
 
-      context.StartOracle();
+      OrthancStone::GenericLoadersContext context(1, 4, 1);
 
       {
         {
@@ -583,7 +582,6 @@ int main(int argc, char* argv[])
             SDL_Delay(1);
           }
         }
-        context.StopOracle();
       }
     }
   }

@@ -134,7 +134,7 @@ namespace OrthancStone
       return environment_;
     }
 
-    New::IOracle& GetOracle()
+    WebAssemblyOracle& GetOracle()
     {
       return oracle_;
     }
@@ -155,7 +155,7 @@ namespace OrthancStone
   {
   private:
     NativeEnvironment    environment_;
-    New::ThreadedOracle  oracle_;
+    ThreadedOracle       oracle_;
 
   public:
     PImpl(const Configuration& configuration) :
@@ -168,7 +168,7 @@ namespace OrthancStone
       return environment_;
     }
 
-    New::IOracle& GetOracle()
+    ThreadedOracle& GetOracle()
     {
       return oracle_;
     }
@@ -255,6 +255,20 @@ namespace OrthancStone
   {
     assert(pimpl_ != NULL);
     return pimpl_->GetEnvironment();
+  }
+
+
+  IOracle& StoneApplication::GetOldOracle()
+  {
+    assert(pimpl_ != NULL);
+    return pimpl_->GetOracle();
+  }
+
+
+  New::IOracle& StoneApplication::GetOracle()
+  {
+    assert(pimpl_ != NULL);
+    return pimpl_->GetOracle();
   }
 
 

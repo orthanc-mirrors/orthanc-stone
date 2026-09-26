@@ -23,6 +23,12 @@
 
 #include "GenericLoadersContext.h"
 
+#include "../Oracle/ThreadedOracle.h"
+#include "../StoneApplication.h"
+
+#include <boost/thread.hpp>
+
+
 namespace OrthancStone
 {
   class GenericLoadersContext::Locker : public ILoadersContext::ILock
@@ -93,13 +99,12 @@ namespace OrthancStone
   }
 
 
-  GenericLoadersContext::GenericLoadersContext(const StoneApplication::Configuration& configuration,
-                                               unsigned int maxHighPriority,
+  GenericLoadersContext::GenericLoadersContext(unsigned int maxHighPriority,
                                                unsigned int maxStandardPriority,
                                                unsigned int maxLowPriority)
   {
-    oracle_.reset(new ThreadedOracle(configuration, *this));
-    scheduler_ = OracleScheduler::Create(*oracle_, oracleObservable_, *this,
+    dynamic_cast<ThreadedOracle&>(StoneApplication::GetInstance().GetOldOracle()).SetMessageEmitter(*this);
+    scheduler_ = OracleScheduler::Create(StoneApplication::GetInstance().GetOldOracle(), oracleObservable_, *this,
                                          maxHighPriority, maxStandardPriority, maxLowPriority);
 
     if (!scheduler_)
@@ -115,29 +120,6 @@ namespace OrthancStone
                  << ", processed commands: " << scheduler_->GetTotalProcessed();
     scheduler_.reset();
     //LOG(INFO) << "counter: " << scheduler_.use_count();
-  }
-
-  
-  void GenericLoadersContext::StartOracle()
-  {
-    boost::recursive_mutex::scoped_lock lock(mutex_);
-    oracle_->Start();
-    //LOG(INFO) << "STARTED ORACLE";
-  }
-
-  
-  void GenericLoadersContext::StopOracle()
-  {
-    /**
-     * DON'T lock "mutex_" here, otherwise Stone won't be able to
-     * stop if one command being executed by the oracle has to emit
-     * a message (method "EmitMessage()" would have to lock the
-     * mutex too).
-     **/
-      
-    //LOG(INFO) << "STOPPING ORACLE";
-    oracle_->Stop();
-    //LOG(INFO) << "STOPPED ORACLE";
   }
 
   

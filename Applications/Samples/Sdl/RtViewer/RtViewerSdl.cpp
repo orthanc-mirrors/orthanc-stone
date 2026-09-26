@@ -178,12 +178,10 @@ namespace OrthancStone
     /**
     Create the shared loaders context
     */
-    loadersContext_.reset(new GenericLoadersContext(configuration, 1, 4, 1));
+    loadersContext_.reset(new GenericLoadersContext(1, 4, 1));
 
     // we are in SDL --> downcast to concrete type
     boost::shared_ptr<GenericLoadersContext> loadersContext = boost::dynamic_pointer_cast<GenericLoadersContext>(loadersContext_);
-
-    loadersContext->StartOracle();
 
     CreateLoaders();
 
@@ -210,7 +208,6 @@ namespace OrthancStone
 
 
     SdlRunLoop(views_, interactor);
-    loadersContext->StopOracle();
   }
 
   void RtViewerView::TakeScreenshot(const std::string& target,

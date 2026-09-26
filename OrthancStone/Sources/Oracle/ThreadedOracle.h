@@ -45,103 +45,50 @@
 #include "../Messages/IMessageEmitter.h"
 #include "../Platforms/Native/RunnableThread.h"
 #include "../StoneApplication.h"
-#include "GenericOracleRunner.h"
 #include "IOracle.h"
+#include "OracleCallback.h"
 
-#include <MultiThreading/SharedMessageQueue.h>
 #include <MultiThreading/ThreadPool.h>
 
 
 namespace OrthancStone
 {
-  class ThreadedOracle : public IOracle
+  class ThreadedOracle :
+    public ::OrthancStone::IOracle,  // TODO Refactoring - Remove this
+    public ::OrthancStone::New::IOracle
   {
   private:
-    enum State
-    {
-      State_Setup,
-      State_Running,
-      State_Stopped
-    };
+    class GenericRunnable;
+    class SleepRunnable;
 
-    class SleepingCommands;
-
-    StoneApplication::Configuration      configuration_;
-    IMessageEmitter&                     emitter_;
-    Orthanc::SharedMessageQueue          queue_;
-    State                                state_;
-    boost::mutex                         mutex_;
-    std::vector<boost::thread*>          workers_;
-    boost::shared_ptr<SleepingCommands>  sleepingCommands_;
-    boost::thread                        sleepingWorker_;
+    IMessageEmitter*                 emitter_;  // TODO Refactoring - Remove this
+    StoneApplication::Configuration  configuration_;
+    RunnableThread                   sleepingThread_;
+    Orthanc::ThreadPool              threadPool_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
     boost::shared_ptr<ParsedDicomCache>  dicomCache_;
 #endif
-    
-    void Step();
 
-    static void Worker(ThreadedOracle* that);
-
-    static void SleepingWorker(ThreadedOracle* that);
-
-    void StopInternal();
+    void SubmitInternal(IOracleCallback* callback /* takes ownership */);
 
   public:
-    ThreadedOracle(const StoneApplication::Configuration& configuration,
-                   IMessageEmitter& emitter);
+    ThreadedOracle(const StoneApplication::Configuration& configuration);
 
-    virtual ~ThreadedOracle() ORTHANC_OVERRIDE;
+    void SetMessageEmitter(IMessageEmitter& emitter)  // TODO Refactoring - Remove this
+    {
+      emitter_ = &emitter;
+    }
 
     void Start();
 
-    void Stop()
-    {
-      StopInternal();
-    }
+    void Stop();
+
+    virtual void Submit(IEnvironment& environment,
+                        const boost::shared_ptr<IOracleClient>& client,
+                        IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
 
     virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
                           IOracleCommand* command) ORTHANC_OVERRIDE;
   };
-
-
-  namespace New
-  {
-    class ThreadedOracle :
-      public ::OrthancStone::IOracle,  // TODO Refactoring - Remove this
-      public ::OrthancStone::New::IOracle
-    {
-    private:
-      class GenericRunnable;
-      class SleepRunnable;
-
-      IMessageEmitter*                 emitter_;  // TODO Refactoring - Remove this
-      StoneApplication::Configuration  configuration_;
-      RunnableThread                   sleepingThread_;
-      Orthanc::ThreadPool              threadPool_;
-
-#if ORTHANC_ENABLE_DCMTK == 1
-      boost::shared_ptr<ParsedDicomCache>  dicomCache_;
-#endif
-
-      void SubmitInternal(IOracleCallback* callback /* takes ownership */);
-
-    public:
-      ThreadedOracle(const StoneApplication::Configuration& configuration);
-
-      ThreadedOracle(const StoneApplication::Configuration& configuration,
-                     IMessageEmitter& emitter);  // TODO Refactoring - Remove this
-
-      void Start();
-
-      void Stop();
-
-      virtual void Submit(IEnvironment& environment,
-                          const boost::shared_ptr<IOracleClient>& client,
-                          IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
-
-      virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
-                            IOracleCommand* command) ORTHANC_OVERRIDE;
-    };
-  }
 }

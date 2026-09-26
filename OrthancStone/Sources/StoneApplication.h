@@ -24,6 +24,7 @@
 #pragma once
 
 #include "Oracle/IEnvironment.h"
+#include "Oracle/IOracle.h"
 
 #include <WebServiceParameters.h>
 
@@ -115,6 +116,11 @@ namespace OrthancStone
 
     IEnvironment& GetEnvironment();
 
+    IOracle& GetOldOracle();  // TODO Refactoring - Remove this
+
+    New::IOracle& GetOracle();
+
+    // TODO Refactoring - Remove this?
     void Submit(const boost::shared_ptr<IOracleClient>& client,
                 IOracleCommand* command /* takes ownership */);
   };

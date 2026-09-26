@@ -23,12 +23,12 @@
 #pragma once
 
 #include "../Messages/IMessageEmitter.h"
-#include "../Oracle/ThreadedOracle.h"
 #include "ILoadersContext.h"
 #include "DicomSource.h"
 #include "OracleScheduler.h"
 
 #include <boost/thread/recursive_mutex.hpp>
+#include <list>
 
 namespace OrthancStone
 {
@@ -46,7 +46,6 @@ namespace OrthancStone
     boost::recursive_mutex  mutex_;
 
     IObservable                         oracleObservable_;
-    std::unique_ptr<ThreadedOracle>     oracle_;
     boost::shared_ptr<OracleScheduler>  scheduler_;
 
     // Necessary to keep the loaders persistent (including global
@@ -58,18 +57,13 @@ namespace OrthancStone
                              const IMessage& message) ORTHANC_OVERRIDE;
 
   public:
-    GenericLoadersContext(const StoneApplication::Configuration& configuration,
-                          unsigned int maxHighPriority,
+    GenericLoadersContext(unsigned int maxHighPriority,
                           unsigned int maxStandardPriority,
                           unsigned int maxLowPriority);
 
     virtual ~GenericLoadersContext();
    
     virtual ILock* Lock() ORTHANC_OVERRIDE;
-
-    void StartOracle();
-
-    void StopOracle();
 
     void WaitUntilComplete();
   };

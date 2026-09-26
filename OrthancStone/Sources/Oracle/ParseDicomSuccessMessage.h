@@ -33,9 +33,10 @@
 #  error Support for DCMTK must be enabled to use ParseDicomFromFileCommand
 #endif
 
-#include "OracleCommandBase.h"
+#include "../Loaders/DicomSource.h"
 #include "../Messages/IMessageEmitter.h"
 #include "../Messages/IObserver.h"
+#include "OracleCommandBase.h"
 
 #include <map>
 
@@ -53,24 +54,19 @@ namespace OrthancStone
     ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
     
   private:
-    const DicomSource&         source_;
-    Orthanc::ParsedDicomFile&  dicom_;
-    size_t                     fileSize_;
-    bool                       hasPixelData_;
+    class MultipartHandler;
+
+    DicomSource                                  source_;
+    boost::shared_ptr<Orthanc::ParsedDicomFile>  dicom_;
+    size_t                                       fileSize_;
+    bool                                         hasPixelData_;
     
   public:
     ParseDicomSuccessMessage(const OracleCommandBase& command,
                              const DicomSource& source,
-                             Orthanc::ParsedDicomFile& dicom,
+                             const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
                              size_t fileSize,
-                             bool hasPixelData) :
-      OriginMessage(command),
-      source_(source),
-      dicom_(dicom),
-      fileSize_(fileSize),
-      hasPixelData_(hasPixelData)
-    {
-    }
+                             bool hasPixelData);
 
     const DicomSource& GetSource() const
     {
@@ -78,6 +74,11 @@ namespace OrthancStone
     }
 
     Orthanc::ParsedDicomFile& GetDicom() const
+    {
+      return *dicom_;
+    }
+
+    const boost::shared_ptr<Orthanc::ParsedDicomFile>& GetSharedDicom() const
     {
       return dicom_;
     }

@@ -319,6 +319,36 @@ namespace OrthancStone
 
   namespace New
   {
+    class ThreadedOracle::GenericRunnable : public Orthanc::IRunnable
+    {
+    private:
+      StoneApplication::Configuration       configuration_;
+      std::unique_ptr<GenericOracleRunner>  runner_;
+      OracleCallback                        callback_;
+
+    public:
+      GenericRunnable(const StoneApplication::Configuration& configuration,
+                      GenericOracleRunner* runner /* takes ownership */,
+                      IEnvironment& environment,
+                      const boost::shared_ptr<IOracleClient>& client,
+                      IOracleCommand* command /* takes ownership */) :
+        configuration_(configuration),
+        runner_(runner),
+        callback_(environment, client, command)
+      {
+        if (runner == NULL)
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+        }
+      }
+
+      virtual void Run() ORTHANC_OVERRIDE
+      {
+        runner_->Run(callback_);
+      }
+    };
+
+
     class ThreadedOracle::SleepRunnable : public Orthanc::IRunnable
     {
     private:
@@ -413,6 +443,16 @@ namespace OrthancStone
     {
       threadPool_.SetThreadsCount(configuration.GetOracleThreadsCount());
       threadPool_.SetDequeueTimeout(configuration.GetWorkersTimeResolution());
+
+      if (configuration.GetDicomCacheSize() == 0)
+      {
+        LOG(WARNING) << "The DICOM cache is disabled";
+      }
+      else
+      {
+        LOG(INFO) << "The DICOM cache size is set to " << configuration.GetDicomCacheSize() << " bytes";
+        dicomCache_.reset(new ParsedDicomCache(configuration.GetDicomCacheSize()));
+      }
     }
 
 
@@ -442,14 +482,23 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
 
-      if (command->GetType() == IOracleCommand::Type_Sleep)
+      if (protection->GetType() == IOracleCommand::Type_Sleep)
       {
         SleepRunnable& runnable = dynamic_cast<SleepRunnable&>(sleepingThread_.GetRunnable());
         runnable.Add(environment, client, dynamic_cast<SleepOracleCommand*>(protection.release()));
       }
       else
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        std::unique_ptr<GenericOracleRunner> runner(new GenericOracleRunner(configuration_));
+
+#if ORTHANC_ENABLE_DCMTK == 1
+        if (dicomCache_)
+        {
+          runner->SetDicomCache(dicomCache_);
+        }
+#endif
+
+        threadPool_.Submit(new GenericRunnable(configuration_, runner.release(), environment, client, protection.release()));
       }
     }
 

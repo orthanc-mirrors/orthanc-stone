@@ -44,20 +44,20 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      const Orthanc::ImageAccessor&  image_;
-      Orthanc::MimeType              mime_;
+      boost::shared_ptr<Orthanc::ImageAccessor>  image_;
+      Orthanc::MimeType                          mime_;
 
     public:
       SuccessMessage(const GetOrthancImageCommand& command,
-                     const Orthanc::ImageAccessor& image,
-                     Orthanc::MimeType mime) :
-        OriginMessage(command),
-        image_(image),
-        mime_(mime)
-      {
-      }
+                     const boost::shared_ptr<Orthanc::ImageAccessor>& image,
+                     Orthanc::MimeType mime);
 
       const Orthanc::ImageAccessor& GetImage() const
+      {
+        return *image_;
+      }
+
+      const boost::shared_ptr<Orthanc::ImageAccessor>& GetSharedImage() const
       {
         return image_;
       }

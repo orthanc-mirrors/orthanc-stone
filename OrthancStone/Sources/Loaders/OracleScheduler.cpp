@@ -351,7 +351,7 @@ namespace OrthancStone
 
     GetOrthancImageCommand::SuccessMessage bis(
       dynamic_cast<const GetOrthancImageCommand&>(payload.GetOriginalCommand()),
-      message.GetImage(), message.GetMimeType());
+      message.GetSharedImage(), message.GetMimeType());
     emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
   
@@ -365,7 +365,7 @@ namespace OrthancStone
 
     GetOrthancWebViewerJpegCommand::SuccessMessage bis(
       dynamic_cast<const GetOrthancWebViewerJpegCommand&>(payload.GetOriginalCommand()),
-      message.GetImage());
+      message.GetSharedImage());
     emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
 
@@ -378,8 +378,9 @@ namespace OrthancStone
     RemoveActiveCommand(payload);
 
     HttpCommand::SuccessMessage bis(
-      dynamic_cast<const HttpCommand&>(payload.GetOriginalCommand()),
-      message.GetAnswerHeaders(), message.GetAnswer());
+      dynamic_cast<const HttpCommand&>(payload.GetOriginalCommand()), message.GetAnswerHeaders());
+    bis.SetAnswer(message.GetAnswer());
+
     emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
 
@@ -392,8 +393,9 @@ namespace OrthancStone
     RemoveActiveCommand(payload);
 
     OrthancRestApiCommand::SuccessMessage bis(
-      dynamic_cast<const OrthancRestApiCommand&>(payload.GetOriginalCommand()),
-      message.GetAnswerHeaders(), message.GetAnswer());
+      dynamic_cast<const OrthancRestApiCommand&>(payload.GetOriginalCommand()), message.GetAnswerHeaders());
+    bis.SetAnswer(message.GetAnswer());
+
     emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
 
@@ -408,7 +410,7 @@ namespace OrthancStone
 
     ParseDicomSuccessMessage bis(
       dynamic_cast<const OracleCommandBase&>(payload.GetOriginalCommand()),
-      message.GetSource(), message.GetDicom(), message.GetFileSize(), message.HasPixelData());
+      message.GetSource(), message.GetSharedDicom(), message.GetFileSize(), message.HasPixelData());
     emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
 #endif
@@ -421,9 +423,8 @@ namespace OrthancStone
     
     RemoveActiveCommand(payload);
 
-    ReadFileCommand::SuccessMessage bis(
-      dynamic_cast<const ReadFileCommand&>(payload.GetOriginalCommand()),
-      message.GetContent());
+    ReadFileCommand::SuccessMessage bis(dynamic_cast<const ReadFileCommand&>(payload.GetOriginalCommand()));
+    bis.SetContent(message.GetContent());
     emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
   

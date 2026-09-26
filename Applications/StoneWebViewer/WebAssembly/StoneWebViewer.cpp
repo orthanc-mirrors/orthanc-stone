@@ -4886,6 +4886,12 @@ public:
                                        const OrthancStone::IMessage& result) ORTHANC_OVERRIDE
   {
     LOG(ERROR) << "success!";
+
+    /*const OrthancStone::HttpCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::HttpCommand::SuccessMessage&>(result);
+      LOG(WARNING) << m.GetAnswer();*/
+
+    const OrthancStone::OrthancRestApiCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::OrthancRestApiCommand::SuccessMessage&>(result);
+    LOG(WARNING) << m.GetAnswer();
   }
 
   virtual void HandleErrorFromOracle(const OrthancStone::IOracleCommand& command,
@@ -4972,7 +4978,15 @@ extern "C"
 
 
     // TODO Refactoring
-    OrthancStone::StoneApplication::GetInstance().Submit(toto_, new OrthancStone::SleepOracleCommand(2000));
+    //OrthancStone::StoneApplication::GetInstance().Submit(toto_, new OrthancStone::SleepOracleCommand(2000));
+
+    /*std::unique_ptr<OrthancStone::HttpCommand> command(new OrthancStone::HttpCommand);
+    command->SetUrl("http://ip-api.com/json/");
+    OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());*/
+
+    std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+    command->SetUri("/system/");
+    OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());
   }
 
 
@@ -4986,13 +5000,17 @@ extern "C"
       {
         OrthancStone::StoneApplication::Configuration configuration;
 
+#if 1
         source_.SetDicomWebSource(Orthanc::SerializationToolbox::ReadString(parsed, "DicomWebRoot"));
         source_.SetDicomWebRendered(true);  // assume "/rendered" is available in DICOMweb (could be a configuration option)
+#else
+        // This uses Orthanc as a DICOMweb proxy
+        configuration.SetLocalOrthancRoot("..");
+        source_.SetOrthancSource();
+        source_.SetDicomWebThroughOrthancSource("self");
+#endif
 
-        // Another possibility:
-        // configuration.SetLocalOrthancRoot(orthancRoot); source_.SetDicomWebThroughOrthancSource(serverName);
-
-        unsigned int size = Orthanc::SerializationToolbox::ReadUnsignedInteger(parsed, "DicomCacheSize", 0);
+        const unsigned int size = Orthanc::SerializationToolbox::ReadUnsignedInteger(parsed, "DicomCacheSize", 0);
         configuration.SetDicomCacheSize(size * 1024 * 1024);  // The size is expressed in MB in the configuration file
 
         static const char* const KEY_DICOM_WEB_HEADERS = "DicomWebHttpHeaders";

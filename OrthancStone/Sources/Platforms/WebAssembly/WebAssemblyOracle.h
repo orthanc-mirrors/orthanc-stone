@@ -84,8 +84,8 @@ namespace OrthancStone
 #endif
 
     void ProcessFetchResult(IOracleCallback& callback,
-                            const std::string& answer,
-                            const HttpHeaders& headers);
+                            const HttpHeaders& headers,
+                            std::string& answer);
 
     void Submit(IOracleCallback* callback);
 

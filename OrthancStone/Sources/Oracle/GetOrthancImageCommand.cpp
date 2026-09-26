@@ -31,6 +31,20 @@
 
 namespace OrthancStone
 {
+  GetOrthancImageCommand::SuccessMessage::SuccessMessage(const GetOrthancImageCommand& command,
+                                                         const boost::shared_ptr<Orthanc::ImageAccessor>& image,
+                                                         Orthanc::MimeType mime) :
+    OriginMessage(command),
+    image_(image),
+    mime_(mime)
+  {
+    if (!image)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+  }
+
+
   GetOrthancImageCommand::GetOrthancImageCommand() :
     uri_("/"),
     timeout_(600),
@@ -114,7 +128,7 @@ namespace OrthancStone
       }
     }
 
-    std::unique_ptr<Orthanc::ImageAccessor> image;
+    boost::shared_ptr<Orthanc::ImageAccessor> image;
 
     switch (contentType)
     {
@@ -185,6 +199,6 @@ namespace OrthancStone
     //}
 
 
-    callback.NotifySuccess(new SuccessMessage(*this, *image, contentType));
+    callback.NotifySuccess(new SuccessMessage(*this, image, contentType));
   }
 }

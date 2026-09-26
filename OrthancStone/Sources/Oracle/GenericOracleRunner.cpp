@@ -144,8 +144,11 @@ namespace OrthancStone
     std::string answer;
     Orthanc::HttpClient::HttpHeaders answerHeaders;
     RunHttpCommand(answer, answerHeaders, command);
+
+    std::unique_ptr<HttpCommand::SuccessMessage> message(new HttpCommand::SuccessMessage(command, answerHeaders));
+    message->SwapAnswer(answer);
     
-    callback.NotifySuccess(new HttpCommand::SuccessMessage(command, answerHeaders, answer));
+    callback.NotifySuccess(message.release());
   }
 
   
@@ -181,7 +184,10 @@ namespace OrthancStone
     Orthanc::HttpClient::HttpHeaders answerHeaders;
     RunOrthancRestApiCommand(answer, answerHeaders, orthanc, command);
 
-    callback.NotifySuccess(new OrthancRestApiCommand::SuccessMessage(command, answerHeaders, answer));
+    std::unique_ptr<OrthancRestApiCommand::SuccessMessage> message(new OrthancRestApiCommand::SuccessMessage(command, answerHeaders));
+    message->SwapAnswer(answer);
+
+    callback.NotifySuccess(message.release());
   }
 
 
@@ -255,7 +261,9 @@ namespace OrthancStone
     std::string content;
     Orthanc::SystemToolbox::ReadFile(content, path, true /* log */);
 
-    callback.NotifySuccess(new ReadFileCommand::SuccessMessage(command, content));
+    std::unique_ptr<ReadFileCommand::SuccessMessage> message(new ReadFileCommand::SuccessMessage(command));
+    message->SwapContent(content);
+    callback.NotifySuccess(message.release());
   }
 
 
@@ -334,6 +342,9 @@ namespace OrthancStone
   {
     const std::string path = GetPath(root, command.GetPath());
 
+#if 0
+    // TODO Refactoring - Reactivate the cache!!!
+
     if (cache)
     {
       ParsedDicomCache::Reader reader(*cache, BUCKET_DICOMDIR, path);
@@ -347,9 +358,10 @@ namespace OrthancStone
         return;
       }
     }
+#endif
 
     uint64_t fileSize;
-    std::unique_ptr<Orthanc::ParsedDicomFile> parsed(ParseDicom(fileSize, path, command.IsPixelDataIncluded()));
+    boost::shared_ptr<Orthanc::ParsedDicomFile> parsed(ParseDicom(fileSize, path, command.IsPixelDataIncluded()));
 
     if (fileSize != static_cast<size_t>(fileSize))
     {
@@ -357,9 +369,11 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotEnoughMemory);
     }
     
-    callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), *parsed,
+    callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), parsed,
                                                         static_cast<size_t>(fileSize), command.IsPixelDataIncluded()));
 
+#if 0
+    // TODO Refactoring - Reactivate the cache!!!
     if (cache)
     {
       // Store it into the cache for future use
@@ -371,6 +385,7 @@ namespace OrthancStone
       cache->Acquire(BUCKET_DICOMDIR, path, parsed.release(),
                      static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
     }
+#endif
   }
 
   
@@ -379,6 +394,8 @@ namespace OrthancStone
                           const Orthanc::WebServiceParameters& orthanc,
                           const ParseDicomFromWadoCommand& command)
   {
+#if 0
+    // TODO Refactoring - Reactivate the cache!!!
     if (cache)
     {
       ParsedDicomCache::Reader reader(*cache, BUCKET_SOP, command.GetSopInstanceUid());
@@ -391,6 +408,7 @@ namespace OrthancStone
         return;
       }
     }
+#endif
 
     std::string answer;
     Orthanc::HttpClient::HttpHeaders answerHeaders;
@@ -411,16 +429,19 @@ namespace OrthancStone
     }
 
     size_t fileSize;
-    std::unique_ptr<Orthanc::ParsedDicomFile> parsed(ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, answerHeaders));
+    boost::shared_ptr<Orthanc::ParsedDicomFile> parsed(ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, answerHeaders));
 
-    callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), *parsed, fileSize,
+    callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), parsed, fileSize,
                                                         true /* pixel data always is included in WADO-RS */));
 
+#if 0
+    // TODO Refactoring - Reactivate the cache!!!
     if (cache)
     {
       // Store it into the cache for future use
       cache->Acquire(BUCKET_SOP, command.GetSopInstanceUid(), parsed.release(), fileSize, true);
     }
+#endif
   }
 #endif
 

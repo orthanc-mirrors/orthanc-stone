@@ -36,19 +36,27 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      const std::string& content_;
+      std::string content_;
 
     public:
-      SuccessMessage(const ReadFileCommand& command,
-                     const std::string& content) :
-        OriginMessage(command),
-        content_(content)
+      SuccessMessage(const ReadFileCommand& command) :
+        OriginMessage(command)
       {
       }
 
       const std::string& GetContent() const
       {
         return content_;
+      }
+
+      void SetContent(const std::string& content)
+      {
+        content_ = content;
+      }
+
+      void SwapContent(std::string& content)
+      {
+        content_.swap(content);
       }
     };
 

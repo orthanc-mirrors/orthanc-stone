@@ -96,10 +96,10 @@ namespace OrthancStone
       callback_->NotifyError(exception);
     }
 
-    void ProcessFetchResult(const std::string& answer,
-                            const HttpHeaders& headers)
+    void ProcessFetchResult(const HttpHeaders& headers,
+                            std::string& answer)
     {
-      oracle_.ProcessFetchResult(*callback_, answer, headers);
+      oracle_.ProcessFetchResult(*callback_, headers, answer);
     }
 
     static void SuccessCallback(emscripten_fetch_t *fetch)
@@ -193,7 +193,7 @@ namespace OrthancStone
       {
         try
         {
-          context->ProcessFetchResult(answer, headers);
+          context->ProcessFetchResult(headers, answer);
         }
         catch (Orthanc::OrthancException& e)
         {
@@ -459,23 +459,28 @@ namespace OrthancStone
 
 
   void WebAssemblyOracle::ProcessFetchResult(IOracleCallback& callback,
-                                             const std::string& answer,
-                                             const HttpHeaders& headers)
+                                             const HttpHeaders& headers,
+                                             std::string& answer)
   {
     switch (callback.GetCommand().GetType())
     {
     case IOracleCommand::Type_Http:
     {
-      callback.NotifySuccess(new HttpCommand::SuccessMessage(
-                               dynamic_cast<const HttpCommand&>(callback.GetCommand()), headers, answer));
+      std::unique_ptr<HttpCommand::SuccessMessage> message(
+        new HttpCommand::SuccessMessage(dynamic_cast<const HttpCommand&>(callback.GetCommand()), headers));
+      message->SwapAnswer(answer);
+
+      callback.NotifySuccess(message.release());
       break;
     }
 
     case IOracleCommand::Type_OrthancRestApi:
     {
-      LOG(TRACE) << "WebAssemblyOracle::FetchContext::SuccessCallback. About to call EmitMessage(message);";
-      callback.NotifySuccess(new OrthancRestApiCommand::SuccessMessage(
-                               dynamic_cast<const OrthancRestApiCommand&>(callback.GetCommand()), headers, answer));
+      std::unique_ptr<OrthancRestApiCommand::SuccessMessage> message(
+        new OrthancRestApiCommand::SuccessMessage(dynamic_cast<const OrthancRestApiCommand&>(callback.GetCommand()), headers));
+      message->SwapAnswer(answer);
+
+      callback.NotifySuccess(message.release());
       break;
     }
 
@@ -497,16 +502,20 @@ namespace OrthancStone
       const ParseDicomFromWadoCommand& c = dynamic_cast<const ParseDicomFromWadoCommand&>(callback.GetCommand());
               
       size_t fileSize;
-      std::unique_ptr<Orthanc::ParsedDicomFile> dicom
+      boost::shared_ptr<Orthanc::ParsedDicomFile> dicom
         (ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, headers));
 
-      callback.NotifySuccess(new ParseDicomSuccessMessage(c, c.GetSource(), *dicom, fileSize, true));
+      callback.NotifySuccess(new ParseDicomSuccessMessage(c, c.GetSource(), dicom, fileSize, true));
 
+#if 0
+      // TODO Refactoring - Reactivate the cache!!!
       if (dicomCache_.get())
       {
         // Store it into the cache for future use
         dicomCache_->Acquire(BUCKET_SOP, c.GetSopInstanceUid(), dicom.release(), fileSize, true);
       }
+#endif
+
 #else
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
 #endif
@@ -643,6 +652,8 @@ namespace OrthancStone
 
     const ParseDicomFromWadoCommand& command = dynamic_cast<const ParseDicomFromWadoCommand&>(protection->GetCommand());
 
+#if 0
+      // TODO Refactoring - Reactivate the cache!!!
 #if ORTHANC_ENABLE_DCMTK == 1
     if (dicomCache_.get())
     {
@@ -656,6 +667,7 @@ namespace OrthancStone
         return;
       }
     }
+#endif
 #endif
 
     switch (command.GetRestCommand().GetType())

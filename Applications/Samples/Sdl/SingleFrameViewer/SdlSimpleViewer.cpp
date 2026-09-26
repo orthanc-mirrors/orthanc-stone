@@ -66,6 +66,12 @@ public:
                                        const OrthancStone::IMessage& result)
   {
     LOG(ERROR) << "success!";
+
+    /*const OrthancStone::HttpCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::HttpCommand::SuccessMessage&>(result);
+      LOG(WARNING) << m.GetAnswer();*/
+
+    const OrthancStone::OrthancRestApiCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::OrthancRestApiCommand::SuccessMessage&>(result);
+    LOG(WARNING) << m.GetAnswer();
   }
 
   virtual void HandleErrorFromOracle(const OrthancStone::IOracleCommand& command,
@@ -295,9 +301,19 @@ int main(int argc, char* argv[])
                 switch (event.key.keysym.sym)
                 {
                   case SDLK_b:
+                  {
                     // TODO Refactoring
-                    OrthancStone::StoneApplication::GetInstance().Submit(toto_, new OrthancStone::SleepOracleCommand(1000));
+                    //OrthancStone::StoneApplication::GetInstance().Submit(toto_, new OrthancStone::SleepOracleCommand(1000));
+
+                    /*std::unique_ptr<OrthancStone::HttpCommand> command(new OrthancStone::HttpCommand);
+                    command->SetUrl("http://ip-api.com/json/");
+                    OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());*/
+
+                    std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+                    command->SetUri("/system/");
+                    OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());
                     break;
+                  }
 
                   case SDLK_f:
                     viewport->ToggleMaximize();

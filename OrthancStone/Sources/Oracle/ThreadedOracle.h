@@ -112,11 +112,16 @@ namespace OrthancStone
       public ::OrthancStone::New::IOracle
     {
     private:
+      class GenericRunnable;
       class SleepRunnable;
 
       StoneApplication::Configuration  configuration_;
       RunnableThread                   sleepingThread_;
       Orthanc::ThreadPool              threadPool_;
+
+#if ORTHANC_ENABLE_DCMTK == 1
+      boost::shared_ptr<ParsedDicomCache>  dicomCache_;
+#endif
 
     public:
       ThreadedOracle(const StoneApplication::Configuration& configuration);

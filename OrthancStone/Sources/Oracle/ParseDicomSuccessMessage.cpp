@@ -29,7 +29,7 @@
 
 namespace OrthancStone
 {
-  class MultipartHandler : public Orthanc::MultipartStreamReader::IHandler
+  class ParseDicomSuccessMessage::MultipartHandler : public Orthanc::MultipartStreamReader::IHandler
   {
   private:
     std::unique_ptr<Orthanc::ParsedDicomFile>  dicom_;
@@ -77,6 +77,24 @@ namespace OrthancStone
   };
 
   
+  ParseDicomSuccessMessage::ParseDicomSuccessMessage(const OracleCommandBase& command,
+                                                     const DicomSource& source,
+                                                     const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
+                                                     size_t fileSize,
+                                                     bool hasPixelData) :
+    OriginMessage(command),
+    source_(source),
+    dicom_(dicom),
+    fileSize_(fileSize),
+    hasPixelData_(hasPixelData)
+  {
+    if (!dicom)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+  }
+
+
   Orthanc::ParsedDicomFile* ParseDicomSuccessMessage::ParseWadoAnswer(
     size_t& fileSize /* OUT */,
     const std::string& answer,

@@ -44,17 +44,18 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      const Orthanc::ImageAccessor&  image_;
+      boost::shared_ptr<Orthanc::ImageAccessor>  image_;
 
     public:
       SuccessMessage(const GetOrthancWebViewerJpegCommand& command,
-                     const Orthanc::ImageAccessor& image) :
-        OriginMessage(command),
-        image_(image)
-      {
-      }
+                     const boost::shared_ptr<Orthanc::ImageAccessor>& image);
 
       const Orthanc::ImageAccessor& GetImage() const
+      {
+        return *image_;
+      }
+
+      const boost::shared_ptr<Orthanc::ImageAccessor>& GetSharedImage() const
       {
         return image_;
       }

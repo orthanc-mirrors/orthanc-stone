@@ -35,6 +35,18 @@
 
 namespace OrthancStone
 {
+  GetOrthancWebViewerJpegCommand::SuccessMessage::SuccessMessage(const GetOrthancWebViewerJpegCommand& command,
+                                                                 const boost::shared_ptr<Orthanc::ImageAccessor>& image) :
+    OriginMessage(command),
+    image_(image)
+  {
+    if (!image)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+  }
+
+
   GetOrthancWebViewerJpegCommand::GetOrthancWebViewerJpegCommand() :
     frame_(0),
     quality_(95),
@@ -110,7 +122,7 @@ namespace OrthancStone
       }
     }
     
-    std::unique_ptr<Orthanc::ImageAccessor> reader;
+    boost::shared_ptr<Orthanc::ImageAccessor> reader;
     
     {
       std::string jpeg;
@@ -133,7 +145,7 @@ namespace OrthancStone
       }
       else
       {
-        callback.NotifySuccess(new SuccessMessage(*this, *reader));
+        callback.NotifySuccess(new SuccessMessage(*this, reader));
         return;
       }
     }
@@ -151,7 +163,7 @@ namespace OrthancStone
       }
       else
       {
-        callback.NotifySuccess(new SuccessMessage(*this, *reader));
+        callback.NotifySuccess(new SuccessMessage(*this, reader));
         return;
       }
     }
@@ -179,7 +191,7 @@ namespace OrthancStone
     }
     
     // Decode a grayscale JPEG 8bpp image coming from the Web viewer
-    std::unique_ptr<Orthanc::ImageAccessor> image
+    boost::shared_ptr<Orthanc::ImageAccessor> image
       (new Orthanc::Image(expectedFormat_, reader->GetWidth(), reader->GetHeight(), false));
 
     Orthanc::ImageProcessing::Convert(*image, *reader);
@@ -193,6 +205,6 @@ namespace OrthancStone
       Orthanc::ImageProcessing::ShiftScale(*image, offset, scaling, true);
     }
 
-    callback.NotifySuccess(new SuccessMessage(*this, *image));
+    callback.NotifySuccess(new SuccessMessage(*this, image));
   }
 }

@@ -43,19 +43,28 @@ namespace OrthancStone
       ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
       
     private:
-      const HttpHeaders&  headers_;
-      const std::string&  answer_;
+      HttpHeaders  headers_;
+      std::string  answer_;
 
     public:
       SuccessMessage(const OrthancRestApiCommand& command,
-                     const HttpHeaders& answerHeaders,
-                     const std::string& answer) :
+                     const HttpHeaders& headers) :
         OriginMessage(command),
-        headers_(answerHeaders),
-        answer_(answer)
+        headers_(headers)
       {
       }
+
+      // TODO Refactoring - Replace this with a boost::shared_ptr<>?
+      void SetAnswer(const std::string& answer)
+      {
+        answer_ = answer;
+      }
       
+      void SwapAnswer(std::string& answer)
+      {
+        answer_.swap(answer);
+      }
+
       const std::string& GetAnswer() const
       {
         return answer_;

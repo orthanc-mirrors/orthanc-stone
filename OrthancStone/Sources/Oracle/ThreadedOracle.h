@@ -115,6 +115,7 @@ namespace OrthancStone
       class GenericRunnable;
       class SleepRunnable;
 
+      IMessageEmitter*                 emitter_;  // TODO Refactoring - Remove this
       StoneApplication::Configuration  configuration_;
       RunnableThread                   sleepingThread_;
       Orthanc::ThreadPool              threadPool_;
@@ -123,8 +124,13 @@ namespace OrthancStone
       boost::shared_ptr<ParsedDicomCache>  dicomCache_;
 #endif
 
+      void SubmitInternal(IOracleCallback* callback /* takes ownership */);
+
     public:
       ThreadedOracle(const StoneApplication::Configuration& configuration);
+
+      ThreadedOracle(const StoneApplication::Configuration& configuration,
+                     IMessageEmitter& emitter);  // TODO Refactoring - Remove this
 
       void Start();
 

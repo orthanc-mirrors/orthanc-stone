@@ -324,19 +324,18 @@ namespace OrthancStone
     private:
       StoneApplication::Configuration       configuration_;
       std::unique_ptr<GenericOracleRunner>  runner_;
-      OracleCallback                        callback_;
+      std::unique_ptr<IOracleCallback>      callback_;
 
     public:
       GenericRunnable(const StoneApplication::Configuration& configuration,
                       GenericOracleRunner* runner /* takes ownership */,
-                      IEnvironment& environment,
-                      const boost::shared_ptr<IOracleClient>& client,
-                      IOracleCommand* command /* takes ownership */) :
+                      IOracleCallback* callback /* takes ownership */) :
         configuration_(configuration),
         runner_(runner),
-        callback_(environment, client, command)
+        callback_(callback)
       {
-        if (runner == NULL)
+        if (runner == NULL ||
+            callback == NULL)
         {
           throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
         }
@@ -344,7 +343,7 @@ namespace OrthancStone
 
       virtual void Run() ORTHANC_OVERRIDE
       {
-        runner_->Run(callback_);
+        runner_->Run(*callback_);
       }
     };
 
@@ -355,17 +354,21 @@ namespace OrthancStone
       class Item : public boost::noncopyable
       {
       private:
-        OracleCallback            callback_;
-        boost::posix_time::ptime  expiration_;
+        std::unique_ptr<IOracleCallback>  callback_;
+        boost::posix_time::ptime          expiration_;
 
       public:
-        Item(IEnvironment& environment,
-             const boost::shared_ptr<IOracleClient>& client,
-             SleepOracleCommand* command) :
-          callback_(environment, client, command)
+        Item(IOracleCallback* callback,
+             unsigned int delay) :
+          callback_(callback)
         {
+          if (callback == NULL)
+          {
+            throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+          }
+
           expiration_ = (boost::posix_time::microsec_clock::local_time() +
-                         boost::posix_time::milliseconds(command->GetDelay()));
+                         boost::posix_time::milliseconds(delay));
         }
 
         const boost::posix_time::ptime& GetExpirationTime() const
@@ -373,9 +376,9 @@ namespace OrthancStone
           return expiration_;
         }
 
-        OracleCallback& GetCallback()
+        IOracleCallback& GetCallback()
         {
-          return callback_;
+          return *callback_;
         }
       };
 
@@ -397,12 +400,11 @@ namespace OrthancStone
       }
 
 
-      void Add(IEnvironment& environment,
-               const boost::shared_ptr<IOracleClient>& client,
-               SleepOracleCommand* command /* takes ownership */)
+      void Add(IOracleCallback* callback,
+               unsigned int delay)
       {
         boost::mutex::scoped_lock lock(mutex_);
-        content_.push_back(new Item(environment, client, command));
+        content_.push_back(new Item(callback, delay));
       }
 
 
@@ -438,6 +440,28 @@ namespace OrthancStone
 
 
     ThreadedOracle::ThreadedOracle(const StoneApplication::Configuration& configuration) :
+      emitter_(NULL),
+      configuration_(configuration),
+      sleepingThread_(new SleepRunnable, configuration.GetWorkersTimeResolution())
+    {
+      threadPool_.SetThreadsCount(configuration.GetOracleThreadsCount());
+      threadPool_.SetDequeueTimeout(configuration.GetWorkersTimeResolution());
+
+      if (configuration.GetDicomCacheSize() == 0)
+      {
+        LOG(WARNING) << "The DICOM cache is disabled";
+      }
+      else
+      {
+        LOG(INFO) << "The DICOM cache size is set to " << configuration.GetDicomCacheSize() << " bytes";
+        dicomCache_.reset(new ParsedDicomCache(configuration.GetDicomCacheSize()));
+      }
+    }
+
+
+    ThreadedOracle::ThreadedOracle(const StoneApplication::Configuration& configuration,
+                                   IMessageEmitter& emitter) :
+      emitter_(&emitter),
       configuration_(configuration),
       sleepingThread_(new SleepRunnable, configuration.GetWorkersTimeResolution())
     {
@@ -470,22 +494,20 @@ namespace OrthancStone
     }
 
 
-    void ThreadedOracle::Submit(IEnvironment& environment,
-                                const boost::shared_ptr<IOracleClient>& client,
-                                IOracleCommand* command /* takes ownership */)
+    void ThreadedOracle::SubmitInternal(IOracleCallback* callback /* takes ownership */)
     {
-      std::unique_ptr<IOracleCommand> protection(command);
+      std::unique_ptr<IOracleCallback> protection(callback);
 
-      if (!client ||
-          command == NULL)
+      if (callback == NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
 
-      if (protection->GetType() == IOracleCommand::Type_Sleep)
+      if (protection->GetCommand().GetType() == IOracleCommand::Type_Sleep)
       {
+        const unsigned int delay = dynamic_cast<const SleepOracleCommand&>(protection->GetCommand()).GetDelay();
         SleepRunnable& runnable = dynamic_cast<SleepRunnable&>(sleepingThread_.GetRunnable());
-        runnable.Add(environment, client, dynamic_cast<SleepOracleCommand*>(protection.release()));
+        runnable.Add(protection.release(), delay);
       }
       else
       {
@@ -498,15 +520,40 @@ namespace OrthancStone
         }
 #endif
 
-        threadPool_.Submit(new GenericRunnable(configuration_, runner.release(), environment, client, protection.release()));
+        threadPool_.Submit(new GenericRunnable(configuration_, runner.release(), protection.release()));
       }
+    }
+
+
+    void ThreadedOracle::Submit(IEnvironment& environment,
+                                const boost::shared_ptr<IOracleClient>& client,
+                                IOracleCommand* command /* takes ownership */)
+    {
+      std::unique_ptr<IOracleCommand> protection(command);
+
+      if (!client)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+
+      SubmitInternal(new OracleCallback(environment, client, protection.release()));
     }
 
 
     bool ThreadedOracle::Schedule(boost::shared_ptr<IObserver> receiver,
                                   IOracleCommand* command)
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      std::unique_ptr<IOracleCommand> protection(command);
+
+      if (emitter_ == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        SubmitInternal(new OldOracleCallback(protection.release(), receiver, *emitter_));
+        return true;
+      }
     }
   }
 }

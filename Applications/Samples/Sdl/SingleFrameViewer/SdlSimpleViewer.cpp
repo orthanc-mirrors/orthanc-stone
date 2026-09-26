@@ -65,13 +65,20 @@ public:
   virtual void HandleSuccessFromOracle(const OrthancStone::IOracleCommand& command,
                                        const OrthancStone::IMessage& result)
   {
+    // TODO Refactoring - Check that at this point, the environment mutex is locked
     LOG(ERROR) << "success!";
 
-    /*const OrthancStone::HttpCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::HttpCommand::SuccessMessage&>(result);
-      LOG(WARNING) << m.GetAnswer();*/
+    if (command.GetType() == OrthancStone::IOracleCommand::Type_Http)
+    {
+      const OrthancStone::HttpCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::HttpCommand::SuccessMessage&>(result);
+      LOG(WARNING) << m.GetAnswer();
+    }
 
-    const OrthancStone::OrthancRestApiCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::OrthancRestApiCommand::SuccessMessage&>(result);
-    LOG(WARNING) << m.GetAnswer();
+    if (command.GetType() == OrthancStone::IOracleCommand::Type_OrthancRestApi)
+    {
+      const OrthancStone::OrthancRestApiCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::OrthancRestApiCommand::SuccessMessage&>(result);
+      LOG(WARNING) << m.GetAnswer();
+    }
   }
 
   virtual void HandleErrorFromOracle(const OrthancStone::IOracleCommand& command,
@@ -303,15 +310,19 @@ int main(int argc, char* argv[])
                   case SDLK_b:
                   {
                     // TODO Refactoring
-                    //OrthancStone::StoneApplication::GetInstance().Submit(toto_, new OrthancStone::SleepOracleCommand(1000));
+                    OrthancStone::StoneApplication::GetInstance().Submit(toto_, new OrthancStone::SleepOracleCommand(1000));
 
-                    /*std::unique_ptr<OrthancStone::HttpCommand> command(new OrthancStone::HttpCommand);
-                    command->SetUrl("http://ip-api.com/json/");
-                    OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());*/
+                    {
+                      std::unique_ptr<OrthancStone::HttpCommand> command(new OrthancStone::HttpCommand);
+                      command->SetUrl("http://ip-api.com/json/");
+                      OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());
+                    }
 
-                    std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
-                    command->SetUri("/system/");
-                    OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());
+                    {
+                      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+                      command->SetUri("/system/");
+                      OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());
+                    }
                     break;
                   }
 

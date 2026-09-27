@@ -53,7 +53,7 @@
 
 namespace OrthancStone
 {
-  class ThreadedOracle : public ::OrthancStone::New::IOracle
+  class ThreadedOracle : public IOracle
   {
   private:
     class GenericRunnable;

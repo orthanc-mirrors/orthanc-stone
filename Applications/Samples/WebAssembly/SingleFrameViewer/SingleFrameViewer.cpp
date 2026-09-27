@@ -97,7 +97,7 @@ extern "C"
       configuration.SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
 
       OrthancStone::StoneApplication::Initialize(configuration);
-      context_.reset(new OrthancStone::WebAssemblyLoadersContext(configuration, 1, 4, 1));
+      context_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
   
       DISPATCH_JAVASCRIPT_EVENT("WasmModuleInitialized");
     }

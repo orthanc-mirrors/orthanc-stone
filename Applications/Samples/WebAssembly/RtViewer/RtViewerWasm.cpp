@@ -156,7 +156,8 @@ namespace OrthancStone
     configuration.SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
 
     OrthancStone::StoneApplication::Initialize(configuration);
-    loadersContext_.reset(new WebAssemblyLoadersContext(configuration, 1, 4, 1));
+
+    loadersContext_.reset(new WebAssemblyLoadersContext(1, 4, 1));
 
     // we are in WASM --> downcast to concrete type
     boost::shared_ptr<WebAssemblyLoadersContext> loadersContext = 

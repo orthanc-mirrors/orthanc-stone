@@ -52,7 +52,7 @@
 
 namespace OrthancStone
 {
-  class WebAssemblyOracle : public New::IOracle
+  class WebAssemblyOracle : public IOracle
   {
   private:
     typedef std::map<std::string, std::string>  HttpHeaders;

@@ -116,6 +116,6 @@ namespace OrthancStone
 
     IEnvironment& GetEnvironment();
 
-    New::IOracle& GetOracle();
+    IOracle& GetOracle();
   };
 }

@@ -258,7 +258,7 @@ namespace OrthancStone
   }
 
 
-  New::IOracle& StoneApplication::GetOracle()
+  IOracle& StoneApplication::GetOracle()
   {
     assert(pimpl_ != NULL);
     return pimpl_->GetOracle();

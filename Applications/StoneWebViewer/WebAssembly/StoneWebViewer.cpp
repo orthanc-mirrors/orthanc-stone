@@ -4985,7 +4985,7 @@ extern "C"
 
     {
       OrthancStone::IEnvironment& environment = OrthancStone::StoneApplication::GetInstance().GetEnvironment();
-      OrthancStone::New::IOracle& oracle = OrthancStone::StoneApplication::GetInstance().GetOracle();
+      OrthancStone::IOracle& oracle = OrthancStone::StoneApplication::GetInstance().GetOracle();
 
       oracle.Submit(environment, toto_, new OrthancStone::SleepOracleCommand(2000));
 

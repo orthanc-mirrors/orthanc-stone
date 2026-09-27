@@ -47,8 +47,8 @@
 namespace OrthancStone
 {
   class OracleScheduler :
-    public ObserverBase<OracleScheduler>,
-    public IOracleClient
+    public IOracleClient,
+    public boost::enable_shared_from_this<OracleScheduler>
   {
   public:
     static const int PRIORITY_HIGH = -1;
@@ -122,14 +122,12 @@ namespace OrthancStone
     
   public:
     static boost::shared_ptr<OracleScheduler> Create(StoneApplication& application,
-                                                     IObservable& oracleObservable,
                                                      IMessageEmitter& emitter)
     {
-      return Create(application, oracleObservable, emitter, 1, 4, 1);
+      return Create(application, emitter, 1, 4, 1);
     }
 
     static boost::shared_ptr<OracleScheduler> Create(StoneApplication& application,
-                                                     IObservable& oracleObservable,
                                                      IMessageEmitter& emitter,
                                                      unsigned int maxHighPriority,
                                                      unsigned int maxStandardPriority,

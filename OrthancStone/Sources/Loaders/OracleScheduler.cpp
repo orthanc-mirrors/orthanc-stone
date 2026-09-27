@@ -241,26 +241,7 @@ namespace OrthancStone
       if (observer)
       {
         ModifyNumberOfActiveCommands(priority, 1);
-        
-        if (application_.GetOldOracle().Schedule(GetSharedObserver(), command->WrapCommand(priority)))
-        {
-          /**
-           * Executing this code if "Schedule()" returned "false"
-           * above, will result in a memory leak within
-           * "OracleScheduler", as the scheduler believes that some
-           * command is still active (i.e. pending to be executed by
-           * the oracle), hereby stalling the scheduler during its
-           * destruction, and not freeing the
-           * "shared_ptr<OracleScheduler>" of the Stone context (check
-           * out "sjo-playground/WebViewer/Backend/Leak")
-           **/
-        }
-        else
-        {
-          // This is similar to "RemoveActiveCommand()"
-          ModifyNumberOfActiveCommands(priority, -1);
-          totalProcessed_ ++;
-        }
+        application_.GetOracle().Submit(application_.GetEnvironment(), shared_from_this(), command->WrapCommand(priority));
       }
     }
     else
@@ -471,7 +452,6 @@ namespace OrthancStone
 
     
   boost::shared_ptr<OracleScheduler> OracleScheduler::Create(StoneApplication& application,
-                                                             IObservable& oracleObservable,
                                                              IMessageEmitter& emitter,
                                                              unsigned int maxHighPriority,
                                                              unsigned int maxStandardPriority,
@@ -479,17 +459,6 @@ namespace OrthancStone
   {
     boost::shared_ptr<OracleScheduler> scheduler
       (new OracleScheduler(application, emitter, maxHighPriority, maxStandardPriority, maxLowPriority));
-    scheduler->Register<GetOrthancImageCommand::SuccessMessage>(oracleObservable, &OracleScheduler::Handle);
-    scheduler->Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(oracleObservable, &OracleScheduler::Handle);
-    scheduler->Register<HttpCommand::SuccessMessage>(oracleObservable, &OracleScheduler::Handle);
-    scheduler->Register<OrthancRestApiCommand::SuccessMessage>(oracleObservable, &OracleScheduler::Handle);
-    scheduler->Register<ReadFileCommand::SuccessMessage>(oracleObservable, &OracleScheduler::Handle);
-    scheduler->Register<OracleCommandExceptionMessage>(oracleObservable, &OracleScheduler::Handle);
-
-#if ORTHANC_ENABLE_DCMTK == 1
-    scheduler->Register<ParseDicomSuccessMessage>(oracleObservable, &OracleScheduler::Handle);
-#endif
-
     return scheduler;
   }
     

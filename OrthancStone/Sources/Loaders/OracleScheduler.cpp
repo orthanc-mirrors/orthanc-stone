@@ -524,8 +524,8 @@ namespace OrthancStone
 
     /**
      * Safeguard to remember that a new "Handle()" method and a call
-     * to "scheduler->Register()" must be implemented for each
-     * possible oracle command.
+     * to "scheduler->HandleSuccessFromOracle()" must be implemented
+     * for each possible oracle command.
      **/
     assert(command->GetType() == IOracleCommand::Type_GetOrthancImage ||
            command->GetType() == IOracleCommand::Type_GetOrthancWebViewerJpeg ||
@@ -551,5 +551,56 @@ namespace OrthancStone
     totalScheduled_ ++;
 
     SpawnCommands();
+  }
+
+
+  void OracleScheduler::HandleSuccessFromOracle(const IOracleCommand& command,
+                                                const IMessage& result)
+  {
+    switch (command.GetType())
+    {
+    case IOracleCommand::Type_GetOrthancImage:
+      Handle(dynamic_cast<const GetOrthancImageCommand::SuccessMessage&>(result));
+      break;
+
+    case IOracleCommand::Type_GetOrthancWebViewerJpeg:
+      Handle(dynamic_cast<const GetOrthancWebViewerJpegCommand::SuccessMessage&>(result));
+      break;
+
+    case IOracleCommand::Type_Http:
+      Handle(dynamic_cast<const HttpCommand::SuccessMessage&>(result));
+      break;
+
+    case IOracleCommand::Type_OrthancRestApi:
+      Handle(dynamic_cast<const OrthancRestApiCommand::SuccessMessage&>(result));
+      break;
+
+#if ORTHANC_ENABLE_DCMTK == 1
+    case IOracleCommand::Type_ParseDicomFromFile:
+      Handle(dynamic_cast<const ParseDicomSuccessMessage&>(result));
+      break;
+#endif
+
+#if ORTHANC_ENABLE_DCMTK == 1
+    case IOracleCommand::Type_ParseDicomFromWado:
+      Handle(dynamic_cast<const ParseDicomSuccessMessage&>(result));
+      break;
+#endif
+
+    case IOracleCommand::Type_ReadFile:
+      Handle(dynamic_cast<const ReadFileCommand::SuccessMessage&>(result));
+      break;
+
+    default:
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+  }
+
+
+  void OracleScheduler::HandleErrorFromOracle(const IOracleCommand& command,
+                                              const Orthanc::OrthancException& error)
+  {
+    OracleCommandExceptionMessage message(command, error);
+    Handle(message);
   }
 }

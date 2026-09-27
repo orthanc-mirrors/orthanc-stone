@@ -46,7 +46,9 @@
 
 namespace OrthancStone
 {
-  class OracleScheduler : public ObserverBase<OracleScheduler>
+  class OracleScheduler :
+    public ObserverBase<OracleScheduler>,
+    public IOracleClient
   {
   public:
     static const int PRIORITY_HIGH = -1;
@@ -171,5 +173,11 @@ namespace OrthancStone
     void Schedule(boost::shared_ptr<IObserver> receiver,
                   int priority,
                   IOracleCommand* command /* Takes ownership */);
+
+    void HandleSuccessFromOracle(const IOracleCommand& command,
+                                 const IMessage& result) ORTHANC_OVERRIDE;
+
+    void HandleErrorFromOracle(const IOracleCommand& command,
+                               const Orthanc::OrthancException& error) ORTHANC_OVERRIDE;
   };
 }

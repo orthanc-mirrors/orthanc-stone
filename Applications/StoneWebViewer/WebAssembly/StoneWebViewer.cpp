@@ -4887,11 +4887,17 @@ public:
   {
     LOG(ERROR) << "success!";
 
-    /*const OrthancStone::HttpCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::HttpCommand::SuccessMessage&>(result);
-      LOG(WARNING) << m.GetAnswer();*/
+    if (command.GetType() == OrthancStone::IOracleCommand::Type_Http)
+    {
+      const OrthancStone::HttpCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::HttpCommand::SuccessMessage&>(result);
+      LOG(WARNING) << m.GetAnswer();
+    }
 
-    const OrthancStone::OrthancRestApiCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::OrthancRestApiCommand::SuccessMessage&>(result);
-    LOG(WARNING) << m.GetAnswer();
+    if (command.GetType() == OrthancStone::IOracleCommand::Type_OrthancRestApi)
+    {
+      const OrthancStone::OrthancRestApiCommand::SuccessMessage& m = dynamic_cast<const OrthancStone::OrthancRestApiCommand::SuccessMessage&>(result);
+      LOG(WARNING) << m.GetAnswer();
+    }
   }
 
   virtual void HandleErrorFromOracle(const OrthancStone::IOracleCommand& command,
@@ -4977,16 +4983,24 @@ extern "C"
     DISPATCH_JAVASCRIPT_EVENT("StoneInitialized");
 
 
-    // TODO Refactoring
-    //OrthancStone::StoneApplication::GetInstance().Submit(toto_, new OrthancStone::SleepOracleCommand(2000));
+    {
+      OrthancStone::IEnvironment& environment = OrthancStone::StoneApplication::GetInstance().GetEnvironment();
+      OrthancStone::New::IOracle& oracle = OrthancStone::StoneApplication::GetInstance().GetOracle();
 
-    /*std::unique_ptr<OrthancStone::HttpCommand> command(new OrthancStone::HttpCommand);
-    command->SetUrl("http://ip-api.com/json/");
-    OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());*/
+      oracle.Submit(environment, toto_, new OrthancStone::SleepOracleCommand(2000));
 
-    std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
-    command->SetUri("/system/");
-    OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());
+      {
+        std::unique_ptr<OrthancStone::HttpCommand> command(new OrthancStone::HttpCommand);
+        command->SetUrl("http://ip-api.com/json/");
+        oracle.Submit(environment, toto_, command.release());
+      }
+
+      {
+        std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+        command->SetUri("/system/");
+        oracle.Submit(environment, toto_, command.release());
+      }
+    }
   }
 
 

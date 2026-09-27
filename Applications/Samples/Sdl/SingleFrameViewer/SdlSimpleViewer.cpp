@@ -309,18 +309,21 @@ int main(int argc, char* argv[])
                   case SDLK_b:
                   {
                     // TODO Refactoring
-                    OrthancStone::StoneApplication::GetInstance().Submit(toto_, new OrthancStone::SleepOracleCommand(1000));
+                    OrthancStone::IEnvironment& environment = OrthancStone::StoneApplication::GetInstance().GetEnvironment();
+                    OrthancStone::New::IOracle& oracle = OrthancStone::StoneApplication::GetInstance().GetOracle();
+
+                    oracle.Submit(environment, toto_, new OrthancStone::SleepOracleCommand(1000));
 
                     {
                       std::unique_ptr<OrthancStone::HttpCommand> command(new OrthancStone::HttpCommand);
                       command->SetUrl("http://ip-api.com/json/");
-                      OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());
+                      oracle.Submit(environment, toto_, command.release());
                     }
 
                     {
                       std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
                       command->SetUri("/system/");
-                      OrthancStone::StoneApplication::GetInstance().Submit(toto_, command.release());
+                      oracle.Submit(environment, toto_, command.release());
                     }
                     break;
                   }

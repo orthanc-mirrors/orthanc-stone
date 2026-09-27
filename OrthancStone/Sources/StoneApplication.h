@@ -119,9 +119,5 @@ namespace OrthancStone
     IOracle& GetOldOracle();  // TODO Refactoring - Remove this
 
     New::IOracle& GetOracle();
-
-    // TODO Refactoring - Remove this?
-    void Submit(const boost::shared_ptr<IOracleClient>& client,
-                IOracleCommand* command /* takes ownership */);
   };
 }

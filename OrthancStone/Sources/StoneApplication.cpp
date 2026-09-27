@@ -270,12 +270,4 @@ namespace OrthancStone
     assert(pimpl_ != NULL);
     return pimpl_->GetOracle();
   }
-
-
-  void StoneApplication::Submit(const boost::shared_ptr<IOracleClient>& client,
-                                IOracleCommand* command /* takes ownership */)
-  {
-    assert(pimpl_ != NULL);
-    pimpl_->GetOracle().Submit(pimpl_->GetEnvironment(), client, command);
-  }
 }

@@ -5050,7 +5050,9 @@ extern "C"
           SetHighlightedColor(OrthancStone::Color(r, g, b));
         }
 
-        context_.reset(new OrthancStone::WebAssemblyLoadersContext(configuration, 1, 4, 1));
+        OrthancStone::StoneApplication::Initialize(configuration);
+
+        context_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
 
         static const char* const KEY_SKIP_SERIES = "SkipSeriesFromModalities";
         if (parsed.isMember(KEY_SKIP_SERIES))
@@ -5059,8 +5061,6 @@ extern "C"
           Orthanc::SerializationToolbox::ReadArrayOfStrings(modalities, parsed, KEY_SKIP_SERIES);
           GetResourcesLoader().SetSkipSeriesFromModalities(modalities);
         }
-
-        OrthancStone::StoneApplication::Initialize(configuration);
       }
       else
       {

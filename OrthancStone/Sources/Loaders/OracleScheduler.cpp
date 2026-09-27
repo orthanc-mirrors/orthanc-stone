@@ -242,7 +242,7 @@ namespace OrthancStone
       {
         ModifyNumberOfActiveCommands(priority, 1);
         
-        if (oracle_.Schedule(GetSharedObserver(), command->WrapCommand(priority)))
+        if (application_.GetOldOracle().Schedule(GetSharedObserver(), command->WrapCommand(priority)))
         {
           /**
            * Executing this code if "Schedule()" returned "false"
@@ -443,12 +443,12 @@ namespace OrthancStone
   }  
 
   
-  OracleScheduler::OracleScheduler(IOracle& oracle,
+  OracleScheduler::OracleScheduler(StoneApplication& application,
                                    IMessageEmitter& emitter,
                                    unsigned int maxHighPriority,
                                    unsigned int maxStandardPriority,
                                    unsigned int maxLowPriority) :
-    oracle_(oracle),
+    application_(application),
     emitter_(emitter),
     maxHighPriorityCommands_(maxHighPriority),
     maxStandardPriorityCommands_(maxStandardPriority),
@@ -470,7 +470,7 @@ namespace OrthancStone
   }
 
     
-  boost::shared_ptr<OracleScheduler> OracleScheduler::Create(IOracle& oracle,
+  boost::shared_ptr<OracleScheduler> OracleScheduler::Create(StoneApplication& application,
                                                              IObservable& oracleObservable,
                                                              IMessageEmitter& emitter,
                                                              unsigned int maxHighPriority,
@@ -478,7 +478,7 @@ namespace OrthancStone
                                                              unsigned int maxLowPriority)
   {
     boost::shared_ptr<OracleScheduler> scheduler
-      (new OracleScheduler(oracle, emitter, maxHighPriority, maxStandardPriority, maxLowPriority));
+      (new OracleScheduler(application, emitter, maxHighPriority, maxStandardPriority, maxLowPriority));
     scheduler->Register<GetOrthancImageCommand::SuccessMessage>(oracleObservable, &OracleScheduler::Handle);
     scheduler->Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(oracleObservable, &OracleScheduler::Handle);
     scheduler->Register<HttpCommand::SuccessMessage>(oracleObservable, &OracleScheduler::Handle);

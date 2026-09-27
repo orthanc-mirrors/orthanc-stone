@@ -38,6 +38,7 @@
 #include "../Oracle/OracleCommandExceptionMessage.h"
 #include "../Oracle/OrthancRestApiCommand.h"
 #include "../Oracle/ReadFileCommand.h"
+#include "../StoneApplication.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1
 #  include "../Oracle/ParseDicomSuccessMessage.h"
@@ -64,7 +65,7 @@ namespace OrthancStone
 
     typedef std::multimap<int, ScheduledCommand*>  Queue;
 
-    IOracle&  oracle_;
+    StoneApplication&  application_;
     IMessageEmitter&  emitter_;
     Queue          standardPriorityQueue_;
     Queue          highPriorityQueue_;
@@ -111,21 +112,21 @@ namespace OrthancStone
 
     void Handle(const OracleCommandExceptionMessage& message);
 
-    OracleScheduler(IOracle& oracle,
+    OracleScheduler(StoneApplication& application,
                     IMessageEmitter& emitter,
                     unsigned int maxHighPriority,
                     unsigned int maxStandardPriority,
                     unsigned int maxLowPriority);
     
   public:
-    static boost::shared_ptr<OracleScheduler> Create(IOracle& oracle,
+    static boost::shared_ptr<OracleScheduler> Create(StoneApplication& application,
                                                      IObservable& oracleObservable,
                                                      IMessageEmitter& emitter)
     {
-      return Create(oracle, oracleObservable, emitter, 1, 4, 1);
+      return Create(application, oracleObservable, emitter, 1, 4, 1);
     }
 
-    static boost::shared_ptr<OracleScheduler> Create(IOracle& oracle,
+    static boost::shared_ptr<OracleScheduler> Create(StoneApplication& application,
                                                      IObservable& oracleObservable,
                                                      IMessageEmitter& emitter,
                                                      unsigned int maxHighPriority,

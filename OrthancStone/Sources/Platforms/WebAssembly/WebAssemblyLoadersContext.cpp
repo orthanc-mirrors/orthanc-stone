@@ -77,13 +77,12 @@ namespace OrthancStone
   };
     
 
-  WebAssemblyLoadersContext::WebAssemblyLoadersContext(const StoneApplication::Configuration& configuration,
-                                                       unsigned int maxHighPriority,
+  WebAssemblyLoadersContext::WebAssemblyLoadersContext(unsigned int maxHighPriority,
                                                        unsigned int maxStandardPriority,
                                                        unsigned int maxLowPriority) :
-    oracle_(configuration)
+    oracle_(dynamic_cast<WebAssemblyOracle&>(StoneApplication::GetInstance().GetOldOracle()))
   {
-    scheduler_ = OracleScheduler::Create(oracle_, oracle_.GetOracleObservable(), oracle_,
+    scheduler_ = OracleScheduler::Create(StoneApplication::GetInstance(), oracle_.GetOracleObservable(), oracle_,
                                          maxHighPriority, maxStandardPriority, maxLowPriority);
 
     if (!scheduler_)

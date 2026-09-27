@@ -37,13 +37,12 @@ namespace OrthancStone
   private:
     class Locker;
     
-    WebAssemblyOracle                          oracle_;
+    WebAssemblyOracle&                         oracle_;
     boost::shared_ptr<OracleScheduler>         scheduler_;
     std::list< boost::shared_ptr<IObserver> >  loaders_;
     
   public:
-    WebAssemblyLoadersContext(const StoneApplication::Configuration& configuration,
-                              unsigned int maxHighPriority,
+    WebAssemblyLoadersContext(unsigned int maxHighPriority,
                               unsigned int maxStandardPriority,
                               unsigned int maxLowPriority);
 

@@ -43,7 +43,7 @@ namespace OrthancStone
     // "Recursive mutex" is necessary, to be able to run
     // "ILoaderFactory" from a message handler triggered by
     // "EmitMessage()"
-    boost::recursive_mutex  mutex_;
+    boost::recursive_mutex  mutex_;  // TODO Refactoring - This is redundant with IEnvironment
 
     IObservable                         oracleObservable_;
     boost::shared_ptr<OracleScheduler>  scheduler_;

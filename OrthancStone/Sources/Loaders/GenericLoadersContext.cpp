@@ -103,7 +103,6 @@ namespace OrthancStone
                                                unsigned int maxStandardPriority,
                                                unsigned int maxLowPriority)
   {
-    dynamic_cast<ThreadedOracle&>(StoneApplication::GetInstance().GetOldOracle()).SetMessageEmitter(*this);
     scheduler_ = OracleScheduler::Create(StoneApplication::GetInstance(), *this,
                                          maxHighPriority, maxStandardPriority, maxLowPriority);
 

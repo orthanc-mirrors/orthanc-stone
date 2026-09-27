@@ -32,11 +32,14 @@
 namespace OrthancStone
 {
   // TODO Refactoring - Remove this class
-  class WebAssemblyLoadersContext : public ILoadersContext
+  class WebAssemblyLoadersContext :
+    public ILoadersContext,
+    public IMessageEmitter
   {
   private:
     class Locker;
-    
+
+    IObservable                                oracleObservable_;
     WebAssemblyOracle&                         oracle_;
     boost::shared_ptr<OracleScheduler>         scheduler_;
     std::list< boost::shared_ptr<IObserver> >  loaders_;
@@ -49,6 +52,12 @@ namespace OrthancStone
     WebAssemblyOracle::CachedInstanceAccessor* AccessCachedInstance(const std::string& sopInstanceUid)
     {
       return new WebAssemblyOracle::CachedInstanceAccessor(oracle_, sopInstanceUid);
+    }
+
+    virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
+                             const IMessage& message) ORTHANC_OVERRIDE
+    {
+      oracleObservable_.EmitMessage(observer, message);
     }
 
     virtual ILock* Lock() ORTHANC_OVERRIDE;

@@ -153,7 +153,6 @@ namespace OrthancStone
 
 
   ThreadedOracle::ThreadedOracle(const StoneApplication::Configuration& configuration) :
-    emitter_(NULL),
     configuration_(configuration),
     sleepingThread_(new SleepRunnable, configuration.GetWorkersTimeResolution())
   {
@@ -229,22 +228,5 @@ namespace OrthancStone
     }
 
     SubmitInternal(new OracleCallback(environment, client, protection.release()));
-  }
-
-
-  bool ThreadedOracle::Schedule(boost::shared_ptr<IObserver> receiver,
-                                IOracleCommand* command)
-  {
-    std::unique_ptr<IOracleCommand> protection(command);
-
-    if (emitter_ == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      SubmitInternal(new OldOracleCallback(protection.release(), receiver, *emitter_));
-      return true;
-    }
   }
 }

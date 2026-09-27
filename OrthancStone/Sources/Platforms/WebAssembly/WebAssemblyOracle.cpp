@@ -806,18 +806,6 @@ namespace OrthancStone
   }
 
 
-  bool WebAssemblyOracle::Schedule(boost::shared_ptr<IObserver> receiver,
-                                   IOracleCommand* command)
-  {
-    LOG(TRACE) << "WebAssemblyOracle::Schedule : receiver = "
-               << std::hex << receiver.get();
-
-    Submit(new OldOracleCallback(command, receiver, *this));
-
-    return true;
-  }
-
-
   void WebAssemblyOracle::Submit(IEnvironment& environment,
                                  const boost::shared_ptr<IOracleClient>& client,
                                  IOracleCommand* command /* takes ownership */)

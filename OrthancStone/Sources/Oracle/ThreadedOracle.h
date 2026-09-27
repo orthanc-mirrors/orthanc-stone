@@ -53,15 +53,12 @@
 
 namespace OrthancStone
 {
-  class ThreadedOracle :
-    public ::OrthancStone::IOracle,  // TODO Refactoring - Remove this
-    public ::OrthancStone::New::IOracle
+  class ThreadedOracle : public ::OrthancStone::New::IOracle
   {
   private:
     class GenericRunnable;
     class SleepRunnable;
 
-    IMessageEmitter*                 emitter_;  // TODO Refactoring - Remove this
     StoneApplication::Configuration  configuration_;
     RunnableThread                   sleepingThread_;
     Orthanc::ThreadPool              threadPool_;
@@ -75,11 +72,6 @@ namespace OrthancStone
   public:
     ThreadedOracle(const StoneApplication::Configuration& configuration);
 
-    void SetMessageEmitter(IMessageEmitter& emitter)  // TODO Refactoring - Remove this
-    {
-      emitter_ = &emitter;
-    }
-
     void Start();
 
     void Stop();
@@ -87,8 +79,5 @@ namespace OrthancStone
     virtual void Submit(IEnvironment& environment,
                         const boost::shared_ptr<IOracleClient>& client,
                         IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
-
-    virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
-                          IOracleCommand* command) ORTHANC_OVERRIDE;
   };
 }

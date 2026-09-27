@@ -52,10 +52,7 @@
 
 namespace OrthancStone
 {
-  class WebAssemblyOracle :
-    public IOracle,   // TODO Refactoring - Remove old flavor
-    public IMessageEmitter,  // TODO Refactoring - Remove old flavor
-    public New::IOracle
+  class WebAssemblyOracle : public New::IOracle
   {
   private:
     typedef std::map<std::string, std::string>  HttpHeaders;
@@ -77,7 +74,6 @@ namespace OrthancStone
     void ExecuteParseDicomFromWadoCommand(IOracleCallback* callback);
 
     StoneApplication::Configuration  configuration_;
-    IObservable                      oracleObservable_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
     std::unique_ptr<ParsedDicomCache>  dicomCache_;
@@ -92,23 +88,9 @@ namespace OrthancStone
   public:
     WebAssemblyOracle(const StoneApplication::Configuration& configuration);
     
-    virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
-                             const IMessage& message) ORTHANC_OVERRIDE
-    {
-      oracleObservable_.EmitMessage(observer, message);
-    }
-    
-    virtual bool Schedule(boost::shared_ptr<IObserver> receiver,
-                          IOracleCommand* command) ORTHANC_OVERRIDE;
-
     virtual void Submit(IEnvironment& environment,
                         const boost::shared_ptr<IOracleClient>& client,
                         IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
-
-    IObservable& GetOracleObservable()
-    {
-      return oracleObservable_;
-    }
 
     class CachedInstanceAccessor : public boost::noncopyable
     {

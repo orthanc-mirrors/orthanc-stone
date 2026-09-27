@@ -116,8 +116,6 @@ namespace OrthancStone
 
     IEnvironment& GetEnvironment();
 
-    IOracle& GetOldOracle();  // TODO Refactoring - Remove this
-
     New::IOracle& GetOracle();
   };
 }

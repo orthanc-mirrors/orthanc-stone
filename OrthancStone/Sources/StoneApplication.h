@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "Messages/IMessageEmitter.h"
 #include "Oracle/IEnvironment.h"
 #include "Oracle/IOracle.h"
 
@@ -100,6 +101,8 @@ namespace OrthancStone
     };
 
   private:
+    class Emitter;  // TODO Refactoring - Remove this
+
     class PImpl;
     PImpl* pimpl_;
 
@@ -117,5 +120,7 @@ namespace OrthancStone
     IEnvironment& GetEnvironment();
 
     IOracle& GetOracle();
+
+    IMessageEmitter& GetMessageEmitter();  // TODO Refactoring - Remove this
   };
 }

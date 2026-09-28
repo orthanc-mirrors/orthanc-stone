@@ -23,18 +23,27 @@
 
 #include "NativeEnvironment.h"
 
+#include "../../Oracle/OracleCallback.h"
+
 
 namespace OrthancStone
 {
-  class NativeEnvironment::Completion : public Orthanc::IDynamicObject
+  class NativeEnvironment::Notification : public Orthanc::IDynamicObject
   {
-  protected:
+  private:
+    NativeEnvironment&               environment_;
     boost::weak_ptr<IOracleClient>   client_;
     std::unique_ptr<IOracleCommand>  command_;
 
+  protected:
+    virtual void NotifyInternal(IOracleClient& client,
+                                const IOracleCommand& command) = 0;
+
   public:
-    Completion(const boost::weak_ptr<IOracleClient>& client,
-               IOracleCommand* command /* takes ownership */) :
+    Notification(NativeEnvironment& environment,
+                 const boost::weak_ptr<IOracleClient>& client,
+                 IOracleCommand* command /* takes ownership */) :
+      environment_(environment),
       client_(client),
       command_(command)
     {
@@ -44,20 +53,45 @@ namespace OrthancStone
       }
     }
 
-    virtual void NotifyClient() = 0;
+    void NotifyClient()
+    {
+      NativeEnvironment::Lock environmentLock(environment_);
+
+      if (!environmentLock.IsFirstLock())
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+
+      {
+        boost::shared_ptr<IOracleClient> clientLock(client_.lock());
+
+        if (clientLock)
+        {
+          NotifyInternal(*clientLock, *command_);
+        }
+      }
+    }
   };
 
 
-  class NativeEnvironment::SuccessCompletion : public Completion
+  class NativeEnvironment::SuccessNotification : public Notification
   {
   private:
     std::unique_ptr<IMessage>  result_;
 
+  protected:
+    virtual void NotifyInternal(IOracleClient& client,
+                                const IOracleCommand& command) ORTHANC_OVERRIDE
+    {
+      client.HandleSuccessFromOracle(command, *result_);
+    }
+
   public:
-    SuccessCompletion(const boost::weak_ptr<IOracleClient>& client,
-                      IOracleCommand* command /* takes ownership */,
-                      IMessage* result /* takes ownership */) :
-      Completion(client, command),
+    SuccessNotification(NativeEnvironment& environment,
+                        const boost::weak_ptr<IOracleClient>& client,
+                        IOracleCommand* command /* takes ownership */,
+                        IMessage* result /* takes ownership */) :
+      Notification(environment, client, command),
       result_(result)
     {
       if (result == NULL)
@@ -65,70 +99,82 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
     }
-
-    virtual void NotifyClient() ORTHANC_OVERRIDE
-    {
-      boost::shared_ptr<IOracleClient> lock(client_.lock());
-
-      if (lock)
-      {
-        lock->HandleSuccessFromOracle(*command_, *result_);
-      }
-    }
   };
 
 
-  class NativeEnvironment::ErrorCompletion : public Completion
+  class NativeEnvironment::ErrorNotification : public Notification
   {
   private:
     Orthanc::OrthancException  error_;
 
-  public:
-    ErrorCompletion(const boost::weak_ptr<IOracleClient>& client,
-                    IOracleCommand* command /* takes ownership */,
-                    const Orthanc::OrthancException& error) :
-      Completion(client, command),
-      error_(error)
+  protected:
+    virtual void NotifyInternal(IOracleClient& client,
+                                const IOracleCommand& command) ORTHANC_OVERRIDE
     {
+      client.HandleErrorFromOracle(command, error_);
     }
 
-    virtual void NotifyClient() ORTHANC_OVERRIDE
+  public:
+    ErrorNotification(NativeEnvironment& environment,
+                      const boost::weak_ptr<IOracleClient>& client,
+                      IOracleCommand* command /* takes ownership */,
+                      const Orthanc::OrthancException& error) :
+      Notification(environment, client, command),
+      error_(error)
     {
-      boost::shared_ptr<IOracleClient> lock(client_.lock());
-
-      if (lock)
-      {
-        lock->HandleErrorFromOracle(*command_, error_);
-      }
     }
   };
 
 
-  class NativeEnvironment::OracleRunnable : public Orthanc::IRunnable
+  class NativeEnvironment::NotificationRunnable : public Orthanc::IRunnable
   {
   private:
     Orthanc::SharedMessageQueue& queue_;
+    unsigned int                 timeResolution_;
 
   public:
-    OracleRunnable(Orthanc::SharedMessageQueue& queue) :
-      queue_(queue)
+    NotificationRunnable(Orthanc::SharedMessageQueue& queue,
+                         unsigned int timeResolution /* milliseconds */) :
+      queue_(queue),
+      timeResolution_(timeResolution)
     {
+      if (timeResolution == 0)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
+      }
     }
 
     virtual void Run() ORTHANC_OVERRIDE
     {
-      std::unique_ptr<Orthanc::IDynamicObject> completion(queue_.Dequeue(50 /* milliseconds */));
+      std::unique_ptr<Orthanc::IDynamicObject> completion(queue_.Dequeue(timeResolution_));
 
       if (completion.get() != NULL)
       {
-        dynamic_cast<Completion&>(*completion).NotifyClient();
+        dynamic_cast<Notification&>(*completion).NotifyClient();
       }
     }
   };
 
 
-  NativeEnvironment::NativeEnvironment() :
-    oracleThread_(new OracleRunnable(oracleQueue_), 0 /* time resolution is in Dequeue() */)
+  NativeEnvironment::Lock::Lock(NativeEnvironment& that) :
+    that_(that),
+    lock_(that.mutex_)
+  {
+    firstLock_ = (that.countLocks_ == 0);
+    that.countLocks_++;
+  }
+
+
+  NativeEnvironment::Lock::~Lock()
+  {
+    assert(that_.countLocks_ > 0);
+    that_.countLocks_--;
+  }
+
+
+  NativeEnvironment::NativeEnvironment(unsigned int timeResolution) :
+    notificationThread_(new NotificationRunnable(notificationQueue_, timeResolution), 0 /* time resolution is in Dequeue() */),
+    countLocks_(0)
   {
   }
 
@@ -137,7 +183,7 @@ namespace OrthancStone
                                               IOracleCommand* command /* takes ownership */,
                                               IMessage* result /* takes ownership */)
   {
-    oracleQueue_.Enqueue(new SuccessCompletion(client, command, result));
+    notificationQueue_.Enqueue(new SuccessNotification(*this, client, command, result));
   }
 
 
@@ -145,6 +191,6 @@ namespace OrthancStone
                                             IOracleCommand* command /* takes ownership */,
                                             const Orthanc::OrthancException& error)
   {
-    oracleQueue_.Enqueue(new ErrorCompletion(client, command, error));
+    notificationQueue_.Enqueue(new ErrorNotification(*this, client, command, error));
   }
 }

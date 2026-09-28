@@ -29,7 +29,17 @@ namespace OrthancStone
 {
   class WebAssemblyEnvironment : public IEnvironment
   {
+  private:
+    class Lock : public ILock
+    {
+    };
+
   public:
+    virtual Lock* AcquireLock() ORTHANC_OVERRIDE
+    {
+      return new Lock;
+    }
+
     virtual void NotifyOracleSuccess(const boost::weak_ptr<IOracleClient>& client,
                                      IOracleCommand* command /* takes ownership */,
                                      IMessage* result /* takes ownership */) ORTHANC_OVERRIDE;

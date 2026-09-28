@@ -34,26 +34,47 @@ namespace OrthancStone
   class NativeEnvironment : public IEnvironment
   {
   private:
-    class OracleRunnable;
-    class Completion;
-    class SuccessCompletion;
-    class ErrorCompletion;
+    class NotificationRunnable;
+    class Notification;
+    class SuccessNotification;
+    class ErrorNotification;
 
+    // TODO Refactoring - Is it necessary to have "recursive_mutex", not plain "mutex"?
     boost::recursive_mutex       mutex_;  // Main mutex of the application, to go single-threaded
-    Orthanc::SharedMessageQueue  oracleQueue_;
-    RunnableThread               oracleThread_;
+    Orthanc::SharedMessageQueue  notificationQueue_;
+    RunnableThread               notificationThread_;
+    unsigned int                 countLocks_;  // Only for debugging
 
   public:
-    NativeEnvironment();
+    class Lock : public ILock
+    {
+    private:
+      NativeEnvironment&                   that_;
+      boost::recursive_mutex::scoped_lock  lock_;
+      bool                                 firstLock_;
+
+    public:
+      Lock(NativeEnvironment& that);
+
+      virtual ~Lock() ORTHANC_OVERRIDE;
+
+      bool IsFirstLock() const  // For debugging
+      {
+        return firstLock_;
+      }
+    };
+
+
+    NativeEnvironment(unsigned int timeResolution /* in milliseconds */);
 
     void Start()
     {
-      oracleThread_.Start();
+      notificationThread_.Start();
     }
 
     void Stop()
     {
-      oracleThread_.Stop();
+      notificationThread_.Stop();
     }
 
     virtual void NotifyOracleSuccess(const boost::weak_ptr<IOracleClient>& client,
@@ -63,5 +84,10 @@ namespace OrthancStone
     virtual void NotifyOracleError(const boost::weak_ptr<IOracleClient>& client,
                                    IOracleCommand* command /* takes ownership */,
                                    const Orthanc::OrthancException& error) ORTHANC_OVERRIDE;
+
+    virtual ILock* AcquireLock() ORTHANC_OVERRIDE
+    {
+      return new Lock(*this);
+    }
   };
 }

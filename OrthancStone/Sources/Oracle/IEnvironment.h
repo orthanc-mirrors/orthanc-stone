@@ -33,9 +33,19 @@ namespace OrthancStone
   class IEnvironment : public boost::noncopyable
   {
   public:
+    class ILock : public boost::noncopyable
+    {
+    public:
+      virtual ~ILock()
+      {
+      }
+    };
+
     virtual ~IEnvironment()
     {
     }
+
+    virtual ILock* AcquireLock() = 0;
 
     /**
      * NB: "command" and "result" must be pointers so that they can be

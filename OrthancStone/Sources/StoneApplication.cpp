@@ -23,6 +23,8 @@
 
 #include "StoneApplication.h"
 
+#include "Messages/IObservable.h"  // TODO Refactoring - Remove this
+
 #include <Compatibility.h>
 #include <Logging.h>
 #include <MultiThreading/Mutex.h>
@@ -120,8 +122,27 @@ namespace OrthancStone
   class StoneApplication::PImpl
   {
   private:
+    class Emitter : public IMessageEmitter  // TODO Refactoring - Remove this
+    {
+    private:
+      IObservable  oracleObservable_;
+
+    public:
+      void EmitMessage(boost::weak_ptr<IObserver> observer,
+                       const IMessage& message) ORTHANC_OVERRIDE
+      {
+        oracleObservable_.EmitMessage(observer, message);
+      }
+
+      IObservable& GetOracleObservable()
+      {
+        return oracleObservable_;
+      }
+    };
+
     WebAssemblyEnvironment  environment_;
     WebAssemblyOracle       oracle_;
+    Emitter                 emitter_;
 
   public:
     PImpl(const Configuration& configuration) :
@@ -139,6 +160,11 @@ namespace OrthancStone
       return oracle_;
     }
 
+    IMessageEmitter& GetMessageEmitter()
+    {
+      return emitter_;
+    }
+
     void Start()
     {
     }
@@ -154,12 +180,47 @@ namespace OrthancStone
   class StoneApplication::PImpl
   {
   private:
-    NativeEnvironment    environment_;
-    ThreadedOracle       oracle_;
+    class Emitter : public IMessageEmitter  // TODO Refactoring - Remove this
+    {
+    private:
+      NativeEnvironment&  environment_;
+      IObservable         oracleObservable_;
+
+    public:
+      Emitter(NativeEnvironment& environment) :
+        environment_(environment)
+      {
+      }
+
+      void EmitMessage(boost::weak_ptr<IObserver> observer,
+                       const IMessage& message) ORTHANC_OVERRIDE
+      {
+        NativeEnvironment::Lock lock(environment_);
+
+        if (lock.IsFirstLock())  // For debugging
+        {
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+        }
+
+        oracleObservable_.EmitMessage(observer, message);
+      }
+
+      IObservable& GetOracleObservable()
+      {
+        return oracleObservable_;
+      }
+    };
+
+
+    NativeEnvironment  environment_;
+    ThreadedOracle     oracle_;
+    Emitter            emitter_;
 
   public:
     PImpl(const Configuration& configuration) :
-      oracle_(configuration)
+      environment_(configuration.GetWorkersTimeResolution()),
+      oracle_(configuration),
+      emitter_(environment_)
     {
     }
 
@@ -171,6 +232,11 @@ namespace OrthancStone
     ThreadedOracle& GetOracle()
     {
       return oracle_;
+    }
+
+    IMessageEmitter& GetMessageEmitter()
+    {
+      return emitter_;
     }
 
     void Start()
@@ -262,5 +328,12 @@ namespace OrthancStone
   {
     assert(pimpl_ != NULL);
     return pimpl_->GetOracle();
+  }
+
+
+  IMessageEmitter& StoneApplication::GetMessageEmitter()
+  {
+    assert(pimpl_ != NULL);
+    return pimpl_->GetMessageEmitter();
   }
 }

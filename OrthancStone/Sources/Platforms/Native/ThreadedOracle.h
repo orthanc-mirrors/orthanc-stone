@@ -39,14 +39,14 @@
 #endif
 
 #if ORTHANC_ENABLE_DCMTK == 1
-#  include "../Toolbox/ParsedDicomCache.h"
+#  include "../../Toolbox/ParsedDicomCache.h"
 #endif
 
-#include "../Messages/IMessageEmitter.h"
-#include "../Platforms/Native/RunnableThread.h"
-#include "../StoneApplication.h"
-#include "IOracle.h"
-#include "OracleCallback.h"
+#include "../../Messages/IMessageEmitter.h"
+#include "../../Oracle/IOracle.h"
+#include "../../Oracle/OracleCallback.h"
+#include "../../StoneApplication.h"
+#include "RunnableThread.h"
 
 #include <MultiThreading/ThreadPool.h>
 

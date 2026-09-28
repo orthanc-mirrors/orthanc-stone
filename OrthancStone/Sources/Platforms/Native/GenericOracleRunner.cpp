@@ -27,17 +27,17 @@
 #  error The macro ORTHANC_ENABLE_DCMTK must be defined
 #endif
 
-#include "GetOrthancImageCommand.h"
-#include "GetOrthancWebViewerJpegCommand.h"
-#include "HttpCommand.h"
-#include "OracleCommandExceptionMessage.h"
-#include "OrthancRestApiCommand.h"
-#include "ParseDicomFromFileCommand.h"
-#include "ParseDicomFromWadoCommand.h"
-#include "ReadFileCommand.h"
+#include "../../Oracle/GetOrthancImageCommand.h"
+#include "../../Oracle/GetOrthancWebViewerJpegCommand.h"
+#include "../../Oracle/HttpCommand.h"
+#include "../../Oracle/OracleCommandExceptionMessage.h"
+#include "../../Oracle/OrthancRestApiCommand.h"
+#include "../../Oracle/ParseDicomFromFileCommand.h"
+#include "../../Oracle/ParseDicomFromWadoCommand.h"
+#include "../../Oracle/ReadFileCommand.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1
-#  include "ParseDicomSuccessMessage.h"
+#  include "../../Oracle/ParseDicomSuccessMessage.h"
 #  include <dcmtk/dcmdata/dcdeftag.h>
 #  include <dcmtk/dcmdata/dcfilefo.h>
 static unsigned int BUCKET_DICOMDIR = 0;

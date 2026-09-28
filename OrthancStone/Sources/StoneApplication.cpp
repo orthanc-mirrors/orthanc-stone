@@ -33,7 +33,7 @@
 #  include "Platforms/WebAssembly/WebAssemblyOracle.h"
 #elif ORTHANC_STONE_TARGET_PLATFORM_NATIVE == 1
 #  include "Platforms/Native/NativeEnvironment.h"
-#  include "Oracle/ThreadedOracle.h"
+#  include "Platforms/Native/ThreadedOracle.h"
 #else
 #  error Support your platform here
 #endif

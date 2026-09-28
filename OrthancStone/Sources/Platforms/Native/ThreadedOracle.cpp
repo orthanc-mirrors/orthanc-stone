@@ -23,9 +23,9 @@
 
 #include "ThreadedOracle.h"
 
+#include "../../Oracle/OracleCallback.h"
+#include "../../Oracle/SleepOracleCommand.h"
 #include "GenericOracleRunner.h"
-#include "OracleCallback.h"
-#include "SleepOracleCommand.h"
 
 #include <Logging.h>
 #include <OrthancException.h>

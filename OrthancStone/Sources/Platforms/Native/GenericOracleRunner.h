@@ -30,12 +30,12 @@
 #endif
 
 #if ORTHANC_ENABLE_DCMTK == 1
-#  include "../Toolbox/ParsedDicomCache.h"
+#  include "../../Toolbox/ParsedDicomCache.h"
 #endif
 
-#include "../StoneApplication.h"
-#include "IOracleCommand.h"
-#include "OracleCallback.h"
+#include "../../Oracle/IOracleCommand.h"
+#include "../../Oracle/OracleCallback.h"
+#include "../../StoneApplication.h"
 
 #include <Enumerations.h>  // For ORTHANC_OVERRIDE
 #include <WebServiceParameters.h>

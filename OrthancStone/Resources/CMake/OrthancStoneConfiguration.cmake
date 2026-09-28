@@ -220,8 +220,8 @@ endif()
 if (NOT ORTHANC_SANDBOXED AND ENABLE_THREADS AND ENABLE_WEB_CLIENT)
   list(APPEND ORTHANC_STONE_SOURCES
     ${ORTHANC_STONE_ROOT}/Loaders/GenericLoadersContext.cpp
-    ${ORTHANC_STONE_ROOT}/Oracle/GenericOracleRunner.cpp
-    ${ORTHANC_STONE_ROOT}/Oracle/ThreadedOracle.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Native/GenericOracleRunner.cpp
+    ${ORTHANC_STONE_ROOT}/Platforms/Native/ThreadedOracle.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Native/NativeEnvironment.cpp
     ${ORTHANC_STONE_ROOT}/Platforms/Native/RunnableThread.cpp
     )

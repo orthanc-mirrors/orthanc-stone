@@ -23,7 +23,7 @@
 
 #include "GenericLoadersContext.h"
 
-#include "../Oracle/ThreadedOracle.h"
+#include "../Platforms/Native/ThreadedOracle.h"
 #include "../StoneApplication.h"
 
 #include <boost/thread.hpp>

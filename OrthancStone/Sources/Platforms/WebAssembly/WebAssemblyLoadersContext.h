@@ -46,9 +46,9 @@ namespace OrthancStone
                               unsigned int maxStandardPriority,
                               unsigned int maxLowPriority);
 
-    WebAssemblyOracle::CachedInstanceAccessor* AccessCachedInstance(const std::string& sopInstanceUid)
+    New::ParsedDicomCache::Accessor* GetCachedDicomInstance(const std::string& sopInstanceUid)
     {
-      return new WebAssemblyOracle::CachedInstanceAccessor(oracle_, sopInstanceUid);
+      return oracle_.GetCachedDicomInstance(sopInstanceUid);
     }
 
     virtual ILock* Lock() ORTHANC_OVERRIDE;

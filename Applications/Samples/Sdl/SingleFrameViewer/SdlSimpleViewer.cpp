@@ -222,6 +222,7 @@ int main(int argc, char* argv[])
 
       OrthancStone::StoneApplication::Configuration configuration;
       configuration.SetRemoteOrthancParameters(orthancWebService);
+      configuration.SetDicomCacheSize(128 * 1024 * 1024);  // TODO Refactoring - Remove this
       configuration.SetRootDirectory("/tmp");  // TODO Refactoring - Remove this
 
       OrthancStone::StoneApplication::Initialize(configuration);

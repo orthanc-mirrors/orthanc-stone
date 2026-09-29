@@ -45,7 +45,7 @@ namespace OrthancStone
     rootDirectory_("."),
     oracleThreadsCount_(4),
     workersTimeResolution_(50),  // By default, time resolution of 50ms
-    dicomCacheSize_(128 * 1024 * 1024)  // By default, use a cache of 128MB
+    dicomCacheSize_(0)  // By default, the cache is disabled
   {
   }
 

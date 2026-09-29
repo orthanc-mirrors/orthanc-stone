@@ -40,11 +40,6 @@
 #include <emscripten/fetch.h>
 
 
-#if ORTHANC_ENABLE_DCMTK == 1
-static unsigned int BUCKET_SOP = 1;
-#endif
-
-
 namespace OrthancStone
 {
   static void TimeoutCallback(void *userData)
@@ -505,16 +500,13 @@ namespace OrthancStone
       boost::shared_ptr<Orthanc::ParsedDicomFile> dicom
         (ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, headers));
 
-      callback.NotifySuccess(new ParseDicomSuccessMessage(c, c.GetSource(), dicom, fileSize, true));
-
-#if 0
-      // TODO Refactoring - Reactivate the cache!!!
       if (dicomCache_.get())
       {
         // Store it into the cache for future use
-        dicomCache_->Acquire(BUCKET_SOP, c.GetSopInstanceUid(), dicom.release(), fileSize, true);
+        dicomCache_->Store(c.GetSopInstanceUid(), dicom, static_cast<size_t>(fileSize), true);
       }
-#endif
+
+      callback.NotifySuccess(new ParseDicomSuccessMessage(c, c.GetSource(), dicom, fileSize, true));
 
 #else
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
@@ -652,22 +644,19 @@ namespace OrthancStone
 
     const ParseDicomFromWadoCommand& command = dynamic_cast<const ParseDicomFromWadoCommand&>(protection->GetCommand());
 
-#if 0
-      // TODO Refactoring - Reactivate the cache!!!
 #if ORTHANC_ENABLE_DCMTK == 1
     if (dicomCache_.get())
     {
-      ParsedDicomCache::Reader reader(*dicomCache_, BUCKET_SOP, command.GetSopInstanceUid());
-      if (reader.IsValid() &&
-          reader.HasPixelData())
+      New::ParsedDicomCache::Accessor accessor(*dicomCache_, command.GetSopInstanceUid());
+      if (accessor.IsValid() &&
+          accessor.HasPixelData())
       {
         // Reuse the DICOM file from the cache
-        protection->NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), reader.GetDicom(),
-                                                               reader.GetFileSize(), reader.HasPixelData()));
+        protection->NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), accessor.GetDicom(),
+                                                               accessor.GetFileSize(), accessor.HasPixelData()));
         return;
       }
     }
-#endif
 #endif
 
     switch (command.GetRestCommand().GetType())
@@ -799,7 +788,7 @@ namespace OrthancStone
     {
       LOG(INFO) << "The DICOM cache size is set to "
                 << (static_cast<float>(configuration.GetDicomCacheSize()) / static_cast<float>(1024 * 1024)) << " MB";
-      dicomCache_.reset(new ParsedDicomCache(configuration.GetDicomCacheSize()));
+      dicomCache_.reset(new New::ParsedDicomCache(configuration.GetDicomCacheSize()));
     }
 #else
     LOG(INFO) << "DCMTK support is disabled, the DICOM cache is disabled";
@@ -815,73 +804,15 @@ namespace OrthancStone
   }
 
 
-  WebAssemblyOracle::CachedInstanceAccessor::CachedInstanceAccessor(WebAssemblyOracle& oracle,
-                                                                    const std::string& sopInstanceUid)
+  New::ParsedDicomCache::Accessor* WebAssemblyOracle::GetCachedDicomInstance(const std::string& sopInstanceUid)
   {
-#if ORTHANC_ENABLE_DCMTK == 1
-    if (oracle.dicomCache_.get() != NULL)
+    if (dicomCache_)
     {
-      reader_.reset(new ParsedDicomCache::Reader(*oracle.dicomCache_, BUCKET_SOP, sopInstanceUid));
-    }
-#endif
-  }
-
-
-  bool WebAssemblyOracle::CachedInstanceAccessor::IsValid() const
-  {
-#if ORTHANC_ENABLE_DCMTK == 1
-    return (reader_.get() != NULL &&
-            reader_->IsValid());
-#else
-    return false;
-#endif
-  }
-
-
-#if ORTHANC_ENABLE_DCMTK == 1
-  const Orthanc::ParsedDicomFile& WebAssemblyOracle::CachedInstanceAccessor::GetDicom() const
-  {
-    if (IsValid())
-    {
-      assert(reader_.get() != NULL);
-      return reader_->GetDicom();
+      return new New::ParsedDicomCache::Accessor(*dicomCache_, sopInstanceUid);
     }
     else
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-#endif
-
-
-  size_t WebAssemblyOracle::CachedInstanceAccessor::GetFileSize() const
-  {
-#if ORTHANC_ENABLE_DCMTK == 1
-    if (IsValid())
-    {
-      assert(reader_.get() != NULL);
-      return reader_->GetFileSize();
-    }
-    else
-#endif
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-  }
-
-
-  bool WebAssemblyOracle::CachedInstanceAccessor::HasPixelData() const
-  {
-#if ORTHANC_ENABLE_DCMTK == 1
-    if (IsValid())
-    {
-      assert(reader_.get() != NULL);
-      return reader_->HasPixelData();
-    }
-    else
-#endif
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      return new New::ParsedDicomCache::Accessor;
     }
   }
 }

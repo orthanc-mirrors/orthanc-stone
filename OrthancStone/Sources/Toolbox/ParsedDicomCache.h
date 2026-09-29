@@ -150,6 +150,10 @@ namespace OrthancStone
         const Item& GetItem() const;
 
       public:
+        Accessor()  // This flavor can be used if the cache is disabled
+        {
+        }
+
         Accessor(ParsedDicomCache& cache,
                  const std::string& key);
 

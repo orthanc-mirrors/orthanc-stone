@@ -3156,8 +3156,8 @@ private:
        * cache of the oracle, bypass the loading of the "rendered" and
        * use the cached DICOM file.
        **/
-      std::unique_ptr<OrthancStone::WebAssemblyOracle::CachedInstanceAccessor> accessor(
-        context_.AccessCachedInstance(instance.GetSopInstanceUid()));
+      std::unique_ptr<OrthancStone::New::ParsedDicomCache::Accessor> accessor(
+        context_.GetCachedDicomInstance(instance.GetSopInstanceUid()));
 
       if (accessor.get() != NULL &&
           accessor->IsValid())
@@ -3167,15 +3167,15 @@ private:
           std::unique_ptr<Orthanc::ImageAccessor> frame;
           if (OrthancStone::IsStructuredReport(instance.GetSopClassUid()))
           {
-            OrthancStone::DicomStructuredReport report(const_cast<Orthanc::ParsedDicomFile&>(accessor->GetDicom()));
+            OrthancStone::DicomStructuredReport report(*accessor->GetDicom());
             frame.reset(report.Render(font_, GetHighlightedColorInternal(), GetAnnotationsColorInternal()));
           }
           else
           {
-            frame.reset(accessor->GetDicom().DecodeFrame(frameNumber));
+            frame.reset(accessor->GetDicom()->DecodeFrame(frameNumber));
           }
 
-          SetFullDicomFrame::Apply(*this, accessor->GetDicom(), frame.release(), instance.GetSopInstanceUid(), frameNumber);
+          SetFullDicomFrame::Apply(*this, *accessor->GetDicom(), frame.release(), instance.GetSopInstanceUid(), frameNumber);
           return;  // Success
         }
         catch (Orthanc::OrthancException&)
@@ -4999,6 +4999,18 @@ extern "C"
         std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
         command->SetUri("/system/");
         oracle.Submit(environment, toto_, command.release());
+      }
+
+      for (unsigned int i = 0; i < 10; i++)
+      {
+        // hand.dcm
+        const std::string& study = "1.2.276.0.7230010.3.1.2.296485376.1.1656336504.287249";
+        const std::string& series = "1.2.276.0.7230010.3.1.3.296485376.1.1656336504.287250";
+        const std::string& sop = "1.2.276.0.7230010.3.1.4.296485376.1.1656336504.287251";
+        oracle.Submit(environment, toto_, OrthancStone::ParseDicomFromWadoCommand::Create(
+                        source_, study, series, sop, false /* no transcoding */,
+                        Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
+                        new Orthanc::IDynamicObject));
       }
     }
   }

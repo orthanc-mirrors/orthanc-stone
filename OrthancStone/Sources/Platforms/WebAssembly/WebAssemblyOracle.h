@@ -76,7 +76,7 @@ namespace OrthancStone
     StoneApplication::Configuration  configuration_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    std::unique_ptr<ParsedDicomCache>  dicomCache_;
+    std::unique_ptr<New::ParsedDicomCache>  dicomCache_;
 #endif
 
     void ProcessFetchResult(IOracleCallback& callback,
@@ -92,26 +92,6 @@ namespace OrthancStone
                         const boost::shared_ptr<IOracleClient>& client,
                         IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
 
-    class CachedInstanceAccessor : public boost::noncopyable
-    {
-    private:
-#if ORTHANC_ENABLE_DCMTK == 1
-      std::unique_ptr<ParsedDicomCache::Reader>  reader_;
-#endif
-
-    public:
-      CachedInstanceAccessor(WebAssemblyOracle& oracle,
-                             const std::string& sopInstanceUid);
-
-      bool IsValid() const;
-
-#if ORTHANC_ENABLE_DCMTK == 1
-      const Orthanc::ParsedDicomFile& GetDicom() const;
-#endif
-
-      size_t GetFileSize() const;
-
-      bool HasPixelData() const;
-    };    
+    New::ParsedDicomCache::Accessor*  GetCachedDicomInstance(const std::string& sopInstanceUid);
   };
 }

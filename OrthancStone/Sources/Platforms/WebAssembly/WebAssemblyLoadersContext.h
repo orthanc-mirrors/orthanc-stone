@@ -46,7 +46,7 @@ namespace OrthancStone
                               unsigned int maxStandardPriority,
                               unsigned int maxLowPriority);
 
-    New::ParsedDicomCache::Accessor* GetCachedDicomInstance(const std::string& sopInstanceUid)
+    ParsedDicomCache::Accessor* GetCachedDicomInstance(const std::string& sopInstanceUid)
     {
       return oracle_.GetCachedDicomInstance(sopInstanceUid);
     }

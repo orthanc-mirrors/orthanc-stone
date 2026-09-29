@@ -347,7 +347,7 @@ namespace OrthancStone
   
 #if ORTHANC_ENABLE_DCMTK == 1
   static void RunInternal(IOracleCallback& callback,
-                          boost::shared_ptr<New::ParsedDicomCache> cache,
+                          boost::shared_ptr<ParsedDicomCache> cache,
                           const std::string& root,
                           const ParseDicomFromFileCommand& command)
   {
@@ -356,7 +356,7 @@ namespace OrthancStone
 
     if (cache)
     {
-      New::ParsedDicomCache::Accessor accessor(*cache, cacheKey);
+      ParsedDicomCache::Accessor accessor(*cache, cacheKey);
 
       if (accessor.IsValid())
       {
@@ -392,7 +392,7 @@ namespace OrthancStone
 
 #if ORTHANC_ENABLE_DCMTK == 1
   static void RunInternal(IOracleCallback& callback,
-                          boost::shared_ptr<New::ParsedDicomCache> cache,
+                          boost::shared_ptr<ParsedDicomCache> cache,
                           const Orthanc::WebServiceParameters& orthanc,
                           const ParseDicomFromWadoCommand& command)
   {
@@ -400,7 +400,7 @@ namespace OrthancStone
 
     if (cache)
     {
-      New::ParsedDicomCache::Accessor accessor(*cache, cacheKey);
+      ParsedDicomCache::Accessor accessor(*cache, cacheKey);
 
       if (accessor.IsValid())
       {

@@ -3156,7 +3156,7 @@ private:
        * cache of the oracle, bypass the loading of the "rendered" and
        * use the cached DICOM file.
        **/
-      std::unique_ptr<OrthancStone::New::ParsedDicomCache::Accessor> accessor(
+      std::unique_ptr<OrthancStone::ParsedDicomCache::Accessor> accessor(
         context_.GetCachedDicomInstance(instance.GetSopInstanceUid()));
 
       if (accessor.get() != NULL &&

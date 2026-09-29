@@ -76,7 +76,7 @@ namespace OrthancStone
     StoneApplication::Configuration  configuration_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    std::unique_ptr<New::ParsedDicomCache>  dicomCache_;
+    std::unique_ptr<ParsedDicomCache>  dicomCache_;
 #endif
 
     void ProcessFetchResult(IOracleCallback& callback,
@@ -92,6 +92,6 @@ namespace OrthancStone
                         const boost::shared_ptr<IOracleClient>& client,
                         IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
 
-    New::ParsedDicomCache::Accessor*  GetCachedDicomInstance(const std::string& sopInstanceUid);
+    ParsedDicomCache::Accessor*  GetCachedDicomInstance(const std::string& sopInstanceUid);
   };
 }

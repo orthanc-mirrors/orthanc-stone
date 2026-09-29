@@ -64,7 +64,7 @@ namespace OrthancStone
     Orthanc::ThreadPool              threadPool_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    boost::shared_ptr<New::ParsedDicomCache>  dicomCache_;
+    boost::shared_ptr<ParsedDicomCache>  dicomCache_;
 #endif
 
     void SubmitInternal(IOracleCallback* callback /* takes ownership */);

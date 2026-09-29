@@ -30,195 +30,62 @@
 
 namespace OrthancStone
 {
-  class ParsedDicomCache::Item : public Orthanc::ICacheable
+  ParsedDicomCache::Item::Item(const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
+                               size_t fileSize,
+                               bool hasPixelData) :
+    dicom_(dicom),
+    fileSize_(fileSize),
+    hasPixelData_(hasPixelData)
   {
-  private:
-    std::unique_ptr<Orthanc::ParsedDicomFile>  dicom_;
-    size_t                                     fileSize_;
-    bool                                       hasPixelData_;
-    
-  public:
-    Item(Orthanc::ParsedDicomFile* dicom,
-         size_t fileSize,
-         bool hasPixelData) :
-      dicom_(dicom),
-      fileSize_(fileSize),
-      hasPixelData_(hasPixelData)
+    if (dicom == NULL)
     {
-      if (dicom == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
-           
-    virtual size_t GetMemoryUsage() const ORTHANC_OVERRIDE
-    {
-      return fileSize_;
-    }
-
-    Orthanc::ParsedDicomFile& GetDicom() const
-    {
-      assert(dicom_.get() != NULL);
-      return *dicom_;
-    }
-
-    bool HasPixelData() const
-    {
-      return hasPixelData_;
-    }
-  };
-    
-
-  std::string ParsedDicomCache::GetIndex(unsigned int bucket,
-                                         const std::string& bucketKey)
-  {
-    return boost::lexical_cast<std::string>(bucket) + "|" + bucketKey;
-  }
-  
-
-  void ParsedDicomCache::Acquire(unsigned int bucket,
-                                 const std::string& bucketKey,
-                                 Orthanc::ParsedDicomFile* dicom,
-                                 size_t fileSize,
-                                 bool hasPixelData)
-  {
-    LOG(TRACE) << "new item stored in cache: bucket " << bucket << ", key " << bucketKey;
-
-    if (lowCacheSizeWarning_ < fileSize &&
-        cache_.GetMaximumSize() > 0 &&
-        fileSize >= cache_.GetMaximumSize())
-    {
-      lowCacheSizeWarning_ = fileSize;
-      LOG(WARNING) << "The DICOM cache size should be larger: Storing a DICOM instance of "
-                   << (fileSize / (1024 * 1024)) << "MB, whereas the cache size is only "
-                   << (cache_.GetMaximumSize() / (1024 * 1024)) << "MB wide";
-    }
-    
-    cache_.Acquire(GetIndex(bucket, bucketKey), new Item(dicom, fileSize, hasPixelData));
   }
 
-  
-  ParsedDicomCache::Reader::Reader(ParsedDicomCache& cache,
-                                   unsigned int bucket,
-                                   const std::string& bucketKey) :
-    /**
-     * The "DcmFileFormat" object cannot be accessed from multiple
-     * threads, even if using only getters. An unique lock (mutex) is
-     * mandatory.
-     **/
-    accessor_(cache.cache_, GetIndex(bucket, bucketKey), true /* unique */)
+
+  void ParsedDicomCache::Store(const std::string& key,
+                               const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
+                               size_t fileSize,
+                               bool hasPixelData)
   {
-    if (accessor_.IsValid())
+    if (dicom == NULL)
     {
-      LOG(TRACE) << "accessing item within cache: bucket " << bucket << ", key " << bucketKey;
-      item_ = &dynamic_cast<Item&>(accessor_.GetValue());
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
     else
     {
-      LOG(TRACE) << "missing item within cache: bucket " << bucket << ", key " << bucketKey;
-      item_ = NULL;
+      cache_.Store(key, boost::shared_ptr<Item>(new Item(dicom, fileSize, hasPixelData)), fileSize);
     }
   }
 
 
-  bool ParsedDicomCache::Reader::HasPixelData() const
+  ParsedDicomCache::Accessor::Accessor(ParsedDicomCache& cache,
+                                       const std::string& key) :
+    item_(cache.cache_.GetCachedValue(key))
   {
-    if (item_ == NULL)
+    if (item_)
+    {
+      lock_.reset(new Orthanc::Mutex::ScopedLock(dynamic_cast<Item&>(*item_).GetMutex()));
+    }
+  }
+
+
+  bool ParsedDicomCache::Accessor::IsValid() const
+  {
+    return (item_ ? true : false);
+  }
+
+
+  const ParsedDicomCache::Item& ParsedDicomCache::Accessor::GetItem() const
+  {
+    if (item_)
+    {
+      return dynamic_cast<Item&>(*item_);
+    }
+    else
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      return item_->HasPixelData();
-    }
-  }
-
-  
-  Orthanc::ParsedDicomFile& ParsedDicomCache::Reader::GetDicom() const
-  {
-    if (item_ == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      return item_->GetDicom();
-    }
-  }
-
-  
-  size_t ParsedDicomCache::Reader::GetFileSize() const
-  {
-    if (item_ == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      return item_->GetMemoryUsage();
-    }
-  }
-
-
-  namespace New
-  {
-    ParsedDicomCache::Item::Item(const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
-                                 size_t fileSize,
-                                 bool hasPixelData) :
-      dicom_(dicom),
-      fileSize_(fileSize),
-      hasPixelData_(hasPixelData)
-    {
-      if (dicom == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-    }
-
-
-    void ParsedDicomCache::Store(const std::string& key,
-                                 const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
-                                 size_t fileSize,
-                                 bool hasPixelData)
-    {
-      if (dicom == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-      }
-      else
-      {
-        cache_.Store(key, boost::shared_ptr<Item>(new Item(dicom, fileSize, hasPixelData)), fileSize);
-      }
-    }
-
-
-    ParsedDicomCache::Accessor::Accessor(ParsedDicomCache& cache,
-                                         const std::string& key) :
-      item_(cache.cache_.GetCachedValue(key))
-    {
-      if (item_)
-      {
-        lock_.reset(new Orthanc::Mutex::ScopedLock(dynamic_cast<Item&>(*item_).GetMutex()));
-      }
-    }
-
-
-    bool ParsedDicomCache::Accessor::IsValid() const
-    {
-      return (item_ ? true : false);
-    }
-
-
-    const ParsedDicomCache::Item& ParsedDicomCache::Accessor::GetItem() const
-    {
-      if (item_)
-      {
-        return dynamic_cast<Item&>(*item_);
-      }
-      else
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-      }
     }
   }
 }

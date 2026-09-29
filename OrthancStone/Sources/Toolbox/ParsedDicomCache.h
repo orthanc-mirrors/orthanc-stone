@@ -24,156 +24,97 @@
 #pragma once
 
 #include <Cache/SharedObjectCache.h>
-#include <Cache/MemoryObjectCache.h>  // TODO Refactoring - Remove this
 #include <DicomParsing/ParsedDicomFile.h>
 
 namespace OrthancStone
 {
-  class ParsedDicomCache : public boost::noncopyable  // TODO Refactoring - Remove this
+  class ParsedDicomCache : public boost::noncopyable
   {
   private:
-    class Item;
+    class Item : public Orthanc::IDynamicObject
+    {
+    private:
+      Orthanc::Mutex                               mutex_;
+      boost::shared_ptr<Orthanc::ParsedDicomFile>  dicom_;
+      size_t                                       fileSize_;
+      bool                                         hasPixelData_;
 
-    static std::string GetIndex(unsigned int bucket,
-                                const std::string& bucketKey);
-    
-    Orthanc::MemoryObjectCache  cache_;
-    size_t                      lowCacheSizeWarning_;
+    public:
+      Item(const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
+           size_t fileSize,
+           bool hasPixelData);
+
+      Orthanc::Mutex& GetMutex()
+      {
+        return mutex_;
+      }
+
+      const boost::shared_ptr<Orthanc::ParsedDicomFile>& GetDicom() const
+      {
+        return dicom_;
+      }
+
+      size_t GetFileSize() const
+      {
+        return fileSize_;
+      }
+
+      bool HasPixelData() const
+      {
+        return hasPixelData_;
+      }
+    };
+
+    Orthanc::SharedObjectCache  cache_;
 
   public:
-    explicit ParsedDicomCache(size_t size) :
-      lowCacheSizeWarning_(0)
+    ParsedDicomCache(uint64_t capacity) :
+      cache_(capacity)
     {
-      cache_.SetMaximumSize(size);
     }
 
-    void Invalidate(unsigned int bucket,
-                    const std::string& bucketKey)
-    {
-      cache_.Invalidate(GetIndex(bucket, bucketKey));
-    }
-    
-    void Acquire(unsigned int bucket,
-                 const std::string& bucketKey,
-                 Orthanc::ParsedDicomFile* dicom,
-                 size_t fileSize,
-                 bool hasPixelData);
+    void Store(const std::string& key,
+               const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
+               size_t fileSize,
+               bool hasPixelData);
 
-    class Reader : public boost::noncopyable
+    void Invalidate(const std::string& key)
+    {
+      cache_.Invalidate(key);
+    }
+
+    class Accessor : public boost::noncopyable
     {
     private:
-      Orthanc::MemoryObjectCache::Accessor accessor_;
-      Item*                                item_;
+      boost::shared_ptr<Orthanc::IDynamicObject>   item_;
+      std::unique_ptr<Orthanc::Mutex::ScopedLock>  lock_;
+
+      const Item& GetItem() const;
 
     public:
-      Reader(ParsedDicomCache& cache,
-             unsigned int bucket,
-             const std::string& bucketKey);
-
-      bool IsValid() const
+      Accessor()  // This flavor can be used if the cache is disabled
       {
-        return item_ != NULL;
       }
 
-      bool HasPixelData() const;
+      Accessor(ParsedDicomCache& cache,
+               const std::string& key);
 
-      Orthanc::ParsedDicomFile& GetDicom() const;
+      bool IsValid() const;
 
-      size_t GetFileSize() const;
+      const boost::shared_ptr<Orthanc::ParsedDicomFile>& GetDicom() const
+      {
+        return GetItem().GetDicom();
+      }
+
+      size_t GetFileSize() const
+      {
+        return GetItem().GetFileSize();
+      }
+
+      bool HasPixelData() const
+      {
+        return GetItem().HasPixelData();
+      }
     };
   };
-
-
-  namespace New
-  {
-    class ParsedDicomCache : public boost::noncopyable
-    {
-    private:
-      class Item : public Orthanc::IDynamicObject
-      {
-      private:
-        Orthanc::Mutex                               mutex_;
-        boost::shared_ptr<Orthanc::ParsedDicomFile>  dicom_;
-        size_t                                       fileSize_;
-        bool                                         hasPixelData_;
-
-      public:
-        Item(const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
-             size_t fileSize,
-             bool hasPixelData);
-
-        Orthanc::Mutex& GetMutex()
-        {
-          return mutex_;
-        }
-
-        const boost::shared_ptr<Orthanc::ParsedDicomFile>& GetDicom() const
-        {
-          return dicom_;
-        }
-
-        size_t GetFileSize() const
-        {
-          return fileSize_;
-        }
-
-        bool HasPixelData() const
-        {
-          return hasPixelData_;
-        }
-      };
-
-      Orthanc::SharedObjectCache  cache_;
-
-    public:
-      ParsedDicomCache(uint64_t capacity) :
-        cache_(capacity)
-      {
-      }
-
-      void Store(const std::string& key,
-                 const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
-                 size_t fileSize,
-                 bool hasPixelData);
-
-      void Invalidate(const std::string& key)
-      {
-        cache_.Invalidate(key);
-      }
-
-      class Accessor : public boost::noncopyable
-      {
-      private:
-        boost::shared_ptr<Orthanc::IDynamicObject>   item_;
-        std::unique_ptr<Orthanc::Mutex::ScopedLock>  lock_;
-
-        const Item& GetItem() const;
-
-      public:
-        Accessor()  // This flavor can be used if the cache is disabled
-        {
-        }
-
-        Accessor(ParsedDicomCache& cache,
-                 const std::string& key);
-
-        bool IsValid() const;
-
-        const boost::shared_ptr<Orthanc::ParsedDicomFile>& GetDicom() const
-        {
-          return GetItem().GetDicom();
-        }
-
-        size_t GetFileSize() const
-        {
-          return GetItem().GetFileSize();
-        }
-
-        bool HasPixelData() const
-        {
-          return GetItem().HasPixelData();
-        }
-      };
-    };
-  }
 }

@@ -379,24 +379,24 @@ namespace OrthancStone
       
       switch (method_)
       {
-      case Orthanc::HttpMethod_Get:
-        method = "GET";
-        break;
+        case Orthanc::HttpMethod_Get:
+          method = "GET";
+          break;
 
-      case Orthanc::HttpMethod_Post:
-        method = "POST";
-        break;
+        case Orthanc::HttpMethod_Post:
+          method = "POST";
+          break;
 
-      case Orthanc::HttpMethod_Delete:
-        method = "DELETE";
-        break;
+        case Orthanc::HttpMethod_Delete:
+          method = "DELETE";
+          break;
 
-      case Orthanc::HttpMethod_Put:
-        method = "PUT";
-        break;
+        case Orthanc::HttpMethod_Put:
+          method = "PUT";
+          break;
 
-      default:
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
       }
 
       strcpy(attr.requestMethod, method);
@@ -459,65 +459,65 @@ namespace OrthancStone
   {
     switch (callback.GetCommand().GetType())
     {
-    case IOracleCommand::Type_Http:
-    {
-      std::unique_ptr<HttpCommand::SuccessMessage> message(
-        new HttpCommand::SuccessMessage(dynamic_cast<const HttpCommand&>(callback.GetCommand()), headers));
-      message->SwapAnswer(answer);
-
-      callback.NotifySuccess(message.release());
-      break;
-    }
-
-    case IOracleCommand::Type_OrthancRestApi:
-    {
-      std::unique_ptr<OrthancRestApiCommand::SuccessMessage> message(
-        new OrthancRestApiCommand::SuccessMessage(dynamic_cast<const OrthancRestApiCommand&>(callback.GetCommand()), headers));
-      message->SwapAnswer(answer);
-
-      callback.NotifySuccess(message.release());
-      break;
-    }
-
-    case IOracleCommand::Type_GetOrthancImage:
-    {
-      dynamic_cast<const GetOrthancImageCommand&>(callback.GetCommand()).ProcessHttpAnswer(callback, answer, headers);
-      break;
-    }
-
-    case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-    {
-      dynamic_cast<const GetOrthancWebViewerJpegCommand&>(callback.GetCommand()).ProcessHttpAnswer(callback, answer);
-      break;
-    }
-
-    case IOracleCommand::Type_ParseDicomFromWado:
-    {
-#if ORTHANC_ENABLE_DCMTK == 1
-      const ParseDicomFromWadoCommand& c = dynamic_cast<const ParseDicomFromWadoCommand&>(callback.GetCommand());
-              
-      size_t fileSize;
-      boost::shared_ptr<Orthanc::ParsedDicomFile> dicom
-        (ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, headers));
-
-      if (dicomCache_.get())
+      case IOracleCommand::Type_Http:
       {
-        // Store it into the cache for future use
-        dicomCache_->Store(c.GetSopInstanceUid(), dicom, static_cast<size_t>(fileSize), true);
+        std::unique_ptr<HttpCommand::SuccessMessage> message(
+          new HttpCommand::SuccessMessage(dynamic_cast<const HttpCommand&>(callback.GetCommand()), headers));
+        message->SwapAnswer(answer);
+
+        callback.NotifySuccess(message.release());
+        break;
       }
 
-      callback.NotifySuccess(new ParseDicomSuccessMessage(c, c.GetSource(), dicom, fileSize, true));
+      case IOracleCommand::Type_OrthancRestApi:
+      {
+        std::unique_ptr<OrthancRestApiCommand::SuccessMessage> message(
+          new OrthancRestApiCommand::SuccessMessage(dynamic_cast<const OrthancRestApiCommand&>(callback.GetCommand()), headers));
+        message->SwapAnswer(answer);
+
+        callback.NotifySuccess(message.release());
+        break;
+      }
+
+      case IOracleCommand::Type_GetOrthancImage:
+      {
+        dynamic_cast<const GetOrthancImageCommand&>(callback.GetCommand()).ProcessHttpAnswer(callback, answer, headers);
+        break;
+      }
+
+      case IOracleCommand::Type_GetOrthancWebViewerJpeg:
+      {
+        dynamic_cast<const GetOrthancWebViewerJpegCommand&>(callback.GetCommand()).ProcessHttpAnswer(callback, answer);
+        break;
+      }
+
+      case IOracleCommand::Type_ParseDicomFromWado:
+      {
+#if ORTHANC_ENABLE_DCMTK == 1
+        const ParseDicomFromWadoCommand& c = dynamic_cast<const ParseDicomFromWadoCommand&>(callback.GetCommand());
+              
+        size_t fileSize;
+        boost::shared_ptr<Orthanc::ParsedDicomFile> dicom
+          (ParseDicomSuccessMessage::ParseWadoAnswer(fileSize, answer, headers));
+
+        if (dicomCache_.get())
+        {
+          // Store it into the cache for future use
+          dicomCache_->Store(c.GetSopInstanceUid(), dicom, static_cast<size_t>(fileSize), true);
+        }
+
+        callback.NotifySuccess(new ParseDicomSuccessMessage(c, c.GetSource(), dicom, fileSize, true));
 
 #else
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
 #endif
-      break;
-    }
+        break;
+      }
 
-    default:
-      LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle (in SuccessCallback): "
-                 << callback.GetCommand().GetType();
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      default:
+        LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle (in SuccessCallback): "
+                   << callback.GetCommand().GetType();
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
   }
 
@@ -647,7 +647,7 @@ namespace OrthancStone
 #if ORTHANC_ENABLE_DCMTK == 1
     if (dicomCache_.get())
     {
-      New::ParsedDicomCache::Accessor accessor(*dicomCache_, command.GetSopInstanceUid());
+      ParsedDicomCache::Accessor accessor(*dicomCache_, command.GetSopInstanceUid());
       if (accessor.IsValid() &&
           accessor.HasPixelData())
       {
@@ -661,54 +661,54 @@ namespace OrthancStone
 
     switch (command.GetRestCommand().GetType())
     {
-    case IOracleCommand::Type_Http:
-    {
-      const HttpCommand& rest =
-        dynamic_cast<const HttpCommand&>(command.GetRestCommand());
-
-      FetchCommand fetch(*this, protection.release());
-
-      fetch.SetMethod(rest.GetMethod());
-      fetch.SetUrl(rest.GetUrl());
-      fetch.AddHttpHeaders(rest.GetHttpHeaders());
-      fetch.SetTimeout(rest.GetTimeout());
-
-      if (rest.GetMethod() == Orthanc::HttpMethod_Post ||
-          rest.GetMethod() == Orthanc::HttpMethod_Put)
+      case IOracleCommand::Type_Http:
       {
-        std::string body = rest.GetBody();
-        fetch.SetBody(body);
-      }
+        const HttpCommand& rest =
+          dynamic_cast<const HttpCommand&>(command.GetRestCommand());
+
+        FetchCommand fetch(*this, protection.release());
+
+        fetch.SetMethod(rest.GetMethod());
+        fetch.SetUrl(rest.GetUrl());
+        fetch.AddHttpHeaders(rest.GetHttpHeaders());
+        fetch.SetTimeout(rest.GetTimeout());
+
+        if (rest.GetMethod() == Orthanc::HttpMethod_Post ||
+            rest.GetMethod() == Orthanc::HttpMethod_Put)
+        {
+          std::string body = rest.GetBody();
+          fetch.SetBody(body);
+        }
     
-      fetch.Execute();
-      break;
-    }
-
-    case IOracleCommand::Type_OrthancRestApi:
-    {
-      const OrthancRestApiCommand& rest =
-        dynamic_cast<const OrthancRestApiCommand&>(command.GetRestCommand());
-
-      FetchCommand fetch(*this, protection.release());
-
-      fetch.SetMethod(rest.GetMethod());
-      SetOrthancUrl(fetch, rest.GetUri());
-      fetch.AddHttpHeaders(rest.GetHttpHeaders());
-      fetch.SetTimeout(rest.GetTimeout());
-
-      if (rest.GetMethod() == Orthanc::HttpMethod_Post ||
-          rest.GetMethod() == Orthanc::HttpMethod_Put)
-      {
-        std::string body = rest.GetBody();
-        fetch.SetBody(body);
+        fetch.Execute();
+        break;
       }
 
-      fetch.Execute();
-      break;
-    }
+      case IOracleCommand::Type_OrthancRestApi:
+      {
+        const OrthancRestApiCommand& rest =
+          dynamic_cast<const OrthancRestApiCommand&>(command.GetRestCommand());
 
-    default:
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+        FetchCommand fetch(*this, protection.release());
+
+        fetch.SetMethod(rest.GetMethod());
+        SetOrthancUrl(fetch, rest.GetUri());
+        fetch.AddHttpHeaders(rest.GetHttpHeaders());
+        fetch.SetTimeout(rest.GetTimeout());
+
+        if (rest.GetMethod() == Orthanc::HttpMethod_Post ||
+            rest.GetMethod() == Orthanc::HttpMethod_Put)
+        {
+          std::string body = rest.GetBody();
+          fetch.SetBody(body);
+        }
+
+        fetch.Execute();
+        break;
+      }
+
+      default:
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
   }
 
@@ -724,54 +724,54 @@ namespace OrthancStone
 
     switch (protection->GetCommand().GetType())
     {
-    case IOracleCommand::Type_Http:
-    {
-      FetchCommand fetch(*this, protection.release());
-      ExecuteHttpCommand(fetch);
-      break;
-    }
+      case IOracleCommand::Type_Http:
+      {
+        FetchCommand fetch(*this, protection.release());
+        ExecuteHttpCommand(fetch);
+        break;
+      }
         
-    case IOracleCommand::Type_OrthancRestApi:
-    {
-      FetchCommand fetch(*this, protection.release());
-      ExecuteOrthancRestApiCommand(fetch);
-      break;
-    }
+      case IOracleCommand::Type_OrthancRestApi:
+      {
+        FetchCommand fetch(*this, protection.release());
+        ExecuteOrthancRestApiCommand(fetch);
+        break;
+      }
         
-    case IOracleCommand::Type_GetOrthancImage:
-    {
-      FetchCommand fetch(*this, protection.release());
-      ExecuteGetOrthancImageCommand(fetch);
-      break;
-    }
+      case IOracleCommand::Type_GetOrthancImage:
+      {
+        FetchCommand fetch(*this, protection.release());
+        ExecuteGetOrthancImageCommand(fetch);
+        break;
+      }
 
-    case IOracleCommand::Type_GetOrthancWebViewerJpeg:
-    {
-      FetchCommand fetch(*this, protection.release());
-      ExecuteGetOrthancWebViewerJpegCommand(fetch);
-      break;
-    }
+      case IOracleCommand::Type_GetOrthancWebViewerJpeg:
+      {
+        FetchCommand fetch(*this, protection.release());
+        ExecuteGetOrthancWebViewerJpegCommand(fetch);
+        break;
+      }
             
-    case IOracleCommand::Type_Sleep:
-    {
-      unsigned int timeoutMS = dynamic_cast<const SleepOracleCommand&>(protection->GetCommand()).GetDelay();
-      emscripten_set_timeout(TimeoutCallback, timeoutMS, protection.release());
-      break;
-    }
+      case IOracleCommand::Type_Sleep:
+      {
+        unsigned int timeoutMS = dynamic_cast<const SleepOracleCommand&>(protection->GetCommand()).GetDelay();
+        emscripten_set_timeout(TimeoutCallback, timeoutMS, protection.release());
+        break;
+      }
 
-    case IOracleCommand::Type_ParseDicomFromWado:
+      case IOracleCommand::Type_ParseDicomFromWado:
 #if ORTHANC_ENABLE_DCMTK == 1
-      ExecuteParseDicomFromWadoCommand(protection.release());
+        ExecuteParseDicomFromWadoCommand(protection.release());
 #else
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
-                                      "DCMTK must be enabled to parse DICOM files");
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
+                                        "DCMTK must be enabled to parse DICOM files");
 #endif
-      break;
+        break;
             
-    default:
-      LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle (in Schedule): "
-                 << protection->GetCommand().GetType();
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+      default:
+        LOG(ERROR) << "Command type not implemented by the WebAssembly Oracle (in Schedule): "
+                   << protection->GetCommand().GetType();
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
   }
 
@@ -788,7 +788,7 @@ namespace OrthancStone
     {
       LOG(INFO) << "The DICOM cache size is set to "
                 << (static_cast<float>(configuration.GetDicomCacheSize()) / static_cast<float>(1024 * 1024)) << " MB";
-      dicomCache_.reset(new New::ParsedDicomCache(configuration.GetDicomCacheSize()));
+      dicomCache_.reset(new ParsedDicomCache(configuration.GetDicomCacheSize()));
     }
 #else
     LOG(INFO) << "DCMTK support is disabled, the DICOM cache is disabled";
@@ -804,15 +804,15 @@ namespace OrthancStone
   }
 
 
-  New::ParsedDicomCache::Accessor* WebAssemblyOracle::GetCachedDicomInstance(const std::string& sopInstanceUid)
+  ParsedDicomCache::Accessor* WebAssemblyOracle::GetCachedDicomInstance(const std::string& sopInstanceUid)
   {
     if (dicomCache_)
     {
-      return new New::ParsedDicomCache::Accessor(*dicomCache_, sopInstanceUid);
+      return new ParsedDicomCache::Accessor(*dicomCache_, sopInstanceUid);
     }
     else
     {
-      return new New::ParsedDicomCache::Accessor;
+      return new ParsedDicomCache::Accessor;
     }
   }
 }

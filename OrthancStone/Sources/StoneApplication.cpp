@@ -23,6 +23,8 @@
 
 #include "StoneApplication.h"
 
+#include "StoneException.h"
+
 #include <Compatibility.h>
 #include <Logging.h>
 #include <MultiThreading/Mutex.h>
@@ -117,7 +119,7 @@ namespace OrthancStone
 
 
 #if ORTHANC_STONE_TARGET_PLATFORM_WASM == 1
-  class StoneApplication::PImpl
+  class StoneApplication::Context::PImpl
   {
   private:
     class Emitter : public IMessageEmitter  // TODO Refactoring - Remove this
@@ -180,7 +182,7 @@ namespace OrthancStone
 
 
 #if ORTHANC_STONE_TARGET_PLATFORM_NATIVE == 1
-  class StoneApplication::PImpl
+  class StoneApplication::Context::PImpl
   {
   private:
     class Emitter : public IMessageEmitter  // TODO Refactoring - Remove this
@@ -262,10 +264,7 @@ namespace OrthancStone
 #endif
 
 
-  static Orthanc::Mutex                     applicationMutex_;
-  static std::unique_ptr<StoneApplication>  application_;
-
-  StoneApplication::StoneApplication(const Configuration& configuration)
+  StoneApplication::Context::Context(const Configuration& configuration)
   {
 #if ORTHANC_STONE_TARGET_PLATFORM_WASM == 1
     pimpl_ = new PImpl(configuration);
@@ -277,14 +276,86 @@ namespace OrthancStone
   }
 
 
-  StoneApplication::~StoneApplication()
+  StoneApplication::Context::~Context()
   {
     assert(pimpl_ != NULL);
     delete pimpl_;
   }
 
 
-  StoneApplication& StoneApplication::GetInstance()
+  IEnvironment& StoneApplication::Context::GetEnvironment()
+  {
+    assert(pimpl_ != NULL);
+    return pimpl_->GetEnvironment();
+  }
+
+
+  IOracle& StoneApplication::Context::GetOracle()
+  {
+    assert(pimpl_ != NULL);
+    return pimpl_->GetOracle();
+  }
+
+
+  void StoneApplication::Context::EmitMessage(boost::weak_ptr<IObserver> observer,
+                                              const IMessage& message)
+  {
+    assert(pimpl_ != NULL);
+    return pimpl_->GetMessageEmitter().EmitMessage(observer, message);
+  }
+
+
+  IObservable& StoneApplication::Context::GetOracleObservable()
+  {
+    assert(pimpl_ != NULL);
+    return pimpl_->GetOracleObservable();
+  }
+
+
+  bool StoneApplication::Run()
+  {
+    try
+    {
+      boost::shared_ptr<Context> context(new Context(configuration_));
+
+      assert(context.get() != NULL);
+      assert(context->pimpl_ != NULL);
+
+      context->pimpl_->Start();
+
+      RunInternal(context);
+
+      context->pimpl_->Stop();
+
+      return true;
+    }
+    catch (Orthanc::OrthancException& e)
+    {
+      LOG(ERROR) << "OrthancException: " << e.What();
+      return false;
+    }
+    catch (StoneException& e)
+    {
+      LOG(ERROR) << "StoneException: " << e.What();
+      return false;
+    }
+    catch (std::runtime_error& e)
+    {
+      LOG(ERROR) << "Runtime error: " << e.what();
+      return false;
+    }
+    catch (...)
+    {
+      LOG(ERROR) << "Native exception";
+      return false;
+    }
+  }
+
+
+  static Orthanc::Mutex                              applicationMutex_;  // TODO Refactoring - Remove this
+  static std::unique_ptr<StoneApplication::Context>  application_;  // TODO Refactoring - Remove this
+
+  StoneApplication::Context& StoneApplication::GetInstance()
   {
     Orthanc::Mutex::ScopedLock lock(applicationMutex_);
 
@@ -303,7 +374,7 @@ namespace OrthancStone
 
     if (application_.get() == NULL)
     {
-      application_.reset(new StoneApplication(configuration));
+      application_.reset(new StoneApplication::Context(configuration));
       application_->pimpl_->Start();
     }
     else
@@ -322,34 +393,5 @@ namespace OrthancStone
       application_->pimpl_->Stop();
       application_.reset(NULL);
     }
-  }
-
-
-  IEnvironment& StoneApplication::GetEnvironment()
-  {
-    assert(pimpl_ != NULL);
-    return pimpl_->GetEnvironment();
-  }
-
-
-  IOracle& StoneApplication::GetOracle()
-  {
-    assert(pimpl_ != NULL);
-    return pimpl_->GetOracle();
-  }
-
-
-  void StoneApplication::EmitMessage(boost::weak_ptr<IObserver> observer,
-                                     const IMessage& message)
-  {
-    assert(pimpl_ != NULL);
-    return pimpl_->GetMessageEmitter().EmitMessage(observer, message);
-  }
-
-
-  IObservable& StoneApplication::GetOracleObservable()
-  {
-    assert(pimpl_ != NULL);
-    return pimpl_->GetOracleObservable();
   }
 }

@@ -66,7 +66,7 @@ namespace OrthancStone
 
     typedef std::multimap<int, ScheduledCommand*>  Queue;
 
-    StoneApplication&  application_;
+    StoneApplication::Context&  application_;
     Queue          standardPriorityQueue_;
     Queue          highPriorityQueue_;
     Queue          lowPriorityQueue_;
@@ -112,18 +112,18 @@ namespace OrthancStone
 
     void Handle(const OracleCommandExceptionMessage& message);
 
-    OracleScheduler(StoneApplication& application,
+    OracleScheduler(StoneApplication::Context& application,
                     unsigned int maxHighPriority,
                     unsigned int maxStandardPriority,
                     unsigned int maxLowPriority);
     
   public:
-    static boost::shared_ptr<OracleScheduler> Create(StoneApplication& application)
+    static boost::shared_ptr<OracleScheduler> Create(StoneApplication::Context& application)
     {
       return Create(application, 1, 4, 1);
     }
 
-    static boost::shared_ptr<OracleScheduler> Create(StoneApplication& application,
+    static boost::shared_ptr<OracleScheduler> Create(StoneApplication::Context& application,
                                                      unsigned int maxHighPriority,
                                                      unsigned int maxStandardPriority,
                                                      unsigned int maxLowPriority);

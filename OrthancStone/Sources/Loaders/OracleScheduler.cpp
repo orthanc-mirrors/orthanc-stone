@@ -424,7 +424,7 @@ namespace OrthancStone
   }  
 
   
-  OracleScheduler::OracleScheduler(StoneApplication& application,
+  OracleScheduler::OracleScheduler(StoneApplication::Context& application,
                                    unsigned int maxHighPriority,
                                    unsigned int maxStandardPriority,
                                    unsigned int maxLowPriority) :
@@ -449,7 +449,7 @@ namespace OrthancStone
   }
 
     
-  boost::shared_ptr<OracleScheduler> OracleScheduler::Create(StoneApplication& application,
+  boost::shared_ptr<OracleScheduler> OracleScheduler::Create(StoneApplication::Context& application,
                                                              unsigned int maxHighPriority,
                                                              unsigned int maxStandardPriority,
                                                              unsigned int maxLowPriority)

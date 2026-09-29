@@ -60,6 +60,7 @@ static int frameIndex = 0;
 #include "../../../../OrthancStone/Sources/Oracle/SleepOracleCommand.h"
 #include "../../../../OrthancStone/Sources/StoneApplication.h"
 
+
 class Toto : public OrthancStone::IOracleClient
 {
 public:
@@ -89,7 +90,203 @@ public:
   }
 };
 
-static boost::shared_ptr<Toto> toto_(new Toto);
+static boost::shared_ptr<Toto> toto_(new Toto);   // TODO REMOVE
+
+
+namespace OrthancStone
+{
+  class SingleWindowSdlApplication : public StoneApplication
+  {
+  private:
+    boost::shared_ptr<SdlViewport> viewport_;
+
+  protected:
+    virtual void RunInternal(const boost::shared_ptr<Context>& context)
+    {
+      CreateComponents(context, viewport_);
+
+      int scancodeCount = 0;
+      const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
+
+      // SDL event loop
+      bool stop = false;
+      while (!stop)
+      {
+        bool paint = false;
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event))
+        {
+          if (event.type == SDL_QUIT)
+          {
+            stop = true;
+            break;
+          }
+          else if (viewport_->IsRefreshEvent(event))
+          {
+            paint = true;
+          }
+          else if (event.type == SDL_WINDOWEVENT &&
+                   (event.window.event == SDL_WINDOWEVENT_RESIZED ||
+                    event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
+          {
+            viewport_->UpdateSize(event.window.data1, event.window.data2);
+          }
+          else if (event.type == SDL_WINDOWEVENT &&
+                   (event.window.event == SDL_WINDOWEVENT_SHOWN ||
+                    event.window.event == SDL_WINDOWEVENT_EXPOSED))
+          {
+            std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+            lock->RefreshCanvasSize();
+          }
+          else if (event.type == SDL_KEYDOWN &&
+                   event.key.repeat == 0 /* Ignore key bounce */)
+          {
+            switch (event.key.keysym.sym)
+            {
+              case SDLK_f:
+                viewport_->ToggleMaximize();
+                break;
+
+              case SDLK_q:
+                stop = true;
+                break;
+
+              default:
+                HandleKeyDown(context, event.key);
+            }
+          }
+          else if (event.type == SDL_MOUSEBUTTONDOWN ||
+                   event.type == SDL_MOUSEMOTION ||
+                   event.type == SDL_MOUSEBUTTONUP)
+          {
+            std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+
+            if (lock->HasCompositor())
+            {
+              OrthancStone::PointerEvent p;
+              OrthancStoneHelpers::GetPointerEvent(p, lock->GetCompositor(), event, keyboardState, scancodeCount);
+
+              switch (event.type)
+              {
+                case SDL_MOUSEBUTTONDOWN:
+                  // TODO
+                  break;
+
+                case SDL_MOUSEMOTION:
+                  // TODO
+                  break;
+
+                case SDL_MOUSEBUTTONUP:
+                  lock->GetController().HandleMouseRelease(p);
+                  lock->Invalidate();
+                  break;
+
+                default:
+                  throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+              }
+            }
+          }
+        }
+
+        if (paint)
+        {
+          viewport_->Paint();
+        }
+
+        // Small delay to avoid using 100% of CPU
+        SDL_Delay(1);
+      }
+    }
+
+    virtual void CreateComponents(const boost::shared_ptr<Context>& context,
+                                  const boost::shared_ptr<IViewport>& viewport) = 0;
+
+    virtual void HandleKeyDown(const boost::shared_ptr<Context>& context,
+                               const SDL_KeyboardEvent& key) = 0;
+
+  public:
+    SingleWindowSdlApplication(const Configuration& configuration,
+                               const std::string& title,
+                               unsigned int width,
+                               unsigned int height) :
+      StoneApplication(configuration)
+    {
+#if SAMPLE_USE_OPENGL == 1
+      viewport_ = OrthancStone::SdlOpenGLViewport::Create(title, width, height);
+#else
+      viewport_ = OrthancStone::SdlCairoViewport::Create(title, width, height);
+#endif
+
+      std::string font;
+      Orthanc::EmbeddedResources::GetFileResource(font, Orthanc::EmbeddedResources::UBUNTU_FONT);
+
+      {
+        std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+        lock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
+      }
+    }
+  };
+
+
+  class SimpleViewerApp : public SingleWindowSdlApplication
+  {
+  private:
+    boost::shared_ptr<Toto>        toto_;
+
+  protected:
+    virtual void CreateComponents(const boost::shared_ptr<Context>& context,
+                                  const boost::shared_ptr<IViewport>& viewport) ORTHANC_OVERRIDE
+    {
+      toto_.reset(new Toto);
+    }
+
+    virtual void HandleKeyDown(const boost::shared_ptr<Context>& context,
+                               const SDL_KeyboardEvent& key) ORTHANC_OVERRIDE
+    {
+      switch (key.keysym.sym)
+      {
+        case SDLK_b:
+        {
+          // TODO Refactoring
+          OrthancStone::IEnvironment& environment = context->GetEnvironment();
+          OrthancStone::IOracle& oracle = context->GetOracle();
+
+          oracle.Submit(environment, toto_, new OrthancStone::SleepOracleCommand(1000));
+
+          {
+            std::unique_ptr<OrthancStone::HttpCommand> command(new OrthancStone::HttpCommand);
+            command->SetUrl("http://ip-api.com/json/");
+            oracle.Submit(environment, toto_, command.release());
+          }
+
+          {
+            std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+            command->SetUri("/system/");
+            oracle.Submit(environment, toto_, command.release());
+          }
+
+          for (unsigned int i = 0; i < 10; i++)
+          {
+            DicomSource source;
+            source.SetDicomDirSource();
+            oracle.Submit(environment, toto_, new OrthancStone::ParseDicomFromFileCommand(source, "hand.dcm"));
+          }
+          break;
+        }
+
+        default:
+          break;
+      }
+    }
+
+  public:
+    SimpleViewerApp(const Configuration& configuration) :
+      SingleWindowSdlApplication(configuration, "Stone of Orthanc", 800, 600)
+    {
+    }
+  };
+}
 // END TODO Refactoring
 
 
@@ -204,7 +401,23 @@ int main(int argc, char* argv[])
     //Orthanc::Logging::EnableInfoLevel(true);
     //Orthanc::Logging::EnableTraceLevel(true);
 
+    Orthanc::WebServiceParameters orthancWebService;
+    orthancWebService.SetUrl(orthancUrl);
+
+    OrthancStone::StoneApplication::Configuration configuration;
+    configuration.SetRemoteOrthancParameters(orthancWebService);
+    configuration.SetDicomCacheSize(128 * 1024 * 1024);  // TODO Refactoring - Remove this
+    configuration.SetRootDirectory("/tmp");  // TODO Refactoring - Remove this
+
+    if (false)
     {
+      OrthancStone::SimpleViewerApp app(configuration);
+      app.Run();
+    }
+    else
+    {
+      OrthancStone::StoneApplication::Initialize(configuration);
+
 #if SAMPLE_USE_OPENGL == 1
       boost::shared_ptr<OrthancStone::SdlViewport> viewport =
         OrthancStone::SdlOpenGLViewport::Create("Stone of Orthanc", 800, 600);
@@ -212,20 +425,6 @@ int main(int argc, char* argv[])
       boost::shared_ptr<OrthancStone::SdlViewport> viewport =
         OrthancStone::SdlCairoViewport::Create("Stone of Orthanc", 800, 600);
 #endif
-
-#if SAMPLE_USE_ANNOTATIONS_LAYER != 1
-      boost::shared_ptr<OrthancStone::UndoStack> undoStack(new OrthancStone::UndoStack);
-#endif
-
-      Orthanc::WebServiceParameters orthancWebService;
-      orthancWebService.SetUrl(orthancUrl);
-
-      OrthancStone::StoneApplication::Configuration configuration;
-      configuration.SetRemoteOrthancParameters(orthancWebService);
-      configuration.SetDicomCacheSize(128 * 1024 * 1024);  // TODO Refactoring - Remove this
-      configuration.SetRootDirectory("/tmp");  // TODO Refactoring - Remove this
-
-      OrthancStone::StoneApplication::Initialize(configuration);
 
       OrthancStone::GenericLoadersContext context(1, 4, 1);
 
@@ -238,7 +437,7 @@ int main(int argc, char* argv[])
           lock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
 
 #if SAMPLE_USE_ANNOTATIONS_LAYER != 1
-          lock->GetController().SetUndoStack(undoStack);
+          lock->GetController().SetUndoStack(new OrthancStone::UndoStack);
 #endif
         }
 
@@ -596,6 +795,8 @@ int main(int argc, char* argv[])
           }
         }
       }
+
+      OrthancStone::StoneApplication::Finalize();
     }
   }
   catch (Orthanc::OrthancException& e)
@@ -620,7 +821,6 @@ int main(int argc, char* argv[])
   }
 
   OrthancStone::SdlWindow::GlobalFinalize();
-  OrthancStone::StoneApplication::Finalize();
   OrthancStone::StoneFinalize();
 
   return status;

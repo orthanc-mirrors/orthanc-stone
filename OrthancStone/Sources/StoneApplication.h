@@ -34,7 +34,7 @@
 
 namespace OrthancStone
 {
-  class StoneApplication : public IMessageEmitter  // TODO Refactoring - Remove this
+  class StoneApplication : public boost::noncopyable
   {
   public:
     class Configuration
@@ -102,30 +102,55 @@ namespace OrthancStone
       }
     };
 
+
+    class Context : public IMessageEmitter  // TODO Refactoring - Remove this
+    {
+      friend class StoneApplication;
+
+    private:
+      class Emitter;  // TODO Refactoring - Remove this
+
+      class PImpl;
+      PImpl* pimpl_;
+
+    public:
+      Context(const Configuration& configuration);
+
+      ~Context();
+
+      IEnvironment& GetEnvironment();
+
+      IOracle& GetOracle();
+
+      virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
+                               const IMessage& message) ORTHANC_OVERRIDE;
+
+      IObservable& GetOracleObservable();  // TODO Refactoring - Remove this
+    };
+
+
   private:
-    class Emitter;  // TODO Refactoring - Remove this
+    Configuration  configuration_;
 
-    class PImpl;
-    PImpl* pimpl_;
-
-    StoneApplication(const Configuration& configuration);
+  protected:
+    virtual void RunInternal(const boost::shared_ptr<Context>& context) = 0;
 
   public:
-    static void Initialize(const Configuration& configuration);
+    StoneApplication(const Configuration& configuration) :
+      configuration_(configuration)
+    {
+    }
 
-    static StoneApplication& GetInstance();
+    virtual ~StoneApplication()
+    {
+    }
 
-    static void Finalize();
+    bool Run();
 
-    ~StoneApplication();
+    static void Initialize(const Configuration& configuration);  // TODO Refactoring - Remove this
 
-    IEnvironment& GetEnvironment();
+    static StoneApplication::Context& GetInstance();  // TODO Refactoring - Remove this
 
-    IOracle& GetOracle();
-
-    virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
-                             const IMessage& message) ORTHANC_OVERRIDE;
-
-    IObservable& GetOracleObservable();  // TODO Refactoring - Remove this
+    static void Finalize();  // TODO Refactoring - Remove this
   };
 }

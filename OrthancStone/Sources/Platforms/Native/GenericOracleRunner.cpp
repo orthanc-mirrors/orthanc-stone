@@ -40,8 +40,6 @@
 #  include "../../Oracle/ParseDicomSuccessMessage.h"
 #  include <dcmtk/dcmdata/dcdeftag.h>
 #  include <dcmtk/dcmdata/dcfilefo.h>
-static unsigned int BUCKET_DICOMDIR = 0;
-static unsigned int BUCKET_SOP = 1;
 #endif
 
 #include <Compression/GzipCompressor.h>
@@ -53,6 +51,17 @@ static unsigned int BUCKET_SOP = 1;
 
 #include <boost/filesystem.hpp>
 
+
+static std::string GetFileSystemCacheKey(const std::string& path)
+{
+  return "file|" + path;
+}
+
+
+static std::string GetSopInstanceUidCacheKey(const std::string& uid)
+{
+  return "sop|" + uid;
+}
 
 
 namespace OrthancStone
@@ -333,32 +342,32 @@ namespace OrthancStone
                                       "Cannot parse file: " + path);
     }
   }
+#endif
 
   
+#if ORTHANC_ENABLE_DCMTK == 1
   static void RunInternal(IOracleCallback& callback,
-                          boost::shared_ptr<ParsedDicomCache> cache,
+                          boost::shared_ptr<New::ParsedDicomCache> cache,
                           const std::string& root,
                           const ParseDicomFromFileCommand& command)
   {
     const std::string path = GetPath(root, command.GetPath());
-
-#if 0
-    // TODO Refactoring - Reactivate the cache!!!
+    const std::string cacheKey = GetFileSystemCacheKey(path);
 
     if (cache)
     {
-      ParsedDicomCache::Reader reader(*cache, BUCKET_DICOMDIR, path);
-      if (reader.IsValid() &&
-          (!command.IsPixelDataIncluded() ||
-           reader.HasPixelData()))
+      New::ParsedDicomCache::Accessor accessor(*cache, cacheKey);
+
+      if (accessor.IsValid())
       {
+        assert(accessor.HasPixelData());
+
         // Reuse the DICOM file from the cache
-        callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), reader.GetDicom(),
-                                                            reader.GetFileSize(), reader.HasPixelData()));
+        callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), accessor.GetDicom(),
+                                                            accessor.GetFileSize(), accessor.HasPixelData()));
         return;
       }
     }
-#endif
 
     uint64_t fileSize;
     boost::shared_ptr<Orthanc::ParsedDicomFile> parsed(ParseDicom(fileSize, path, command.IsPixelDataIncluded()));
@@ -372,43 +381,37 @@ namespace OrthancStone
     callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), parsed,
                                                         static_cast<size_t>(fileSize), command.IsPixelDataIncluded()));
 
-#if 0
-    // TODO Refactoring - Reactivate the cache!!!
-    if (cache)
+    if (cache &&
+        command.IsPixelDataIncluded())
     {
-      // Store it into the cache for future use
-      
-      // Invalidate to overwrite DICOM instance that would already
-      // be stored without pixel data
-      cache->Invalidate(BUCKET_DICOMDIR, path);
-      
-      cache->Acquire(BUCKET_DICOMDIR, path, parsed.release(),
-                     static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
+      cache->Store(cacheKey, parsed, static_cast<size_t>(fileSize), command.IsPixelDataIncluded());
     }
-#endif
   }
-
+#endif
   
+
+#if ORTHANC_ENABLE_DCMTK == 1
   static void RunInternal(IOracleCallback& callback,
-                          boost::shared_ptr<ParsedDicomCache> cache,
+                          boost::shared_ptr<New::ParsedDicomCache> cache,
                           const Orthanc::WebServiceParameters& orthanc,
                           const ParseDicomFromWadoCommand& command)
   {
-#if 0
-    // TODO Refactoring - Reactivate the cache!!!
+    const std::string cacheKey = GetSopInstanceUidCacheKey(command.GetSopInstanceUid());
+
     if (cache)
     {
-      ParsedDicomCache::Reader reader(*cache, BUCKET_SOP, command.GetSopInstanceUid());
-      if (reader.IsValid() &&
-          reader.HasPixelData())
+      New::ParsedDicomCache::Accessor accessor(*cache, cacheKey);
+
+      if (accessor.IsValid())
       {
+        assert(accessor.HasPixelData());
+
         // Reuse the DICOM file from the cache
-        callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), reader.GetDicom(),
-                                                            reader.GetFileSize(), reader.HasPixelData()));
+        callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), accessor.GetDicom(),
+                                                            accessor.GetFileSize(), accessor.HasPixelData()));
         return;
       }
     }
-#endif
 
     std::string answer;
     Orthanc::HttpClient::HttpHeaders answerHeaders;
@@ -434,14 +437,11 @@ namespace OrthancStone
     callback.NotifySuccess(new ParseDicomSuccessMessage(command, command.GetSource(), parsed, fileSize,
                                                         true /* pixel data always is included in WADO-RS */));
 
-#if 0
-    // TODO Refactoring - Reactivate the cache!!!
     if (cache)
     {
       // Store it into the cache for future use
-      cache->Acquire(BUCKET_SOP, command.GetSopInstanceUid(), parsed.release(), fileSize, true);
+      cache->Store(cacheKey, parsed, static_cast<size_t>(fileSize), true);
     }
-#endif
   }
 #endif
 

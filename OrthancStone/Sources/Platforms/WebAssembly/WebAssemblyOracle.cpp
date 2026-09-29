@@ -797,7 +797,8 @@ namespace OrthancStone
     }
     else
     {
-      LOG(INFO) << "The DICOM cache size is set to " << configuration.GetDicomCacheSize() << " bytes";
+      LOG(INFO) << "The DICOM cache size is set to "
+                << (static_cast<float>(configuration.GetDicomCacheSize()) / static_cast<float>(1024 * 1024)) << " MB";
       dicomCache_.reset(new ParsedDicomCache(configuration.GetDicomCacheSize()));
     }
 #else

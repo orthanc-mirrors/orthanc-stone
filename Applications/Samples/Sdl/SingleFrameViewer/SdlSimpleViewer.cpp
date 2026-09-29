@@ -56,6 +56,7 @@ static int frameIndex = 0;
 
 
 // TODO Refactoring
+#include "../../../../OrthancStone/Sources/Oracle/ParseDicomFromFileCommand.h"
 #include "../../../../OrthancStone/Sources/Oracle/SleepOracleCommand.h"
 #include "../../../../OrthancStone/Sources/StoneApplication.h"
 
@@ -221,6 +222,7 @@ int main(int argc, char* argv[])
 
       OrthancStone::StoneApplication::Configuration configuration;
       configuration.SetRemoteOrthancParameters(orthancWebService);
+      configuration.SetRootDirectory("/tmp");  // TODO Refactoring - Remove this
 
       OrthancStone::StoneApplication::Initialize(configuration);
 
@@ -324,6 +326,13 @@ int main(int argc, char* argv[])
                       std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
                       command->SetUri("/system/");
                       oracle.Submit(environment, toto_, command.release());
+                    }
+
+                    for (unsigned int i = 0; i < 10; i++)
+                    {
+                      DicomSource source;
+                      source.SetDicomDirSource();
+                      oracle.Submit(environment, toto_, new OrthancStone::ParseDicomFromFileCommand(source, "hand.dcm"));
                     }
                     break;
                   }

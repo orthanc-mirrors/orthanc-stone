@@ -48,7 +48,7 @@ namespace OrthancStone
     StoneApplication::Configuration  configuration_;
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    boost::shared_ptr<ParsedDicomCache>  dicomCache_;
+    boost::shared_ptr<New::ParsedDicomCache>  dicomCache_;
 #endif
 
   public:
@@ -58,7 +58,7 @@ namespace OrthancStone
     }
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    void SetDicomCache(boost::shared_ptr<ParsedDicomCache> cache)
+    void SetDicomCache(boost::shared_ptr<New::ParsedDicomCache> cache)
     {
       dicomCache_ = cache;
     }

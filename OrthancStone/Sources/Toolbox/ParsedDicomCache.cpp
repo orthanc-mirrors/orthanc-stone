@@ -158,4 +158,67 @@ namespace OrthancStone
       return item_->GetMemoryUsage();
     }
   }
+
+
+  namespace New
+  {
+    ParsedDicomCache::Item::Item(const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
+                                 size_t fileSize,
+                                 bool hasPixelData) :
+      dicom_(dicom),
+      fileSize_(fileSize),
+      hasPixelData_(hasPixelData)
+    {
+      if (dicom == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+    }
+
+
+    void ParsedDicomCache::Store(const std::string& key,
+                                 const boost::shared_ptr<Orthanc::ParsedDicomFile>& dicom,
+                                 size_t fileSize,
+                                 bool hasPixelData)
+    {
+      if (dicom == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+      else
+      {
+        cache_.Store(key, boost::shared_ptr<Item>(new Item(dicom, fileSize, hasPixelData)), fileSize);
+      }
+    }
+
+
+    ParsedDicomCache::Accessor::Accessor(ParsedDicomCache& cache,
+                                         const std::string& key) :
+      item_(cache.cache_.GetCachedValue(key))
+    {
+      if (item_)
+      {
+        lock_.reset(new Orthanc::Mutex::ScopedLock(dynamic_cast<Item&>(*item_).GetMutex()));
+      }
+    }
+
+
+    bool ParsedDicomCache::Accessor::IsValid() const
+    {
+      return (item_ ? true : false);
+    }
+
+
+    const ParsedDicomCache::Item& ParsedDicomCache::Accessor::GetItem() const
+    {
+      if (item_)
+      {
+        return dynamic_cast<Item&>(*item_);
+      }
+      else
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+    }
+  }
 }

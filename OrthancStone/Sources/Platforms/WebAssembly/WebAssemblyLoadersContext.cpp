@@ -43,7 +43,7 @@ namespace OrthancStone
 
     virtual IObservable& GetOracleObservable() const ORTHANC_OVERRIDE
     {
-      return that_.oracleObservable_;
+      return StoneApplication::GetInstance().GetOracleObservable();
     }
 
     virtual void Schedule(boost::shared_ptr<IObserver> receiver,
@@ -82,8 +82,7 @@ namespace OrthancStone
                                                        unsigned int maxLowPriority) :
     oracle_(dynamic_cast<WebAssemblyOracle&>(StoneApplication::GetInstance().GetOracle()))
   {
-    scheduler_ = OracleScheduler::Create(StoneApplication::GetInstance(), *this,
-                                         maxHighPriority, maxStandardPriority, maxLowPriority);
+    scheduler_ = OracleScheduler::Create(StoneApplication::GetInstance(), maxHighPriority, maxStandardPriority, maxLowPriority);
 
     if (!scheduler_)
     {

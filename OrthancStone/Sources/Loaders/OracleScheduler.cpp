@@ -333,7 +333,7 @@ namespace OrthancStone
     GetOrthancImageCommand::SuccessMessage bis(
       dynamic_cast<const GetOrthancImageCommand&>(payload.GetOriginalCommand()),
       message.GetSharedImage(), message.GetMimeType());
-    emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
+    application_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
   
 
@@ -347,7 +347,7 @@ namespace OrthancStone
     GetOrthancWebViewerJpegCommand::SuccessMessage bis(
       dynamic_cast<const GetOrthancWebViewerJpegCommand&>(payload.GetOriginalCommand()),
       message.GetSharedImage());
-    emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
+    application_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
 
   
@@ -362,7 +362,7 @@ namespace OrthancStone
       dynamic_cast<const HttpCommand&>(payload.GetOriginalCommand()), message.GetAnswerHeaders());
     bis.SetAnswer(message.GetAnswer());
 
-    emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
+    application_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
 
   
@@ -377,7 +377,7 @@ namespace OrthancStone
       dynamic_cast<const OrthancRestApiCommand&>(payload.GetOriginalCommand()), message.GetAnswerHeaders());
     bis.SetAnswer(message.GetAnswer());
 
-    emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
+    application_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
 
   
@@ -392,7 +392,7 @@ namespace OrthancStone
     ParseDicomSuccessMessage bis(
       dynamic_cast<const OracleCommandBase&>(payload.GetOriginalCommand()),
       message.GetSource(), message.GetSharedDicom(), message.GetFileSize(), message.HasPixelData());
-    emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
+    application_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
 #endif
   
@@ -406,7 +406,7 @@ namespace OrthancStone
 
     ReadFileCommand::SuccessMessage bis(dynamic_cast<const ReadFileCommand&>(payload.GetOriginalCommand()));
     bis.SetContent(message.GetContent());
-    emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
+    application_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }
   
 
@@ -420,17 +420,15 @@ namespace OrthancStone
     RemoveActiveCommand(payload);
 
     OracleCommandExceptionMessage bis(payload.GetOriginalCommand(), message.GetException());
-    emitter_.EmitMessage(payload.GetOriginalReceiver(), bis);
+    application_.EmitMessage(payload.GetOriginalReceiver(), bis);
   }  
 
   
   OracleScheduler::OracleScheduler(StoneApplication& application,
-                                   IMessageEmitter& emitter,
                                    unsigned int maxHighPriority,
                                    unsigned int maxStandardPriority,
                                    unsigned int maxLowPriority) :
     application_(application),
-    emitter_(emitter),
     maxHighPriorityCommands_(maxHighPriority),
     maxStandardPriorityCommands_(maxStandardPriority),
     maxLowPriorityCommands_(maxLowPriority),
@@ -452,13 +450,12 @@ namespace OrthancStone
 
     
   boost::shared_ptr<OracleScheduler> OracleScheduler::Create(StoneApplication& application,
-                                                             IMessageEmitter& emitter,
                                                              unsigned int maxHighPriority,
                                                              unsigned int maxStandardPriority,
                                                              unsigned int maxLowPriority)
   {
     boost::shared_ptr<OracleScheduler> scheduler
-      (new OracleScheduler(application, emitter, maxHighPriority, maxStandardPriority, maxLowPriority));
+      (new OracleScheduler(application, maxHighPriority, maxStandardPriority, maxLowPriority));
     return scheduler;
   }
     

@@ -33,9 +33,7 @@
 namespace OrthancStone
 {
   // TODO Refactoring - Remove this class
-  class GenericLoadersContext : 
-    public ILoadersContext,
-    private IMessageEmitter
+  class GenericLoadersContext : public ILoadersContext
   {
   private:
     class Locker;
@@ -45,16 +43,12 @@ namespace OrthancStone
     // "EmitMessage()"
     boost::recursive_mutex  mutex_;  // TODO Refactoring - This is redundant with IEnvironment
 
-    IObservable                         oracleObservable_;
     boost::shared_ptr<OracleScheduler>  scheduler_;
 
     // Necessary to keep the loaders persistent (including global
     // function promises), after the function that created them is
     // left. This avoids creating one global variable for each loader.
     std::list< boost::shared_ptr<IObserver> >  loaders_; 
-
-    virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
-                             const IMessage& message) ORTHANC_OVERRIDE;
 
   public:
     GenericLoadersContext(unsigned int maxHighPriority,

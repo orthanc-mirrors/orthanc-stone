@@ -29,7 +29,6 @@
 #  error The macro ORTHANC_ENABLE_DCMTK must be defined
 #endif
 
-#include "../Messages/IMessageEmitter.h"
 #include "../Messages/ObserverBase.h"
 #include "../Oracle/GetOrthancImageCommand.h"
 #include "../Oracle/GetOrthancWebViewerJpegCommand.h"
@@ -68,7 +67,6 @@ namespace OrthancStone
     typedef std::multimap<int, ScheduledCommand*>  Queue;
 
     StoneApplication&  application_;
-    IMessageEmitter&  emitter_;
     Queue          standardPriorityQueue_;
     Queue          highPriorityQueue_;
     Queue          lowPriorityQueue_;
@@ -115,20 +113,17 @@ namespace OrthancStone
     void Handle(const OracleCommandExceptionMessage& message);
 
     OracleScheduler(StoneApplication& application,
-                    IMessageEmitter& emitter,
                     unsigned int maxHighPriority,
                     unsigned int maxStandardPriority,
                     unsigned int maxLowPriority);
     
   public:
-    static boost::shared_ptr<OracleScheduler> Create(StoneApplication& application,
-                                                     IMessageEmitter& emitter)
+    static boost::shared_ptr<OracleScheduler> Create(StoneApplication& application)
     {
-      return Create(application, emitter, 1, 4, 1);
+      return Create(application, 1, 4, 1);
     }
 
     static boost::shared_ptr<OracleScheduler> Create(StoneApplication& application,
-                                                     IMessageEmitter& emitter,
                                                      unsigned int maxHighPriority,
                                                      unsigned int maxStandardPriority,
                                                      unsigned int maxLowPriority);

@@ -23,8 +23,6 @@
 
 #include "StoneApplication.h"
 
-#include "Messages/IObservable.h"  // TODO Refactoring - Remove this
-
 #include <Compatibility.h>
 #include <Logging.h>
 #include <MultiThreading/Mutex.h>
@@ -165,6 +163,11 @@ namespace OrthancStone
       return emitter_;
     }
 
+    IObservable& GetOracleObservable()
+    {
+      return emitter_.GetOracleObservable();
+    }
+
     void Start()
     {
     }
@@ -237,6 +240,11 @@ namespace OrthancStone
     IMessageEmitter& GetMessageEmitter()
     {
       return emitter_;
+    }
+
+    IObservable& GetOracleObservable()
+    {
+      return emitter_.GetOracleObservable();
     }
 
     void Start()
@@ -331,9 +339,17 @@ namespace OrthancStone
   }
 
 
-  IMessageEmitter& StoneApplication::GetMessageEmitter()
+  void StoneApplication::EmitMessage(boost::weak_ptr<IObserver> observer,
+                                     const IMessage& message)
   {
     assert(pimpl_ != NULL);
-    return pimpl_->GetMessageEmitter();
+    return pimpl_->GetMessageEmitter().EmitMessage(observer, message);
+  }
+
+
+  IObservable& StoneApplication::GetOracleObservable()
+  {
+    assert(pimpl_ != NULL);
+    return pimpl_->GetOracleObservable();
   }
 }

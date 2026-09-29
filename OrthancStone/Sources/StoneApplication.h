@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "Messages/IObservable.h"  // TODO Refactoring - Remove this
+
 #include "Messages/IMessageEmitter.h"
 #include "Oracle/IEnvironment.h"
 #include "Oracle/IOracle.h"
@@ -32,7 +34,7 @@
 
 namespace OrthancStone
 {
-  class StoneApplication : public boost::noncopyable
+  class StoneApplication : public IMessageEmitter  // TODO Refactoring - Remove this
   {
   public:
     class Configuration
@@ -121,6 +123,9 @@ namespace OrthancStone
 
     IOracle& GetOracle();
 
-    IMessageEmitter& GetMessageEmitter();  // TODO Refactoring - Remove this
+    virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
+                             const IMessage& message) ORTHANC_OVERRIDE;
+
+    IObservable& GetOracleObservable();  // TODO Refactoring - Remove this
   };
 }

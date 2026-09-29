@@ -60,7 +60,7 @@ namespace OrthancStone
 
     virtual IObservable& GetOracleObservable() const ORTHANC_OVERRIDE
     {
-      return that_.oracleObservable_;
+      return StoneApplication::GetInstance().GetOracleObservable();
     }
 
     virtual void Schedule(boost::shared_ptr<IObserver> receiver,
@@ -89,22 +89,11 @@ namespace OrthancStone
   };
 
 
-  void GenericLoadersContext::EmitMessage(boost::weak_ptr<IObserver> observer,
-                                          const IMessage& message)
-  {
-    boost::recursive_mutex::scoped_lock lock(mutex_);
-    //LOG(INFO) << "  inside emit lock: " << message.GetIdentifier().AsString();
-    oracleObservable_.EmitMessage(observer, message);
-    //LOG(INFO) << "  outside emit lock";
-  }
-
-
   GenericLoadersContext::GenericLoadersContext(unsigned int maxHighPriority,
                                                unsigned int maxStandardPriority,
                                                unsigned int maxLowPriority)
   {
-    scheduler_ = OracleScheduler::Create(StoneApplication::GetInstance(), *this,
-                                         maxHighPriority, maxStandardPriority, maxLowPriority);
+    scheduler_ = OracleScheduler::Create(StoneApplication::GetInstance(), maxHighPriority, maxStandardPriority, maxLowPriority);
 
     if (!scheduler_)
     {

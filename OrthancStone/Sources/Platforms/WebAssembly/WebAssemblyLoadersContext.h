@@ -46,10 +46,12 @@ namespace OrthancStone
                               unsigned int maxStandardPriority,
                               unsigned int maxLowPriority);
 
+#if ORTHANC_ENABLE_DCMTK == 1
     ParsedDicomCache::Accessor* GetCachedDicomInstance(const std::string& sopInstanceUid)
     {
       return oracle_.GetCachedDicomInstance(sopInstanceUid);
     }
+#endif
 
     virtual ILock* Lock() ORTHANC_OVERRIDE;
   };

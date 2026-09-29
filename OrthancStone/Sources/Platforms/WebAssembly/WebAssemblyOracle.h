@@ -92,6 +92,8 @@ namespace OrthancStone
                         const boost::shared_ptr<IOracleClient>& client,
                         IOracleCommand* command /* takes ownership */) ORTHANC_OVERRIDE;
 
+#if ORTHANC_ENABLE_DCMTK == 1
     ParsedDicomCache::Accessor*  GetCachedDicomInstance(const std::string& sopInstanceUid);
+#endif
   };
 }

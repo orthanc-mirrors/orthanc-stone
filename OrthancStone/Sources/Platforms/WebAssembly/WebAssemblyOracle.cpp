@@ -804,6 +804,7 @@ namespace OrthancStone
   }
 
 
+#if ORTHANC_ENABLE_DCMTK == 1
   ParsedDicomCache::Accessor* WebAssemblyOracle::GetCachedDicomInstance(const std::string& sopInstanceUid)
   {
     if (dicomCache_)
@@ -815,4 +816,5 @@ namespace OrthancStone
       return new ParsedDicomCache::Accessor;
     }
   }
+#endif
 }

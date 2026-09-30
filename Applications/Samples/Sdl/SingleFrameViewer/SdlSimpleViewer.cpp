@@ -20,11 +20,6 @@
  **/
 
 
-
-#define SAMPLE_USE_OPENGL             1
-#define SAMPLE_USE_ANNOTATIONS_LAYER  1
-
-
 #include "SdlSimpleViewerApplication.h"
 #include "../SdlHelpers.h"
 #include "../../Common/SampleHelpers.h"
@@ -46,11 +41,6 @@
 #include <SDL.h>
 
 #include <string>
-
-
-static std::string orthancUrl;
-static std::string instanceId;
-static int frameIndex = 0;
 
 
 
@@ -94,10 +84,10 @@ static boost::shared_ptr<Toto> toto_(new Toto);   // TODO REMOVE
 
 namespace OrthancStone
 {
-  class ISingleViewportApplicationComponents : public boost::noncopyable
+  class ISingleViewportApplicationCore : public boost::noncopyable
   {
   public:
-    virtual ~ISingleViewportApplicationComponents()
+    virtual ~ISingleViewportApplicationCore()
     {
     }
 
@@ -121,8 +111,8 @@ namespace OrthancStone
   class SingleViewportSdlApplication : public StoneApplication
   {
   private:
-    std::unique_ptr<ISingleViewportApplicationComponents>  core_;
-    boost::shared_ptr<SdlViewport>                         viewport_;
+    std::unique_ptr<ISingleViewportApplicationCore>  core_;
+    boost::shared_ptr<SdlViewport>                   viewport_;
 
   protected:
     virtual void RunInternal(const boost::shared_ptr<Context>& context)
@@ -235,7 +225,7 @@ namespace OrthancStone
 
   public:
     SingleViewportSdlApplication(const Configuration& configuration,
-                                 ISingleViewportApplicationComponents* core,
+                                 ISingleViewportApplicationCore* core /* takes ownership */,
                                  const std::string& title,
                                  unsigned int width,
                                  unsigned int height,
@@ -268,7 +258,7 @@ namespace OrthancStone
   };
 
 
-  class SimpleViewerApp : public ISingleViewportApplicationComponents
+  class SimpleViewerApp : public ISingleViewportApplicationCore
   {
   private:
     std::string                                   instanceId_;
@@ -463,7 +453,9 @@ namespace OrthancStone
 
 
 
-
+static std::string orthancUrl;
+static std::string instanceId;
+static int frameIndex = 0;
 
 static void ProcessOptions(int argc, char* argv[])
 {
@@ -546,14 +538,6 @@ static void ProcessOptions(int argc, char* argv[])
 }
 
 
-enum ActiveTool
-{
-  ActiveTool_None,
-  ActiveTool_Line,
-  ActiveTool_Angle
-};
-
-
 /**
  * IMPORTANT: The full arguments to "main()" are needed for SDL on
  * Windows. Otherwise, one gets the linking error "undefined reference
@@ -581,396 +565,12 @@ int main(int argc, char* argv[])
     configuration.SetDicomCacheSize(128 * 1024 * 1024);  // TODO Refactoring - Remove this
     configuration.SetRootDirectory("/tmp");  // TODO Refactoring - Remove this
 
-    if (true)
-    {
-      std::unique_ptr<OrthancStone::SimpleViewerApp> core(new OrthancStone::SimpleViewerApp(instanceId, frameIndex));
+    std::unique_ptr<OrthancStone::SimpleViewerApp> core(new OrthancStone::SimpleViewerApp(instanceId, frameIndex));
 
-      OrthancStone::SingleViewportSdlApplication app(
-        configuration, core.release(), "Stone of Orthanc", 800, 600, true /* use OpenGL */);
-      app.Run();
-    }
-    else
-    {
-      OrthancStone::StoneApplication::Initialize(configuration);
+    OrthancStone::SingleViewportSdlApplication app(
+      configuration, core.release(), "Stone of Orthanc", 800, 600, true /* use OpenGL */);
 
-#if SAMPLE_USE_OPENGL == 1
-      boost::shared_ptr<OrthancStone::SdlViewport> viewport =
-        OrthancStone::SdlOpenGLViewport::Create("Stone of Orthanc", 800, 600);
-#else
-      boost::shared_ptr<OrthancStone::SdlViewport> viewport =
-        OrthancStone::SdlCairoViewport::Create("Stone of Orthanc", 800, 600);
-#endif
-
-      {
-        {
-          std::string font;
-          Orthanc::EmbeddedResources::GetFileResource(font, Orthanc::EmbeddedResources::UBUNTU_FONT);
-          
-          std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
-          lock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
-
-#if SAMPLE_USE_ANNOTATIONS_LAYER != 1
-          lock->GetController().SetUndoStack(boost::make_shared<OrthancStone::UndoStack>());
-#endif
-        }
-
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-        OrthancStone::AnnotationsSceneLayer annotations(10);
-        annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
-        annotations.SetProbedLayer(0);
-
-#else
-        ActiveTool activeTool = ActiveTool_None;
-
-        boost::shared_ptr<OrthancStone::LineMeasureTool> lineMeasureTool(OrthancStone::LineMeasureTool::Create(viewport));
-        bool lineMeasureFirst = true;
-        lineMeasureTool->Disable();
-
-        boost::shared_ptr<OrthancStone::AngleMeasureTool> angleMeasureTool(OrthancStone::AngleMeasureTool::Create(viewport));
-        bool angleMeasureFirst = true;
-        angleMeasureTool->Disable();
-#endif
-
-        boost::shared_ptr<SdlSimpleViewerApplication> application(
-          SdlSimpleViewerApplication::Create(OrthancStone::StoneApplication::GetInstance(), viewport));
-
-        OrthancStone::DicomSource source;
-
-        application->LoadOrthancFrame(source, instanceId, frameIndex);
-
-        OrthancStone::DefaultViewportInteractor interactor;
-        interactor.SetWindowingLayer(0);
-
-        {
-          int scancodeCount = 0;
-          const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
-
-          bool stop = false;
-          while (!stop)
-          {
-            annotations.SetUnits(application->GetUnits());
-
-            bool paint = false;
-            SDL_Event event;
-            while (SDL_PollEvent(&event))
-            {
-              if (event.type == SDL_QUIT)
-              {
-                stop = true;
-                break;
-              }
-              else if (viewport->IsRefreshEvent(event))
-              {
-                paint = true;
-              }
-              else if (event.type == SDL_WINDOWEVENT &&
-                       (event.window.event == SDL_WINDOWEVENT_RESIZED ||
-                        event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
-              {
-                viewport->UpdateSize(event.window.data1, event.window.data2);
-              }
-              else if (event.type == SDL_WINDOWEVENT &&
-                       (event.window.event == SDL_WINDOWEVENT_SHOWN ||
-                        event.window.event == SDL_WINDOWEVENT_EXPOSED))
-              {
-                std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
-                lock->RefreshCanvasSize();
-              }
-              else if (event.type == SDL_KEYDOWN &&
-                       event.key.repeat == 0 /* Ignore key bounce */)
-              {
-                switch (event.key.keysym.sym)
-                {
-                  case SDLK_b:
-                  {
-                    // TODO Refactoring
-                    OrthancStone::IEnvironment& environment = OrthancStone::StoneApplication::GetInstance().GetEnvironment();
-                    OrthancStone::IOracle& oracle = OrthancStone::StoneApplication::GetInstance().GetOracle();
-
-                    oracle.Submit(environment, toto_, new OrthancStone::SleepOracleCommand(1000));
-
-                    {
-                      std::unique_ptr<OrthancStone::HttpCommand> command(new OrthancStone::HttpCommand);
-                      command->SetUrl("http://ip-api.com/json/");
-                      oracle.Submit(environment, toto_, command.release());
-                    }
-
-                    {
-                      std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
-                      command->SetUri("/system/");
-                      oracle.Submit(environment, toto_, command.release());
-                    }
-
-                    for (unsigned int i = 0; i < 10; i++)
-                    {
-                      DicomSource source;
-                      source.SetDicomDirSource();
-                      oracle.Submit(environment, toto_, new OrthancStone::ParseDicomFromFileCommand(source, "hand.dcm"));
-                    }
-                    break;
-                  }
-
-                  case SDLK_f:
-                    viewport->ToggleMaximize();
-                    break;
-
-                  case SDLK_s:
-                    application->FitContent();
-                    break;
-
-                  case SDLK_q:
-                    stop = true;
-                    break;
-
-#if SAMPLE_USE_ANNOTATIONS_LAYER != 1
-                  case SDLK_u:
-                  {
-                    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
-                    if (lock->GetController().CanUndo())
-                    {
-                      lock->GetController().Undo();
-                    }
-                    break;
-                  }
-#endif
-
-#if SAMPLE_USE_ANNOTATIONS_LAYER != 1
-                  case SDLK_r:
-                  {
-                    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
-                    if (lock->GetController().CanRedo())
-                    {
-                      lock->GetController().Redo();
-                    }
-                    break;
-                  }
-#endif
-
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                  case SDLK_c:
-                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Circle);
-                    break;
-#endif
-
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                  case SDLK_m:
-                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
-                    break;
-#endif
-
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                  case SDLK_d:
-                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Remove);
-                    break;
-#endif
-
-                  case SDLK_l:
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Length);
-#else
-                    if (activeTool == ActiveTool_Line)
-                    {
-                      lineMeasureTool->Disable();
-                      activeTool = ActiveTool_None;
-                    }
-                    else
-                    {
-                      if (lineMeasureFirst)
-                      {
-                        std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
-                        OrthancStone::Extent2D extent;
-                        lock->GetController().GetScene().GetBoundingBox(extent);
-                        if (!extent.IsEmpty())
-                        {
-                          OrthancStone::ScenePoint2D p(extent.GetCenterX(), extent.GetCenterY());
-                          lineMeasureTool->Set(p, p);
-                        }
-                        lineMeasureFirst = false;
-                      }
-                      
-                      lineMeasureTool->Enable();
-                      angleMeasureTool->Disable();
-                      activeTool = ActiveTool_Line;
-                    }
-#endif
-                    break;
-
-                  case SDLK_a:
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Angle);
-#else
-                    if (activeTool == ActiveTool_Angle)
-                    {
-                      angleMeasureTool->Disable();
-                      activeTool = ActiveTool_None;
-                    }
-                    else
-                    {
-                      if (angleMeasureFirst)
-                      {
-                        std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
-                        OrthancStone::Extent2D extent;
-                        lock->GetController().GetScene().GetBoundingBox(extent);
-                        if (!extent.IsEmpty())
-                        {
-                          OrthancStone::ScenePoint2D p1(1.0 * extent.GetX1() / 3.0 + 2.0 * extent.GetX2() / 3.0,
-                                                        2.0 * extent.GetY1() / 3.0 + 2.0 * extent.GetY2() / 3.0);
-                          OrthancStone::ScenePoint2D p2(1.0 * extent.GetX1() / 2.0 + 1.0 * extent.GetX2() / 2.0,
-                                                        1.0 * extent.GetY1() / 3.0 + 1.0 * extent.GetY2() / 3.0);
-                          OrthancStone::ScenePoint2D p3(2.0 * extent.GetX1() / 3.0 + 1.0 * extent.GetX2() / 3.0,
-                                                        2.0 * extent.GetY1() / 3.0 + 2.0 * extent.GetY2() / 3.0);
-                          angleMeasureTool->SetSide1End(p1);
-                          angleMeasureTool->SetCenter(p2);
-                          angleMeasureTool->SetSide2End(p3);
-                        }
-                        angleMeasureFirst = false;
-                      }
-                      
-                      lineMeasureTool->Disable();
-                      angleMeasureTool->Enable();
-                      activeTool = ActiveTool_Angle;
-                    }
-#endif
-                    break;
-
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                  case SDLK_p:
-                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_PixelProbe);
-                    break;
-#endif
-
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                  case SDLK_e:
-                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_EllipseProbe);
-                    break;
-#endif
-
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                  case SDLK_r:
-                    annotations.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_RectangleProbe);
-                    break;
-#endif
-
-                  default:
-                    break;
-                }
-              }
-              else if (event.type == SDL_MOUSEBUTTONDOWN ||
-                       event.type == SDL_MOUSEMOTION ||
-                       event.type == SDL_MOUSEBUTTONUP)
-              {
-                std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
-                if (lock->HasCompositor())
-                {
-                  OrthancStone::PointerEvent p;
-                  OrthancStoneHelpers::GetPointerEvent(p, lock->GetCompositor(),
-                                                       event, keyboardState, scancodeCount);
-
-                  switch (event.type)
-                  {
-                    case SDL_MOUSEBUTTONDOWN:
-                    {
-                      boost::shared_ptr<OrthancStone::IFlexiblePointerTracker> t;
-                      
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                      if (p.GetMouseButton() == OrthancStone::MouseButton_Left)
-                      {
-                        t.reset(annotations.CreateTracker(p.GetMainPosition(), lock->GetController().GetScene()));
-                      }
-#else
-                      if (t.get() == NULL)
-                      {
-                        switch (activeTool)
-                        {
-                          case ActiveTool_Angle:
-                            t = angleMeasureTool->CreateEditionTracker(p);
-                            break;
-
-                          case ActiveTool_Line:
-                            t = lineMeasureTool->CreateEditionTracker(p);
-                            break;
-
-                          case ActiveTool_None:
-                            break;
-                          
-                          default:
-                            throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
-                        }
-                      }
-#endif
-                      
-                      if (t.get() != NULL)
-                      {
-                        lock->GetController().AcquireActiveTracker(t);
-                      }
-                      else
-                      {
-                        lock->GetController().HandleMousePress(interactor, p,
-                                                               lock->GetCompositor().GetCanvasWidth(),
-                                                               lock->GetCompositor().GetCanvasHeight());
-                      }
-                      lock->Invalidate();
-                      break;
-                    }
-
-                    case SDL_MOUSEMOTION:
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-                      if (lock->GetController().HandleMouseMove(p))
-                      {
-                        lock->Invalidate();
-                        if (annotations.ClearHover())
-                        {
-                          paint = true;
-                        }                          
-                      }
-                      else
-                      {
-                        if (annotations.SetMouseHover(p.GetMainPosition(), lock->GetController().GetScene()))
-                        {
-                          paint = true;
-                        }
-                      }
-#else
-                      if (lock->GetController().HandleMouseMove(p))
-                      {
-                        lock->Invalidate();
-                        paint = true;
-                      }
-#endif
-                      break;
-
-                    case SDL_MOUSEBUTTONUP:
-                      lock->GetController().HandleMouseRelease(p);
-                      lock->Invalidate();
-                      break;
-
-                    default:
-                      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
-                  }
-                }
-              }
-            }
-
-            if (paint)
-            {
-#if SAMPLE_USE_ANNOTATIONS_LAYER == 1
-              {
-                std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
-                annotations.Render(lock->GetController().GetScene());
-              }
-#endif
-
-              viewport->Paint();
-            }
-
-            // Small delay to avoid using 100% of CPU
-            SDL_Delay(1);
-          }
-        }
-      }
-
-      OrthancStone::StoneApplication::Finalize();
-    }
+    app.Run();
   }
   catch (Orthanc::OrthancException& e)
   {

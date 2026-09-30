@@ -571,10 +571,7 @@ namespace OrthancStone
     command->AcquirePayload(new OrthancInstanceTagsHandler(shared_from_this(), target, priority,
                                                            source, remainingCommands, userPayload));
 
-    {
-      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-      lock->Schedule(GetSharedObserver(), priority, command.release());
-    }
+    context_.Schedule(GetSharedObserver(), priority, command.release());
   }
 
 
@@ -591,10 +588,7 @@ namespace OrthancStone
     command->AcquirePayload(new OrthancOneChildInstanceHandler(shared_from_this(), target, priority,
                                                                source, remainingCommands, userPayload));
 
-    {
-      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-      lock->Schedule(GetSharedObserver(), priority, command.release());
-    }
+    context_.Schedule(GetSharedObserver(), priority, command.release());
   }
     
     
@@ -612,9 +606,9 @@ namespace OrthancStone
   }
 
 
-  boost::shared_ptr<DicomResourcesLoader> DicomResourcesLoader::Create(const ILoadersContext::ILock& stone)
+  boost::shared_ptr<DicomResourcesLoader> DicomResourcesLoader::Create(StoneApplication::Context& stone)
   {
-    boost::shared_ptr<DicomResourcesLoader> result(new DicomResourcesLoader(stone.GetContext()));
+    boost::shared_ptr<DicomResourcesLoader> result(new DicomResourcesLoader(stone));
     result->Register<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
     result->Register<OracleCommandExceptionMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
     result->Register<OrthancRestApiCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
@@ -679,10 +673,7 @@ namespace OrthancStone
       source.CreateDicomWebCommand(uri, arguments, headers, 
                                    new DicomWebHandler(shared_from_this(), target, priority, source, protection)));
       
-    {
-      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-      lock->Schedule(GetSharedObserver(), priority, command.release());
-    }
+    context_.Schedule(GetSharedObserver(), priority, command.release());
   }
   
 
@@ -742,11 +733,7 @@ namespace OrthancStone
       source.CreateDicomWebCommand(uri, arguments, headers, 
                                    new DicomWebHandler(shared_from_this(), target, priority, source, protection)));
 
-
-    {
-      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-      lock->Schedule(GetSharedObserver(), priority, command.release());
-    }
+    context_.Schedule(GetSharedObserver(), priority, command.release());
   }
 
     
@@ -818,14 +805,10 @@ namespace OrthancStone
                               (shared_from_this(), target, priority, source,
                                remainingCommands, bottomLevel, protection));
 
-      {
-        std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-
-        // GetSharedObserver() means "this" (for use as an IObserver), as a 
-        // shared_ptr
-        // The oracle will thus call "this" 
-        lock->Schedule(GetSharedObserver(), priority, command.release());
-      }
+      // GetSharedObserver() means "this" (for use as an IObserver), as a 
+      // shared_ptr
+      // The oracle will thus call "this" 
+      context_.Schedule(GetSharedObserver(), priority, command.release());
     }
   }
 
@@ -853,10 +836,7 @@ namespace OrthancStone
     std::unique_ptr<ReadFileCommand> command(new ReadFileCommand(path));
     command->AcquirePayload(new DicomDirHandler(shared_from_this(), target, priority, source, protection));
 
-    {
-      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
-      lock->Schedule(GetSharedObserver(), priority, command.release());
-    }
+    context_.Schedule(GetSharedObserver(), priority, command.release());
 #else
     throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
                                     "DCMTK is disabled, cannot load DICOMDIR");
@@ -878,10 +858,7 @@ namespace OrthancStone
     command->SetPixelDataIncluded(includePixelData);
     command->AcquirePayload(new Handler(shared_from_this(), target, priority, source, protection));
 
-    {
-      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-      lock->Schedule(GetSharedObserver(), priority, command.release());
-    }
+    context_.Schedule(GetSharedObserver(), priority, command.release());
 #else
     throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError,
                                     "DCMTK is disabled, cannot load DICOM files");

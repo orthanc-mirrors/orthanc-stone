@@ -114,7 +114,7 @@ namespace OrthancStone
         framesFactory_.SetDicomDir(dicomDirPath, dicomDir);
       }
 
-      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context) ORTHANC_OVERRIDE;
+      virtual boost::shared_ptr<IObserver> Create(StoneApplication::Context& context) ORTHANC_OVERRIDE;
     };
 
     bool IsValid() const

@@ -27,6 +27,7 @@
 #include "../../../../OrthancStone/Sources/Loaders/SeriesFramesLoader.h"
 #include "../../../../OrthancStone/Sources/Loaders/SeriesThumbnailsLoader.h"
 #include "../../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
+#include "../../../../OrthancStone/Sources/StoneApplication.h"
 #include "../../../../OrthancStone/Sources/Viewport/IViewport.h"
 
 #include <Compatibility.h>  // For std::unique_ptr<>
@@ -55,14 +56,12 @@ class SdlSimpleViewerApplication : public ObserverBase<SdlSimpleViewerApplicatio
 {
 
 public:
-  static boost::shared_ptr<SdlSimpleViewerApplication> Create(ILoadersContext& context, boost::shared_ptr<IViewport> viewport)
+  static boost::shared_ptr<SdlSimpleViewerApplication> Create(OrthancStone::StoneApplication::Context& context,
+                                                              boost::shared_ptr<IViewport> viewport)
   {
     boost::shared_ptr<SdlSimpleViewerApplication> application(new SdlSimpleViewerApplication(context, viewport));
 
-    {
-      std::unique_ptr<ILoadersContext::ILock> lock(context.Lock());
-      application->dicomLoader_ = DicomResourcesLoader::Create(*lock);
-    }
+    application->dicomLoader_ = DicomResourcesLoader::Create(context);
 
     application->Register<DicomResourcesLoader::SuccessMessage>(*application->dicomLoader_, &SdlSimpleViewerApplication::Handle);
 
@@ -71,7 +70,7 @@ public:
 
   void LoadOrthancFrame(const DicomSource& source, const std::string& instanceId, unsigned int frame)
   {
-    std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
+    std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
 
     dicomLoader_->ScheduleLoadOrthancResource(boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID),
                                               0, source, Orthanc::ResourceType_Instance, instanceId,
@@ -108,13 +107,13 @@ public:
   }
 
 private:
-  ILoadersContext& context_;
+  OrthancStone::StoneApplication::Context& context_;
   boost::shared_ptr<IViewport>             viewport_;
   boost::shared_ptr<DicomResourcesLoader>  dicomLoader_;
   boost::shared_ptr<SeriesFramesLoader>    framesLoader_;
   OrthancStone::Units                      units_;
 
-  SdlSimpleViewerApplication(ILoadersContext& context,
+  SdlSimpleViewerApplication(OrthancStone::StoneApplication::Context& context,
                              boost::shared_ptr<IViewport> viewport) :
     context_(context),
     viewport_(viewport),
@@ -173,11 +172,11 @@ private:
     //message.GetResources()->GetResource(0).Print(stdout);
 
     {
-      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
+
       SeriesFramesLoader::Factory f(*message.GetResources());
 
-      framesLoader_ = boost::dynamic_pointer_cast<SeriesFramesLoader>(
-        f.Create(*lock));
+      framesLoader_ = boost::dynamic_pointer_cast<SeriesFramesLoader>(f.Create(context_));
       
       Register<SeriesFramesLoader::FrameLoadedMessage>(
         *framesLoader_, &SdlSimpleViewerApplication::Handle);

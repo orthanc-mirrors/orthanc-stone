@@ -751,7 +751,7 @@ public:
   };
   
 private:
-  OrthancStone::ILoadersContext&                           context_;
+  OrthancStone::StoneApplication::Context&                 context_;
   std::unique_ptr<IObserver>                               observer_;
   OrthancStone::DicomSource                                source_;
   size_t                                                   pending_;
@@ -768,7 +768,7 @@ private:
   typedef std::map<std::string, boost::shared_ptr<OrthancStone::DicomStructuredReport> >  StructuredReports;
   StructuredReports structuredReports_;
 
-  explicit ResourcesLoader(OrthancStone::ILoadersContext& context,
+  explicit ResourcesLoader(OrthancStone::StoneApplication::Context& context,
                            const OrthancStone::DicomSource& source) :
     context_(context),
     source_(source),
@@ -908,8 +908,7 @@ private:
           message.GetInstance(i).LookupStringValue(sopClassUid, Orthanc::DICOM_TAG_SOP_CLASS_UID, false) &&
           OrthancStone::IsStructuredReport(OrthancStone::StringToSopClassUid(sopClassUid)))
       {
-        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
-        lock->Schedule(
+        context_.Schedule(
           GetSharedObserver(), PRIORITY_NORMAL, OrthancStone::ParseDicomFromWadoCommand::Create(
             source_, message.GetStudyInstanceUid(), message.GetSeriesInstanceUid(), sopInstanceUid,
             false /* no transcoding */, Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
@@ -1106,12 +1105,9 @@ private:
       const std::string uri = ("studies/" + studyInstanceUid + "/series/" + seriesInstanceUid +
                                "/instances/" + sopInstanceUid + "/frames/1/rendered");
 
-      {
-        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
-        lock->Schedule(
-          GetSharedObserver(), PRIORITY_LOW + 2, source_.CreateDicomWebCommand(
-            uri, arguments, headers, new Orthanc::SingleValueObject<std::string>(virtualSeriesId)));
-      }
+      context_.Schedule(
+        GetSharedObserver(), PRIORITY_LOW + 2, source_.CreateDicomWebCommand(
+          uri, arguments, headers, new Orthanc::SingleValueObject<std::string>(virtualSeriesId)));
     }
   }
 
@@ -1132,14 +1128,14 @@ public:
     skipSeriesFromModalities_ = skipSeriesFromModalities;
   }
 
-  static boost::shared_ptr<ResourcesLoader> Create(const OrthancStone::ILoadersContext::ILock& lock,
+  static boost::shared_ptr<ResourcesLoader> Create(OrthancStone::StoneApplication::Context& context,
                                                    const OrthancStone::DicomSource& source)
   {
-    boost::shared_ptr<ResourcesLoader> loader(new ResourcesLoader(lock.GetContext(), source));
+    boost::shared_ptr<ResourcesLoader> loader(new ResourcesLoader(context, source));
 
-    loader->resourcesLoader_ = OrthancStone::DicomResourcesLoader::Create(lock);
-    loader->thumbnailsLoader_ = OrthancStone::SeriesThumbnailsLoader::Create(lock, PRIORITY_LOW);
-    loader->metadataLoader_ = OrthancStone::SeriesMetadataLoader::Create(lock);
+    loader->resourcesLoader_ = OrthancStone::DicomResourcesLoader::Create(context);
+    loader->thumbnailsLoader_ = OrthancStone::SeriesThumbnailsLoader::Create(context, PRIORITY_LOW);
+    loader->metadataLoader_ = OrthancStone::SeriesMetadataLoader::Create(context);
     
     loader->Register<OrthancStone::DicomResourcesLoader::SuccessMessage>(
       *loader->resourcesLoader_, &ResourcesLoader::Handle);
@@ -1151,10 +1147,10 @@ public:
       *loader->metadataLoader_, &ResourcesLoader::Handle);
 
     loader->Register<OrthancStone::ParseDicomSuccessMessage>(
-      lock.GetOracleObservable(), &ResourcesLoader::Handle);
+      context.GetOracleObservable(), &ResourcesLoader::Handle);
 
     loader->Register<OrthancStone::HttpCommand::SuccessMessage>(
-      lock.GetOracleObservable(), &ResourcesLoader::HandleInstanceThumbnail);
+      context.GetOracleObservable(), &ResourcesLoader::HandleInstanceThumbnail);
 
     return loader;
   }
@@ -1447,8 +1443,7 @@ public:
             accessor.GetInstance(i).LookupStringValue(sopInstanceUid, Orthanc::DICOM_TAG_SOP_INSTANCE_UID, false) &&
             OrthancStone::StringToSopClassUid(sopClassUid) == OrthancStone::SopClassUid_EncapsulatedPdf)
         {
-          std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
-          lock->Schedule(
+          context_.Schedule(
             GetSharedObserver(), PRIORITY_NORMAL, OrthancStone::ParseDicomFromWadoCommand::Create(
               source_, studyInstanceUid, seriesInstanceUid, sopInstanceUid,
               false /* no transcoding */, Orthanc::DicomTransferSyntax_LittleEndianExplicit /* dummy value */,
@@ -2672,7 +2667,7 @@ private:
   
 
   std::unique_ptr<IObserver>                   observer_;
-  OrthancStone::WebAssemblyLoadersContext&               context_;
+  OrthancStone::StoneApplication::Context&               context_;
   boost::shared_ptr<OrthancStone::WebAssemblyViewport>   viewport_;
   boost::shared_ptr<OrthancStone::DicomResourcesLoader> loader_;
   OrthancStone::DicomSource                    source_;
@@ -3114,8 +3109,7 @@ private:
   {
     if (frames_.get() != NULL)
     {
-      std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
-      lock->Schedule(
+      context_.Schedule(
         GetSharedObserver(), priority, OrthancStone::ParseDicomFromWadoCommand::Create(
           source_, studyInstanceUid, seriesInstanceUid, sopInstanceUid, serverSideTranscoding_,
           Orthanc::DicomTransferSyntax_LittleEndianExplicit,
@@ -3157,7 +3151,7 @@ private:
        * use the cached DICOM file.
        **/
       std::unique_ptr<OrthancStone::ParsedDicomCache::Accessor> accessor(
-        context_.GetCachedDicomInstance(instance.GetSopInstanceUid()));
+        dynamic_cast<OrthancStone::WebAssemblyOracle&>(context_.GetOracle()).GetCachedDicomInstance(instance.GetSopInstanceUid()));
 
       if (accessor.get() != NULL &&
           accessor->IsValid())
@@ -3210,10 +3204,7 @@ private:
             GetSharedObserver(), instance.GetSopInstanceUid(), frameNumber,
             windowingTracker_.GetWindowing(), isMonochrome1, isPrefetch)));
 
-      {
-        std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_.Lock());
-        lock->Schedule(GetSharedObserver(), priority, command.release());
-      }
+      context_.Schedule(GetSharedObserver(), priority, command.release());
     }
   }
 
@@ -3235,7 +3226,7 @@ private:
     }
   }
   
-  ViewerViewport(OrthancStone::WebAssemblyLoadersContext& context,
+  ViewerViewport(OrthancStone::StoneApplication::Context& context,
                  const OrthancStone::DicomSource& source,
                  const std::string& canvas,
                  boost::shared_ptr<FramesCache> cache,
@@ -3441,7 +3432,7 @@ public:
     emscripten_set_wheel_callback(viewport_->GetCanvasCssSelector().c_str(), this, true, NULL);
   }
 
-  static boost::shared_ptr<ViewerViewport> Create(OrthancStone::WebAssemblyLoadersContext& context,
+  static boost::shared_ptr<ViewerViewport> Create(OrthancStone::StoneApplication::Context& context,
                                                   const OrthancStone::DicomSource& source,
                                                   const std::string& canvas,
                                                   boost::shared_ptr<FramesCache> framesCache,
@@ -3453,17 +3444,15 @@ public:
       new ViewerViewport(context, source, canvas, framesCache, instancesCache, softwareRendering, linearInterpolation));
 
     {
-      std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context.Lock());
-    
-      viewport->loader_ = OrthancStone::DicomResourcesLoader::Create(*lock);
+      viewport->loader_ = OrthancStone::DicomResourcesLoader::Create(context);
       viewport->Register<OrthancStone::DicomResourcesLoader::SuccessMessage>(
         *viewport->loader_, &ViewerViewport::Handle);
 
       viewport->Register<OrthancStone::HttpCommand::SuccessMessage>(
-        lock->GetOracleObservable(), &ViewerViewport::Handle);
+        context.GetOracleObservable(), &ViewerViewport::Handle);
 
       viewport->Register<OrthancStone::ParseDicomSuccessMessage>(
-        lock->GetOracleObservable(), &ViewerViewport::Handle);
+        context.GetOracleObservable(), &ViewerViewport::Handle);
 
       viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationChangedMessage>(
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
@@ -4745,8 +4734,7 @@ static ResourcesLoader& GetResourcesLoader()
 
   if (!resourcesLoader_)
   {
-    std::unique_ptr<OrthancStone::ILoadersContext::ILock> lock(context_->Lock());
-    resourcesLoader_ = ResourcesLoader::Create(*lock, source_);
+    resourcesLoader_ = ResourcesLoader::Create(OrthancStone::StoneApplication::GetInstance(), source_);
     resourcesLoader_->AcquireObserver(new WebAssemblyObserver);
   }
 
@@ -4769,7 +4757,8 @@ static boost::shared_ptr<ViewerViewport> GetViewport(const std::string& canvas)
   if (found == allViewports_.end())
   {
     boost::shared_ptr<ViewerViewport> viewport(
-      ViewerViewport::Create(*context_, source_, canvas, framesCache_, instancesCache_, softwareRendering_, linearInterpolation_));
+      ViewerViewport::Create(OrthancStone::StoneApplication::GetInstance(),
+                             source_, canvas, framesCache_, instancesCache_, softwareRendering_, linearInterpolation_));
     viewport->SetMouseButtonActions(leftButtonAction_, middleButtonAction_, rightButtonAction_);
     viewport->AcquireObserver(new WebAssemblyObserver);
     viewport->AddLayerSource(*overlayLayerSource_);

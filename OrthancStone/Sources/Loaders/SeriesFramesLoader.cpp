@@ -115,7 +115,7 @@ namespace OrthancStone
   };
     
 
-  SeriesFramesLoader::SeriesFramesLoader(ILoadersContext& context,
+  SeriesFramesLoader::SeriesFramesLoader(StoneApplication::Context& context,
                                          LoadedDicomResources& instances,
                                          const std::string& dicomDirPath,
                                          boost::shared_ptr<LoadedDicomResources> dicomDir) :
@@ -312,10 +312,10 @@ namespace OrthancStone
   }
 
 
-  boost::shared_ptr<IObserver> SeriesFramesLoader::Factory::Create(ILoadersContext::ILock& stone)
+  boost::shared_ptr<IObserver> SeriesFramesLoader::Factory::Create(StoneApplication::Context& stone)
   {
     boost::shared_ptr<SeriesFramesLoader> loader(
-      new SeriesFramesLoader(stone.GetContext(), instances_, dicomDirPath_, dicomDir_));
+      new SeriesFramesLoader(stone, instances_, dicomDirPath_, dicomDir_));
     loader->Register<GetOrthancImageCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesFramesLoader::Handle);
     loader->Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesFramesLoader::Handle);
     loader->Register<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesFramesLoader::Handle);
@@ -371,10 +371,7 @@ namespace OrthancStone
         command->SetPixelDataIncluded(true);
         command->AcquirePayload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
 
-        {
-          std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-          lock->Schedule(GetSharedObserver(), priority, command.release());
-        }
+        context_.Schedule(GetSharedObserver(), priority, command.release());
       }
       else
       {
@@ -410,11 +407,8 @@ namespace OrthancStone
         std::unique_ptr<Payload> payload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
         payload->SetWindowing(windowing);
 
-        {
-          std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-          lock->Schedule(GetSharedObserver(), priority,
-                         source.CreateDicomWebCommand(uri + "/rendered", arguments, headers, payload.release()));
-        }
+        context_.Schedule(GetSharedObserver(), priority,
+                          source.CreateDicomWebCommand(uri + "/rendered", arguments, headers, payload.release()));
       }
       else
       {
@@ -432,10 +426,7 @@ namespace OrthancStone
                                         source.CreateDicomWebCommand(uri, empty, empty, NULL)));
         command->AcquirePayload(payload.release());
 
-        {
-          std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-          lock->Schedule(GetSharedObserver(), priority, command.release());
-        }
+        context_.Schedule(GetSharedObserver(), priority, command.release());
 #else
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented,
                                         "DCMTK is not enabled, cannot parse a DICOM instance");
@@ -469,10 +460,7 @@ namespace OrthancStone
         command->SetExpectedPixelFormat(parameters.GetExpectedPixelFormat());
         command->AcquirePayload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
 
-        {
-          std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-          lock->Schedule(GetSharedObserver(), priority, command.release());
-        }
+        context_.Schedule(GetSharedObserver(), priority, command.release());
       }
       else if (quality == 0 && source.HasOrthancAdvancedPreview())
       {
@@ -491,10 +479,7 @@ namespace OrthancStone
         command->SetHttpHeader("Accept", Orthanc::MIME_PAM);
         command->AcquirePayload(new Payload(source, index, sopInstanceUid, quality, protection.release()));
 
-        {
-          std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-          lock->Schedule(GetSharedObserver(), priority, command.release());
-        }
+        context_.Schedule(GetSharedObserver(), priority, command.release());
       }
     }
     else

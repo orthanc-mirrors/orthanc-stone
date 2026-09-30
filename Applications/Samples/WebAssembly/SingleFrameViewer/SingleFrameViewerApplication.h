@@ -35,16 +35,16 @@
 
 namespace OrthancStone
 {
-  class Application : public ObserverBase<Application>
+  class SingleFrameViewerApplication : public ObserverBase<SingleFrameViewerApplication>
   {
   private:
-    ILoadersContext&                         context_;
+    StoneApplication::Context&               context_;
     boost::shared_ptr<IViewport>             viewport_;
     boost::shared_ptr<DicomResourcesLoader>  dicomLoader_;
     boost::shared_ptr<SeriesFramesLoader>    framesLoader_;
 
-    Application(ILoadersContext& context,
-                boost::shared_ptr<IViewport> viewport) : 
+    SingleFrameViewerApplication(StoneApplication::Context& context,
+                                 boost::shared_ptr<IViewport> viewport) : 
       context_(context),
       viewport_(viewport)
     {
@@ -78,11 +78,11 @@ namespace OrthancStone
       //message.GetResources()->GetResource(0).Print(stdout);
 
       {
-        std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
+        std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
         SeriesFramesLoader::Factory f(*message.GetResources());
 
-        framesLoader_ = boost::dynamic_pointer_cast<SeriesFramesLoader>(f.Create(*lock));
-        Register<SeriesFramesLoader::FrameLoadedMessage>(*framesLoader_, &Application::Handle);
+        framesLoader_ = boost::dynamic_pointer_cast<SeriesFramesLoader>(f.Create(context_));
+        Register<SeriesFramesLoader::FrameLoadedMessage>(*framesLoader_, &SingleFrameViewerApplication::Handle);
 
         assert(message.HasUserPayload());
         const Orthanc::SingleValueObject<unsigned int>& payload =
@@ -97,17 +97,14 @@ namespace OrthancStone
     }
 
   public:
-    static boost::shared_ptr<Application> Create(ILoadersContext& context,
-                                                 boost::shared_ptr<IViewport> viewport)
+    static boost::shared_ptr<SingleFrameViewerApplication> Create(StoneApplication::Context& context,
+                                                                  boost::shared_ptr<IViewport> viewport)
     {
-      boost::shared_ptr<Application> application(new Application(context, viewport));
+      boost::shared_ptr<SingleFrameViewerApplication> application(new SingleFrameViewerApplication(context, viewport));
 
-      {
-        std::unique_ptr<ILoadersContext::ILock> lock(context.Lock());
-        application->dicomLoader_ = DicomResourcesLoader::Create(*lock);
-      }
+      application->dicomLoader_ = DicomResourcesLoader::Create(context);
 
-      application->Register<DicomResourcesLoader::SuccessMessage>(*application->dicomLoader_, &Application::Handle);
+      application->Register<DicomResourcesLoader::SuccessMessage>(*application->dicomLoader_, &SingleFrameViewerApplication::Handle);
 
       return application;
     }
@@ -116,7 +113,7 @@ namespace OrthancStone
                           const std::string& instanceId,
                           unsigned int frame)
     {
-      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
 
       dicomLoader_->ScheduleLoadOrthancResource(
         boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID), 
@@ -130,7 +127,7 @@ namespace OrthancStone
                            const std::string& sopInstanceUid,
                            unsigned int frame)
     {
-      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
 
       // We first must load the "/metadata" to know the number of frames
       dicomLoader_->ScheduleGetDicomWeb(
@@ -176,7 +173,7 @@ namespace OrthancStone
       Type_DicomWeb = 2
     };
 
-    ILoadersContext&                           context_;
+    StoneApplication::Context&                   context_;
     std::unique_ptr<IWebViewerLoadersObserver>   observer_;
     bool                                       loadThumbnails_;
     DicomSource                                source_;
@@ -188,7 +185,7 @@ namespace OrthancStone
     boost::shared_ptr<DicomResourcesLoader>    resourcesLoader_;
     boost::shared_ptr<SeriesThumbnailsLoader>  thumbnailsLoader_;
 
-    WebViewerLoaders(ILoadersContext& context,
+    WebViewerLoaders(StoneApplication::Context& context,
                      IWebViewerLoadersObserver* observer) :
       context_(context),
       observer_(observer),
@@ -303,7 +300,7 @@ namespace OrthancStone
     }
 
   public:
-    static boost::shared_ptr<WebViewerLoaders> Create(ILoadersContext& context,
+    static boost::shared_ptr<WebViewerLoaders> Create(StoneApplication::Context& context,
                                                       const DicomSource& source,
                                                       bool loadThumbnails,
                                                       IWebViewerLoadersObserver* observer)
@@ -312,35 +309,31 @@ namespace OrthancStone
       application->source_ = source;
       application->loadThumbnails_ = loadThumbnails;
 
+      application->resourcesLoader_ = DicomResourcesLoader::Create(context);
+
       {
-        std::unique_ptr<ILoadersContext::ILock> lock(context.Lock());
-
-        application->resourcesLoader_ = DicomResourcesLoader::Create(*lock);
-
-        {
-          SeriesThumbnailsLoader::Factory f;
-          f.SetPriority(PRIORITY_THUMBNAILS);
-          application->thumbnailsLoader_ = boost::dynamic_pointer_cast<SeriesThumbnailsLoader>(f.Create(*lock));
-        }
-
-        application->Register<OrthancRestApiCommand::SuccessMessage>(
-          lock->GetOracleObservable(), &WebViewerLoaders::HandleOrthancRestApi);
-
-        application->Register<DicomResourcesLoader::SuccessMessage>(
-          *application->resourcesLoader_, &WebViewerLoaders::HandleLoadedResources);
-
-        application->Register<SeriesThumbnailsLoader::SuccessMessage>(
-          *application->thumbnailsLoader_, &WebViewerLoaders::HandleThumbnail);
-
-        lock->AddLoader(application);
+        SeriesThumbnailsLoader::Factory f;
+        f.SetPriority(PRIORITY_THUMBNAILS);
+        application->thumbnailsLoader_ = boost::dynamic_pointer_cast<SeriesThumbnailsLoader>(f.Create(context));
       }
+
+      application->Register<OrthancRestApiCommand::SuccessMessage>(
+        context.GetOracleObservable(), &WebViewerLoaders::HandleOrthancRestApi);
+
+      application->Register<DicomResourcesLoader::SuccessMessage>(
+        *application->resourcesLoader_, &WebViewerLoaders::HandleLoadedResources);
+
+      application->Register<SeriesThumbnailsLoader::SuccessMessage>(
+        *application->thumbnailsLoader_, &WebViewerLoaders::HandleThumbnail);
+
+      context.AddLoader(application);
 
       return application;
     }
     
     void AddDicomAllSeries()
     {
-      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
+      std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
 
       if (source_.IsDicomWeb())
       {
@@ -354,7 +347,7 @@ namespace OrthancStone
         std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
         command->SetMethod(Orthanc::HttpMethod_Get);
         command->SetUri("/series");
-        lock->Schedule(GetSharedObserver(), PRIORITY_ADD_RESOURCES, command.release());
+        context_.Schedule(GetSharedObserver(), PRIORITY_ADD_RESOURCES, command.release());
       }
       else
       {
@@ -375,7 +368,7 @@ namespace OrthancStone
           filter.SetValue(Orthanc::DICOM_TAG_STUDY_INSTANCE_UID, studyInstanceUid, false);
           
           {
-            std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
+            std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
             
             std::set<Orthanc::DicomTag> tags;
 
@@ -398,10 +391,7 @@ namespace OrthancStone
           body["Query"]["StudyInstanceUID"] = studyInstanceUid;
           command->SetBody(body);
 
-          {
-            std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
-            lock->Schedule(GetSharedObserver(), PRIORITY_ADD_RESOURCES, command.release());
-          }
+          context_.Schedule(GetSharedObserver(), PRIORITY_ADD_RESOURCES, command.release());
         }
         else
         {
@@ -415,7 +405,7 @@ namespace OrthancStone
     {
       std::set<Orthanc::DicomTag> tags;
 
-      std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
+      std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
 
       if (scheduledStudies_.find(studyInstanceUid) == scheduledStudies_.end())
       {
@@ -457,7 +447,7 @@ namespace OrthancStone
           body["Query"]["SeriesInstanceUID"] = seriesInstanceUid;
           command->SetBody(body);
 
-          lock->Schedule(GetSharedObserver(), PRIORITY_ADD_RESOURCES, command.release());
+          context_.Schedule(GetSharedObserver(), PRIORITY_ADD_RESOURCES, command.release());
         }
         else
         {
@@ -470,7 +460,7 @@ namespace OrthancStone
     {
       if (source_.IsOrthanc())
       {
-        std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
+        std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
         resourcesLoader_->ScheduleLoadOrthancResources(
           loadedSeries_, PRIORITY_ADD_RESOURCES, source_,
           Orthanc::ResourceType_Study, orthancId, Orthanc::ResourceType_Series,
@@ -487,7 +477,7 @@ namespace OrthancStone
     {
       if (source_.IsOrthanc())
       {
-        std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());      
+        std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
         resourcesLoader_->ScheduleLoadOrthancResource(
           loadedSeries_, PRIORITY_ADD_RESOURCES,
           source_, Orthanc::ResourceType_Series, orthancId,

@@ -459,7 +459,7 @@ int main(int argc, char* argv[])
 #endif
 
         boost::shared_ptr<SdlSimpleViewerApplication> application(
-          SdlSimpleViewerApplication::Create(context, viewport));
+          SdlSimpleViewerApplication::Create(OrthancStone::StoneApplication::GetInstance(), viewport));
 
         OrthancStone::DicomSource source;
 

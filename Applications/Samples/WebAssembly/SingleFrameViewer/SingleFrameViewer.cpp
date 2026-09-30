@@ -71,8 +71,7 @@ namespace OrthancStone
 {
 }
 
-static std::unique_ptr<OrthancStone::WebAssemblyLoadersContext>  context_;
-static boost::shared_ptr<OrthancStone::Application>  application_;
+static boost::shared_ptr<OrthancStone::SingleFrameViewerApplication>  application_;
 
 extern "C"
 {
@@ -97,7 +96,6 @@ extern "C"
       configuration.SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
 
       OrthancStone::StoneApplication::Initialize(configuration);
-      context_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
   
       DISPATCH_JAVASCRIPT_EVENT("WasmModuleInitialized");
     }
@@ -111,12 +109,6 @@ extern "C"
   {
     try
     {
-      if (context_.get() == NULL)
-      {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
-                                        "The loaders context is not available yet");
-      }
-      
       if (application_.get() != NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
@@ -125,7 +117,7 @@ extern "C"
 
       boost::shared_ptr<OrthancStone::WebGLViewport> viewport(
         OrthancStone::WebGLViewportsRegistry::GetGlobalRegistry().Add(canvasId));
-      application_ = OrthancStone::Application::Create(*context_, viewport);
+      application_ = OrthancStone::SingleFrameViewerApplication::Create(OrthancStone::StoneApplication::GetInstance(), viewport);
 
       {
         OrthancStone::WebGLViewportsRegistry::Accessor accessor(

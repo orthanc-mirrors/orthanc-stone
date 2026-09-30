@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "../StoneApplication.h"
 #include "ILoadersContext.h"
 
 namespace OrthancStone
@@ -38,6 +39,6 @@ namespace OrthancStone
      * Factory function that creates a new loader, to be used by the
      * Stone loaders context.
      **/
-    virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context) = 0;
+    virtual boost::shared_ptr<IObserver> Create(StoneApplication::Context& context) = 0;
   };
 }

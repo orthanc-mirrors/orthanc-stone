@@ -457,8 +457,7 @@ namespace OrthancStone
 
   void SeriesThumbnailsLoader::Schedule(IOracleCommand* command)
   {
-    std::unique_ptr<ILoadersContext::ILock> lock(context_.Lock());
-    lock->Schedule(GetSharedObserver(), priority_, command);
+    context_.Schedule(GetSharedObserver(), priority_, command);
   }    
 
   
@@ -586,7 +585,7 @@ namespace OrthancStone
   }
 
 
-  SeriesThumbnailsLoader::SeriesThumbnailsLoader(ILoadersContext& context,
+  SeriesThumbnailsLoader::SeriesThumbnailsLoader(StoneApplication::Context& context,
                                                  int priority) :
     context_(context),
     priority_(priority),
@@ -596,11 +595,10 @@ namespace OrthancStone
   }
     
   
-  boost::shared_ptr<SeriesThumbnailsLoader> SeriesThumbnailsLoader::Create(
-    const ILoadersContext::ILock& stone,
-    int priority)
+  boost::shared_ptr<SeriesThumbnailsLoader> SeriesThumbnailsLoader::Create(StoneApplication::Context& stone,
+                                                                           int priority)
   {
-    boost::shared_ptr<SeriesThumbnailsLoader> result(new SeriesThumbnailsLoader(stone.GetContext(), priority));
+    boost::shared_ptr<SeriesThumbnailsLoader> result(new SeriesThumbnailsLoader(stone, priority));
     result->Register<GetOrthancImageCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
     result->Register<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
     result->Register<OracleCommandExceptionMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);

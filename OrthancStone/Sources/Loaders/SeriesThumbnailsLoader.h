@@ -148,7 +148,7 @@ namespace OrthancStone
     // Maps a "Series Instance UID" to a thumbnail
     typedef std::map<std::string, Thumbnail*>  Thumbnails;
 
-    ILoadersContext&       context_;
+    StoneApplication::Context&  context_;
     Thumbnails             thumbnails_;
     int                    priority_;
     unsigned int           width_;
@@ -174,7 +174,7 @@ namespace OrthancStone
 
     void Handle(const OracleCommandExceptionMessage& message);
 
-    SeriesThumbnailsLoader(ILoadersContext& context,
+    SeriesThumbnailsLoader(StoneApplication::Context& context,
                            int priority);
     
   public:
@@ -194,7 +194,7 @@ namespace OrthancStone
         priority_ = priority;
       }
 
-      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context)
+      virtual boost::shared_ptr<IObserver> Create(StoneApplication::Context& context)
       {
         return SeriesThumbnailsLoader::Create(context, priority_);
       }
@@ -207,7 +207,7 @@ namespace OrthancStone
     }
 
 
-    static boost::shared_ptr<SeriesThumbnailsLoader> Create(const ILoadersContext::ILock& context,
+    static boost::shared_ptr<SeriesThumbnailsLoader> Create(StoneApplication::Context& context,
                                                             int priority);
 
     void SetThumbnailSize(unsigned int width,

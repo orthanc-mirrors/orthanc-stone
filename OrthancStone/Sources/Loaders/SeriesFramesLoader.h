@@ -43,12 +43,12 @@ namespace OrthancStone
   private:
     class Payload;
 
-    ILoadersContext&                         context_;
+    StoneApplication::Context&               context_;
     SeriesOrderedFrames                      frames_;
     std::string                              dicomDirPath_;
     boost::shared_ptr<LoadedDicomResources>  dicomDir_;
 
-    SeriesFramesLoader(ILoadersContext& context,
+    SeriesFramesLoader(StoneApplication::Context& context,
                        LoadedDicomResources& instances,
                        const std::string& dicomDirPath,
                        boost::shared_ptr<LoadedDicomResources> dicomDir);
@@ -159,7 +159,7 @@ namespace OrthancStone
       void SetDicomDir(const std::string& dicomDirPath,
                        boost::shared_ptr<LoadedDicomResources> dicomDir);
 
-      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& context) ORTHANC_OVERRIDE;
+      virtual boost::shared_ptr<IObserver> Create(StoneApplication::Context& context) ORTHANC_OVERRIDE;
     };
 
     const SeriesOrderedFrames& GetOrderedFrames() const

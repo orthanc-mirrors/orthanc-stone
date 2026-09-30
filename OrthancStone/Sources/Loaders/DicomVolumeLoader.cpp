@@ -152,7 +152,7 @@ namespace OrthancStone
   }
 
 
-  boost::shared_ptr<IObserver> DicomVolumeLoader::Factory::Create(ILoadersContext::ILock& context)
+  boost::shared_ptr<IObserver> DicomVolumeLoader::Factory::Create(StoneApplication::Context& context)
   { 
     boost::shared_ptr<SeriesFramesLoader> frames =
       boost::dynamic_pointer_cast<SeriesFramesLoader>(framesFactory_.Create(context));

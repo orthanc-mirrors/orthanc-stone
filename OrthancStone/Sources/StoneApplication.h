@@ -31,9 +31,14 @@
 
 #include <WebServiceParameters.h>
 
+#include <MultiThreading/Mutex.h>  // TODO Refactoring - Remove this
+#include <list>  // TODO Refactoring - Remove this
+
 
 namespace OrthancStone
 {
+  class OracleScheduler;
+
   class StoneApplication : public boost::noncopyable
   {
   public:
@@ -113,6 +118,11 @@ namespace OrthancStone
       class PImpl;
       PImpl* pimpl_;
 
+      boost::shared_ptr<OracleScheduler>  oracleScheduler_;
+
+      Orthanc::Mutex   loadersMutex_;  // TODO Refactoring - Remove this
+      std::list< boost::shared_ptr<IObserver> >  loaders_;  // TODO Refactoring - Remove this
+
     public:
       Context(const Configuration& configuration);
 
@@ -126,6 +136,21 @@ namespace OrthancStone
                                const IMessage& message) ORTHANC_OVERRIDE;
 
       IObservable& GetOracleObservable();  // TODO Refactoring - Remove this
+
+      void Schedule(boost::shared_ptr<IObserver> receiver,
+                    int priority,
+                    IOracleCommand* command /* Takes ownership */);  // TODO Refactoring - Remove this
+
+      /**
+       * Add a reference to the given observer in the Stone loaders
+       * context. This can be used to match the lifetime of a loader
+       * with the lifetime of the Stone context: This is useful if
+       * your Stone application does not keep a reference to the
+       * loader by itself (typically in global promises), which would
+       * make the loader disappear as soon as the scope of the
+       * variable is left.
+       **/
+      void AddLoader(const boost::shared_ptr<IObserver>& loader);  // TODO Refactoring - Remove this
     };
 
 

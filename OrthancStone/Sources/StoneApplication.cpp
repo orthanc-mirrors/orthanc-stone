@@ -23,6 +23,7 @@
 
 #include "StoneApplication.h"
 
+#include "Loaders/OracleScheduler.h"
 #include "StoneException.h"
 
 #include <Compatibility.h>
@@ -273,6 +274,8 @@ namespace OrthancStone
 #else
 #   error Support your platform here
 #endif
+
+    oracleScheduler_ = OracleScheduler::Create(*this, 1, 4, 1);  // TODO Refactoring - Parameters
   }
 
 
@@ -309,6 +312,26 @@ namespace OrthancStone
   {
     assert(pimpl_ != NULL);
     return pimpl_->GetOracleObservable();
+  }
+
+
+  void StoneApplication::Context::Schedule(boost::shared_ptr<IObserver> receiver,
+                                           int priority,
+                                           IOracleCommand* command /* Takes ownership */)
+  {
+    assert(oracleScheduler_);
+
+    {
+      std::unique_ptr<IEnvironment::ILock> lock(GetEnvironment().AcquireLock());
+      oracleScheduler_->Schedule(receiver, priority, command);
+    }
+  }
+
+
+  void StoneApplication::Context::AddLoader(const boost::shared_ptr<IObserver>& loader)
+  {
+    Orthanc::Mutex::ScopedLock lock(loadersMutex_);
+    loaders_.push_back(loader);
   }
 
 

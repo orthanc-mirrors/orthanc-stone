@@ -95,12 +95,12 @@ namespace OrthancStone
                                              boost::shared_ptr<unsigned int> remainingCommands,
                                              boost::shared_ptr<Orthanc::IDynamicObject> userPayload);
     
-    explicit DicomResourcesLoader(ILoadersContext& context) :
+    explicit DicomResourcesLoader(StoneApplication::Context& context) :
       context_(context)
     {
     }
 
-    ILoadersContext&  context_;
+    StoneApplication::Context&  context_;
 
 
   public:
@@ -155,14 +155,14 @@ namespace OrthancStone
     class Factory : public ILoaderFactory
     {
     public:
-      virtual boost::shared_ptr<IObserver> Create(ILoadersContext::ILock& stone) ORTHANC_OVERRIDE
+      virtual boost::shared_ptr<IObserver> Create(StoneApplication::Context& stone) ORTHANC_OVERRIDE
       {
         return DicomResourcesLoader::Create(stone);
       }
     };
 
 
-    static boost::shared_ptr<DicomResourcesLoader> Create(const ILoadersContext::ILock& stone);
+    static boost::shared_ptr<DicomResourcesLoader> Create(StoneApplication::Context& stone);
 
     void ScheduleGetDicomWeb(boost::shared_ptr<LoadedDicomResources> target,
                              int priority,

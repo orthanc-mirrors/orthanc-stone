@@ -20,26 +20,23 @@
  **/
 
 
-#include "SdlSimpleViewerApplication.h"
-#include "../SdlHelpers.h"
-#include "../../Common/SampleHelpers.h"
-
-#include "../../../../OrthancStone/Sources/Platforms/Sdl/SdlViewport.h"
+#include "../../../../OrthancStone/Sources/Loaders/DicomResourcesLoader.h"
+#include "../../../../OrthancStone/Sources/Loaders/SeriesFramesLoader.h"
 #include "../../../../OrthancStone/Sources/Scene2D/AnnotationsSceneLayer.h"
-#include "../../../../OrthancStone/Sources/Scene2DViewport/AngleMeasureTool.h"
-#include "../../../../OrthancStone/Sources/Scene2DViewport/LineMeasureTool.h"
 #include "../../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"
+#include "../../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
 #include "../../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
+#include "../../Common/SampleHelpers.h"
+#include "../SdlHelpers.h"
 
-#include <EmbeddedResources.h>
 #include <Compatibility.h>  // For std::unique_ptr<>
-#include <OrthancException.h>
+#include <EmbeddedResources.h>
 
-#include <boost/program_options.hpp>
 #include <SDL.h>
-
+#include <boost/make_shared.hpp>
+#include <boost/program_options.hpp>
 #include <string>
 
 
@@ -94,9 +91,7 @@ namespace OrthancStone
     virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
                                   const boost::shared_ptr<IViewport>& viewport) = 0;
 
-    virtual void HandleKeyDown(const boost::shared_ptr<StoneApplication::Context>& context,
-                               const boost::shared_ptr<IViewport>& viewport,
-                               char key) = 0;
+    virtual bool HandleKeyDown(char key) = 0;
 
     virtual void HandleMouseDown(OrthancStone::IViewport::ILock& lock,
                                  const OrthancStone::PointerEvent& p) = 0;
@@ -111,8 +106,8 @@ namespace OrthancStone
   class SingleViewportSdlApplication : public StoneApplication
   {
   private:
-    std::unique_ptr<ISingleViewportApplicationCore>  core_;
-    boost::shared_ptr<SdlViewport>                   viewport_;
+    boost::shared_ptr<ISingleViewportApplicationCore>  core_;
+    boost::shared_ptr<SdlViewport>                     viewport_;
 
   protected:
     virtual void RunInternal(const boost::shared_ptr<Context>& context)
@@ -171,7 +166,7 @@ namespace OrthancStone
               }
               else
               {
-                core_->HandleKeyDown(context, viewport_, s[0]);
+                paint = core_->HandleKeyDown(s[0]);
               }
             }
           }
@@ -225,7 +220,7 @@ namespace OrthancStone
 
   public:
     SingleViewportSdlApplication(const Configuration& configuration,
-                                 ISingleViewportApplicationCore* core /* takes ownership */,
+                                 const boost::shared_ptr<ISingleViewportApplicationCore>& core,
                                  const std::string& title,
                                  unsigned int width,
                                  unsigned int height,
@@ -233,7 +228,7 @@ namespace OrthancStone
       StoneApplication(configuration),
       core_(core)
     {
-      if (core == NULL)
+      if (!core)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
@@ -258,24 +253,102 @@ namespace OrthancStone
   };
 
 
-  class SimpleViewerApp : public ISingleViewportApplicationCore
+  class SimpleViewerApp : public ISingleViewportApplicationCore,
+                          public ObserverBase<SimpleViewerApp>  // TODO Refactoring - Remove
   {
   private:
     std::string                                   instanceId_;
     unsigned int                                  frameIndex_;
-    boost::shared_ptr<SdlSimpleViewerApplication> application_;
+    boost::shared_ptr<StoneApplication::Context>  context_;
+    boost::shared_ptr<IViewport>                  viewport_;
     AnnotationsSceneLayer                         annotations_;
     OrthancStone::DefaultViewportInteractor       interactor_;
     boost::shared_ptr<Toto>                       toto_;
+    boost::shared_ptr<DicomResourcesLoader>       dicomLoader_;
+    boost::shared_ptr<SeriesFramesLoader>         framesLoader_;
+    OrthancStone::Units                           units_;
+
+    void Handle(const SeriesFramesLoader::FrameLoadedMessage& message)
+    {
+      LOG(INFO) << "Frame decoded! "
+                << message.GetImage().GetWidth() << "x" << message.GetImage().GetHeight()
+                << " " << Orthanc::EnumerationToString(message.GetImage().GetFormat());
+
+      std::unique_ptr<TextureBaseSceneLayer> layer(
+        message.GetInstanceParameters().CreateTexture(message.GetImage()));
+      //layer->SetLinearInterpolation(true);
+      layer->SetLinearInterpolation(false);
+
+      {
+        std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+        lock->GetController().GetScene().SetLayer(0, layer.release());
+        lock->GetCompositor().FitContent(lock->GetController().GetScene());
+        lock->Invalidate();
+      }
+    }
+
+    void Handle(const DicomResourcesLoader::SuccessMessage& message)
+    {
+      if (message.GetResources()->GetSize() != 1)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+
+      OrthancStone::DicomInstanceParameters parameters(message.GetResources()->GetResource(0));
+      if (parameters.HasPixelSpacing())
+      {
+        /**
+         * TODO - Ultrasound (US) images store an equivalent to
+         * "PixelSpacing" in the "SequenceOfUltrasoundRegions"
+         * (0018,6011) sequence, cf. tags "PhysicalDeltaX" (0018,602c)
+         * and "PhysicalDeltaY" (0018,602e) => This would require
+         * parsing "message.GetResources()->GetSourceJson(0)"
+         * => cf. "DicomInstanceParameters::EnrichUsingDicomWeb()"
+         **/
+
+        // std::cout << message.GetResources()->GetSourceJson(0).toStyledString();
+
+        LOG(INFO) << "Using millimeters units, as the DICOM instance contains the PixelSpacing tag";
+        units_ = OrthancStone::Units_Millimeters;
+      }
+      else
+      {
+        LOG(INFO) << "Using pixels units, as the DICOM instance does *not* contain the PixelSpacing tag";
+      }
+
+      //message.GetResources()->GetResource(0).Print(stdout);
+
+      {
+        std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_->GetEnvironment().AcquireLock());
+
+        framesLoader_ = SeriesFramesLoader::Create(*context_, *message.GetResources());
+
+        Register<SeriesFramesLoader::FrameLoadedMessage>(*framesLoader_, &SimpleViewerApp::Handle);
+
+        assert(message.HasUserPayload());
+
+        const Orthanc::SingleValueObject<unsigned int>& payload =
+          dynamic_cast<const Orthanc::SingleValueObject<unsigned int>&>(
+            message.GetUserPayload());
+
+        LOG(INFO) << "Loading pixel data of frame: " << payload.GetValue();
+        framesLoader_->ScheduleLoadFrame(
+          0, message.GetDicomSource(), payload.GetValue(),
+          message.GetDicomSource().GetQualityCount() - 1 /* download best quality available */,
+          NULL);
+      }
+    }
 
   protected:
     virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
                                   const boost::shared_ptr<IViewport>& viewport) ORTHANC_OVERRIDE
     {
-      application_ = SdlSimpleViewerApplication::Create(*context, viewport);
+      context_ = context;
+      viewport_ = viewport;
 
-      OrthancStone::DicomSource source;
-      application_->LoadOrthancFrame(source, instanceId_, frameIndex_);
+      dicomLoader_ = DicomResourcesLoader::Create(*context);
+
+      Register<DicomResourcesLoader::SuccessMessage>(*dicomLoader_, &SimpleViewerApp::Handle);
 
       annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
       annotations_.SetProbedLayer(0);
@@ -288,19 +361,25 @@ namespace OrthancStone
         std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
         lock->GetController().SetUndoStack(boost::make_shared<OrthancStone::UndoStack>());
       }
+
+      {
+        // std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context->GetEnvironment().AcquireLock());
+        OrthancStone::DicomSource source;
+        dicomLoader_->ScheduleLoadOrthancResource(boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID),
+                                                  0, source, Orthanc::ResourceType_Instance, instanceId_,
+                                                  new Orthanc::SingleValueObject<unsigned int>(frameIndex_));
+      }
     }
 
-    virtual void HandleKeyDown(const boost::shared_ptr<StoneApplication::Context>& context,
-                               const boost::shared_ptr<IViewport>& viewport,
-                               char key) ORTHANC_OVERRIDE
+    virtual bool HandleKeyDown(char key) ORTHANC_OVERRIDE
     {
       switch (key)
       {
         case 'b':
         {
           // TODO Refactoring
-          OrthancStone::IEnvironment& environment = context->GetEnvironment();
-          OrthancStone::IOracle& oracle = context->GetOracle();
+          OrthancStone::IEnvironment& environment = context_->GetEnvironment();
+          OrthancStone::IOracle& oracle = context_->GetOracle();
 
           oracle.Submit(environment, toto_, new OrthancStone::SleepOracleCommand(1000));
 
@@ -326,12 +405,16 @@ namespace OrthancStone
         }
 
         case 's':
-          application_->FitContent();
+        {
+          std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+          lock->GetCompositor().FitContent(lock->GetController().GetScene());
+          lock->Invalidate();
           break;
+        }
 
         case 'u':
         {
-          std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+          std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
           if (lock->GetController().CanUndo())
           {
             lock->GetController().Undo();
@@ -341,7 +424,7 @@ namespace OrthancStone
 
         case 'U':
         {
-          std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+          std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
           if (lock->GetController().CanRedo())
           {
             lock->GetController().Redo();
@@ -384,12 +467,14 @@ namespace OrthancStone
         default:
           break;
       }
+
+      return false;  // No need to repaint
     }
 
     virtual void HandleMouseDown(OrthancStone::IViewport::ILock& lock,
                                  const OrthancStone::PointerEvent& p) ORTHANC_OVERRIDE
     {
-      annotations_.SetUnits(application_->GetUnits());  // TODO Refactoring, should happen after loading the image
+      annotations_.SetUnits(units_);
 
       boost::shared_ptr<OrthancStone::IFlexiblePointerTracker> t;
 
@@ -444,7 +529,8 @@ namespace OrthancStone
                     unsigned int frameIndex) :
       instanceId_(instanceId),
       frameIndex_(frameIndex),
-      annotations_(10)
+      annotations_(10),
+      units_(OrthancStone::Units_Pixels)
     {
     }
   };
@@ -565,10 +651,10 @@ int main(int argc, char* argv[])
     configuration.SetDicomCacheSize(128 * 1024 * 1024);  // TODO Refactoring - Remove this
     configuration.SetRootDirectory("/tmp");  // TODO Refactoring - Remove this
 
-    std::unique_ptr<OrthancStone::SimpleViewerApp> core(new OrthancStone::SimpleViewerApp(instanceId, frameIndex));
+    boost::shared_ptr<OrthancStone::SimpleViewerApp> core(new OrthancStone::SimpleViewerApp(instanceId, frameIndex));
 
     OrthancStone::SingleViewportSdlApplication app(
-      configuration, core.release(), "Stone of Orthanc", 800, 600, true /* use OpenGL */);
+      configuration, core, "Stone of Orthanc", 800, 600, true /* use OpenGL */);
 
     app.Run();
   }

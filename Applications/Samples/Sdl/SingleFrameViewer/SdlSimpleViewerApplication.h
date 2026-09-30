@@ -23,7 +23,6 @@
 #pragma once
 
 #include "../../../../OrthancStone/Sources/Loaders/DicomResourcesLoader.h"
-#include "../../../../OrthancStone/Sources/Loaders/ILoadersContext.h"
 #include "../../../../OrthancStone/Sources/Loaders/SeriesFramesLoader.h"
 #include "../../../../OrthancStone/Sources/Loaders/SeriesThumbnailsLoader.h"
 #include "../../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
@@ -35,7 +34,6 @@
 #include <boost/make_shared.hpp>
 
 
-using OrthancStone::ILoadersContext;
 using OrthancStone::ObserverBase;
 using OrthancStone::IViewport;
 using OrthancStone::DicomResourcesLoader;

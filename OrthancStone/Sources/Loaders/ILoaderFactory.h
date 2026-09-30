@@ -24,10 +24,10 @@
 #pragma once
 
 #include "../StoneApplication.h"
-#include "ILoadersContext.h"
 
 namespace OrthancStone
 {
+  // TODO Refactoring - class to remove
   class ILoaderFactory : public boost::noncopyable
   {
   public:

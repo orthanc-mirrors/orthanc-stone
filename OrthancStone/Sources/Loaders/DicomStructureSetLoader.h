@@ -25,7 +25,6 @@
 
 #include "../Toolbox/DicomStructureSet.h"
 #include "../Volumes/IVolumeSlicer.h"
-#include "../Loaders/ILoadersContext.h"
 #include "LoaderStateMachine.h"
 
 #include <vector>

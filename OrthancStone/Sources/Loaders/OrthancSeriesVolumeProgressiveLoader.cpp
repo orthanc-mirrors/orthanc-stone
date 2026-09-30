@@ -24,7 +24,6 @@
 #include "OrthancSeriesVolumeProgressiveLoader.h"
 
 #include "../StoneException.h"
-#include "../Loaders/ILoadersContext.h"
 #include "../Loaders/BasicFetchingItemsSorter.h"
 #include "../Loaders/BasicFetchingStrategy.h"
 #include "../Toolbox/GeometryToolbox.h"

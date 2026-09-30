@@ -23,8 +23,6 @@
 
 #include "LoaderStateMachine.h"
 
-#include "../Loaders/ILoadersContext.h"
-
 #include <OrthancException.h>
 
 namespace OrthancStone

@@ -23,7 +23,6 @@
 #pragma once
 
 #include "../../../OrthancStone/Sources/Loaders/DicomStructureSetLoader.h"
-#include "../../../OrthancStone/Sources/Loaders/ILoadersContext.h"
 #include "../../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.h"
 #include "../../../OrthancStone/Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
 #include "../../../OrthancStone/Sources/Messages/IMessageEmitter.h"

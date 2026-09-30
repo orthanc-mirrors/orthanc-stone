@@ -136,6 +136,7 @@ namespace OrthancStone
     void UpdateLayersInAllViews();
 
   private:
+    StoneApplication::Context&   context_;
     boost::shared_ptr<DicomVolumeImage>  ctVolume_;
     boost::shared_ptr<DicomVolumeImage>  doseVolume_;
 
@@ -144,8 +145,6 @@ namespace OrthancStone
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> ctLoader_;
     boost::shared_ptr<OrthancMultiframeVolumeLoader> doseLoader_;
     boost::shared_ptr<DicomStructureSetLoader>  rtstructLoader_;
-
-    StoneApplication::Context&   context_;
 
     /**
     another interface to the ctLoader object (that also implements the IVolumeSlicer interface), that serves as the 

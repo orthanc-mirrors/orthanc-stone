@@ -138,31 +138,6 @@ namespace OrthancStone
   }
 
 
-  DicomVolumeLoader::Factory::Factory(LoadedDicomResources& instances) :
-    framesFactory_(instances),
-    computeRange_(false)
-  {
-  }
-
-  DicomVolumeLoader::Factory::Factory(const SeriesMetadataLoader::SuccessMessage& metadata) :
-    framesFactory_(metadata.GetInstances()),
-    computeRange_(false)
-  {
-    SetDicomDir(metadata.GetDicomDirPath(), metadata.GetDicomDir());  // Only useful for DICOMDIR sources
-  }
-
-
-  boost::shared_ptr<IObserver> DicomVolumeLoader::Factory::Create(StoneApplication::Context& context)
-  { 
-    boost::shared_ptr<SeriesFramesLoader> frames =
-      boost::dynamic_pointer_cast<SeriesFramesLoader>(framesFactory_.Create(context));
-
-    boost::shared_ptr<DicomVolumeLoader> volume(new DicomVolumeLoader(frames, computeRange_));
-    volume->Register<SeriesFramesLoader::FrameLoadedMessage>(*frames, &DicomVolumeLoader::Handle);
-
-    return volume;
-  }
-
   void DicomVolumeLoader::Start(int priority,
                                 const DicomSource& source)
   {

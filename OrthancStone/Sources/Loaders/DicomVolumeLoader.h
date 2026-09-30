@@ -92,31 +92,6 @@ namespace OrthancStone
     };
 
 
-    class Factory : public boost::noncopyable  // TODO Refactoring - Remove this?
-    {
-    private:
-      SeriesFramesLoader::Factory  framesFactory_;
-      bool                         computeRange_;
-
-    public:
-      explicit Factory(LoadedDicomResources& instances);
-
-      explicit Factory(const SeriesMetadataLoader::SuccessMessage& metadata);
-
-      void SetComputeRange(bool computeRange)
-      {
-        computeRange_ = computeRange;
-      }
-
-      void SetDicomDir(const std::string& dicomDirPath,
-                       boost::shared_ptr<LoadedDicomResources> dicomDir)
-      {
-        framesFactory_.SetDicomDir(dicomDirPath, dicomDir);
-      }
-
-      boost::shared_ptr<IObserver> Create(StoneApplication::Context& context);
-    };
-
     bool IsValid() const
     {
       return isValid_;

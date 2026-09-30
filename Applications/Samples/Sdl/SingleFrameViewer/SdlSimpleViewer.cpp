@@ -29,7 +29,6 @@
 #include "../SdlHelpers.h"
 #include "../../Common/SampleHelpers.h"
 
-#include "../../../../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
 #include "../../../../OrthancStone/Sources/Platforms/Sdl/SdlViewport.h"
 #include "../../../../OrthancStone/Sources/Scene2D/AnnotationsSceneLayer.h"
 #include "../../../../OrthancStone/Sources/Scene2DViewport/AngleMeasureTool.h"
@@ -425,8 +424,6 @@ int main(int argc, char* argv[])
       boost::shared_ptr<OrthancStone::SdlViewport> viewport =
         OrthancStone::SdlCairoViewport::Create("Stone of Orthanc", 800, 600);
 #endif
-
-      OrthancStone::GenericLoadersContext context(1, 4, 1);
 
       {
         {

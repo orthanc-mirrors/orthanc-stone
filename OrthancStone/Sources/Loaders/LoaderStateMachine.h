@@ -30,6 +30,7 @@
 #include "../Oracle/IOracle.h"
 #include "../Oracle/OracleCommandExceptionMessage.h"
 #include "../Oracle/OrthancRestApiCommand.h"
+#include "../StoneApplication.h"
 
 #include <IDynamicObject.h>
 
@@ -37,8 +38,6 @@
 
 namespace OrthancStone
 {
-  class ILoadersContext;
-
   /**
      This class is supplied with Oracle commands and will schedule up to 
      simultaneousDownloads_ of them at the same time, then will schedule the 
@@ -104,7 +103,7 @@ namespace OrthancStone
 
     typedef std::list<IOracleCommand*>  PendingCommands;
 
-    ILoadersContext&  loadersContext_;
+    StoneApplication::Context&  context_;
     bool                            active_;
     unsigned int                    simultaneousDownloads_;
     PendingCommands                 pendingCommands_;
@@ -112,7 +111,7 @@ namespace OrthancStone
 
 
   public:
-    explicit LoaderStateMachine(ILoadersContext& loadersContext);
+    explicit LoaderStateMachine(StoneApplication::Context& context);
 
     void PostConstructor();
 

@@ -21,10 +21,8 @@
 
 #include "../../Common/RtViewerApp.h"
 #include "../../Common/RtViewerView.h"
-#include "../../Common/SampleHelpers.h"
 
 // Stone of Orthanc includes
-#include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyLoadersContext.h"
 #include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
 #include "../../../../OrthancStone/Sources/StoneApplication.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
@@ -157,12 +155,6 @@ namespace OrthancStone
 
     OrthancStone::StoneApplication::Initialize(configuration);
 
-    loadersContext_.reset(new WebAssemblyLoadersContext(1, 4, 1));
-
-    // we are in WASM --> downcast to concrete type
-    boost::shared_ptr<WebAssemblyLoadersContext> loadersContext = 
-      boost::dynamic_pointer_cast<WebAssemblyLoadersContext>(loadersContext_);
-
     CreateLoaders();
     
     CreateView("RtViewer_Axial", VolumeProjection_Axial);
@@ -199,8 +191,11 @@ extern "C"
 
       LOG(INFO) << "Endianness: " << Orthanc::EnumerationToString(Orthanc::Toolbox::DetectEndianness());
 
-      g_app = OrthancStone::RtViewerApp::Create();
-  
+      OrthancStone::StoneApplication::Configuration configuration;
+      OrthancStone::StoneApplication::Initialize(configuration);
+
+      g_app = OrthancStone::RtViewerApp::Create(OrthancStone::StoneApplication::GetInstance());
+
       DISPATCH_JAVASCRIPT_EVENT("WasmModuleInitialized");
     }
     EXTERN_CATCH_EXCEPTIONS;

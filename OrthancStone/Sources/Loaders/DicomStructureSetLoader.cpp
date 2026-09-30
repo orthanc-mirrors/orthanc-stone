@@ -69,7 +69,7 @@ namespace OrthancStone
 
   protected:
     explicit RestInstanceLookupHandler(DicomStructureSetLoader& loader) :
-      LoaderStateMachine(loader.loadersContext_),
+      LoaderStateMachine(loader.context_),
       loader_(loader)
     {
     }
@@ -378,24 +378,21 @@ namespace OrthancStone
   };
     
 
-  DicomStructureSetLoader::DicomStructureSetLoader(
-    ILoadersContext& loadersContext) 
-    : LoaderStateMachine(loadersContext)
-    , loadersContext_(loadersContext)
-    , revision_(0)
-    , countProcessedInstances_(0)
-    , countReferencedInstances_(0)
-    , structuresReady_(false)
+  DicomStructureSetLoader::DicomStructureSetLoader(StoneApplication::Context& context) :
+    LoaderStateMachine(context),
+    context_(context),
+    revision_(0),
+    countProcessedInstances_(0),
+    countReferencedInstances_(0),
+    structuresReady_(false)
   {
     // the default handler to retrieve slice geometry is RestInstanceLookupHandler
     instanceLookupHandler_ = RestInstanceLookupHandler::Create(*this);
   }
     
-  boost::shared_ptr<DicomStructureSetLoader> DicomStructureSetLoader::Create(ILoadersContext& loadersContext)
+  boost::shared_ptr<DicomStructureSetLoader> DicomStructureSetLoader::Create(StoneApplication::Context& context)
   {
-    boost::shared_ptr<DicomStructureSetLoader> obj(
-      new DicomStructureSetLoader(
-        loadersContext));
+    boost::shared_ptr<DicomStructureSetLoader> obj(new DicomStructureSetLoader(context));
     obj->LoaderStateMachine::PostConstructor();
     return obj;
   }

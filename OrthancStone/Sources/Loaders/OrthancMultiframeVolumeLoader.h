@@ -23,9 +23,10 @@
 
 #pragma once
 
-#include "LoaderStateMachine.h"
+#include "../StoneApplication.h"
 #include "../Volumes/DicomVolumeImage.h"
 #include "../Volumes/IGeometryProvider.h"
+#include "LoaderStateMachine.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -98,13 +99,13 @@ namespace OrthancStone
     void SetUncompressedPixelData(const std::string& pixelData);
 
   protected:
-    OrthancMultiframeVolumeLoader(ILoadersContext& loadersContext,
+    OrthancMultiframeVolumeLoader(StoneApplication::Context& context,
                                   boost::shared_ptr<DicomVolumeImage> volume,
                                   float outliersHalfRejectionRate);
     
   public:
     static boost::shared_ptr<OrthancMultiframeVolumeLoader> Create(
-      ILoadersContext& loadersContext,
+      StoneApplication::Context& context,
       boost::shared_ptr<DicomVolumeImage> volume,
       float outliersHalfRejectionRate = 0.0005);
 

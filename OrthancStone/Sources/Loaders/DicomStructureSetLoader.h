@@ -63,7 +63,7 @@ namespace OrthancStone
     class RestInstanceLookupHandler;
 
     static boost::shared_ptr<DicomStructureSetLoader> Create(
-      ILoadersContext& loadersContext);
+      StoneApplication::Context& context);
 
     void SetInstanceLookupHandler(boost::shared_ptr<IInstanceLookupHandler> instanceLookupHandler)
     {
@@ -109,7 +109,7 @@ namespace OrthancStone
     // Only state of LoaderStateMachine
     class LoadStructure;           // 1st state
     
-    ILoadersContext&                    loadersContext_;
+    StoneApplication::Context&          context_;
     std::unique_ptr<DicomStructureSet>  content_;
     uint64_t                            revision_;
     std::string                         instanceId_;
@@ -143,6 +143,6 @@ namespace OrthancStone
     void RetrieveReferencedSlices(const std::set<std::string>& nonEmptyInstances);
 
   protected:
-    explicit DicomStructureSetLoader(ILoadersContext& loadersContext);
+    explicit DicomStructureSetLoader(StoneApplication::Context& context);
   };
 }

@@ -21,12 +21,12 @@
 
 #include "../../Common/RtViewerApp.h"
 #include "../../Common/RtViewerView.h"
+#include "../../Common/SampleHelpers.h"
 #include "../SdlHelpers.h"
 
 #include <EmbeddedResources.h>
 
 // Stone of Orthanc includes
-#include "../../../../OrthancStone/Sources/Loaders/GenericLoadersContext.h"
 #include "../../../../OrthancStone/Sources/OpenGL/OpenGLIncludes.h"
 #include "../../../../OrthancStone/Sources/Platforms/Sdl/SdlOpenGLContext.h"
 #include "../../../../OrthancStone/Sources/StoneApplication.h"
@@ -95,7 +95,8 @@ namespace OrthancStone
     // only used in WASM at the moment
   }
 
-  void RtViewerApp::ProcessOptions(int argc, char* argv[])
+  static void ProcessOptions(std::map<std::string, std::string>& arguments,
+                             int argc, char* argv[])
   {
     namespace po = boost::program_options;
     po::options_description desc("Usage");
@@ -135,54 +136,12 @@ namespace OrthancStone
       std::string key = it->first;
       const po::variable_value& value = it->second;
       const std::string& strValue = value.as<std::string>();
-      SetArgument(key, strValue);
+      arguments[key] = strValue;
     }
   }
 
-  void RtViewerApp::RunSdl(int argc, char* argv[])
+  void RtViewerApp::RunSdl()
   {
-    ProcessOptions(argc, argv);
-
-    /**
-      Url of the Orthanc instance
-      Typically, in a native application (Qt, SDL), it will be an absolute URL like "http://localhost:8042". In 
-      wasm on the browser, it could be an absolute URL, provided you do not have cross-origin problems, or a relative
-      URL. In our wasm samples, it is set to "..", because we set up either a reverse proxy or an Orthanc ServeFolders
-      plugin that serves the main web application from an URL like "http://localhost:8042/stone-rtviewer" (with ".." 
-      leading to the main Orthanc root URL)
-    */
-    std::string orthancUrl = arguments_["orthanc"];
-
-    StoneApplication::Configuration configuration;
-
-    {
-      Orthanc::WebServiceParameters p;
-      if (HasArgument("orthanc"))
-      {
-        p.SetUrl(orthancUrl);
-      }
-      if (HasArgument("user"))
-      {
-        ORTHANC_ASSERT(HasArgument("password"));
-        p.SetCredentials(GetArgument("user"), GetArgument("password"));
-      } 
-      else
-      {
-        ORTHANC_ASSERT(!HasArgument("password"));
-      }
-      configuration.SetRemoteOrthancParameters(p);
-    }
-
-    OrthancStone::StoneApplication::Initialize(configuration);
-
-    /**
-    Create the shared loaders context
-    */
-    loadersContext_.reset(new GenericLoadersContext(1, 4, 1));
-
-    // we are in SDL --> downcast to concrete type
-    boost::shared_ptr<GenericLoadersContext> loadersContext = boost::dynamic_pointer_cast<GenericLoadersContext>(loadersContext_);
-
     CreateLoaders();
 
     /**
@@ -453,6 +412,30 @@ namespace OrthancStone
   }
 }
 
+
+
+static std::string GetArgument(const std::map<std::string, std::string>& arguments,
+                               const std::string& key)
+{
+  std::map<std::string, std::string>::const_iterator found = arguments.find(key);
+  if (found == arguments.end())
+  {
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+  }
+  else
+  {
+    return found->second;
+  }
+}
+
+
+static bool HasArgument(const std::map<std::string, std::string>& arguments,
+                        const std::string& key)
+{
+  return (arguments.find(key) != arguments.end());
+}
+
+
 boost::weak_ptr<OrthancStone::RtViewerApp> g_app;
 
 /**
@@ -469,9 +452,51 @@ int main(int argc, char* argv[])
 
   try
   {
-    boost::shared_ptr<OrthancStone::RtViewerApp> app = OrthancStone::RtViewerApp::Create();
+    std::map<std::string, std::string> arguments;
+    OrthancStone::ProcessOptions(arguments, argc, argv);
+
+    /**
+      Url of the Orthanc instance
+      Typically, in a native application (Qt, SDL), it will be an absolute URL like "http://localhost:8042". In
+      wasm on the browser, it could be an absolute URL, provided you do not have cross-origin problems, or a relative
+      URL. In our wasm samples, it is set to "..", because we set up either a reverse proxy or an Orthanc ServeFolders
+      plugin that serves the main web application from an URL like "http://localhost:8042/stone-rtviewer" (with ".."
+      leading to the main Orthanc root URL)
+    */
+    std::string orthancUrl = arguments["orthanc"];
+
+    OrthancStone::StoneApplication::Configuration configuration;
+
+    {
+      Orthanc::WebServiceParameters p;
+      if (HasArgument(arguments, "orthanc"))
+      {
+        p.SetUrl(orthancUrl);
+      }
+      if (HasArgument(arguments, "user"))
+      {
+        ORTHANC_ASSERT(HasArgument(arguments, "password"));
+        p.SetCredentials(GetArgument(arguments, "user"), GetArgument(arguments, "password"));
+      }
+      else
+      {
+        ORTHANC_ASSERT(!HasArgument(arguments, "password"));
+      }
+      configuration.SetRemoteOrthancParameters(p);
+    }
+
+    OrthancStone::StoneApplication::Initialize(configuration);
+
+    boost::shared_ptr<OrthancStone::RtViewerApp> app = OrthancStone::RtViewerApp::Create(
+      OrthancStone::StoneApplication::GetInstance());
+
+    for (std::map<std::string, std::string>::const_iterator it = arguments.begin(); it != arguments.end(); ++it)
+    {
+      app->SetArgument(it->first, it->second);
+    }
+
     g_app = app;
-    app->RunSdl(argc,argv);
+    app->RunSdl();
   }
   catch (Orthanc::OrthancException& e)
   {

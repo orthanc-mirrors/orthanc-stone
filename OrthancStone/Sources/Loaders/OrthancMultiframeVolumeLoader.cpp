@@ -562,19 +562,18 @@ namespace OrthancStone
     return volume_->GetGeometry();
   }
 
-  OrthancMultiframeVolumeLoader::OrthancMultiframeVolumeLoader(
-    ILoadersContext& loadersContext,
-    boost::shared_ptr<DicomVolumeImage> volume,
-    float outliersHalfRejectionRate) 
-    : LoaderStateMachine(loadersContext)
-    , volume_(volume)
-    , isReversedFrameOffsets_(false)
-    , pixelDataLoaded_(false)
-    , outliersHalfRejectionRate_(outliersHalfRejectionRate)
-    , distributionRawMin_(0)
-    , distributionRawMax_(0)
-    , computedDistributionMin_(0)
-    , computedDistributionMax_(0)
+  OrthancMultiframeVolumeLoader::OrthancMultiframeVolumeLoader(StoneApplication::Context& context,
+                                                               boost::shared_ptr<DicomVolumeImage> volume,
+                                                               float outliersHalfRejectionRate) :
+    LoaderStateMachine(context),
+    volume_(volume),
+    isReversedFrameOffsets_(false),
+    pixelDataLoaded_(false),
+    outliersHalfRejectionRate_(outliersHalfRejectionRate),
+    distributionRawMin_(0),
+    distributionRawMax_(0),
+    computedDistributionMin_(0),
+    computedDistributionMax_(0)
   {
     if (volume.get() == NULL)
     {
@@ -584,17 +583,15 @@ namespace OrthancStone
 
 
   boost::shared_ptr<OrthancMultiframeVolumeLoader>
-    OrthancMultiframeVolumeLoader::Create(
-      ILoadersContext& loadersContext, 
-      boost::shared_ptr<DicomVolumeImage> volume, 
-      float outliersHalfRejectionRate /*= 0.0005*/)
+  OrthancMultiframeVolumeLoader::Create(StoneApplication::Context& context, 
+                                        boost::shared_ptr<DicomVolumeImage> volume, 
+                                        float outliersHalfRejectionRate /*= 0.0005*/)
   {
     boost::shared_ptr<OrthancMultiframeVolumeLoader> obj(
-      new OrthancMultiframeVolumeLoader(
-        loadersContext,
-        volume,
-        outliersHalfRejectionRate));
+      new OrthancMultiframeVolumeLoader(context, volume, outliersHalfRejectionRate));
+
     obj->LoaderStateMachine::PostConstructor();
+
     return obj;
   }
 

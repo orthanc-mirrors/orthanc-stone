@@ -323,11 +323,7 @@ namespace OrthancStone
 
       command->AcquirePayload(new Orthanc::SingleValueObject<unsigned int>(sliceIndex));
       
-      {
-        std::unique_ptr<ILoadersContext::ILock> lock(loadersContext_.Lock());
-        boost::shared_ptr<IObserver> observer(GetSharedObserver());
-        lock->Schedule(observer, sliceSchedulingPriority_, command.release());
-      }
+      context_.Schedule(GetSharedObserver(), sliceSchedulingPriority_, command.release());
     }
     else
     {
@@ -527,45 +523,40 @@ namespace OrthancStone
     sliceSchedulingPriority_ = p;
   }
 
-  OrthancSeriesVolumeProgressiveLoader::OrthancSeriesVolumeProgressiveLoader(
-    ILoadersContext& loadersContext,
-    boost::shared_ptr<DicomVolumeImage> volume,
-    bool progressiveQuality)
-    : loadersContext_(loadersContext)
-    , active_(false)
-    , progressiveQuality_(progressiveQuality)
-    , startCenter_(false)
-    , simultaneousDownloads_(4)
-    , volume_(volume)
-    , sorter_(new BasicFetchingItemsSorter::Factory)
-    , volumeImageReadyInHighQuality_(false)
-    , medadataSchedulingPriority_(0)
-    , sliceSchedulingPriority_(0)
+  OrthancSeriesVolumeProgressiveLoader::OrthancSeriesVolumeProgressiveLoader(StoneApplication::Context& context,
+                                                                             boost::shared_ptr<DicomVolumeImage> volume,
+                                                                             bool progressiveQuality) :
+    context_(context),
+    active_(false),
+    progressiveQuality_(progressiveQuality),
+    startCenter_(false),
+    simultaneousDownloads_(4),
+    volume_(volume),
+    sorter_(new BasicFetchingItemsSorter::Factory),
+    volumeImageReadyInHighQuality_(false),
+    medadataSchedulingPriority_(0),
+    sliceSchedulingPriority_(0)
   {
   }
 
   boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> 
-    OrthancSeriesVolumeProgressiveLoader::Create(
-      ILoadersContext& loadersContext,
-      boost::shared_ptr<DicomVolumeImage> volume,
-      bool progressiveQuality)
+  OrthancSeriesVolumeProgressiveLoader::Create(StoneApplication::Context& context,
+                                               boost::shared_ptr<DicomVolumeImage> volume,
+                                               bool progressiveQuality)
   {
-    std::unique_ptr<ILoadersContext::ILock> lock(loadersContext.Lock());
-
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> obj(
-        new OrthancSeriesVolumeProgressiveLoader(
-          loadersContext, volume, progressiveQuality));
+      new OrthancSeriesVolumeProgressiveLoader(context, volume, progressiveQuality));
 
     obj->Register<OrthancRestApiCommand::SuccessMessage>(
-      lock->GetOracleObservable(),
+      context.GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadGeometry);
 
     obj->Register<GetOrthancImageCommand::SuccessMessage>(
-      lock->GetOracleObservable(),
+      context.GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent);
 
     obj->Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(
-      lock->GetOracleObservable(),
+      context.GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent);
 
     return obj;
@@ -613,11 +604,8 @@ namespace OrthancStone
 
       std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
       command->SetUri("/series/" + seriesId + "/instances-tags");
-      {
-        std::unique_ptr<ILoadersContext::ILock> lock(loadersContext_.Lock());
-        boost::shared_ptr<IObserver> observer(GetSharedObserver());
-        lock->Schedule(observer, medadataSchedulingPriority_, command.release());
-      }
+
+      context_.Schedule(GetSharedObserver(), medadataSchedulingPriority_, command.release());
     }
   }
   

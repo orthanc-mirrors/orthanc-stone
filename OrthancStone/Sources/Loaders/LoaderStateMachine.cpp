@@ -101,11 +101,8 @@ namespace OrthancStone
         ") < simultaneousDownloads_ (" << simultaneousDownloads_ << 
         ") --> will Schedule command addr " << std::hex << nextCommand << std::dec;
 
-      {
-        std::unique_ptr<ILoadersContext::ILock> lock(loadersContext_.Lock());
-        boost::shared_ptr<IObserver> observer(GetSharedObserver());
-        lock->Schedule(observer, 0, nextCommand); // TODO: priority!
-      }
+      context_.Schedule(GetSharedObserver(), 0, nextCommand); // TODO: priority!
+
       pendingCommands_.pop_front();
 
       activeCommands_++;
@@ -165,12 +162,11 @@ namespace OrthancStone
   }
 
 
-  LoaderStateMachine::LoaderStateMachine(
-    ILoadersContext& loadersContext)
-    : loadersContext_(loadersContext)
-    , active_(false)
-    , simultaneousDownloads_(4)
-    , activeCommands_(0)
+  LoaderStateMachine::LoaderStateMachine(StoneApplication::Context& context) :
+    context_(context),
+    active_(false),
+    simultaneousDownloads_(4),
+    activeCommands_(0)
   {
     LOG(TRACE) << "LoaderStateMachine(" << std::hex << this 
                << std::dec << ")::LoaderStateMachine()";
@@ -178,20 +174,15 @@ namespace OrthancStone
 
   void LoaderStateMachine::PostConstructor()
   {
-    std::unique_ptr<ILoadersContext::ILock>
-      lock(loadersContext_.Lock());
-
-    IObservable& observable = lock->GetOracleObservable();
-
     // TODO => Move this out of constructor
     Register<OrthancRestApiCommand::SuccessMessage>(
-      observable, &LoaderStateMachine::HandleSuccessMessage);
+      context_.GetOracleObservable(), &LoaderStateMachine::HandleSuccessMessage);
     Register<GetOrthancImageCommand::SuccessMessage>(
-      observable, &LoaderStateMachine::HandleSuccessMessage);
+      context_.GetOracleObservable(), &LoaderStateMachine::HandleSuccessMessage);
     Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(
-      observable, &LoaderStateMachine::HandleSuccessMessage);
+      context_.GetOracleObservable(), &LoaderStateMachine::HandleSuccessMessage);
     Register<OracleCommandExceptionMessage>(
-      observable, &LoaderStateMachine::HandleExceptionMessage);
+      context_.GetOracleObservable(), &LoaderStateMachine::HandleExceptionMessage);
   }
 
   LoaderStateMachine::~LoaderStateMachine()

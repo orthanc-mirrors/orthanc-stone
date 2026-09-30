@@ -23,7 +23,6 @@
 #pragma once
 
 #include "../../../OrthancStone/Sources/Loaders/DicomStructureSetLoader.h"
-#include "../../../OrthancStone/Sources/Loaders/ILoadersContext.h"
 #include "../../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.h"
 #include "../../../OrthancStone/Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
 #include "../../../OrthancStone/Sources/Messages/IMessageEmitter.h"
@@ -31,6 +30,7 @@
 #include "../../../OrthancStone/Sources/Messages/ObserverBase.h"
 #include "../../../OrthancStone/Sources/Oracle/OracleCommandExceptionMessage.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
+#include "../../../OrthancStone/Sources/StoneApplication.h"
 #include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 #include "../../../OrthancStone/Sources/Viewport/IViewport.h"
 #include "../../../OrthancStone/Sources/Volumes/DicomVolumeImage.h"
@@ -72,11 +72,10 @@ namespace OrthancStone
 
 #if ORTHANC_ENABLE_SDL
   public:
-    void RunSdl(int argc, char* argv[]);
+    void RunSdl();
     void SdlRunLoop(const std::vector<boost::shared_ptr<RtViewerView> >& views,
                     DefaultViewportInteractor& interactor);
   private:
-    void ProcessOptions(int argc, char* argv[]);
     void HandleApplicationEvent(const SDL_Event& event);
 #elif ORTHANC_ENABLE_WASM
   public:
@@ -96,12 +95,12 @@ namespace OrthancStone
 
     VolumeImageGeometry GetMainGeometry();
 
-    static boost::shared_ptr<RtViewerApp> Create();
+    static boost::shared_ptr<RtViewerApp> Create(StoneApplication::Context& context);
 
     void CreateView(const std::string& canvasId, VolumeProjection projection);
 
   protected:
-    RtViewerApp();
+    RtViewerApp(StoneApplication::Context& context);
 
   private:
     void CreateLoaders();
@@ -146,8 +145,7 @@ namespace OrthancStone
     boost::shared_ptr<OrthancMultiframeVolumeLoader> doseLoader_;
     boost::shared_ptr<DicomStructureSetLoader>  rtstructLoader_;
 
-    /** encapsulates resources shared by loaders */
-    boost::shared_ptr<ILoadersContext>                  loadersContext_;
+    StoneApplication::Context&   context_;
 
     /**
     another interface to the ctLoader object (that also implements the IVolumeSlicer interface), that serves as the 

@@ -31,6 +31,7 @@
 #include "../Oracle/GetOrthancWebViewerJpegCommand.h"
 #include "../Oracle/IOracle.h"
 #include "../Oracle/OrthancRestApiCommand.h"
+#include "../StoneApplication.h"
 #include "../Toolbox/SlicesSorter.h"
 #include "../Volumes/DicomVolumeImage.h"
 #include "../Volumes/IVolumeSlicer.h"
@@ -119,7 +120,7 @@ namespace OrthancStone
 
     void LoadJpegSliceContent(const GetOrthancWebViewerJpegCommand::SuccessMessage& message);
 
-    ILoadersContext&                                loadersContext_;
+    StoneApplication::Context&                      context_;
     bool                                            active_;
     bool                                            progressiveQuality_;
     bool                                            startCenter_;
@@ -139,7 +140,7 @@ namespace OrthancStone
     int sliceSchedulingPriority_;
 
     OrthancSeriesVolumeProgressiveLoader(
-      ILoadersContext& loadersContext,
+      StoneApplication::Context& context,
       boost::shared_ptr<DicomVolumeImage> volume,
       bool progressiveQuality);
   
@@ -150,7 +151,7 @@ namespace OrthancStone
     See doc for the progressiveQuality_ field
     */
     static boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> Create(
-      ILoadersContext& context,
+      StoneApplication::Context& context,
       boost::shared_ptr<DicomVolumeImage> volume,
       bool progressiveQuality = false);
 

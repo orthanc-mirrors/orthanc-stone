@@ -80,8 +80,9 @@ namespace OrthancStone
     }
   }
 
-  RtViewerApp::RtViewerApp() :
+  RtViewerApp::RtViewerApp(StoneApplication::Context& context) :
     // Create the volumes that will be filled later on
+    context_(context),
     ctVolume_(boost::make_shared<DicomVolumeImage>()),
     doseVolume_(boost::make_shared<DicomVolumeImage>()),
     undoStack_(new UndoStack),
@@ -89,9 +90,9 @@ namespace OrthancStone
   {
   }
 
-  boost::shared_ptr<RtViewerApp> RtViewerApp::Create()
+  boost::shared_ptr<RtViewerApp> RtViewerApp::Create(StoneApplication::Context& context)
   {
-    boost::shared_ptr<RtViewerApp> thisOne(new RtViewerApp());
+    boost::shared_ptr<RtViewerApp> thisOne(new RtViewerApp(context));
     return thisOne;
   }
 
@@ -128,7 +129,7 @@ namespace OrthancStone
       // "true" means use progressive quality (jpeg 50 --> jpeg 90 --> 16-bit raw)
       // "false" means only using hi quality
       // TODO: add flag for quality
-      ctLoader_ = OrthancSeriesVolumeProgressiveLoader::Create(*loadersContext_, ctVolume_, true);
+      ctLoader_ = OrthancSeriesVolumeProgressiveLoader::Create(context_, ctVolume_, true);
       
       // better priority for CT vs dose and struct
       ctLoader_->SetSchedulingPriority(-100);
@@ -137,8 +138,8 @@ namespace OrthancStone
       // we need to store the CT loader to ask from geometry details later on when geometry is loaded
       geometryProvider_ = ctLoader_;
 
-      doseLoader_ = OrthancMultiframeVolumeLoader::Create(*loadersContext_, doseVolume_);
-      rtstructLoader_ = DicomStructureSetLoader::Create(*loadersContext_);
+      doseLoader_ = OrthancMultiframeVolumeLoader::Create(context_, doseVolume_);
+      rtstructLoader_ = DicomStructureSetLoader::Create(context_);
     }
 
     /**

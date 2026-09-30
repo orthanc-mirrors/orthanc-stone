@@ -309,12 +309,7 @@ namespace OrthancStone
       application->loadThumbnails_ = loadThumbnails;
 
       application->resourcesLoader_ = DicomResourcesLoader::Create(context);
-
-      {
-        SeriesThumbnailsLoader::Factory f;
-        f.SetPriority(PRIORITY_THUMBNAILS);
-        application->thumbnailsLoader_ = boost::dynamic_pointer_cast<SeriesThumbnailsLoader>(f.Create(context));
-      }
+      application->thumbnailsLoader_ = SeriesThumbnailsLoader::Create(context, PRIORITY_THUMBNAILS);
 
       application->Register<OrthancRestApiCommand::SuccessMessage>(
         context.GetOracleObservable(), &WebViewerLoaders::HandleOrthancRestApi);

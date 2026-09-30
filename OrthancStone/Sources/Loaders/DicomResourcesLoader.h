@@ -34,7 +34,6 @@
 #include "../Oracle/OrthancRestApiCommand.h"
 #include "../Oracle/ReadFileCommand.h"
 #include "DicomSource.h"
-#include "ILoaderFactory.h"
 #include "LoadedDicomResources.h"
 #include "OracleScheduler.h"
 
@@ -149,16 +148,6 @@ namespace OrthancStone
       }
 
       const Orthanc::IDynamicObject& GetUserPayload() const;
-    };
-
-
-    class Factory : public ILoaderFactory
-    {
-    public:
-      virtual boost::shared_ptr<IObserver> Create(StoneApplication::Context& stone) ORTHANC_OVERRIDE
-      {
-        return DicomResourcesLoader::Create(stone);
-      }
     };
 
 

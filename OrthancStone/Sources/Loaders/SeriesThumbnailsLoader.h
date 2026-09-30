@@ -35,7 +35,6 @@
 #include "../Oracle/OracleCommandExceptionMessage.h"
 #include "../Oracle/OrthancRestApiCommand.h"
 #include "DicomSource.h"
-#include "ILoaderFactory.h"
 #include "OracleScheduler.h"
 
 
@@ -178,29 +177,6 @@ namespace OrthancStone
                            int priority);
     
   public:
-    class Factory : public ILoaderFactory
-    {
-    private:
-      int priority_;
-
-    public:
-      Factory() :
-        priority_(0)
-      {
-      }
-
-      void SetPriority(int priority)
-      {
-        priority_ = priority;
-      }
-
-      virtual boost::shared_ptr<IObserver> Create(StoneApplication::Context& context)
-      {
-        return SeriesThumbnailsLoader::Create(context, priority_);
-      }
-    };
-
-
     virtual ~SeriesThumbnailsLoader()
     {
       Clear();

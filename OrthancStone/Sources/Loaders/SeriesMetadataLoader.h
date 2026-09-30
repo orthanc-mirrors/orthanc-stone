@@ -127,16 +127,6 @@ namespace OrthancStone
     };
 
   
-    class Factory : public ILoaderFactory
-    {
-    public:
-      virtual boost::shared_ptr<IObserver> Create(StoneApplication::Context& context) ORTHANC_OVERRIDE
-      {
-        return SeriesMetadataLoader::Create(context);
-      }
-    };
-
-
     static boost::shared_ptr<SeriesMetadataLoader> Create(StoneApplication::Context& context);
 
   

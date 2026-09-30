@@ -32,7 +32,6 @@
 #include "OracleScheduler.h"
 #include "DicomSource.h"
 #include "SeriesOrderedFrames.h"
-#include "ILoaderFactory.h"
 
 namespace OrthancStone
 {  
@@ -142,7 +141,7 @@ namespace OrthancStone
     };
 
 
-    class Factory : public ILoaderFactory
+    class Factory : public boost::noncopyable  // TODO Refactoring - remove this?
     {
     private:
       LoadedDicomResources&                    instances_;
@@ -159,7 +158,7 @@ namespace OrthancStone
       void SetDicomDir(const std::string& dicomDirPath,
                        boost::shared_ptr<LoadedDicomResources> dicomDir);
 
-      virtual boost::shared_ptr<IObserver> Create(StoneApplication::Context& context) ORTHANC_OVERRIDE;
+      boost::shared_ptr<IObserver> Create(StoneApplication::Context& context);
     };
 
     const SeriesOrderedFrames& GetOrderedFrames() const

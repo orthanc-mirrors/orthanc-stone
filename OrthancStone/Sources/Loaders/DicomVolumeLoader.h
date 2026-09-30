@@ -92,7 +92,7 @@ namespace OrthancStone
     };
 
 
-    class Factory : public ILoaderFactory
+    class Factory : public boost::noncopyable  // TODO Refactoring - Remove this?
     {
     private:
       SeriesFramesLoader::Factory  framesFactory_;
@@ -114,7 +114,7 @@ namespace OrthancStone
         framesFactory_.SetDicomDir(dicomDirPath, dicomDir);
       }
 
-      virtual boost::shared_ptr<IObserver> Create(StoneApplication::Context& context) ORTHANC_OVERRIDE;
+      boost::shared_ptr<IObserver> Create(StoneApplication::Context& context);
     };
 
     bool IsValid() const

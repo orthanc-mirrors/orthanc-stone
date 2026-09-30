@@ -23,10 +23,8 @@
 
 #pragma once
 
-#include "../Messages/IMessageEmitter.h"
+#include "OracleCallback.h"
 #include "OracleCommandBase.h"
-
-#include "OracleCallback.h"   // TODO Refactoring
 
 #include <Images/ImageAccessor.h>
 

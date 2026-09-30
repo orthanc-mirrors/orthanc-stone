@@ -23,10 +23,9 @@
 
 #pragma once
 
-#include "../Messages/IMessageEmitter.h"
+#include "../Messages/IMessage.h"
 #include "OracleCommandBase.h"
-
-#include "OracleCallback.h"   // TODO Refactoring
+#include "OracleCallback.h"
 
 #include <Images/ImageAccessor.h>
 

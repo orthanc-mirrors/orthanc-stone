@@ -42,8 +42,6 @@
 #  include "../../Toolbox/ParsedDicomCache.h"
 #endif
 
-#include "../../Messages/IMessageEmitter.h"
-#include "../../Oracle/IOracle.h"
 #include "../../Oracle/OracleCallback.h"
 #include "../../StoneApplication.h"
 #include "RunnableThread.h"

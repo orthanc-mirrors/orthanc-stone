@@ -34,9 +34,10 @@
 #endif
 
 #include "../Loaders/DicomSource.h"
-#include "../Messages/IMessageEmitter.h"
-#include "../Messages/IObserver.h"
+#include "../Messages/IMessage.h"
 #include "OracleCommandBase.h"
+
+#include <DicomParsing/ParsedDicomFile.h>
 
 #include <map>
 

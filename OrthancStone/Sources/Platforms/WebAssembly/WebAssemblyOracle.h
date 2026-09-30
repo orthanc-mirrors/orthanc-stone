@@ -33,12 +33,7 @@
 #  error This file can only compiled for WebAssembly
 #endif
 
-#include "../../Oracle/OracleCallback.h"   // TODO Refactoring
-
-#include "../../Messages/IMessageEmitter.h"
-#include "../../Messages/IObservable.h"
-#include "../../Oracle/IEnvironment.h"
-#include "../../Oracle/IOracle.h"
+#include "../../Oracle/OracleCallback.h"
 #include "../../StoneApplication.h"
 
 #if ORTHANC_ENABLE_DCMTK == 1

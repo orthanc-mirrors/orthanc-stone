@@ -25,7 +25,6 @@
 #include "../../../OrthancStone/Sources/Loaders/DicomStructureSetLoader.h"
 #include "../../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.h"
 #include "../../../OrthancStone/Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
-#include "../../../OrthancStone/Sources/Messages/IMessageEmitter.h"
 #include "../../../OrthancStone/Sources/Messages/IObserver.h"
 #include "../../../OrthancStone/Sources/Messages/ObserverBase.h"
 #include "../../../OrthancStone/Sources/Oracle/OracleCommandExceptionMessage.h"

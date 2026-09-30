@@ -37,12 +37,12 @@ namespace OrthancStone
   private:
     StoneApplication::Configuration       configuration_;
     std::unique_ptr<GenericOracleRunner>  runner_;
-    std::unique_ptr<IOracleCallback>      callback_;
+    std::unique_ptr<OracleCallback>       callback_;
 
   public:
     GenericRunnable(const StoneApplication::Configuration& configuration,
                     GenericOracleRunner* runner /* takes ownership */,
-                    IOracleCallback* callback /* takes ownership */) :
+                    OracleCallback* callback /* takes ownership */) :
       configuration_(configuration),
       runner_(runner),
       callback_(callback)
@@ -67,11 +67,11 @@ namespace OrthancStone
     class Item : public boost::noncopyable
     {
     private:
-      std::unique_ptr<IOracleCallback>  callback_;
-      boost::posix_time::ptime          expiration_;
+      std::unique_ptr<OracleCallback>  callback_;
+      boost::posix_time::ptime         expiration_;
 
     public:
-      Item(IOracleCallback* callback,
+      Item(OracleCallback* callback,
            unsigned int delay) :
         callback_(callback)
       {
@@ -89,7 +89,7 @@ namespace OrthancStone
         return expiration_;
       }
 
-      IOracleCallback& GetCallback()
+      OracleCallback& GetCallback()
       {
         return *callback_;
       }
@@ -113,7 +113,7 @@ namespace OrthancStone
     }
 
 
-    void Add(IOracleCallback* callback,
+    void Add(OracleCallback* callback,
              unsigned int delay)
     {
       boost::mutex::scoped_lock lock(mutex_);
@@ -186,9 +186,9 @@ namespace OrthancStone
   }
 
 
-  void ThreadedOracle::SubmitInternal(IOracleCallback* callback /* takes ownership */)
+  void ThreadedOracle::SubmitInternal(OracleCallback* callback /* takes ownership */)
   {
-    std::unique_ptr<IOracleCallback> protection(callback);
+    std::unique_ptr<OracleCallback> protection(callback);
 
     if (callback == NULL)
     {

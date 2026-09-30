@@ -25,23 +25,10 @@
 
 #include "IEnvironment.h"
 
-#include "../Messages/IMessageEmitter.h"   // TODO Refactoring - Remove this
-
 
 namespace OrthancStone
 {
-  class IOracleCallback : public Orthanc::IDynamicObject  // TODO Refactoring - Remove this
-  {
-  public:
-    virtual void NotifySuccess(IMessage* result) = 0;
-
-    virtual void NotifyError(const Orthanc::OrthancException& error) = 0;
-
-    virtual const IOracleCommand& GetCommand() const = 0;
-  };
-
-
-  class OracleCallback : public IOracleCallback
+  class OracleCallback : public boost::noncopyable
   {
   private:
     IEnvironment&                    environment_;
@@ -53,38 +40,13 @@ namespace OrthancStone
                    const boost::shared_ptr<IOracleClient>& client,
                    IOracleCommand* command /* takes ownership */);
 
-    virtual void NotifySuccess(IMessage* result) ORTHANC_OVERRIDE;
+    void NotifySuccess(IMessage* result);
 
-    virtual void NotifyError(const Orthanc::OrthancException& error) ORTHANC_OVERRIDE;
+    void NotifyError(const Orthanc::OrthancException& error);
 
-    virtual const IOracleCommand& GetCommand() const ORTHANC_OVERRIDE  // TODO Refactoring - Remove this
+    const IOracleCommand& GetCommand() const  // TODO Refactoring - Remove this
     {
       return *command_;
-    }
-  };
-
-
-  class OldOracleCallback : public IOracleCallback  // TODO Refactoring - Remove this
-  {
-  private:
-    std::unique_ptr<IOracleCommand>  command_;
-    boost::weak_ptr<IObserver>       receiver_;
-    IMessageEmitter&                 emitter_;
-
-  public:
-    OldOracleCallback(IOracleCommand* command /* takes ownership */,
-                      boost::weak_ptr<IObserver> receiver,
-                      IMessageEmitter& emitter);
-
-    virtual void NotifySuccess(IMessage* message /* takes ownership */) ORTHANC_OVERRIDE;
-
-    virtual void NotifyError(const Orthanc::OrthancException& error) ORTHANC_OVERRIDE;
-
-    virtual const IOracleCommand& GetCommand() const ORTHANC_OVERRIDE;
-
-    const boost::weak_ptr<IObserver>& GetReceiver() const
-    {
-      return receiver_;
     }
   };
 }

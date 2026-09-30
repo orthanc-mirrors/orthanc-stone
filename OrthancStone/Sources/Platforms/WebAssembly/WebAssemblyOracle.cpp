@@ -44,7 +44,7 @@ namespace OrthancStone
 {
   static void TimeoutCallback(void *userData)
   {
-    std::unique_ptr<IOracleCallback> callback(reinterpret_cast<IOracleCallback*>(userData));
+    std::unique_ptr<OracleCallback> callback(reinterpret_cast<OracleCallback*>(userData));
 
     const SleepOracleCommand& command = dynamic_cast<const SleepOracleCommand&>(callback->GetCommand());  // TODO Refactoring - Remove this
     callback->NotifySuccess(new SleepOracleCommand::TimeoutMessage(command));
@@ -63,13 +63,13 @@ namespace OrthancStone
   class WebAssemblyOracle::FetchContext : public boost::noncopyable
   {
   private:
-    WebAssemblyOracle&                oracle_;  // TODO Refactoring - Remove this
-    std::unique_ptr<IOracleCallback>  callback_;
-    std::string                       expectedContentType_;
+    WebAssemblyOracle&               oracle_;  // TODO Refactoring - Remove this
+    std::unique_ptr<OracleCallback>  callback_;
+    std::string                      expectedContentType_;
 
   public:
     FetchContext(WebAssemblyOracle& oracle,
-                 IOracleCallback* callback /* takes ownership */,
+                 OracleCallback* callback /* takes ownership */,
                  const std::string& expectedContentType) :
       callback_(callback),
       oracle_(oracle),
@@ -239,7 +239,7 @@ namespace OrthancStone
   {
   private:
     WebAssemblyOracle&                oracle_;  // TODO Refactoring - Remove this
-    std::unique_ptr<IOracleCallback>  callback_;
+    std::unique_ptr<OracleCallback>   callback_;
     Orthanc::HttpMethod            method_;
     std::string                    url_;
     size_t                         bodySize_;
@@ -263,7 +263,7 @@ namespace OrthancStone
 
   public:
     FetchCommand(WebAssemblyOracle& oracle,
-                 IOracleCallback* callback) :
+                 OracleCallback* callback) :
       oracle_(oracle),
       callback_(callback),
       method_(Orthanc::HttpMethod_Get),
@@ -283,7 +283,7 @@ namespace OrthancStone
       ClearBody();
     }
 
-    const IOracleCallback& GetCallback() const
+    const OracleCallback& GetCallback() const
     {
       if (callback_.get() == NULL)
       {
@@ -453,7 +453,7 @@ namespace OrthancStone
   };
 
 
-  void WebAssemblyOracle::ProcessFetchResult(IOracleCallback& callback,
+  void WebAssemblyOracle::ProcessFetchResult(OracleCallback& callback,
                                              const HttpHeaders& headers,
                                              std::string& answer)
   {
@@ -638,9 +638,9 @@ namespace OrthancStone
   }
 
 
-  void WebAssemblyOracle::ExecuteParseDicomFromWadoCommand(IOracleCallback* callback)
+  void WebAssemblyOracle::ExecuteParseDicomFromWadoCommand(OracleCallback* callback)
   {
-    std::unique_ptr<IOracleCallback> protection(callback);
+    std::unique_ptr<OracleCallback> protection(callback);
 
     const ParseDicomFromWadoCommand& command = dynamic_cast<const ParseDicomFromWadoCommand&>(protection->GetCommand());
 
@@ -713,9 +713,9 @@ namespace OrthancStone
   }
 
 
-  void WebAssemblyOracle::Submit(IOracleCallback* callback)
+  void WebAssemblyOracle::Submit(OracleCallback* callback)
   {
-    std::unique_ptr<IOracleCallback> protection(callback);
+    std::unique_ptr<OracleCallback> protection(callback);
 
     if (callback == NULL)
     {

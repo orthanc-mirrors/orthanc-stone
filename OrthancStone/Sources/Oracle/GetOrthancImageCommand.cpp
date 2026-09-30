@@ -96,7 +96,7 @@ namespace OrthancStone
   }
 
 
-  void GetOrthancImageCommand::ProcessHttpAnswer(IOracleCallback& callback,
+  void GetOrthancImageCommand::ProcessHttpAnswer(OracleCallback& callback,
                                                  const std::string& answer,
                                                  const HttpHeaders& answerHeaders) const
   {

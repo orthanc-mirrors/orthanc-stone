@@ -138,7 +138,7 @@ namespace OrthancStone
       return timeout_;
     }
 
-    void ProcessHttpAnswer(IOracleCallback& callback,
+    void ProcessHttpAnswer(OracleCallback& callback,
                            const std::string& answer,
                            const HttpHeaders& answerHeaders) const;
   };

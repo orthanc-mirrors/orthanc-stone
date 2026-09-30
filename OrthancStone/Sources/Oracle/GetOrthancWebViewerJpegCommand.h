@@ -152,7 +152,7 @@ namespace OrthancStone
 
     std::string GetUri() const;
 
-    void ProcessHttpAnswer(IOracleCallback& callback,
+    void ProcessHttpAnswer(OracleCallback& callback,
                            const std::string& answer) const;
   };
 }

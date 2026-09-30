@@ -147,7 +147,7 @@ namespace OrthancStone
   }
 
 
-  static void RunInternal(IOracleCallback& callback,
+  static void RunInternal(OracleCallback& callback,
                           const HttpCommand& command)
   {
     std::string answer;
@@ -185,7 +185,7 @@ namespace OrthancStone
   }
 
   
-  static void RunInternal(IOracleCallback& callback,
+  static void RunInternal(OracleCallback& callback,
                           const Orthanc::WebServiceParameters& orthanc,
                           const OrthancRestApiCommand& command)
   {
@@ -200,7 +200,7 @@ namespace OrthancStone
   }
 
 
-  static void RunInternal(IOracleCallback& callback,
+  static void RunInternal(OracleCallback& callback,
                           const Orthanc::WebServiceParameters& orthanc,
                           const GetOrthancImageCommand& command)
   {
@@ -220,7 +220,7 @@ namespace OrthancStone
   }
 
 
-  static void RunInternal(IOracleCallback& callback,
+  static void RunInternal(OracleCallback& callback,
                           const Orthanc::WebServiceParameters& orthanc,
                           const GetOrthancWebViewerJpegCommand& command)
   {
@@ -260,7 +260,7 @@ namespace OrthancStone
   }
 
 
-  static void RunInternal(IOracleCallback& callback,
+  static void RunInternal(OracleCallback& callback,
                           const std::string& root,
                           const ReadFileCommand& command)
   {
@@ -346,7 +346,7 @@ namespace OrthancStone
 
   
 #if ORTHANC_ENABLE_DCMTK == 1
-  static void RunInternal(IOracleCallback& callback,
+  static void RunInternal(OracleCallback& callback,
                           boost::shared_ptr<ParsedDicomCache> cache,
                           const std::string& root,
                           const ParseDicomFromFileCommand& command)
@@ -391,7 +391,7 @@ namespace OrthancStone
   
 
 #if ORTHANC_ENABLE_DCMTK == 1
-  static void RunInternal(IOracleCallback& callback,
+  static void RunInternal(OracleCallback& callback,
                           boost::shared_ptr<ParsedDicomCache> cache,
                           const Orthanc::WebServiceParameters& orthanc,
                           const ParseDicomFromWadoCommand& command)
@@ -446,7 +446,7 @@ namespace OrthancStone
 #endif
 
 
-  void GenericOracleRunner::Run(IOracleCallback& callback)
+  void GenericOracleRunner::Run(OracleCallback& callback)
   {
     Orthanc::ErrorCode error = Orthanc::ErrorCode_Success;
     

@@ -77,7 +77,7 @@ namespace OrthancStone
   }
 
 
-  void GetOrthancWebViewerJpegCommand::ProcessHttpAnswer(IOracleCallback& callback,
+  void GetOrthancWebViewerJpegCommand::ProcessHttpAnswer(OracleCallback& callback,
                                                          const std::string& answer) const
   {
     // This code comes from older "OrthancSlicesLoader::ParseSliceImageJpeg()"

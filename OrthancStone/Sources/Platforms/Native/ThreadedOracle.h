@@ -67,7 +67,7 @@ namespace OrthancStone
     boost::shared_ptr<ParsedDicomCache>  dicomCache_;
 #endif
 
-    void SubmitInternal(IOracleCallback* callback /* takes ownership */);
+    void SubmitInternal(OracleCallback* callback /* takes ownership */);
 
   public:
     ThreadedOracle(const StoneApplication::Configuration& configuration);

@@ -71,7 +71,7 @@ namespace OrthancStone
     
     void ExecuteGetOrthancWebViewerJpegCommand(FetchCommand& fetch);
     
-    void ExecuteParseDicomFromWadoCommand(IOracleCallback* callback);
+    void ExecuteParseDicomFromWadoCommand(OracleCallback* callback);
 
     StoneApplication::Configuration  configuration_;
 
@@ -79,11 +79,11 @@ namespace OrthancStone
     std::unique_ptr<ParsedDicomCache>  dicomCache_;
 #endif
 
-    void ProcessFetchResult(IOracleCallback& callback,
+    void ProcessFetchResult(OracleCallback& callback,
                             const HttpHeaders& headers,
                             std::string& answer);
 
-    void Submit(IOracleCallback* callback);
+    void Submit(OracleCallback* callback);
 
   public:
     WebAssemblyOracle(const StoneApplication::Configuration& configuration);

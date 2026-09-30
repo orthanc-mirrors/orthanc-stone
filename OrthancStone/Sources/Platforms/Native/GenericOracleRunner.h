@@ -64,6 +64,6 @@ namespace OrthancStone
     }
 #endif
 
-    void Run(IOracleCallback& callback);
+    void Run(OracleCallback& callback);
   };
 }

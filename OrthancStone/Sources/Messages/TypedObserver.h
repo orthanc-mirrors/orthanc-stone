@@ -23,53 +23,24 @@
 
 #pragma once
 
-#include "../StoneEnumerations.h"
-#include "ICallable.h"
-#include "IObserver.h"
-#include "TypedObservable.h"
+#include <boost/noncopyable.hpp>
 
-#include <set>
-#include <map>
-
-namespace OrthancStone 
+namespace OrthancStone
 {
-  class IObservable : public boost::noncopyable
-  {
-  private:
-    typedef std::map<MessageIdentifier, std::set<ICallable*> >  Callables;
-
-    Callables       callables_;
-
-    void EmitMessageInternal(const IObserver* receiver,
-                             const IMessage& message);
-
-  public:
-    virtual ~IObservable();
-
-    // Takes ownership of the callable
-    void RegisterCallable(ICallable* callable);
-
-    void BroadcastMessage(const IMessage& message);
-
-    void EmitMessage(boost::weak_ptr<IObserver> observer,
-                     const IMessage& message);
-  };
-
-
   namespace New
   {
-    class IObservable : public boost::noncopyable
+    class IObservable;
+
+    template <typename Message>
+    class TypedObserver : public boost::noncopyable
     {
     public:
-      virtual ~IObservable()
+      virtual ~TypedObserver()
       {
       }
 
-      template <typename Message>
-      void Notify(const Message& message)
-      {
-        dynamic_cast< TypedObservable<Message>& >(*this).Dispatch(*this, message);
-      }
+      virtual void Handle(const IObservable& source,
+                          const Message& message) = 0;
     };
   }
 }

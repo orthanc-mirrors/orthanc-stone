@@ -780,7 +780,7 @@ private:
   {
   }
 
-  void Handle(const OrthancStone::DicomResourcesLoader::SuccessMessage& message)
+  void Handle(const OrthancStone::DicomResourcesLoadedMessage& message)
   {
     const Orthanc::SingleValueObject<Orthanc::ResourceType>& payload =
       dynamic_cast<const Orthanc::SingleValueObject<Orthanc::ResourceType>&>(message.GetUserPayload());
@@ -1138,7 +1138,7 @@ public:
     loader->thumbnailsLoader_ = OrthancStone::SeriesThumbnailsLoader::Create(context, PRIORITY_LOW);
     loader->metadataLoader_ = OrthancStone::SeriesMetadataLoader::Create(context);
     
-    loader->Register<OrthancStone::DicomResourcesLoader::SuccessMessage>(
+    loader->Register<OrthancStone::DicomResourcesLoadedMessage>(
       *loader->resourcesLoader_, &ResourcesLoader::Handle);
 
     loader->Register<OrthancStone::SeriesThumbnailsLoader::SuccessMessage>(
@@ -2346,7 +2346,7 @@ private:
       return *viewport_;
     }
     
-    virtual void Handle(const OrthancStone::DicomResourcesLoader::SuccessMessage& message) const
+    virtual void Handle(const OrthancStone::DicomResourcesLoadedMessage& message) const
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
     }
@@ -2370,7 +2370,7 @@ private:
     {
     }
     
-    virtual void Handle(const OrthancStone::DicomResourcesLoader::SuccessMessage& message) const ORTHANC_OVERRIDE
+    virtual void Handle(const OrthancStone::DicomResourcesLoadedMessage& message) const ORTHANC_OVERRIDE
     {
       if (message.GetResources()->GetSize() != 1)
       {
@@ -3331,7 +3331,7 @@ private:
     return true;
   }
 
-  void Handle(const OrthancStone::DicomResourcesLoader::SuccessMessage& message)
+  void Handle(const OrthancStone::DicomResourcesLoadedMessage& message)
   {
     dynamic_cast<const ICommand&>(message.GetUserPayload()).Handle(message);
   }
@@ -3446,7 +3446,7 @@ public:
 
     {
       viewport->loader_ = OrthancStone::DicomResourcesLoader::Create(context);
-      viewport->Register<OrthancStone::DicomResourcesLoader::SuccessMessage>(
+      viewport->Register<OrthancStone::DicomResourcesLoadedMessage>(
         *viewport->loader_, &ViewerViewport::Handle);
 
       viewport->Register<OrthancStone::HttpCommand::SuccessMessage>(

@@ -29,6 +29,7 @@
 #  error The macro ORTHANC_ENABLE_DCMTK must be defined
 #endif
 
+#include "../Messages/TypedObservable.h"
 #include "../Oracle/HttpCommand.h"
 #include "../Oracle/OracleCommandExceptionMessage.h"
 #include "../Oracle/OrthancRestApiCommand.h"
@@ -49,11 +50,67 @@ namespace OrthancStone
 #if ORTHANC_ENABLE_DCMTK == 1
   class ParseDicomFromFileCommand;
 #endif
-  
+
+  class DicomResourcesLoader;
+
+  // TODO Refactoring - Move to a separate file
+  class DicomResourcesLoadedMessage : public OriginMessage<DicomResourcesLoader>
+  {
+    ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
+  private:
+    boost::shared_ptr<LoadedDicomResources>  resources_;
+    int                                      priority_;
+    const DicomSource&                       source_;
+    const Orthanc::IDynamicObject*           userPayload_;
+
+  public:
+    DicomResourcesLoadedMessage(const DicomResourcesLoader& origin,
+                                boost::shared_ptr<LoadedDicomResources> resources,
+                                int priority,
+                                const DicomSource& source,
+                                const Orthanc::IDynamicObject* userPayload) :
+      OriginMessage(origin),
+      resources_(resources),
+      priority_(priority),
+      source_(source),
+      userPayload_(userPayload)
+    {
+    }
+
+    int GetPriority() const
+    {
+      return priority_;
+    }
+
+    const boost::shared_ptr<LoadedDicomResources> GetResources() const
+    {
+      return resources_;
+    }
+
+    const DicomSource& GetDicomSource() const
+    {
+      return source_;
+    }
+
+    bool HasUserPayload() const
+    {
+      return userPayload_ != NULL;
+    }
+
+    const Orthanc::IDynamicObject& GetUserPayload() const;
+  };
+
+
   class DicomResourcesLoader :
     public ObserverBase<DicomResourcesLoader>,
-    public IObservable
+    public IObservable,
+    public New::IObservable,
+    public New::TypedObservable<DicomResourcesLoadedMessage>
   {
+  public:
+    using New::TypedObservable<DicomResourcesLoadedMessage>::Register;  // TODO Refactoring - Presumably not needed
+
   private:
     class Handler;
     class StringHandler;
@@ -103,54 +160,6 @@ namespace OrthancStone
 
 
   public:
-    class SuccessMessage : public OriginMessage<DicomResourcesLoader>
-    {
-      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
-      
-    private:
-      boost::shared_ptr<LoadedDicomResources>  resources_;
-      int                                      priority_;
-      const DicomSource&                       source_;
-      const Orthanc::IDynamicObject*           userPayload_;
-      
-    public:
-      SuccessMessage(const DicomResourcesLoader& origin,
-                     boost::shared_ptr<LoadedDicomResources> resources,
-                     int priority,
-                     const DicomSource& source,
-                     const Orthanc::IDynamicObject* userPayload) :
-        OriginMessage(origin),
-        resources_(resources),
-        priority_(priority),
-        source_(source),
-        userPayload_(userPayload)
-      {
-      }
-
-      int GetPriority() const
-      {
-        return priority_;
-      }
-
-      const boost::shared_ptr<LoadedDicomResources> GetResources() const
-      {
-        return resources_;
-      }
-
-      const DicomSource& GetDicomSource() const
-      {
-        return source_;
-      }
-
-      bool HasUserPayload() const
-      {
-        return userPayload_ != NULL;
-      }
-
-      const Orthanc::IDynamicObject& GetUserPayload() const;
-    };
-
-
     static boost::shared_ptr<DicomResourcesLoader> Create(StoneApplication::Context& stone);
 
     void ScheduleGetDicomWeb(boost::shared_ptr<LoadedDicomResources> target,

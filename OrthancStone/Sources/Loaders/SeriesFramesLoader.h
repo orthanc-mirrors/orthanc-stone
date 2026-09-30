@@ -34,11 +34,83 @@
 #include "SeriesOrderedFrames.h"
 
 namespace OrthancStone
-{  
+{
+  class SeriesFramesLoader;
+
+  // TODO Refactoring - Move to a separate file
+  class FrameDecodedMessage : public OriginMessage<SeriesFramesLoader>
+  {
+    ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
+  private:
+    size_t                          frameIndex_;
+    unsigned int                    quality_;
+    const Orthanc::ImageAccessor&   image_;
+    const Orthanc::DicomMap&        instance_;
+    const DicomInstanceParameters&  parameters_;
+    Orthanc::IDynamicObject*        userPayload_; // Ownership is maintained by the caller
+
+  public:
+    FrameDecodedMessage(const SeriesFramesLoader& loader,
+                        size_t frameIndex,
+                        unsigned int quality,
+                        const Orthanc::ImageAccessor& image,
+                        const Orthanc::DicomMap& instance,
+                        const DicomInstanceParameters&  parameters,
+                        Orthanc::IDynamicObject* userPayload) :
+      OriginMessage(loader),
+      frameIndex_(frameIndex),
+      quality_(quality),
+      image_(image),
+      instance_(instance),
+      parameters_(parameters),
+      userPayload_(userPayload)
+    {
+    }
+
+    size_t GetFrameIndex() const
+    {
+      return frameIndex_;
+    }
+
+    unsigned int GetQuality() const
+    {
+      return quality_;
+    }
+
+    const Orthanc::ImageAccessor& GetImage() const
+    {
+      return image_;
+    }
+
+    const Orthanc::DicomMap& GetInstance() const
+    {
+      return instance_;
+    }
+
+    const DicomInstanceParameters& GetInstanceParameters() const
+    {
+      return parameters_;
+    }
+
+    bool HasUserPayload() const
+    {
+      return userPayload_ != NULL;
+    }
+
+    Orthanc::IDynamicObject& GetUserPayload() const;
+  };
+
+
   class SeriesFramesLoader : 
     public ObserverBase<SeriesFramesLoader>,
-    public IObservable
+    public IObservable,
+    public New::IObservable,
+    public New::TypedObservable<FrameDecodedMessage>
   {
+  public:
+    using New::TypedObservable<FrameDecodedMessage>::Register;  // TODO Refactoring - Presumably not needed
+
   private:
     class Payload;
 
@@ -77,70 +149,6 @@ namespace OrthancStone
     void Handle(const HttpCommand::SuccessMessage& message);
 
   public:
-    class FrameLoadedMessage : public OriginMessage<SeriesFramesLoader>
-    {
-      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
-
-    private:
-      size_t                          frameIndex_;
-      unsigned int                    quality_;
-      const Orthanc::ImageAccessor&   image_;
-      const Orthanc::DicomMap&        instance_;
-      const DicomInstanceParameters&  parameters_;
-      Orthanc::IDynamicObject*        userPayload_; // Ownership is maintained by the caller
-
-    public:
-      FrameLoadedMessage(const SeriesFramesLoader& loader,
-                         size_t frameIndex,
-                         unsigned int quality,
-                         const Orthanc::ImageAccessor& image,
-                         const Orthanc::DicomMap& instance,
-                         const DicomInstanceParameters&  parameters,
-                         Orthanc::IDynamicObject* userPayload) :
-        OriginMessage(loader),
-        frameIndex_(frameIndex),
-        quality_(quality),
-        image_(image),
-        instance_(instance),
-        parameters_(parameters),
-        userPayload_(userPayload)
-      {
-      }
-
-      size_t GetFrameIndex() const
-      {
-        return frameIndex_;
-      }
-
-      unsigned int GetQuality() const
-      {
-        return quality_;
-      }
-
-      const Orthanc::ImageAccessor& GetImage() const
-      {
-        return image_;
-      }
-
-      const Orthanc::DicomMap& GetInstance() const
-      {
-        return instance_;
-      }
-
-      const DicomInstanceParameters& GetInstanceParameters() const
-      {
-        return parameters_;
-      }
-
-      bool HasUserPayload() const
-      {
-        return userPayload_ != NULL;
-      }
-
-      Orthanc::IDynamicObject& GetUserPayload() const;
-    };
-
-
     static boost::shared_ptr<SeriesFramesLoader> Create(StoneApplication::Context& context,
                                                         LoadedDicomResources& instances);
 

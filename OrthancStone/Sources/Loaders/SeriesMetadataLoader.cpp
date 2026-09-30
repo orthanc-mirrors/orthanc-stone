@@ -52,7 +52,7 @@ namespace OrthancStone
   }
 
 
-  void SeriesMetadataLoader::Handle(const DicomResourcesLoader::SuccessMessage& message)
+  void SeriesMetadataLoader::Handle(const DicomResourcesLoadedMessage& message)
   {
     assert(message.GetResources());
 
@@ -194,7 +194,7 @@ namespace OrthancStone
     boost::shared_ptr<DicomResourcesLoader> loader(DicomResourcesLoader::Create(context));
       
     boost::shared_ptr<SeriesMetadataLoader> obj(new SeriesMetadataLoader(loader));
-    obj->Register<DicomResourcesLoader::SuccessMessage>(*loader, &SeriesMetadataLoader::Handle);
+    obj->Register<DicomResourcesLoadedMessage>(*loader, &SeriesMetadataLoader::Handle);
     return obj;
   }
 

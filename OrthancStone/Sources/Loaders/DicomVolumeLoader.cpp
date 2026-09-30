@@ -84,7 +84,7 @@ namespace OrthancStone
   }
 
 
-  void DicomVolumeLoader::Handle(const SeriesFramesLoader::FrameLoadedMessage& message)
+  void DicomVolumeLoader::Handle(const FrameDecodedMessage& message)
   {
     if (remaining_ == 0 ||
         !message.HasUserPayload())

@@ -43,7 +43,7 @@ namespace OrthancStone
     DicomVolumeLoader(boost::shared_ptr<SeriesFramesLoader>& framesLoader,
                       bool computeRange);
 
-    void Handle(const SeriesFramesLoader::FrameLoadedMessage& message);
+    void Handle(const FrameDecodedMessage& message);
 
   public:
     class VolumeReadyMessage : public OriginMessage<DicomVolumeLoader>

@@ -95,8 +95,10 @@ namespace OrthancStone
 
     void BroadcastSuccess()
     {
-      SuccessMessage message(*loader_, target_, priority_, source_, userPayload_.get());
+      DicomResourcesLoadedMessage message(*loader_, target_, priority_, source_, userPayload_.get());
       loader_->BroadcastMessage(message);
+
+      loader_->Notify(message);
     }
 
     boost::shared_ptr<DicomResourcesLoader> GetLoader()
@@ -593,7 +595,7 @@ namespace OrthancStone
     
     
 
-  const Orthanc::IDynamicObject& DicomResourcesLoader::SuccessMessage::GetUserPayload() const
+  const Orthanc::IDynamicObject& DicomResourcesLoadedMessage::GetUserPayload() const
   {
     if (userPayload_ == NULL)
     {
@@ -609,13 +611,13 @@ namespace OrthancStone
   boost::shared_ptr<DicomResourcesLoader> DicomResourcesLoader::Create(StoneApplication::Context& stone)
   {
     boost::shared_ptr<DicomResourcesLoader> result(new DicomResourcesLoader(stone));
-    result->Register<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
-    result->Register<OracleCommandExceptionMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
-    result->Register<OrthancRestApiCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
-    result->Register<ReadFileCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
+    result->ObserverBase<DicomResourcesLoader>::Register<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
+    result->ObserverBase<DicomResourcesLoader>::Register<OracleCommandExceptionMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
+    result->ObserverBase<DicomResourcesLoader>::Register<OrthancRestApiCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
+    result->ObserverBase<DicomResourcesLoader>::Register<ReadFileCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    result->Register<ParseDicomSuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
+    result->ObserverBase<DicomResourcesLoader>::Register<ParseDicomSuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
 #endif
     
     return result;

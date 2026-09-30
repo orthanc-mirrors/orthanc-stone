@@ -20,6 +20,8 @@
  **/
 
 
+#include "../../../../OrthancStone/Sources/Messages/TypedObserver.h"
+
 #include "../../../../OrthancStone/Sources/Loaders/DicomResourcesLoader.h"
 #include "../../../../OrthancStone/Sources/Loaders/SeriesFramesLoader.h"
 #include "../../../../OrthancStone/Sources/Scene2D/AnnotationsSceneLayer.h"
@@ -75,8 +77,7 @@ public:
     LOG(ERROR) << "error!";
   }
 };
-
-static boost::shared_ptr<Toto> toto_(new Toto);   // TODO REMOVE
+// END TODO Refactoring
 
 
 namespace OrthancStone
@@ -93,13 +94,13 @@ namespace OrthancStone
 
     virtual bool HandleKeyDown(char key) = 0;
 
-    virtual void HandleMouseDown(OrthancStone::IViewport::ILock& lock,
-                                 const OrthancStone::PointerEvent& p) = 0;
+    virtual void HandleMouseDown(IViewport::ILock& lock,
+                                 const PointerEvent& p) = 0;
 
-    virtual bool HandleMouseMove(OrthancStone::IViewport::ILock& lock,
-                                 const OrthancStone::PointerEvent& p) = 0;
+    virtual bool HandleMouseMove(IViewport::ILock& lock,
+                                 const PointerEvent& p) = 0;
 
-    virtual void Render(OrthancStone::IViewport::ILock& lock) = 0;
+    virtual void Render(IViewport::ILock& lock) = 0;
   };
 
 
@@ -146,7 +147,7 @@ namespace OrthancStone
                    (event.window.event == SDL_WINDOWEVENT_SHOWN ||
                     event.window.event == SDL_WINDOWEVENT_EXPOSED))
           {
-            std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+            std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
             lock->RefreshCanvasSize();
           }
           else if (event.type == SDL_TEXTINPUT)
@@ -174,11 +175,11 @@ namespace OrthancStone
                    event.type == SDL_MOUSEMOTION ||
                    event.type == SDL_MOUSEBUTTONUP)
           {
-            std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+            std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
 
             if (lock->HasCompositor())
             {
-              OrthancStone::PointerEvent p;
+              PointerEvent p;
               OrthancStoneHelpers::GetPointerEvent(p, lock->GetCompositor(), event, keyboardState, scancodeCount);
 
               switch (event.type)
@@ -206,7 +207,7 @@ namespace OrthancStone
         if (paint)
         {
           {
-            std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+            std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
             core_->Render(*lock);
           }
 
@@ -235,18 +236,18 @@ namespace OrthancStone
 
       if (useOpenGL)
       {
-        viewport_ = OrthancStone::SdlOpenGLViewport::Create(title, width, height);
+        viewport_ = SdlOpenGLViewport::Create(title, width, height);
       }
       else
       {
-        viewport_ = OrthancStone::SdlCairoViewport::Create(title, width, height);
+        viewport_ = SdlCairoViewport::Create(title, width, height);
       }
 
       std::string font;
       Orthanc::EmbeddedResources::GetFileResource(font, Orthanc::EmbeddedResources::UBUNTU_FONT);
 
       {
-        std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+        std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
         lock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
       }
     }
@@ -254,7 +255,9 @@ namespace OrthancStone
 
 
   class SimpleViewerApp : public ISingleViewportApplicationCore,
-                          public ObserverBase<SimpleViewerApp>  // TODO Refactoring - Remove
+                          public boost::enable_shared_from_this<SimpleViewerApp>,
+                          public New::TypedObserver<FrameDecodedMessage>,
+                          public New::TypedObserver<DicomResourcesLoadedMessage>
   {
   private:
     std::string                                   instanceId_;
@@ -262,13 +265,15 @@ namespace OrthancStone
     boost::shared_ptr<StoneApplication::Context>  context_;
     boost::shared_ptr<IViewport>                  viewport_;
     AnnotationsSceneLayer                         annotations_;
-    OrthancStone::DefaultViewportInteractor       interactor_;
+    DefaultViewportInteractor                     interactor_;
     boost::shared_ptr<Toto>                       toto_;
     boost::shared_ptr<DicomResourcesLoader>       dicomLoader_;
     boost::shared_ptr<SeriesFramesLoader>         framesLoader_;
-    OrthancStone::Units                           units_;
+    Units                                         units_;
 
-    void Handle(const SeriesFramesLoader::FrameLoadedMessage& message)
+  public:
+    virtual void Handle(const New::IObservable& observable,
+                        const FrameDecodedMessage& message) ORTHANC_OVERRIDE
     {
       LOG(INFO) << "Frame decoded! "
                 << message.GetImage().GetWidth() << "x" << message.GetImage().GetHeight()
@@ -287,14 +292,15 @@ namespace OrthancStone
       }
     }
 
-    void Handle(const DicomResourcesLoader::SuccessMessage& message)
+    virtual void Handle(const New::IObservable& observable,
+                        const DicomResourcesLoadedMessage& message) ORTHANC_OVERRIDE
     {
       if (message.GetResources()->GetSize() != 1)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
       }
 
-      OrthancStone::DicomInstanceParameters parameters(message.GetResources()->GetResource(0));
+      DicomInstanceParameters parameters(message.GetResources()->GetResource(0));
       if (parameters.HasPixelSpacing())
       {
         /**
@@ -309,7 +315,7 @@ namespace OrthancStone
         // std::cout << message.GetResources()->GetSourceJson(0).toStyledString();
 
         LOG(INFO) << "Using millimeters units, as the DICOM instance contains the PixelSpacing tag";
-        units_ = OrthancStone::Units_Millimeters;
+        units_ = Units_Millimeters;
       }
       else
       {
@@ -319,11 +325,12 @@ namespace OrthancStone
       //message.GetResources()->GetResource(0).Print(stdout);
 
       {
-        std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_->GetEnvironment().AcquireLock());
+        std::unique_ptr<IEnvironment::ILock> lock(context_->GetEnvironment().AcquireLock());
 
         framesLoader_ = SeriesFramesLoader::Create(*context_, *message.GetResources());
 
-        Register<SeriesFramesLoader::FrameLoadedMessage>(*framesLoader_, &SimpleViewerApp::Handle);
+        //Register<FrameDecodedMessage>(*framesLoader_, &SimpleViewerApp::Handle);
+        framesLoader_->Register(shared_from_this());
 
         assert(message.HasUserPayload());
 
@@ -348,9 +355,12 @@ namespace OrthancStone
 
       dicomLoader_ = DicomResourcesLoader::Create(*context);
 
-      Register<DicomResourcesLoader::SuccessMessage>(*dicomLoader_, &SimpleViewerApp::Handle);
+      //Register<DicomResourcesLoadedMessage>(*dicomLoader_, &SimpleViewerApp::Handle);
 
-      annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
+      //New::TypedObservable<DicomResourcesLoadedMessage>::Bind(*dicomLoader_, shared_from_this());
+      dicomLoader_->Register(shared_from_this());
+
+      annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
       annotations_.SetProbedLayer(0);
 
       interactor_.SetWindowingLayer(0);
@@ -358,13 +368,13 @@ namespace OrthancStone
       toto_.reset(new Toto);
 
       {
-        std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
-        lock->GetController().SetUndoStack(boost::make_shared<OrthancStone::UndoStack>());
+        std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
+        lock->GetController().SetUndoStack(boost::make_shared<UndoStack>());
       }
 
       {
-        // std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context->GetEnvironment().AcquireLock());
-        OrthancStone::DicomSource source;
+        // std::unique_ptr<IEnvironment::ILock> lock(context->GetEnvironment().AcquireLock());
+        DicomSource source;
         dicomLoader_->ScheduleLoadOrthancResource(boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID),
                                                   0, source, Orthanc::ResourceType_Instance, instanceId_,
                                                   new Orthanc::SingleValueObject<unsigned int>(frameIndex_));
@@ -378,19 +388,19 @@ namespace OrthancStone
         case 'b':
         {
           // TODO Refactoring
-          OrthancStone::IEnvironment& environment = context_->GetEnvironment();
-          OrthancStone::IOracle& oracle = context_->GetOracle();
+          IEnvironment& environment = context_->GetEnvironment();
+          IOracle& oracle = context_->GetOracle();
 
-          oracle.Submit(environment, toto_, new OrthancStone::SleepOracleCommand(1000));
+          oracle.Submit(environment, toto_, new SleepOracleCommand(1000));
 
           {
-            std::unique_ptr<OrthancStone::HttpCommand> command(new OrthancStone::HttpCommand);
+            std::unique_ptr<HttpCommand> command(new HttpCommand);
             command->SetUrl("http://ip-api.com/json/");
             oracle.Submit(environment, toto_, command.release());
           }
 
           {
-            std::unique_ptr<OrthancStone::OrthancRestApiCommand> command(new OrthancStone::OrthancRestApiCommand);
+            std::unique_ptr<OrthancRestApiCommand> command(new OrthancRestApiCommand);
             command->SetUri("/system/");
             oracle.Submit(environment, toto_, command.release());
           }
@@ -399,7 +409,7 @@ namespace OrthancStone
           {
             DicomSource source;
             source.SetDicomDirSource();
-            oracle.Submit(environment, toto_, new OrthancStone::ParseDicomFromFileCommand(source, "hand.dcm"));
+            oracle.Submit(environment, toto_, new ParseDicomFromFileCommand(source, "hand.dcm"));
           }
           break;
         }
@@ -414,7 +424,7 @@ namespace OrthancStone
 
         case 'u':
         {
-          std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+          std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
           if (lock->GetController().CanUndo())
           {
             lock->GetController().Undo();
@@ -424,7 +434,7 @@ namespace OrthancStone
 
         case 'U':
         {
-          std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+          std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
           if (lock->GetController().CanRedo())
           {
             lock->GetController().Redo();
@@ -433,35 +443,35 @@ namespace OrthancStone
         }
 
         case 'c':
-          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Circle);
+          annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Circle);
           break;
 
         case 'm':
-          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
+          annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
           break;
 
         case 'd':
-          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Remove);
+          annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Remove);
           break;
 
         case 'l':
-          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Length);
+          annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Length);
           break;
 
         case 'a':
-          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Angle);
+          annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Angle);
           break;
 
         case 'p':
-          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_PixelProbe);
+          annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_PixelProbe);
           break;
 
         case 'e':
-          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_EllipseProbe);
+          annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_EllipseProbe);
           break;
 
         case 'r':
-          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_RectangleProbe);
+          annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_RectangleProbe);
           break;
 
         default:
@@ -471,14 +481,14 @@ namespace OrthancStone
       return false;  // No need to repaint
     }
 
-    virtual void HandleMouseDown(OrthancStone::IViewport::ILock& lock,
-                                 const OrthancStone::PointerEvent& p) ORTHANC_OVERRIDE
+    virtual void HandleMouseDown(IViewport::ILock& lock,
+                                 const PointerEvent& p) ORTHANC_OVERRIDE
     {
       annotations_.SetUnits(units_);
 
-      boost::shared_ptr<OrthancStone::IFlexiblePointerTracker> t;
+      boost::shared_ptr<IFlexiblePointerTracker> t;
 
-      if (p.GetMouseButton() == OrthancStone::MouseButton_Left)
+      if (p.GetMouseButton() == MouseButton_Left)
       {
         t.reset(annotations_.CreateTracker(p.GetMainPosition(), lock.GetController().GetScene()));
       }
@@ -497,8 +507,8 @@ namespace OrthancStone
       lock.Invalidate();
     }
 
-    virtual bool HandleMouseMove(OrthancStone::IViewport::ILock& lock,
-                                 const OrthancStone::PointerEvent& p) ORTHANC_OVERRIDE
+    virtual bool HandleMouseMove(IViewport::ILock& lock,
+                                 const PointerEvent& p) ORTHANC_OVERRIDE
     {
       if (lock.GetController().HandleMouseMove(p))
       {
@@ -519,7 +529,7 @@ namespace OrthancStone
       return false;
     }
 
-    virtual void Render(OrthancStone::IViewport::ILock& lock)
+    virtual void Render(IViewport::ILock& lock)
     {
       annotations_.Render(lock.GetController().GetScene());
     }
@@ -530,12 +540,11 @@ namespace OrthancStone
       instanceId_(instanceId),
       frameIndex_(frameIndex),
       annotations_(10),
-      units_(OrthancStone::Units_Pixels)
+      units_(Units_Pixels)
     {
     }
   };
 }
-// END TODO Refactoring
 
 
 

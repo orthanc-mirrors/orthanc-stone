@@ -49,7 +49,7 @@ namespace OrthancStone
     {
     }
 
-    void Handle(const SeriesFramesLoader::FrameLoadedMessage& message)
+    void Handle(const FrameDecodedMessage& message)
     {
       LOG(INFO) << "Frame decoded! "
                 << message.GetImage().GetWidth() << "x" << message.GetImage().GetHeight()
@@ -67,7 +67,7 @@ namespace OrthancStone
       }
     }
 
-    void Handle(const DicomResourcesLoader::SuccessMessage& message)
+    void Handle(const DicomResourcesLoadedMessage& message)
     {
       if (message.GetResources()->GetSize() != 1)
       {
@@ -80,7 +80,7 @@ namespace OrthancStone
         std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
 
         framesLoader_ = SeriesFramesLoader::Create(context_, *message.GetResources());
-        Register<SeriesFramesLoader::FrameLoadedMessage>(*framesLoader_, &SingleFrameViewerApplication::Handle);
+        Register<FrameDecodedMessage>(*framesLoader_, &SingleFrameViewerApplication::Handle);
 
         assert(message.HasUserPayload());
         const Orthanc::SingleValueObject<unsigned int>& payload =
@@ -102,7 +102,7 @@ namespace OrthancStone
 
       application->dicomLoader_ = DicomResourcesLoader::Create(context);
 
-      application->Register<DicomResourcesLoader::SuccessMessage>(*application->dicomLoader_, &SingleFrameViewerApplication::Handle);
+      application->Register<DicomResourcesLoadedMessage>(*application->dicomLoader_, &SingleFrameViewerApplication::Handle);
 
       return application;
     }
@@ -208,7 +208,7 @@ namespace OrthancStone
       }
     }
     
-    void HandleLoadedResources(const DicomResourcesLoader::SuccessMessage& message)
+    void HandleLoadedResources(const DicomResourcesLoadedMessage& message)
     {
       LoadedDicomResources series(Orthanc::DICOM_TAG_SERIES_INSTANCE_UID);
 
@@ -313,7 +313,7 @@ namespace OrthancStone
       application->Register<OrthancRestApiCommand::SuccessMessage>(
         context.GetOracleObservable(), &WebViewerLoaders::HandleOrthancRestApi);
 
-      application->Register<DicomResourcesLoader::SuccessMessage>(
+      application->Register<DicomResourcesLoadedMessage>(
         *application->resourcesLoader_, &WebViewerLoaders::HandleLoadedResources);
 
       application->Register<SeriesThumbnailsLoader::SuccessMessage>(

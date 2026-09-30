@@ -55,7 +55,7 @@ namespace OrthancStone
     bool IsScheduledWithHigherPriority(const std::string& seriesInstanceUid,
                                        int priority) const;
 
-    void Handle(const DicomResourcesLoader::SuccessMessage& message);
+    void Handle(const DicomResourcesLoadedMessage& message);
 
   public:
     class SuccessMessage : public OriginMessage<SeriesMetadataLoader>

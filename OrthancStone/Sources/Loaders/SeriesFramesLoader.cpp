@@ -145,8 +145,9 @@ namespace OrthancStone
                << image.GetHeight() << ", " << Orthanc::EnumerationToString(image.GetFormat())
                << ", quality " << payload.GetQuality();
       
-    FrameLoadedMessage message(*this, frameIndex, payload.GetQuality(), image, instance, parameters, payload.GetUserPayload());
+    FrameDecodedMessage message(*this, frameIndex, payload.GetQuality(), image, instance, parameters, payload.GetUserPayload());
     BroadcastMessage(message);
+    Notify(message);
   }
 
 
@@ -291,7 +292,7 @@ namespace OrthancStone
   }
 
 
-  Orthanc::IDynamicObject& SeriesFramesLoader::FrameLoadedMessage::GetUserPayload() const
+  Orthanc::IDynamicObject& FrameDecodedMessage::GetUserPayload() const
   {
     if (userPayload_)
     {
@@ -321,13 +322,13 @@ namespace OrthancStone
     boost::shared_ptr<SeriesFramesLoader> loader(
       new SeriesFramesLoader(context, instances, dicomDirPath, dicomDir));
 
-    loader->Register<GetOrthancImageCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
-    loader->Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
-    loader->Register<HttpCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
-    loader->Register<OrthancRestApiCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
+    loader->ObserverBase<SeriesFramesLoader>::Register<GetOrthancImageCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
+    loader->ObserverBase<SeriesFramesLoader>::Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
+    loader->ObserverBase<SeriesFramesLoader>::Register<HttpCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
+    loader->ObserverBase<SeriesFramesLoader>::Register<OrthancRestApiCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    loader->Register<ParseDicomSuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
+    loader->ObserverBase<SeriesFramesLoader>::Register<ParseDicomSuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
 #endif
 
     return loader;

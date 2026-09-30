@@ -94,15 +94,41 @@ static boost::shared_ptr<Toto> toto_(new Toto);   // TODO REMOVE
 
 namespace OrthancStone
 {
-  class SingleWindowSdlApplication : public StoneApplication
+  class ISingleViewportApplicationComponents : public boost::noncopyable
+  {
+  public:
+    virtual ~ISingleViewportApplicationComponents()
+    {
+    }
+
+    virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
+                                  const boost::shared_ptr<IViewport>& viewport) = 0;
+
+    virtual void HandleKeyDown(const boost::shared_ptr<StoneApplication::Context>& context,
+                               const boost::shared_ptr<IViewport>& viewport,
+                               char key) = 0;
+
+    virtual void HandleMouseDown(OrthancStone::IViewport::ILock& lock,
+                                 const OrthancStone::PointerEvent& p) = 0;
+
+    virtual bool HandleMouseMove(OrthancStone::IViewport::ILock& lock,
+                                 const OrthancStone::PointerEvent& p) = 0;
+
+    virtual void Render(OrthancStone::IViewport::ILock& lock) = 0;
+  };
+
+
+  class SingleViewportSdlApplication : public StoneApplication
   {
   private:
-    boost::shared_ptr<SdlViewport> viewport_;
+    std::unique_ptr<ISingleViewportApplicationComponents>  core_;
+    boost::shared_ptr<SdlViewport>                         viewport_;
 
   protected:
     virtual void RunInternal(const boost::shared_ptr<Context>& context)
     {
-      CreateComponents(context, viewport_);
+      assert(core_.get() != NULL);
+      core_->CreateComponents(context, viewport_);
 
       int scancodeCount = 0;
       const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
@@ -138,21 +164,25 @@ namespace OrthancStone
             std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
             lock->RefreshCanvasSize();
           }
-          else if (event.type == SDL_KEYDOWN &&
-                   event.key.repeat == 0 /* Ignore key bounce */)
+          else if (event.type == SDL_TEXTINPUT)
           {
-            switch (event.key.keysym.sym)
+            std::string s(event.text.text);
+            if (s.size() == 1 &&
+                s[0] > 0x00 &&
+                s[0] <= 0x7f)
             {
-              case SDLK_f:
+              if (s[0] == 'f')
+              {
                 viewport_->ToggleMaximize();
-                break;
-
-              case SDLK_q:
+              }
+              else if (s[0] == 'q')
+              {
                 stop = true;
-                break;
-
-              default:
-                HandleKeyDown(context, event.key);
+              }
+              else
+              {
+                core_->HandleKeyDown(context, viewport_, s[0]);
+              }
             }
           }
           else if (event.type == SDL_MOUSEBUTTONDOWN ||
@@ -169,11 +199,11 @@ namespace OrthancStone
               switch (event.type)
               {
                 case SDL_MOUSEBUTTONDOWN:
-                  // TODO
+                  core_->HandleMouseDown(*lock, p);
                   break;
 
                 case SDL_MOUSEMOTION:
-                  // TODO
+                  paint = core_->HandleMouseMove(*lock, p);
                   break;
 
                 case SDL_MOUSEBUTTONUP:
@@ -190,6 +220,11 @@ namespace OrthancStone
 
         if (paint)
         {
+          {
+            std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+            core_->Render(*lock);
+          }
+
           viewport_->Paint();
         }
 
@@ -198,24 +233,29 @@ namespace OrthancStone
       }
     }
 
-    virtual void CreateComponents(const boost::shared_ptr<Context>& context,
-                                  const boost::shared_ptr<IViewport>& viewport) = 0;
-
-    virtual void HandleKeyDown(const boost::shared_ptr<Context>& context,
-                               const SDL_KeyboardEvent& key) = 0;
-
   public:
-    SingleWindowSdlApplication(const Configuration& configuration,
-                               const std::string& title,
-                               unsigned int width,
-                               unsigned int height) :
-      StoneApplication(configuration)
+    SingleViewportSdlApplication(const Configuration& configuration,
+                                 ISingleViewportApplicationComponents* core,
+                                 const std::string& title,
+                                 unsigned int width,
+                                 unsigned int height,
+                                 bool useOpenGL) :
+      StoneApplication(configuration),
+      core_(core)
     {
-#if SAMPLE_USE_OPENGL == 1
-      viewport_ = OrthancStone::SdlOpenGLViewport::Create(title, width, height);
-#else
-      viewport_ = OrthancStone::SdlCairoViewport::Create(title, width, height);
-#endif
+      if (core == NULL)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+
+      if (useOpenGL)
+      {
+        viewport_ = OrthancStone::SdlOpenGLViewport::Create(title, width, height);
+      }
+      else
+      {
+        viewport_ = OrthancStone::SdlCairoViewport::Create(title, width, height);
+      }
 
       std::string font;
       Orthanc::EmbeddedResources::GetFileResource(font, Orthanc::EmbeddedResources::UBUNTU_FONT);
@@ -228,24 +268,45 @@ namespace OrthancStone
   };
 
 
-  class SimpleViewerApp : public SingleWindowSdlApplication
+  class SimpleViewerApp : public ISingleViewportApplicationComponents
   {
   private:
-    boost::shared_ptr<Toto>        toto_;
+    std::string                                   instanceId_;
+    unsigned int                                  frameIndex_;
+    boost::shared_ptr<SdlSimpleViewerApplication> application_;
+    AnnotationsSceneLayer                         annotations_;
+    OrthancStone::DefaultViewportInteractor       interactor_;
+    boost::shared_ptr<Toto>                       toto_;
 
   protected:
-    virtual void CreateComponents(const boost::shared_ptr<Context>& context,
+    virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
                                   const boost::shared_ptr<IViewport>& viewport) ORTHANC_OVERRIDE
     {
+      application_ = SdlSimpleViewerApplication::Create(*context, viewport);
+
+      OrthancStone::DicomSource source;
+      application_->LoadOrthancFrame(source, instanceId_, frameIndex_);
+
+      annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
+      annotations_.SetProbedLayer(0);
+
+      interactor_.SetWindowingLayer(0);
+
       toto_.reset(new Toto);
+
+      {
+        std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+        lock->GetController().SetUndoStack(boost::make_shared<OrthancStone::UndoStack>());
+      }
     }
 
-    virtual void HandleKeyDown(const boost::shared_ptr<Context>& context,
-                               const SDL_KeyboardEvent& key) ORTHANC_OVERRIDE
+    virtual void HandleKeyDown(const boost::shared_ptr<StoneApplication::Context>& context,
+                               const boost::shared_ptr<IViewport>& viewport,
+                               char key) ORTHANC_OVERRIDE
     {
-      switch (key.keysym.sym)
+      switch (key)
       {
-        case SDLK_b:
+        case 'b':
         {
           // TODO Refactoring
           OrthancStone::IEnvironment& environment = context->GetEnvironment();
@@ -274,14 +335,126 @@ namespace OrthancStone
           break;
         }
 
+        case 's':
+          application_->FitContent();
+          break;
+
+        case 'u':
+        {
+          std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+          if (lock->GetController().CanUndo())
+          {
+            lock->GetController().Undo();
+          }
+          break;
+        }
+
+        case 'U':
+        {
+          std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->Lock());
+          if (lock->GetController().CanRedo())
+          {
+            lock->GetController().Redo();
+          }
+          break;
+        }
+
+        case 'c':
+          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Circle);
+          break;
+
+        case 'm':
+          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Edit);
+          break;
+
+        case 'd':
+          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Remove);
+          break;
+
+        case 'l':
+          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Length);
+          break;
+
+        case 'a':
+          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_Angle);
+          break;
+
+        case 'p':
+          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_PixelProbe);
+          break;
+
+        case 'e':
+          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_EllipseProbe);
+          break;
+
+        case 'r':
+          annotations_.SetActiveTool(OrthancStone::AnnotationsSceneLayer::Tool_RectangleProbe);
+          break;
+
         default:
           break;
       }
     }
 
+    virtual void HandleMouseDown(OrthancStone::IViewport::ILock& lock,
+                                 const OrthancStone::PointerEvent& p) ORTHANC_OVERRIDE
+    {
+      annotations_.SetUnits(application_->GetUnits());  // TODO Refactoring, should happen after loading the image
+
+      boost::shared_ptr<OrthancStone::IFlexiblePointerTracker> t;
+
+      if (p.GetMouseButton() == OrthancStone::MouseButton_Left)
+      {
+        t.reset(annotations_.CreateTracker(p.GetMainPosition(), lock.GetController().GetScene()));
+      }
+
+      if (t.get() != NULL)
+      {
+        lock.GetController().AcquireActiveTracker(t);
+      }
+      else
+      {
+        lock.GetController().HandleMousePress(interactor_, p,
+                                              lock.GetCompositor().GetCanvasWidth(),
+                                              lock.GetCompositor().GetCanvasHeight());
+      }
+
+      lock.Invalidate();
+    }
+
+    virtual bool HandleMouseMove(OrthancStone::IViewport::ILock& lock,
+                                 const OrthancStone::PointerEvent& p) ORTHANC_OVERRIDE
+    {
+      if (lock.GetController().HandleMouseMove(p))
+      {
+        lock.Invalidate();
+        if (annotations_.ClearHover())
+        {
+          return true;
+        }
+      }
+      else
+      {
+        if (annotations_.SetMouseHover(p.GetMainPosition(), lock.GetController().GetScene()))
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    virtual void Render(OrthancStone::IViewport::ILock& lock)
+    {
+      annotations_.Render(lock.GetController().GetScene());
+    }
+
   public:
-    SimpleViewerApp(const Configuration& configuration) :
-      SingleWindowSdlApplication(configuration, "Stone of Orthanc", 800, 600)
+    SimpleViewerApp(const std::string& instanceId,
+                    unsigned int frameIndex) :
+      instanceId_(instanceId),
+      frameIndex_(frameIndex),
+      annotations_(10)
     {
     }
   };
@@ -408,9 +581,12 @@ int main(int argc, char* argv[])
     configuration.SetDicomCacheSize(128 * 1024 * 1024);  // TODO Refactoring - Remove this
     configuration.SetRootDirectory("/tmp");  // TODO Refactoring - Remove this
 
-    if (false)
+    if (true)
     {
-      OrthancStone::SimpleViewerApp app(configuration);
+      std::unique_ptr<OrthancStone::SimpleViewerApp> core(new OrthancStone::SimpleViewerApp(instanceId, frameIndex));
+
+      OrthancStone::SingleViewportSdlApplication app(
+        configuration, core.release(), "Stone of Orthanc", 800, 600, true /* use OpenGL */);
       app.Run();
     }
     else
@@ -434,7 +610,7 @@ int main(int argc, char* argv[])
           lock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
 
 #if SAMPLE_USE_ANNOTATIONS_LAYER != 1
-          lock->GetController().SetUndoStack(new OrthancStone::UndoStack);
+          lock->GetController().SetUndoStack(boost::make_shared<OrthancStone::UndoStack>());
 #endif
         }
 
@@ -783,7 +959,7 @@ int main(int argc, char* argv[])
                 annotations.Render(lock->GetController().GetScene());
               }
 #endif
-              
+
               viewport->Paint();
             }
 

@@ -141,25 +141,13 @@ namespace OrthancStone
     };
 
 
-    class Factory : public boost::noncopyable  // TODO Refactoring - remove this?
-    {
-    private:
-      LoadedDicomResources&                    instances_;
-      std::string                              dicomDirPath_;
-      boost::shared_ptr<LoadedDicomResources>  dicomDir_;
+    static boost::shared_ptr<SeriesFramesLoader> Create(StoneApplication::Context& context,
+                                                        LoadedDicomResources& instances);
 
-    public:
-      // No "const" because "LoadedDicomResources::GetResource()" will call "Flatten()"
-      explicit Factory(LoadedDicomResources& instances) :
-        instances_(instances)
-      {
-      }
-
-      void SetDicomDir(const std::string& dicomDirPath,
-                       boost::shared_ptr<LoadedDicomResources> dicomDir);
-
-      boost::shared_ptr<IObserver> Create(StoneApplication::Context& context);
-    };
+    static boost::shared_ptr<SeriesFramesLoader> Create(StoneApplication::Context& context,
+                                                        LoadedDicomResources& instances,
+                                                        const std::string& dicomDirPath,
+                                                        boost::shared_ptr<LoadedDicomResources> dicomDir);
 
     const SeriesOrderedFrames& GetOrderedFrames() const
     {

@@ -78,9 +78,8 @@ namespace OrthancStone
 
       {
         std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
-        SeriesFramesLoader::Factory f(*message.GetResources());
 
-        framesLoader_ = boost::dynamic_pointer_cast<SeriesFramesLoader>(f.Create(context_));
+        framesLoader_ = SeriesFramesLoader::Create(context_, *message.GetResources());
         Register<SeriesFramesLoader::FrameLoadedMessage>(*framesLoader_, &SingleFrameViewerApplication::Handle);
 
         assert(message.HasUserPayload());

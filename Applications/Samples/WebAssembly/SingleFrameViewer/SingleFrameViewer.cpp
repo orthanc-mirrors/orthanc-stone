@@ -22,7 +22,6 @@
 
 #include "SingleFrameViewerApplication.h"
 
-#include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyLoadersContext.h"
 #include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
 #include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewportsRegistry.h"
 #include "../../../../OrthancStone/Sources/StoneApplication.h"

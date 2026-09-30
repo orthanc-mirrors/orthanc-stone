@@ -48,13 +48,14 @@
 #include "../../../OrthancStone/Sources/Toolbox/DicomStructuredReport.h"
 #include "../../../OrthancStone/Sources/Toolbox/GeometryToolbox.h"
 #include "../../../OrthancStone/Sources/Toolbox/OsiriX/CollectionOfAnnotations.h"
+#include "../../../OrthancStone/Sources/Toolbox/ParsedDicomCache.h"
 #include "../../../OrthancStone/Sources/Toolbox/ParsedDicomDataset.h"
 #include "../../../OrthancStone/Sources/Toolbox/SortedFrames.h"
 #include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 
 // WebAssembly includes
 #include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyCairoViewport.h"
-#include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyLoadersContext.h"
+#include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyOracle.h"
 #include "../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
 
 // Orthanc framework includes
@@ -4699,7 +4700,6 @@ public:
 static OrthancStone::DicomSource source_;
 static boost::shared_ptr<FramesCache> framesCache_;
 static boost::shared_ptr<InstancesCache> instancesCache_;
-static boost::shared_ptr<OrthancStone::WebAssemblyLoadersContext> context_;
 static std::string stringBuffer_;
 static bool softwareRendering_ = false;
 static bool linearInterpolation_ = true;
@@ -5052,8 +5052,6 @@ extern "C"
         }
 
         OrthancStone::StoneApplication::Initialize(configuration);
-
-        context_.reset(new OrthancStone::WebAssemblyLoadersContext(1, 4, 1));
 
         static const char* const KEY_SKIP_SERIES = "SkipSeriesFromModalities";
         if (parsed.isMember(KEY_SKIP_SERIES))

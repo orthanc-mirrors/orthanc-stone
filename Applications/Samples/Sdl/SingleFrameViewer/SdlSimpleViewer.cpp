@@ -20,37 +20,20 @@
  **/
 
 
-#include "../../Common/SimpleViewerCore.h"
-#include "../../SingleViewportSdlApplication.h"
-
-#include "../../../../OrthancStone/Sources/Messages/TypedObserver.h"
-
-#include "../../../../OrthancStone/Sources/Loaders/DicomResourcesLoader.h"
-#include "../../../../OrthancStone/Sources/Loaders/SeriesFramesLoader.h"
-#include "../../../../OrthancStone/Sources/Scene2D/AnnotationsSceneLayer.h"
-#include "../../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"
-#include "../../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
-#include "../../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 #include "../../Common/SampleHelpers.h"
+#include "../../Common/SimpleViewerCore.h"
 #include "../SdlHelpers.h"
+#include "../SingleViewportSdlApplication.h"
 
-#include <Compatibility.h>  // For std::unique_ptr<>
-#include <EmbeddedResources.h>
-
-#include <SDL.h>
-#include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
-#include <string>
-
 
 
 // TODO Refactoring
 #include "../../../../OrthancStone/Sources/Oracle/ParseDicomFromFileCommand.h"
 #include "../../../../OrthancStone/Sources/Oracle/SleepOracleCommand.h"
 #include "../../../../OrthancStone/Sources/StoneApplication.h"
-
 
 namespace OrthancStone
 {

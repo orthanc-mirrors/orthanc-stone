@@ -149,6 +149,7 @@ install(
 project(SingleFrameViewerWasm)
 
 add_executable(SingleFrameViewerWasm
+  ../Common/SimpleViewerCore.cpp
   SingleFrameViewer/SingleFrameViewer.cpp
   )
 

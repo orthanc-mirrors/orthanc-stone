@@ -35,6 +35,9 @@
 #include <map>
 #include <string>
 
+
+// TODO Refactoring - Move this into "SingleViewportSdlApplication.cpp"
+
 namespace OrthancStoneHelpers
 {
 

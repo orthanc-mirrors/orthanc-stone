@@ -92,15 +92,19 @@ namespace OrthancStone
     virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
                                   const boost::shared_ptr<IViewport>& viewport) = 0;
 
-    virtual bool HandleKeyDown(char key) = 0;
+    virtual bool HandleKeyDown(const IEnvironment::ILock& environmentLock,
+                               char key) = 0;
 
-    virtual void HandleMouseDown(IViewport::ILock& lock,
+    virtual void HandleMouseDown(const IEnvironment::ILock& environmentLock,
+                                 IViewport::ILock& viewportLock,
                                  const PointerEvent& p) = 0;
 
-    virtual bool HandleMouseMove(IViewport::ILock& lock,
+    virtual bool HandleMouseMove(const IEnvironment::ILock& environmentLock,
+                                 IViewport::ILock& viewportLock,
                                  const PointerEvent& p) = 0;
 
-    virtual void Render(IViewport::ILock& lock) = 0;
+    virtual void Render(const IEnvironment::ILock& environmentLock,
+                        IViewport::ILock& viewportLock) = 0;
   };
 
 
@@ -147,8 +151,8 @@ namespace OrthancStone
                    (event.window.event == SDL_WINDOWEVENT_SHOWN ||
                     event.window.event == SDL_WINDOWEVENT_EXPOSED))
           {
-            std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-            lock->RefreshCanvasSize();
+            std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+            viewportLock->RefreshCanvasSize();
           }
           else if (event.type == SDL_TEXTINPUT)
           {
@@ -167,7 +171,8 @@ namespace OrthancStone
               }
               else
               {
-                paint = core_->HandleKeyDown(s[0]);
+                std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
+                paint = core_->HandleKeyDown(*environmentLock, s[0]);
               }
             }
           }
@@ -175,26 +180,32 @@ namespace OrthancStone
                    event.type == SDL_MOUSEMOTION ||
                    event.type == SDL_MOUSEBUTTONUP)
           {
-            std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
+            std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
 
-            if (lock->HasCompositor())
+            if (viewportLock->HasCompositor())
             {
               PointerEvent p;
-              OrthancStoneHelpers::GetPointerEvent(p, lock->GetCompositor(), event, keyboardState, scancodeCount);
+              OrthancStoneHelpers::GetPointerEvent(p, viewportLock->GetCompositor(), event, keyboardState, scancodeCount);
 
               switch (event.type)
               {
                 case SDL_MOUSEBUTTONDOWN:
-                  core_->HandleMouseDown(*lock, p);
+                {
+                  std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
+                  core_->HandleMouseDown(*environmentLock, *viewportLock, p);
                   break;
+                }
 
                 case SDL_MOUSEMOTION:
-                  paint = core_->HandleMouseMove(*lock, p);
+                {
+                  std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
+                  paint = core_->HandleMouseMove(*environmentLock, *viewportLock, p);
                   break;
+                }
 
                 case SDL_MOUSEBUTTONUP:
-                  lock->GetController().HandleMouseRelease(p);
-                  lock->Invalidate();
+                  viewportLock->GetController().HandleMouseRelease(p);
+                  viewportLock->Invalidate();
                   break;
 
                 default:
@@ -207,8 +218,9 @@ namespace OrthancStone
         if (paint)
         {
           {
-            std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-            core_->Render(*lock);
+            std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
+            std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+            core_->Render(*environmentLock, *viewportLock);
           }
 
           viewport_->Paint();
@@ -247,8 +259,8 @@ namespace OrthancStone
       Orthanc::EmbeddedResources::GetFileResource(font, Orthanc::EmbeddedResources::UBUNTU_FONT);
 
       {
-        std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-        lock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
+        std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+        viewportLock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
       }
     }
   };
@@ -285,10 +297,10 @@ namespace OrthancStone
       layer->SetLinearInterpolation(false);
 
       {
-        std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-        lock->GetController().GetScene().SetLayer(0, layer.release());
-        lock->GetCompositor().FitContent(lock->GetController().GetScene());
-        lock->Invalidate();
+        std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+        viewportLock->GetController().GetScene().SetLayer(0, layer.release());
+        viewportLock->GetCompositor().FitContent(viewportLock->GetController().GetScene());
+        viewportLock->Invalidate();
       }
     }
 
@@ -325,7 +337,7 @@ namespace OrthancStone
       //message.GetResources()->GetResource(0).Print(stdout);
 
       {
-        std::unique_ptr<IEnvironment::ILock> lock(context_->GetEnvironment().AcquireLock());
+        std::unique_ptr<IEnvironment::ILock> environmentLock(context_->GetEnvironment().AcquireLock());  // TODO Refactoring - Should already be locked
 
         framesLoader_ = SeriesFramesLoader::Create(*context_, *message.GetResources());
 
@@ -370,12 +382,11 @@ namespace OrthancStone
       toto_.reset(new Toto);
 
       {
-        std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
-        lock->GetController().SetUndoStack(boost::make_shared<UndoStack>());
+        std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
+        viewportLock->GetController().SetUndoStack(boost::make_shared<UndoStack>());
       }
 
       {
-        // std::unique_ptr<IEnvironment::ILock> lock(context->GetEnvironment().AcquireLock());
         DicomSource source;
         dicomLoader_->ScheduleLoadOrthancResource(boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID),
                                                   0, source, Orthanc::ResourceType_Instance, instanceId_,
@@ -383,7 +394,8 @@ namespace OrthancStone
       }
     }
 
-    virtual bool HandleKeyDown(char key) ORTHANC_OVERRIDE
+    virtual bool HandleKeyDown(const IEnvironment::ILock& environmentLock,
+                               char key) ORTHANC_OVERRIDE
     {
       switch (key)
       {
@@ -418,28 +430,28 @@ namespace OrthancStone
 
         case 's':
         {
-          std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-          lock->GetCompositor().FitContent(lock->GetController().GetScene());
-          lock->Invalidate();
+          std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+          viewportLock->GetCompositor().FitContent(viewportLock->GetController().GetScene());
+          viewportLock->Invalidate();
           break;
         }
 
         case 'u':
         {
-          std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-          if (lock->GetController().CanUndo())
+          std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+          if (viewportLock->GetController().CanUndo())
           {
-            lock->GetController().Undo();
+            viewportLock->GetController().Undo();
           }
           break;
         }
 
         case 'U':
         {
-          std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-          if (lock->GetController().CanRedo())
+          std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+          if (viewportLock->GetController().CanRedo())
           {
-            lock->GetController().Redo();
+            viewportLock->GetController().Redo();
           }
           break;
         }
@@ -483,7 +495,8 @@ namespace OrthancStone
       return false;  // No need to repaint
     }
 
-    virtual void HandleMouseDown(IViewport::ILock& lock,
+    virtual void HandleMouseDown(const IEnvironment::ILock& environmentLock,
+                                 IViewport::ILock& viewportLock,
                                  const PointerEvent& p) ORTHANC_OVERRIDE
     {
       annotations_.SetUnits(units_);
@@ -492,29 +505,30 @@ namespace OrthancStone
 
       if (p.GetMouseButton() == MouseButton_Left)
       {
-        t.reset(annotations_.CreateTracker(p.GetMainPosition(), lock.GetController().GetScene()));
+        t.reset(annotations_.CreateTracker(p.GetMainPosition(), viewportLock.GetController().GetScene()));
       }
 
       if (t.get() != NULL)
       {
-        lock.GetController().AcquireActiveTracker(t);
+        viewportLock.GetController().AcquireActiveTracker(t);
       }
       else
       {
-        lock.GetController().HandleMousePress(interactor_, p,
-                                              lock.GetCompositor().GetCanvasWidth(),
-                                              lock.GetCompositor().GetCanvasHeight());
+        viewportLock.GetController().HandleMousePress(interactor_, p,
+                                                      viewportLock.GetCompositor().GetCanvasWidth(),
+                                                      viewportLock.GetCompositor().GetCanvasHeight());
       }
 
-      lock.Invalidate();
+      viewportLock.Invalidate();
     }
 
-    virtual bool HandleMouseMove(IViewport::ILock& lock,
+    virtual bool HandleMouseMove(const IEnvironment::ILock& environmentLock,
+                                 IViewport::ILock& viewportLock,
                                  const PointerEvent& p) ORTHANC_OVERRIDE
     {
-      if (lock.GetController().HandleMouseMove(p))
+      if (viewportLock.GetController().HandleMouseMove(p))
       {
-        lock.Invalidate();
+        viewportLock.Invalidate();
         if (annotations_.ClearHover())
         {
           return true;
@@ -522,7 +536,7 @@ namespace OrthancStone
       }
       else
       {
-        if (annotations_.SetMouseHover(p.GetMainPosition(), lock.GetController().GetScene()))
+        if (annotations_.SetMouseHover(p.GetMainPosition(), viewportLock.GetController().GetScene()))
         {
           return true;
         }
@@ -531,9 +545,10 @@ namespace OrthancStone
       return false;
     }
 
-    virtual void Render(IViewport::ILock& lock)
+    virtual void Render(const IEnvironment::ILock& environmentLock,
+                        IViewport::ILock& viewportLock)
     {
-      annotations_.Render(lock.GetController().GetScene());
+      annotations_.Render(viewportLock.GetController().GetScene());
     }
 
   public:

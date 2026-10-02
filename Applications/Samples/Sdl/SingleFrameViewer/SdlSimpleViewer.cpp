@@ -117,13 +117,6 @@ namespace OrthancStone
         return SimpleViewerCore::HandleKeyDown(environmentLock, key);
       }
     }
-
-  public:
-    Tutu(const std::string& instanceId,
-         unsigned int frameIndex) :
-      SimpleViewerCore(instanceId, frameIndex)
-    {
-    }
   };
 }
 // END TODO Refactoring
@@ -214,6 +207,27 @@ static void ProcessOptions(int argc, char* argv[])
 }
 
 
+class Startup : public OrthancStone::SingleViewportSdlApplication::ICoreStartup
+{
+private:
+  std::string   instanceId_;
+  unsigned int  frameIndex_;
+
+public:
+  Startup(const std::string& instanceId,
+          unsigned int frameIndex) :
+    instanceId_(instanceId),
+    frameIndex_(frameIndex)
+  {
+  }
+
+  virtual void Start(OrthancStone::ISingleViewportApplicationCore& core) ORTHANC_OVERRIDE
+  {
+    dynamic_cast<OrthancStone::SimpleViewerCore&>(core).LoadFrameFromOrthanc(instanceId_, frameIndex_);
+  }
+};
+
+
 /**
  * IMPORTANT: The full arguments to "main()" are needed for SDL on
  * Windows. Otherwise, one gets the linking error "undefined reference
@@ -241,11 +255,12 @@ int main(int argc, char* argv[])
     configuration.SetDicomCacheSize(128 * 1024 * 1024);  // TODO Refactoring - Remove this
     configuration.SetRootDirectory("/tmp");  // TODO Refactoring - Remove this
 
-    boost::shared_ptr<OrthancStone::SimpleViewerCore> core(new OrthancStone::Tutu(instanceId, frameIndex));
+    boost::shared_ptr<OrthancStone::SimpleViewerCore> core(new OrthancStone::Tutu);
 
     OrthancStone::SingleViewportSdlApplication app(
       configuration, core, "Stone of Orthanc", 800, 600, true /* use OpenGL */);
 
+    app.SetCoreStartup(new Startup(instanceId, frameIndex));
     app.Run();
   }
   catch (Orthanc::OrthancException& e)

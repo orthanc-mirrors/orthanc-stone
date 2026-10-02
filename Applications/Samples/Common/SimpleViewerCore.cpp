@@ -129,13 +129,6 @@ namespace OrthancStone
       std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
       viewportLock->GetController().SetUndoStack(boost::make_shared<UndoStack>());
     }
-
-    {
-      DicomSource source;
-      dicomLoader_->ScheduleLoadOrthancResource(boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID),
-                                                0, source, Orthanc::ResourceType_Instance, instanceId_,
-                                                new Orthanc::SingleValueObject<unsigned int>(frameIndex_));
-    }
   }
 
 
@@ -271,12 +264,34 @@ namespace OrthancStone
   }
 
 
-  SimpleViewerCore::SimpleViewerCore(const std::string& instanceId,
-                                     unsigned int frameIndex) :
-    instanceId_(instanceId),
-    frameIndex_(frameIndex),
+  SimpleViewerCore::SimpleViewerCore() :
     annotations_(10),
     units_(Units_Pixels)
   {
+  }
+
+
+  void SimpleViewerCore::LoadFrameFromOrthanc(const std::string& instanceId,
+                                              unsigned int frameIndex)
+  {
+    std::unique_ptr<IEnvironment::ILock> environmentLock(context_->GetEnvironment().AcquireLock());
+
+    DicomSource source;
+    dicomLoader_->ScheduleLoadOrthancResource(boost::make_shared<LoadedDicomResources>(Orthanc::DICOM_TAG_SOP_INSTANCE_UID),
+                                              0, source, Orthanc::ResourceType_Instance, instanceId,
+                                              new Orthanc::SingleValueObject<unsigned int>(frameIndex));
+  }
+
+
+  void SimpleViewerCore::LoadFrameFromDicomWeb(const std::string& server,
+                                               const std::string& studyInstanceUid,
+                                               const std::string& seriesInstanceUid,
+                                               const std::string& sopInstanceUid,
+                                               unsigned int frameIndex)
+  {
+    OrthancStone::DicomSource source;
+    source.SetDicomWebThroughOrthancSource(server);
+
+    throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
   }
 }

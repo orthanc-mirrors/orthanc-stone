@@ -36,6 +36,11 @@ namespace OrthancStone
     assert(core_.get() != NULL);
     core_->CreateComponents(context, viewport_);
 
+    if (startup_.get() != NULL)
+    {
+      startup_->Start(*core_);
+    }
+
     int scancodeCount = 0;
     const uint8_t* keyboardState = SDL_GetKeyboardState(&scancodeCount);
 
@@ -177,6 +182,19 @@ namespace OrthancStone
     {
       std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
       viewportLock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
+    }
+  }
+
+
+  void SingleViewportSdlApplication::SetCoreStartup(ICoreStartup* startup)
+  {
+    if (startup == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else
+    {
+      startup_.reset(startup);
     }
   }
 }

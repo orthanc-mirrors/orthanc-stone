@@ -20,6 +20,8 @@
  **/
 
 
+#include "../../Common/SimpleViewerCore.h"
+
 #include "SingleFrameViewerApplication.h"
 
 #include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
@@ -68,8 +70,33 @@
 
 namespace OrthancStone
 {
+  class SingleViewportWebAssemblyApplication : public StoneApplication
+  {
+  private:
+    boost::shared_ptr<ISingleViewportApplicationCore>  core_;
+    boost::shared_ptr<WebAssemblyViewport>             viewport_;
+
+  protected:
+    virtual void RunInternal(const boost::shared_ptr<Context>& context) ORTHANC_OVERRIDE
+    {
+    }
+
+  public:
+    SingleViewportWebAssemblyApplication(const Configuration& configuration,
+                                         const boost::shared_ptr<ISingleViewportApplicationCore>& core) :
+      StoneApplication(configuration),
+      core_(core)
+    {
+      if (!core)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+    }
+  };
 }
 
+
+static boost::shared_ptr<OrthancStone::SingleViewportWebAssemblyApplication> application2_;
 static boost::shared_ptr<OrthancStone::SingleFrameViewerApplication>  application_;
 
 extern "C"
@@ -93,6 +120,9 @@ extern "C"
       OrthancStone::StoneApplication::Configuration configuration;
       configuration.SetLocalOrthancRoot("..");
       configuration.SetDicomCacheSize(128 * 1024 * 1024);  // 128MB
+
+      boost::shared_ptr<OrthancStone::SimpleViewerCore> core(new OrthancStone::SimpleViewerCore);
+      application2_.reset(new OrthancStone::SingleViewportWebAssemblyApplication(configuration, core));
 
       OrthancStone::StoneApplication::Initialize(configuration);
   

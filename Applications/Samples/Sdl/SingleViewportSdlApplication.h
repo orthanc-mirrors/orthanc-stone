@@ -30,9 +30,21 @@ namespace OrthancStone
 {
   class SingleViewportSdlApplication : public StoneApplication
   {
+  public:
+    class ICoreStartup : public boost::noncopyable
+    {
+    public:
+      virtual ~ICoreStartup()
+      {
+      }
+
+      virtual void Start(ISingleViewportApplicationCore& core) = 0;
+    };
+
   private:
     boost::shared_ptr<ISingleViewportApplicationCore>  core_;
     boost::shared_ptr<SdlViewport>                     viewport_;
+    std::unique_ptr<ICoreStartup>                      startup_;
 
   protected:
     virtual void RunInternal(const boost::shared_ptr<Context>& context) ORTHANC_OVERRIDE;
@@ -44,5 +56,7 @@ namespace OrthancStone
                                  unsigned int width,
                                  unsigned int height,
                                  bool useOpenGL);
+
+    void SetCoreStartup(ICoreStartup* startup /* takes ownership */);
   };
 }

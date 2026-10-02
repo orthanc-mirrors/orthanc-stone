@@ -43,8 +43,6 @@ namespace OrthancStone
     boost::shared_ptr<IViewport>                  viewport_;
 
   private:
-    std::string                                   instanceId_;
-    unsigned int                                  frameIndex_;
     AnnotationsSceneLayer                         annotations_;
     DefaultViewportInteractor                     interactor_;
     boost::shared_ptr<DicomResourcesLoader>       dicomLoader_;
@@ -77,7 +75,15 @@ namespace OrthancStone
                         IViewport::ILock& viewportLock) ORTHANC_OVERRIDE;
 
   public:
-    SimpleViewerCore(const std::string& instanceId,
-                     unsigned int frameIndex);
+    SimpleViewerCore();
+
+    void LoadFrameFromOrthanc(const std::string& instanceId,
+                              unsigned int frameIndex);
+
+    void LoadFrameFromDicomWeb(const std::string& server,
+                               const std::string& studyInstanceUid,
+                               const std::string& seriesInstanceUid,
+                               const std::string& sopInstanceUid,
+                               unsigned int frameIndex);
   };
 }

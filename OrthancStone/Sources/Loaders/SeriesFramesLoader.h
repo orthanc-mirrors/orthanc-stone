@@ -108,9 +108,6 @@ namespace OrthancStone
     public New::IObservable,
     public New::TypedObservable<FrameDecodedMessage>
   {
-  public:
-    using New::TypedObservable<FrameDecodedMessage>::Register;  // TODO Refactoring - Presumably not needed
-
   private:
     class Payload;
 

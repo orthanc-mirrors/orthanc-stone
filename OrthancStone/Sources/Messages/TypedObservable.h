@@ -47,8 +47,8 @@ namespace OrthancStone
         content_.push_back(observer);
       }
 
-      void Dispatch(const IObservable& observable,
-                    const Message& message)
+      void Notify(const IObservable& observable,
+                  const Message& message)
       {
         Content active;
 
@@ -64,13 +64,6 @@ namespace OrthancStone
         }
 
         content_.swap(active);
-      }
-
-      template <typename Observable>
-      static void Bind(Observable& observable,
-                       const boost::shared_ptr< TypedObserver<Message> >& observer)
-      {
-        static_cast< TypedObservable<Message>& >(observable).Register(observer);
       }
     };
   }

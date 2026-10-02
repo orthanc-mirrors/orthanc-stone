@@ -65,10 +65,18 @@ namespace OrthancStone
       {
       }
 
-      template <typename Message>
-      void Notify(const Message& message)
+      template <typename Observable, typename Message>
+      static void Dispatch(const boost::shared_ptr<Observable>& observable,
+                           const Message& message)
       {
-        dynamic_cast< TypedObservable<Message>& >(*this).Dispatch(*this, message);
+        static_cast< TypedObservable<Message>& >(*observable).Notify(*observable, message);
+      }
+
+      template <typename Message>
+      static void Bind(const boost::shared_ptr< TypedObservable<Message> >& observable,
+                       const boost::shared_ptr< TypedObserver<Message> >& observer)
+      {
+        observable->Register(observer);
       }
     };
   }

@@ -132,6 +132,11 @@ namespace OrthancStone
 
       IOracle& GetOracle();
 
+      const boost::shared_ptr<OracleScheduler>& GetScheduler() const
+      {
+        return oracleScheduler_;
+      }
+
       virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
                                const IMessage& message) ORTHANC_OVERRIDE;
 

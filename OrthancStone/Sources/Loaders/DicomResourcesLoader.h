@@ -108,9 +108,6 @@ namespace OrthancStone
     public New::IObservable,
     public New::TypedObservable<DicomResourcesLoadedMessage>
   {
-  public:
-    using New::TypedObservable<DicomResourcesLoadedMessage>::Register;  // TODO Refactoring - Presumably not needed
-
   private:
     class Handler;
     class StringHandler;

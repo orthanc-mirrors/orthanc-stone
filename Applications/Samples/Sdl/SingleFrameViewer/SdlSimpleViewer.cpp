@@ -330,7 +330,9 @@ namespace OrthancStone
         framesLoader_ = SeriesFramesLoader::Create(*context_, *message.GetResources());
 
         //Register<FrameDecodedMessage>(*framesLoader_, &SimpleViewerApp::Handle);
-        framesLoader_->Register(shared_from_this());
+
+        //framesLoader_->TypedObservable<FrameDecodedMessage>::Register(shared_from_this());
+        New::IObservable::Bind<FrameDecodedMessage>(framesLoader_, shared_from_this());
 
         assert(message.HasUserPayload());
 
@@ -357,8 +359,8 @@ namespace OrthancStone
 
       //Register<DicomResourcesLoadedMessage>(*dicomLoader_, &SimpleViewerApp::Handle);
 
-      //New::TypedObservable<DicomResourcesLoadedMessage>::Bind(*dicomLoader_, shared_from_this());
-      dicomLoader_->Register(shared_from_this());
+      //dicomLoader_->TypedObservable<DicomResourcesLoadedMessage>::Register(shared_from_this());
+      New::IObservable::Bind<DicomResourcesLoadedMessage>(dicomLoader_, shared_from_this());
 
       annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
       annotations_.SetProbedLayer(0);

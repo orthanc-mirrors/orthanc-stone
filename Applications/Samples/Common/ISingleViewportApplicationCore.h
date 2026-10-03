@@ -24,7 +24,7 @@
 
 #include "../../../OrthancStone/Sources/StoneApplication.h"
 #include "../../../OrthancStone/Sources/Viewport/IViewport.h"
-#include "../../../OrthancStone/Sources/Scene2D/PointerEvent.h"
+#include "../../../OrthancStone/Sources/Viewport/IViewportInteractor.h"
 
 
 namespace OrthancStone
@@ -39,16 +39,10 @@ namespace OrthancStone
     virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
                                   const boost::shared_ptr<IViewport>& viewport) = 0;
 
+    virtual IViewportInteractor* CreateMouseInteractor() = 0;
+
     virtual bool HandleKeyDown(const IEnvironment::ILock& environmentLock,
                                char key) = 0;
-
-    virtual void HandleMouseDown(const IEnvironment::ILock& environmentLock,
-                                 IViewport::ILock& viewportLock,
-                                 const PointerEvent& p) = 0;
-
-    virtual bool HandleMouseMove(const IEnvironment::ILock& environmentLock,
-                                 IViewport::ILock& viewportLock,
-                                 const PointerEvent& p) = 0;
 
     virtual void Render(const IEnvironment::ILock& environmentLock,
                         IViewport::ILock& viewportLock) = 0;

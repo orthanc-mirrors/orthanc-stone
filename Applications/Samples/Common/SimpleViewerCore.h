@@ -26,7 +26,6 @@
 #include "../../../OrthancStone/Sources/Loaders/SeriesFramesLoader.h"
 #include "../../../OrthancStone/Sources/Scene2D/AnnotationsSceneLayer.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
-#include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 #include "ISingleViewportApplicationCore.h"
 
 
@@ -43,11 +42,11 @@ namespace OrthancStone
     boost::shared_ptr<IViewport>                  viewport_;
 
   private:
-    AnnotationsSceneLayer                         annotations_;
-    DefaultViewportInteractor                     interactor_;
+    class Interactor;
+
+    boost::shared_ptr<AnnotationsSceneLayer>      annotations_;
     boost::shared_ptr<DicomResourcesLoader>       dicomLoader_;
     boost::shared_ptr<SeriesFramesLoader>         framesLoader_;
-    Units                                         units_;
 
   public:
     virtual void Handle(const New::IObservable& observable,
@@ -60,23 +59,15 @@ namespace OrthancStone
     virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
                                   const boost::shared_ptr<IViewport>& viewport) ORTHANC_OVERRIDE;
 
+    virtual IViewportInteractor* CreateMouseInteractor() ORTHANC_OVERRIDE;
+
     virtual bool HandleKeyDown(const IEnvironment::ILock& environmentLock,
                                char key) ORTHANC_OVERRIDE;
-
-    virtual void HandleMouseDown(const IEnvironment::ILock& environmentLock,
-                                 IViewport::ILock& viewportLock,
-                                 const PointerEvent& p) ORTHANC_OVERRIDE;
-
-    virtual bool HandleMouseMove(const IEnvironment::ILock& environmentLock,
-                                 IViewport::ILock& viewportLock,
-                                 const PointerEvent& p) ORTHANC_OVERRIDE;
 
     virtual void Render(const IEnvironment::ILock& environmentLock,
                         IViewport::ILock& viewportLock) ORTHANC_OVERRIDE;
 
   public:
-    SimpleViewerCore();
-
     void LoadFrameFromOrthanc(const std::string& instanceId,
                               unsigned int frameIndex);
 

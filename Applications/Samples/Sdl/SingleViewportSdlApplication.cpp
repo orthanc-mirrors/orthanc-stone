@@ -37,6 +37,12 @@ namespace OrthancStone
     assert(core_.get() != NULL);
     core_->CreateComponents(context, viewport_);
 
+    std::unique_ptr<IViewportInteractor> interactor(core_->CreateMouseInteractor());
+    if (interactor.get() == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+
     if (startup_.get() != NULL)
     {
       startup_->Start(*core_);
@@ -113,15 +119,25 @@ namespace OrthancStone
             {
             case SDL_MOUSEBUTTONDOWN:
             {
-              std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
-              core_->HandleMouseDown(*environmentLock, *viewportLock, p);
+              viewportLock->GetController().HandleMousePress(*interactor, p, viewportLock->GetCompositor().GetCanvasWidth(),
+                                                             viewportLock->GetCompositor().GetCanvasHeight());
+              viewportLock->Invalidate();
               break;
             }
 
             case SDL_MOUSEMOTION:
             {
-              std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
-              paint = core_->HandleMouseMove(*environmentLock, *viewportLock, p);
+              if (viewportLock->GetController().HasActiveTracker())
+              {
+                if (viewportLock->GetController().HandleMouseMove(p))
+                {
+                  viewportLock->Invalidate();
+                }
+              }
+              else if (interactor->HasMouseHover())
+              {
+                interactor->HandleMouseHover(*viewport_, p);
+              }
               break;
             }
 

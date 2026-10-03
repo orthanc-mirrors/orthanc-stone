@@ -23,6 +23,7 @@
 #include "SimpleViewerCore.h"
 
 #include "../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"
+#include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 
 #include <boost/make_shared.hpp>
 
@@ -73,11 +74,12 @@ namespace OrthancStone
       // std::cout << message.GetResources()->GetSourceJson(0).toStyledString();
 
       LOG(INFO) << "Using millimeters units, as the DICOM instance contains the PixelSpacing tag";
-      units_ = Units_Millimeters;
+      annotations_->SetUnits(Units_Millimeters);
     }
     else
     {
       LOG(INFO) << "Using pixels units, as the DICOM instance does *not* contain the PixelSpacing tag";
+      annotations_->SetUnits(Units_Pixels);
     }
 
     //message.GetResources()->GetResource(0).Print(stdout);
@@ -110,6 +112,13 @@ namespace OrthancStone
   void SimpleViewerCore::CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
                                           const boost::shared_ptr<IViewport>& viewport)
   {
+    if (context_ ||
+        viewport_ ||
+        annotations_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
     context_ = context;
     viewport_ = viewport;
 
@@ -120,14 +129,75 @@ namespace OrthancStone
     //dicomLoader_->TypedObservable<DicomResourcesLoadedMessage>::Register(shared_from_this());
     New::IObservable::Bind<DicomResourcesLoadedMessage>(dicomLoader_, shared_from_this());
 
-    annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
-    annotations_.SetProbedLayer(0);
-
-    interactor_.SetWindowingLayer(0);
+    annotations_.reset(new AnnotationsSceneLayer(10));
+    annotations_->SetUnits(Units_Millimeters);
+    annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
+    annotations_->SetProbedLayer(0);
 
     {
       std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
       viewportLock->GetController().SetUndoStack(boost::make_shared<UndoStack>());
+    }
+  }
+
+
+  class SimpleViewerCore::Interactor : public IViewportInteractor
+  {
+  private:
+    DefaultViewportInteractor                 default_;
+    boost::shared_ptr<AnnotationsSceneLayer>  annotations_;
+
+  public:
+    Interactor(const boost::shared_ptr<AnnotationsSceneLayer>& annotations) :
+      annotations_(annotations)
+    {
+      default_.SetWindowingLayer(0);
+    }
+
+    virtual IFlexiblePointerTracker* CreateTracker(boost::weak_ptr<IViewport> viewport,
+                                                   const PointerEvent& event,
+                                                   unsigned int viewportWidth,
+                                                   unsigned int viewportHeight) ORTHANC_OVERRIDE
+    {
+      annotations_->ClearHover();
+
+      if (event.GetMouseButton() == MouseButton_Left)
+      {
+        boost::shared_ptr<IViewport> lock(viewport);
+        if (lock)
+        {
+          std::unique_ptr<IViewport::ILock> viewportLock(lock->Lock());
+          return annotations_->CreateTracker(event.GetMainPosition(), viewportLock->GetController().GetScene());
+        }
+      }
+
+      return default_.CreateTracker(viewport, event, viewportWidth, viewportHeight);
+    }
+
+    virtual bool HasMouseHover() const ORTHANC_OVERRIDE
+    {
+      return true;
+    }
+
+    virtual void HandleMouseHover(IViewport& viewport,
+                                  const PointerEvent& event) ORTHANC_OVERRIDE
+    {
+      std::unique_ptr<IViewport::ILock> viewportLock(viewport.Lock());
+      annotations_->SetMouseHover(event.GetMainPosition(), viewportLock->GetController().GetScene());
+      viewportLock->Invalidate();
+    }
+  };
+
+
+  IViewportInteractor* SimpleViewerCore::CreateMouseInteractor()
+  {
+    if (annotations_.get() == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      return new Interactor(annotations_);
     }
   }
 
@@ -166,35 +236,35 @@ namespace OrthancStone
     }
 
     case 'c':
-      annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Circle);
+      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Circle);
       break;
 
     case 'm':
-      annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
+      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
       break;
 
     case 'd':
-      annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Remove);
+      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Remove);
       break;
 
     case 'l':
-      annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Length);
+      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Length);
       break;
 
     case 'a':
-      annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_Angle);
+      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Angle);
       break;
 
     case 'p':
-      annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_PixelProbe);
+      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_PixelProbe);
       break;
 
     case 'e':
-      annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_EllipseProbe);
+      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_EllipseProbe);
       break;
 
     case 'r':
-      annotations_.SetActiveTool(AnnotationsSceneLayer::Tool_RectangleProbe);
+      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_RectangleProbe);
       break;
 
     default:
@@ -205,69 +275,17 @@ namespace OrthancStone
   }
 
 
-  void SimpleViewerCore::HandleMouseDown(const IEnvironment::ILock& environmentLock,
-                                         IViewport::ILock& viewportLock,
-                                         const PointerEvent& p)
-  {
-    annotations_.SetUnits(units_);
-
-    boost::shared_ptr<IFlexiblePointerTracker> t;
-
-    if (p.GetMouseButton() == MouseButton_Left)
-    {
-      t.reset(annotations_.CreateTracker(p.GetMainPosition(), viewportLock.GetController().GetScene()));
-    }
-
-    if (t.get() != NULL)
-    {
-      viewportLock.GetController().AcquireActiveTracker(t);
-    }
-    else
-    {
-      viewportLock.GetController().HandleMousePress(interactor_, p,
-                                                    viewportLock.GetCompositor().GetCanvasWidth(),
-                                                    viewportLock.GetCompositor().GetCanvasHeight());
-    }
-
-    viewportLock.Invalidate();
-  }
-
-
-  bool SimpleViewerCore::HandleMouseMove(const IEnvironment::ILock& environmentLock,
-                                         IViewport::ILock& viewportLock,
-                                         const PointerEvent& p)
-  {
-    if (viewportLock.GetController().HandleMouseMove(p))
-    {
-      viewportLock.Invalidate();
-      if (annotations_.ClearHover())
-      {
-        return true;
-      }
-    }
-    else
-    {
-      if (annotations_.SetMouseHover(p.GetMainPosition(), viewportLock.GetController().GetScene()))
-      {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-
   void SimpleViewerCore::Render(const IEnvironment::ILock& environmentLock,
                                 IViewport::ILock& viewportLock)
   {
-    annotations_.Render(viewportLock.GetController().GetScene());
-  }
-
-
-  SimpleViewerCore::SimpleViewerCore() :
-    annotations_(10),
-    units_(Units_Pixels)
-  {
+    if (!annotations_)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+    else
+    {
+      annotations_->Render(viewportLock.GetController().GetScene());
+    }
   }
 
 

@@ -23,6 +23,7 @@
 #include "SingleViewportSdlApplication.h"
 
 #include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
+#include "../../../OrthancStone/Sources/StoneException.h"
 #include "../Common/SampleHelpers.h"
 #include "SdlHelpers.h"
 
@@ -195,6 +196,38 @@ namespace OrthancStone
     else
     {
       startup_.reset(startup);
+    }
+  }
+
+
+  bool SingleViewportSdlApplication::Run()
+  {
+    try
+    {
+      Start();
+      RunInternal(GetContext());
+      Stop();
+      return true;
+    }
+    catch (Orthanc::OrthancException& e)
+    {
+      LOG(ERROR) << "OrthancException: " << e.What();
+      return false;
+    }
+    catch (StoneException& e)
+    {
+      LOG(ERROR) << "StoneException: " << e.What();
+      return false;
+    }
+    catch (std::runtime_error& e)
+    {
+      LOG(ERROR) << "Runtime error: " << e.what();
+      return false;
+    }
+    catch (...)
+    {
+      LOG(ERROR) << "Native exception";
+      return false;
     }
   }
 }

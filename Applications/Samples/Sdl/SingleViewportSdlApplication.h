@@ -47,7 +47,7 @@ namespace OrthancStone
     std::unique_ptr<ICoreStartup>                      startup_;
 
   protected:
-    virtual void RunInternal(const boost::shared_ptr<Context>& context) ORTHANC_OVERRIDE;
+    void RunInternal(const boost::shared_ptr<Context>& context);
 
   public:
     SingleViewportSdlApplication(const Configuration& configuration,
@@ -56,6 +56,8 @@ namespace OrthancStone
                                  unsigned int width,
                                  unsigned int height,
                                  bool useOpenGL);
+
+    bool Run();
 
     void SetCoreStartup(ICoreStartup* startup /* takes ownership */);
   };

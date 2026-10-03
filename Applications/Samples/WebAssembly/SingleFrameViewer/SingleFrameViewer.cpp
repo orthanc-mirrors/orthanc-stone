@@ -24,6 +24,7 @@
 
 #include "SingleFrameViewerApplication.h"
 
+#include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebAssemblyCairoViewport.h"
 #include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewport.h"
 #include "../../../../OrthancStone/Sources/Platforms/WebAssembly/WebGLViewportsRegistry.h"
 #include "../../../../OrthancStone/Sources/StoneApplication.h"
@@ -76,11 +77,6 @@ namespace OrthancStone
     boost::shared_ptr<ISingleViewportApplicationCore>  core_;
     boost::shared_ptr<WebAssemblyViewport>             viewport_;
 
-  protected:
-    virtual void RunInternal(const boost::shared_ptr<Context>& context) ORTHANC_OVERRIDE
-    {
-    }
-
   public:
     SingleViewportWebAssemblyApplication(const Configuration& configuration,
                                          const boost::shared_ptr<ISingleViewportApplicationCore>& core) :
@@ -91,6 +87,35 @@ namespace OrthancStone
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
+
+      Start();
+    }
+
+    void Setup(const std::string& canvasId,
+               bool useOpenGL)
+    {
+      if (viewport_)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+      }
+      else
+      {
+        if (useOpenGL)
+        {
+          viewport_ = OrthancStone::WebAssemblyCairoViewport::Create(canvasId);
+        }
+        else
+        {
+          viewport_ = OrthancStone::WebGLViewport::Create(canvasId);
+        }
+
+        core_->CreateComponents(GetContext(), viewport_);
+      }
+    }
+
+    const boost::shared_ptr<ISingleViewportApplicationCore>& GetCore() const
+    {
+      return core_;
     }
   };
 }
@@ -124,7 +149,9 @@ extern "C"
       boost::shared_ptr<OrthancStone::SimpleViewerCore> core(new OrthancStone::SimpleViewerCore);
       application2_.reset(new OrthancStone::SingleViewportWebAssemblyApplication(configuration, core));
 
+#if 0
       OrthancStone::StoneApplication::Initialize(configuration);
+#endif
   
       DISPATCH_JAVASCRIPT_EVENT("WasmModuleInitialized");
     }
@@ -138,6 +165,9 @@ extern "C"
   {
     try
     {
+      application2_->Setup(canvasId, true);
+
+#if 0
       if (application_.get() != NULL)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls,
@@ -157,6 +187,7 @@ extern "C"
           accessor.GetViewport().Invalidate();
         }
       }
+#endif
     }
     EXTERN_CATCH_EXCEPTIONS;
   }
@@ -168,11 +199,15 @@ extern "C"
   {
     try
     {
+      dynamic_cast<OrthancStone::SimpleViewerCore&>(*application2_->GetCore()).LoadFrameFromOrthanc(instance, frame);
+
+#if 0
       if (application_.get() != NULL)
       {
         OrthancStone::DicomSource source;
         application_->LoadOrthancFrame(source, instance, frame);
       }
+#endif
     }
     EXTERN_CATCH_EXCEPTIONS;
   }
@@ -187,6 +222,10 @@ extern "C"
   {
     try
     {
+      dynamic_cast<OrthancStone::SimpleViewerCore&>(*application2_->GetCore()).LoadFrameFromDicomWeb(
+        server, studyInstanceUid, seriesInstanceUid, sopInstanceUid, frame);
+
+#if 0
       if (application_.get() != NULL)
       {
         OrthancStone::DicomSource source;
@@ -194,6 +233,7 @@ extern "C"
         application_->LoadDicomWebFrame(source, studyInstanceUid, seriesInstanceUid,
                                         sopInstanceUid, frame);
       }
+#endif
     }
     EXTERN_CATCH_EXCEPTIONS;
   }

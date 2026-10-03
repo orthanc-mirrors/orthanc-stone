@@ -335,42 +335,46 @@ namespace OrthancStone
   }
 
 
-  bool StoneApplication::Run()
+  void StoneApplication::Start()
   {
-    try
+    if (context_)
     {
-      boost::shared_ptr<Context> context(new Context(configuration_));
-
-      assert(context.get() != NULL);
-      assert(context->pimpl_ != NULL);
-
-      context->pimpl_->Start();
-
-      RunInternal(context);
-
-      context->pimpl_->Stop();
-
-      return true;
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-    catch (Orthanc::OrthancException& e)
+    else
     {
-      LOG(ERROR) << "OrthancException: " << e.What();
-      return false;
+      context_.reset(new Context(configuration_));
+
+      assert(context_.get() != NULL);
+      assert(context_->pimpl_ != NULL);
+
+      context_->pimpl_->Start();
     }
-    catch (StoneException& e)
+  }
+
+
+  const boost::shared_ptr<StoneApplication::Context>& StoneApplication::GetContext()
+  {
+    if (context_)
     {
-      LOG(ERROR) << "StoneException: " << e.What();
-      return false;
+      return context_;
     }
-    catch (std::runtime_error& e)
+    else
     {
-      LOG(ERROR) << "Runtime error: " << e.what();
-      return false;
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
-    catch (...)
+  }
+
+
+  void StoneApplication::Stop()
+  {
+    if (context_)
     {
-      LOG(ERROR) << "Native exception";
-      return false;
+      context_->pimpl_->Stop();
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
   }
 

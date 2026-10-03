@@ -160,10 +160,8 @@ namespace OrthancStone
 
 
   private:
-    Configuration  configuration_;
-
-  protected:
-    virtual void RunInternal(const boost::shared_ptr<Context>& context) = 0;
+    Configuration               configuration_;
+    boost::shared_ptr<Context>  context_;
 
   public:
     StoneApplication(const Configuration& configuration) :
@@ -175,7 +173,11 @@ namespace OrthancStone
     {
     }
 
-    bool Run();
+    void Start();
+
+    const boost::shared_ptr<Context>& GetContext();
+
+    void Stop();
 
     static void Initialize(const Configuration& configuration);  // TODO Refactoring - Remove this
 

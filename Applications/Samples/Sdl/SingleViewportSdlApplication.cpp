@@ -86,8 +86,8 @@ namespace OrthancStone
         {
           std::string s(event.text.text);
           if (s.size() == 1 &&
-              s[0] > 0x00 &&
-              s[0] <= 0x7f)
+              s[0] >= 32 &&
+              s[0] <= 126)
           {
             if (s[0] == 'f')
             {

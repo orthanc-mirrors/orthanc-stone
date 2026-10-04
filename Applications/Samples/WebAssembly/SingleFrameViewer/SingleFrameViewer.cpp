@@ -77,6 +77,27 @@ namespace OrthancStone
     boost::shared_ptr<ISingleViewportApplicationCore>  core_;
     boost::shared_ptr<WebAssemblyViewport>             viewport_;
 
+    static EM_BOOL OnKeyDown(int eventType,
+                             const EmscriptenKeyboardEvent *e,
+                             void *userData)
+    {
+      SingleViewportWebAssemblyApplication& that = *reinterpret_cast<SingleViewportWebAssemblyApplication*>(userData);
+
+      if (e != NULL &&
+          e->key[0] != '\0' &&
+          e->key[1] == '\0' &&
+          e->key[0] >= 32 &&
+          e->key[1] <= 126)
+      {
+        const char key = static_cast<char>(e->key[0]);
+
+        std::unique_ptr<IEnvironment::ILock> environmentLock(that.GetContext()->GetEnvironment().AcquireLock());
+        that.core_->HandleKeyDown(*environmentLock, key);
+      }
+
+      return EM_FALSE; // Don't prevent the browser's default behavior
+    }
+
   public:
     SingleViewportWebAssemblyApplication(const Configuration& configuration,
                                          const boost::shared_ptr<ISingleViewportApplicationCore>& core) :
@@ -112,6 +133,8 @@ namespace OrthancStone
         core_->CreateComponents(GetContext(), viewport_);
 
         viewport_->AcquireInteractor(core_->CreateMouseInteractor());
+
+        emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_FALSE, OnKeyDown);
       }
     }
 

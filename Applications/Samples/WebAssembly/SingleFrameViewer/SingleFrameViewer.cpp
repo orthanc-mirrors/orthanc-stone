@@ -110,6 +110,8 @@ namespace OrthancStone
         }
 
         core_->CreateComponents(GetContext(), viewport_);
+
+        viewport_->AcquireInteractor(core_->CreateMouseInteractor());
       }
     }
 

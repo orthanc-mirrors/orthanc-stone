@@ -100,7 +100,7 @@ namespace OrthancStone
             else
             {
               std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
-              paint = core_->HandleKeyDown(*environmentLock, s[0]);
+              core_->HandleKeyDown(*environmentLock, s[0]);
             }
           }
         }
@@ -137,6 +137,7 @@ namespace OrthancStone
               else if (interactor->HasMouseHover())
               {
                 interactor->HandleMouseHover(*viewport_, p);
+                viewportLock->Invalidate();
               }
               break;
             }
@@ -155,12 +156,6 @@ namespace OrthancStone
 
       if (paint)
       {
-        {
-          std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
-          std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
-          core_->Render(*environmentLock, *viewportLock);
-        }
-
         viewport_->Paint();
       }
 

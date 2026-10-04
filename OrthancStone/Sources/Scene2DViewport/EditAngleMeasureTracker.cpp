@@ -51,7 +51,7 @@ namespace OrthancStone
   }
 
   void EditAngleMeasureTracker::PointerMove(const PointerEvent& e,
-                                            const Scene2D& scene)
+                                            Scene2D& scene)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     
@@ -108,13 +108,13 @@ namespace OrthancStone
   }
 
   void EditAngleMeasureTracker::PointerUp(const PointerEvent& e,
-                                          const Scene2D& scene)
+                                          Scene2D& scene)
   {
     alive_ = false;
   }
 
   void EditAngleMeasureTracker::PointerDown(const PointerEvent& e,
-                                            const Scene2D& scene)
+                                            Scene2D& scene)
   {
     LOG(WARNING) << "Additional touches (fingers, pen, mouse buttons...) "
       "are ignored when the edit angle tracker is active";

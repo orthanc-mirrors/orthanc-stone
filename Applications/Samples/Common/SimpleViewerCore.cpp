@@ -202,7 +202,7 @@ namespace OrthancStone
   }
 
 
-  bool SimpleViewerCore::HandleKeyDown(const IEnvironment::ILock& environmentLock,
+  void SimpleViewerCore::HandleKeyDown(const IEnvironment::ILock& environmentLock,
                                        char key)
   {
     switch (key)
@@ -269,22 +269,6 @@ namespace OrthancStone
 
     default:
       break;
-    }
-
-    return false;  // No need to repaint
-  }
-
-
-  void SimpleViewerCore::Render(const IEnvironment::ILock& environmentLock,
-                                IViewport::ILock& viewportLock)
-  {
-    if (!annotations_)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-    else
-    {
-      annotations_->Render(viewportLock.GetController().GetScene());
     }
   }
 

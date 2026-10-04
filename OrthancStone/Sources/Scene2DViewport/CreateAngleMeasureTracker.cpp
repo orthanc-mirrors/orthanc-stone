@@ -48,7 +48,7 @@ namespace OrthancStone
   }
 
   void CreateAngleMeasureTracker::PointerMove(const PointerEvent& event,
-                                              const Scene2D& scene)
+                                              Scene2D& scene)
   {
     if (!alive_)
     {
@@ -85,7 +85,7 @@ namespace OrthancStone
   }
 
   void CreateAngleMeasureTracker::PointerUp(const PointerEvent& e,
-                                            const Scene2D& scene)
+                                            Scene2D& scene)
   {
     // TODO: the current app does not prevent multiple PointerDown AND
     // PointerUp to be sent to the tracker.
@@ -111,7 +111,7 @@ namespace OrthancStone
   }
 
   void CreateAngleMeasureTracker::PointerDown(const PointerEvent& e,
-                                              const Scene2D& scene)
+                                              Scene2D& scene)
   {
     switch (state_)
     {

@@ -49,7 +49,7 @@ namespace OrthancStone
   }
   
   void ZoomSceneTracker::PointerMove(const PointerEvent& event,
-                                     const Scene2D& scene)
+                                     Scene2D& scene)
   {
     static const double MIN_ZOOM = -4;
     static const double MAX_ZOOM = 4;
@@ -93,7 +93,7 @@ namespace OrthancStone
     }
   }
 
-  void ZoomSceneTracker::Cancel(const Scene2D& scene)
+  void ZoomSceneTracker::Cancel(Scene2D& scene)
   {
     ViewportLocker locker(viewport_);
     

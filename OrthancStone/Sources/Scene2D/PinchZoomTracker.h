@@ -53,16 +53,16 @@ namespace OrthancStone
                      const PointerEvent& event);
 
     virtual void PointerMove(const PointerEvent &event,
-                             const Scene2D &scene) ORTHANC_OVERRIDE;
+                             Scene2D &scene) ORTHANC_OVERRIDE;
 
     virtual void PointerUp(const PointerEvent &event,
-                           const Scene2D &scene) ORTHANC_OVERRIDE
+                           Scene2D &scene) ORTHANC_OVERRIDE
     {
       state_ = State_Dead;
     }
 
     virtual void PointerDown(const PointerEvent &event,
-                             const Scene2D &scene) ORTHANC_OVERRIDE
+                             Scene2D &scene) ORTHANC_OVERRIDE
     {
     }
 
@@ -71,7 +71,7 @@ namespace OrthancStone
       return state_ != State_Dead;
     }
 
-    virtual void Cancel(const Scene2D &scene) ORTHANC_OVERRIDE
+    virtual void Cancel(Scene2D &scene) ORTHANC_OVERRIDE
     {
       state_ = State_Dead;
     }

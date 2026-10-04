@@ -45,7 +45,7 @@ namespace OrthancStone
 
   
   void RotateSceneTracker::PointerMove(const PointerEvent& event,
-                                       const Scene2D& scene)
+                                       Scene2D& scene)
   {
     if (aligner_.get() != NULL)
     {
@@ -80,7 +80,7 @@ namespace OrthancStone
   }
 
   
-  void RotateSceneTracker::Cancel(const Scene2D& scene)
+  void RotateSceneTracker::Cancel(Scene2D& scene)
   {
     ViewportLocker locker(viewport_);
     

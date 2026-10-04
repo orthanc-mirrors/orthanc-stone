@@ -171,11 +171,11 @@ namespace OrthancStone
     
     bool ClearHover();
 
-    bool SetMouseHover(const ScenePoint2D& p /* expressed in canvas coordinates */,
-                       const Scene2D& scene);
+    void SetMouseHover(const ScenePoint2D& p /* expressed in canvas coordinates */,
+                       Scene2D& scene);
 
     IFlexiblePointerTracker* CreateTracker(const ScenePoint2D& p /* expressed in canvas coordinates */,
-                                           const Scene2D& scene);
+                                           Scene2D& scene);
     
     void Serialize(Json::Value& target) const;
     

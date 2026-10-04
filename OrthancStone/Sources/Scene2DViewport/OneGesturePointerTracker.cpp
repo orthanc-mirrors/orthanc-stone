@@ -36,7 +36,7 @@ namespace OrthancStone
   }
 
   void OneGesturePointerTracker::PointerUp(const PointerEvent& event,
-                                           const Scene2D& scene)
+                                           Scene2D& scene)
   {
     // pointer up is only called for the LAST up event in case of a multi-touch
     // gesture
@@ -51,7 +51,7 @@ namespace OrthancStone
   }
 
   void OneGesturePointerTracker::PointerDown(const PointerEvent& event,
-                                             const Scene2D& scene)
+                                             Scene2D& scene)
   {
     // additional touches are not taken into account but we need to count 
     // the number of active touches

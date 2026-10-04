@@ -46,13 +46,13 @@ namespace OrthancStone
     ~EditAngleMeasureTracker();
 
     virtual void PointerMove(const PointerEvent& e,
-                             const Scene2D& scene) ORTHANC_OVERRIDE;
+                             Scene2D& scene) ORTHANC_OVERRIDE;
     
     virtual void PointerUp(const PointerEvent& e,
-                           const Scene2D& scene) ORTHANC_OVERRIDE;
+                           Scene2D& scene) ORTHANC_OVERRIDE;
     
     virtual void PointerDown(const PointerEvent& e,
-                             const Scene2D& scene) ORTHANC_OVERRIDE;
+                             Scene2D& scene) ORTHANC_OVERRIDE;
 
   private:
     AngleMeasureTool::AngleHighlightArea modifiedZone_;

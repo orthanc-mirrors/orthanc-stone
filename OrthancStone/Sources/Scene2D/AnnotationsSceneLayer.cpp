@@ -1051,22 +1051,26 @@ namespace OrthancStone
     }
 
     virtual void PointerMove(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE
+                             Scene2D& scene) ORTHANC_OVERRIDE
     {
       primitive_.MovePreview(event.GetMainPosition().Apply(canvasToScene_) - sceneClick_, scene);
+
       that_.BroadcastMessage(AnnotationChangedMessage(that_));
+      that_.Render(scene);
     }
       
     virtual void PointerUp(const PointerEvent& event,
-                           const Scene2D& scene) ORTHANC_OVERRIDE
+                           Scene2D& scene) ORTHANC_OVERRIDE
     {
       primitive_.MoveDone(event.GetMainPosition().Apply(canvasToScene_) - sceneClick_, scene);
       alive_ = false;
+
       that_.BroadcastMessage(AnnotationChangedMessage(that_));
+      that_.Render(scene);
     }
 
     virtual void PointerDown(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE
+                             Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
@@ -1075,7 +1079,7 @@ namespace OrthancStone
       return alive_;
     }
 
-    virtual void Cancel(const Scene2D& scene) ORTHANC_OVERRIDE
+    virtual void Cancel(Scene2D& scene) ORTHANC_OVERRIDE
     {
       //primitive_.MoveDone(ScenePoint2D(0, 0), scene);
       primitive_.MoveDone(sceneClick_, scene);   // TODO Check this
@@ -2392,7 +2396,7 @@ namespace OrthancStone
     }
 
     virtual void PointerMove(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE
+                             Scene2D& scene) ORTHANC_OVERRIDE
     {
       if (annotation_ != NULL)
       {
@@ -2400,19 +2404,21 @@ namespace OrthancStone
         annotation_->SignalMove(annotation_->GetHandle(1), scene);
 
         layer_.BroadcastMessage(AnnotationChangedMessage(layer_));
+        layer_.Render(scene);
       }
     }
       
     virtual void PointerUp(const PointerEvent& event,
-                           const Scene2D& scene) ORTHANC_OVERRIDE
+                           Scene2D& scene) ORTHANC_OVERRIDE
     {
       annotation_ = NULL;  // IsAlive() becomes false
 
       layer_.BroadcastMessage(AnnotationAddedMessage(layer_));
+      layer_.Render(scene);
     }
 
     virtual void PointerDown(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE
+                             Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
@@ -2421,7 +2427,7 @@ namespace OrthancStone
       return (annotation_ != NULL);
     }
 
-    virtual void Cancel(const Scene2D& scene) ORTHANC_OVERRIDE
+    virtual void Cancel(Scene2D& scene) ORTHANC_OVERRIDE
     {
       if (annotation_ != NULL)
       {
@@ -2453,13 +2459,14 @@ namespace OrthancStone
     }
 
     virtual void PointerMove(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE
+                             Scene2D& scene) ORTHANC_OVERRIDE
     {
       if (length_ != NULL)
       {
         length_->GetHandle(1).SetCenter(event.GetMainPosition().Apply(canvasToScene_));
         length_->SignalMove(length_->GetHandle(1), scene);
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
+        that_.Render(scene);
       }
 
       if (angle_ != NULL)
@@ -2467,11 +2474,12 @@ namespace OrthancStone
         angle_->GetHandle(2).SetCenter(event.GetMainPosition().Apply(canvasToScene_));
         angle_->SignalMove(angle_->GetHandle(2), scene);
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
+        that_.Render(scene);
       }
     }
       
     virtual void PointerUp(const PointerEvent& event,
-                           const Scene2D& scene) ORTHANC_OVERRIDE
+                           Scene2D& scene) ORTHANC_OVERRIDE
     {
       if (length_ != NULL)
       {
@@ -2485,17 +2493,19 @@ namespace OrthancStone
         length_ = NULL;
 
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
+        that_.Render(scene);
       }
       else
       {
         angle_ = NULL;  // IsAlive() becomes false
 
         that_.BroadcastMessage(AnnotationAddedMessage(that_));
+        that_.Render(scene);
       }
     }
 
     virtual void PointerDown(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE
+                             Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
@@ -2505,7 +2515,7 @@ namespace OrthancStone
               angle_ != NULL);
     }
 
-    virtual void Cancel(const Scene2D& scene) ORTHANC_OVERRIDE
+    virtual void Cancel(Scene2D& scene) ORTHANC_OVERRIDE
     {
       if (length_ != NULL)
       {
@@ -2527,25 +2537,27 @@ namespace OrthancStone
   public:
     CreatePixelProbeTracker(AnnotationsSceneLayer& that,
                             const ScenePoint2D& sceneClick,
-                            const Scene2D& scene)
+                            Scene2D& scene)
     {
       PixelProbeAnnotation* annotation = new PixelProbeAnnotation(that, sceneClick);
       annotation->UpdateProbe(scene);
+
       that.BroadcastMessage(AnnotationAddedMessage(that));
+      that.Render(scene);
     }
 
     virtual void PointerMove(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE
+                             Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
       
     virtual void PointerUp(const PointerEvent& event,
-                           const Scene2D& scene) ORTHANC_OVERRIDE
+                           Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
     virtual void PointerDown(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE
+                             Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
@@ -2554,7 +2566,7 @@ namespace OrthancStone
       return false;
     }
 
-    virtual void Cancel(const Scene2D& scene) ORTHANC_OVERRIDE
+    virtual void Cancel(Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
   };
@@ -2572,7 +2584,7 @@ namespace OrthancStone
     }
 
     virtual void PointerUp(const PointerEvent& event,
-                           const Scene2D& scene) ORTHANC_OVERRIDE
+                           Scene2D& scene) ORTHANC_OVERRIDE
     {
       std::unique_ptr<TextAnnotationRequiredMessage> request;
       
@@ -2585,6 +2597,7 @@ namespace OrthancStone
       
       GetLayer().BroadcastMessage(AnnotationChangedMessage(GetLayer()));
       GetLayer().BroadcastMessage(*request);
+      GetLayer().Render(scene);
     }
   };
 
@@ -2599,17 +2612,17 @@ namespace OrthancStone
     }
 
     virtual void PointerMove(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE
+                             Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
       
     virtual void PointerUp(const PointerEvent& event,
-                           const Scene2D& scene) ORTHANC_OVERRIDE
+                           Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
     virtual void PointerDown(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE
+                             Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
 
@@ -2618,7 +2631,7 @@ namespace OrthancStone
       return false;
     }
 
-    virtual void Cancel(const Scene2D& scene) ORTHANC_OVERRIDE
+    virtual void Cancel(Scene2D& scene) ORTHANC_OVERRIDE
     {
     }
   };
@@ -2774,7 +2787,7 @@ namespace OrthancStone
   bool AnnotationsSceneLayer::ClearHover()
   {
     bool needsRefresh = false;
-      
+
     for (GeometricPrimitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
     {
       assert(*it != NULL);
@@ -2789,17 +2802,17 @@ namespace OrthancStone
   }
   
 
-  bool AnnotationsSceneLayer::SetMouseHover(const ScenePoint2D& p,
-                                            const Scene2D& scene)
+  void AnnotationsSceneLayer::SetMouseHover(const ScenePoint2D& p,
+                                            Scene2D& scene)
   {
+    bool needsRefresh = false;
+
     if (activeTool_ == Tool_None)
     {
-      return ClearHover();
+      needsRefresh = ClearHover();
     }
     else
     {
-      bool needsRefresh = false;
-      
       const ScenePoint2D s = p.Apply(scene.GetCanvasToSceneTransform());
       
       for (GeometricPrimitives::iterator it = primitives_.begin(); it != primitives_.end(); ++it)
@@ -2814,14 +2827,17 @@ namespace OrthancStone
         
         (*it)->SetHover(hover);
       }
+    }
 
-      return needsRefresh;
+    if (needsRefresh)
+    {
+      Render(scene);
     }
   }
 
 
   IFlexiblePointerTracker* AnnotationsSceneLayer::CreateTracker(const ScenePoint2D& p,
-                                                                const Scene2D& scene)
+                                                                Scene2D& scene)
   {
     /**
      * WARNING: The created trackers must NOT keep a reference to "scene"!

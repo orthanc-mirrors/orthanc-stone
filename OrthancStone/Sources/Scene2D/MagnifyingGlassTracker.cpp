@@ -62,7 +62,7 @@ namespace OrthancStone
       
 
   void MagnifyingGlassTracker::PointerUp(const PointerEvent& event,
-                                         const Scene2D& scene)
+                                         Scene2D& scene)
   {
     Cancel(scene);
     OneGesturePointerTracker::PointerUp(event, scene);
@@ -70,7 +70,7 @@ namespace OrthancStone
 
   
   void MagnifyingGlassTracker::PointerMove(const PointerEvent& event,
-                                           const Scene2D& scene)
+                                           Scene2D& scene)
   {
     ViewportLocker locker(viewport_);
     
@@ -81,7 +81,7 @@ namespace OrthancStone
   }
     
 
-  void MagnifyingGlassTracker::Cancel(const Scene2D& scene)
+  void MagnifyingGlassTracker::Cancel(Scene2D& scene)
   {
     ViewportLocker locker(viewport_);
     

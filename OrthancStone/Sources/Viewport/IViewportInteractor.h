@@ -34,14 +34,14 @@ namespace OrthancStone
     {
     }
 
-    virtual IFlexiblePointerTracker* CreateTracker(boost::weak_ptr<IViewport> viewport,
+    virtual IFlexiblePointerTracker* CreateTracker(boost::weak_ptr<IViewport> viewport,  // TODO Refresh - Why not reference here?
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) = 0;
 
     virtual bool HasMouseHover() const = 0;
 
-    virtual void HandleMouseHover(IViewport& viewport,
+    virtual void HandleMouseHover(IViewport& viewport,  // TODO Refresh - Why not IViewport::ILock here?
                                   const PointerEvent& event) = 0;
   };
 }

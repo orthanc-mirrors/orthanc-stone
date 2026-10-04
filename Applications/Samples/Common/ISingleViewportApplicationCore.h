@@ -41,10 +41,7 @@ namespace OrthancStone
 
     virtual IViewportInteractor* CreateMouseInteractor() = 0;
 
-    virtual bool HandleKeyDown(const IEnvironment::ILock& environmentLock,
+    virtual void HandleKeyDown(const IEnvironment::ILock& environmentLock,
                                char key) = 0;
-
-    virtual void Render(const IEnvironment::ILock& environmentLock,
-                        IViewport::ILock& viewportLock) = 0;
   };
 }

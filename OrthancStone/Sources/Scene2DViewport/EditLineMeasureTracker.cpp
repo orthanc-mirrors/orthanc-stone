@@ -47,7 +47,7 @@ namespace OrthancStone
   }
 
   void EditLineMeasureTracker::PointerMove(const PointerEvent& e,
-                                           const Scene2D& scene)
+                                           Scene2D& scene)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     ViewportController& controller = lock->GetController();
@@ -93,13 +93,13 @@ namespace OrthancStone
   }
 
   void EditLineMeasureTracker::PointerUp(const PointerEvent& e,
-                                         const Scene2D& scene)
+                                         Scene2D& scene)
   {
     alive_ = false;
   }
 
   void EditLineMeasureTracker::PointerDown(const PointerEvent& e,
-                                           const Scene2D& scene)
+                                           Scene2D& scene)
   {
     LOG(WARNING) << "Additional touches (fingers, pen, mouse buttons...) "
       "are ignored when the edit line tracker is active";

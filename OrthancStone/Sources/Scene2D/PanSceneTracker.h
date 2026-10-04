@@ -40,8 +40,8 @@ namespace OrthancStone
                     const PointerEvent& event);
 
     virtual void PointerMove(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE;
+                             Scene2D& scene) ORTHANC_OVERRIDE;
     
-    virtual void Cancel(const Scene2D& scene) ORTHANC_OVERRIDE;
+    virtual void Cancel(Scene2D& scene) ORTHANC_OVERRIDE;
   };
 }

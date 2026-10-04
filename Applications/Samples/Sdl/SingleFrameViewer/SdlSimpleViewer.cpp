@@ -80,7 +80,7 @@ namespace OrthancStone
     }
 
 
-    virtual bool HandleKeyDown(const IEnvironment::ILock& environmentLock,
+    virtual void HandleKeyDown(const IEnvironment::ILock& environmentLock,
                                char key) ORTHANC_OVERRIDE
     {
       if (key == 'b')
@@ -109,12 +109,10 @@ namespace OrthancStone
           source.SetDicomDirSource();
           oracle.Submit(environment, toto_, new ParseDicomFromFileCommand(source, "hand.dcm"));
         }
-
-        return false;
       }
       else
       {
-        return SimpleViewerCore::HandleKeyDown(environmentLock, key);
+        SimpleViewerCore::HandleKeyDown(environmentLock, key);
       }
     }
   };

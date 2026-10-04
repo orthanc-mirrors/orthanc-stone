@@ -49,7 +49,7 @@ namespace OrthancStone
   }
 
   void CreateLineMeasureTracker::PointerMove(const PointerEvent& event,
-                                             const Scene2D& scene)
+                                             Scene2D& scene)
   {
     if (!alive_)
     {
@@ -75,7 +75,7 @@ namespace OrthancStone
   }
 
   void CreateLineMeasureTracker::PointerUp(const PointerEvent& e,
-                                           const Scene2D& scene)
+                                           Scene2D& scene)
   {
     // TODO: the current app does not prevent multiple PointerDown AND
     // PointerUp to be sent to the tracker.
@@ -86,7 +86,7 @@ namespace OrthancStone
   }
 
   void CreateLineMeasureTracker::PointerDown(const PointerEvent& e,
-                                             const Scene2D& scene)
+                                             Scene2D& scene)
   {
     LOG(WARNING) << "Additional touches (fingers, pen, mouse buttons...) "
       "are ignored when the line measure creation tracker is active";

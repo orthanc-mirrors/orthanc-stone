@@ -155,7 +155,7 @@ namespace OrthancStone
   }
   
   void GrayscaleWindowingSceneTracker::PointerMove(const PointerEvent& event,
-                                                   const Scene2D& scene)
+                                                   Scene2D& scene)
   {
     if (active_)
     {
@@ -174,7 +174,7 @@ namespace OrthancStone
     }
   }
 
-  void GrayscaleWindowingSceneTracker::Cancel(const Scene2D& scene)
+  void GrayscaleWindowingSceneTracker::Cancel(Scene2D& scene)
   {
     SetWindowing(originalCenter_, originalWidth_);
   }

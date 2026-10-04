@@ -44,7 +44,7 @@ namespace OrthancStone
 
 
   void PanSceneTracker::PointerMove(const PointerEvent& event,
-                                    const Scene2D& scene)
+                                    Scene2D& scene)
   {
     ScenePoint2D p = event.GetMainPosition().Apply(originalCanvasToScene_);
 
@@ -61,7 +61,7 @@ namespace OrthancStone
     }
   }
 
-  void PanSceneTracker::Cancel(const Scene2D& scene)
+  void PanSceneTracker::Cancel(Scene2D& scene)
   {
     ViewportLocker locker(viewport_);
     

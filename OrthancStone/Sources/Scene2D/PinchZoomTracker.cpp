@@ -65,7 +65,7 @@ namespace OrthancStone
 
 
   void PinchZoomTracker::PointerMove(const PointerEvent &event,
-                                     const Scene2D &scene)
+                                     Scene2D &scene)
   {
     if (state_ == State_OneFinger &&
         event.GetPositionsCount() == 2)

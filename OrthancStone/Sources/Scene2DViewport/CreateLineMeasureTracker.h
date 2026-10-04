@@ -46,11 +46,13 @@ namespace OrthancStone
     ~CreateLineMeasureTracker();
 
     virtual void PointerMove(const PointerEvent& e,
-                             const Scene2D& scene) ORTHANC_OVERRIDE;
+                             Scene2D& scene) ORTHANC_OVERRIDE;
+
     virtual void PointerUp(const PointerEvent& e,
-                             const Scene2D& scene) ORTHANC_OVERRIDE;
+                           Scene2D& scene) ORTHANC_OVERRIDE;
+
     virtual void PointerDown(const PointerEvent& e,
-                             const Scene2D& scene) ORTHANC_OVERRIDE;
+                             Scene2D& scene) ORTHANC_OVERRIDE;
 
   private:
     boost::shared_ptr<CreateLineMeasureCommand> GetCommand();

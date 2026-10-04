@@ -53,10 +53,10 @@ namespace OrthancStone
     explicit OneGesturePointerTracker();
     
     virtual void PointerUp(const PointerEvent& event,
-                           const Scene2D& scene) ORTHANC_OVERRIDE;
+                           Scene2D& scene) ORTHANC_OVERRIDE;
     
     virtual void PointerDown(const PointerEvent& event,
-                             const Scene2D& scene) ORTHANC_OVERRIDE;
+                             Scene2D& scene) ORTHANC_OVERRIDE;
     
     virtual bool IsAlive() const ORTHANC_OVERRIDE;
   };

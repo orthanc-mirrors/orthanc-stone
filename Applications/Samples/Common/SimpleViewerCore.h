@@ -61,11 +61,8 @@ namespace OrthancStone
 
     virtual IViewportInteractor* CreateMouseInteractor() ORTHANC_OVERRIDE;
 
-    virtual bool HandleKeyDown(const IEnvironment::ILock& environmentLock,
+    virtual void HandleKeyDown(const IEnvironment::ILock& environmentLock,
                                char key) ORTHANC_OVERRIDE;
-
-    virtual void Render(const IEnvironment::ILock& environmentLock,
-                        IViewport::ILock& viewportLock) ORTHANC_OVERRIDE;
 
   public:
     void LoadFrameFromOrthanc(const std::string& instanceId,

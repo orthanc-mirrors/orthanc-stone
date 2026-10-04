@@ -4034,11 +4034,9 @@ public:
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport.Lock());
 
-      if (viewer_.stoneAnnotations_->SetMouseHover(event.GetMainPosition(), lock->GetController().GetScene()))
-      {
-        viewer_.stoneAnnotations_->Render(lock->GetController().GetScene());
-        lock->Invalidate();
-      }
+      viewer_.stoneAnnotations_->SetMouseHover(event.GetMainPosition(), lock->GetController().GetScene());
+      viewer_.stoneAnnotations_->Render(lock->GetController().GetScene());
+      lock->Invalidate();
     }
   };
   

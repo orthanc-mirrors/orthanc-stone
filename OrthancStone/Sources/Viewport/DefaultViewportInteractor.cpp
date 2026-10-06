@@ -117,7 +117,8 @@ namespace OrthancStone
         if (event.GetPositionsCount() == 1 ||
             event.GetPositionsCount() == 2)
         {
-          return new PinchZoomTracker(viewport, event);
+          std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
+          return new PinchZoomTracker(lock->GetController().GetScene(), event);
         }
         else
         {

@@ -41,15 +41,14 @@ namespace OrthancStone
       State_Dead
     };
 
-    boost::weak_ptr<IViewport> viewport_;
-    State                      state_;
-    AffineTransform2D          originalSceneToCanvas_;
-    AffineTransform2D          originalCanvasToScene_;
-    ScenePoint2D               pivot_;
-    double                     originalDistance_;
+    State              state_;
+    AffineTransform2D  originalSceneToCanvas_;
+    AffineTransform2D  originalCanvasToScene_;
+    ScenePoint2D       pivot_;
+    double             originalDistance_;
 
   public:
-    PinchZoomTracker(const boost::shared_ptr<IViewport>& viewport,
+    PinchZoomTracker(const Scene2D& scene,
                      const PointerEvent& event);
 
     virtual bool PointerMove(const PointerEvent &event,

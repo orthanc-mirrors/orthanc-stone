@@ -36,30 +36,24 @@ namespace OrthancStone
   }
 
 
-  PinchZoomTracker::PinchZoomTracker(const boost::shared_ptr<IViewport>& viewport,
+  PinchZoomTracker::PinchZoomTracker(const Scene2D& scene,
                                      const PointerEvent& event) :
-    viewport_(viewport),
     state_(State_Dead)
   {
-    ViewportLocker locker(viewport_);
+    originalSceneToCanvas_ = scene.GetSceneToCanvasTransform();
+    originalCanvasToScene_ = scene.GetCanvasToSceneTransform();
 
-    if (locker.IsValid())
+    if (event.GetPositionsCount() == 1)
     {
-      originalSceneToCanvas_ = locker.GetController().GetScene().GetSceneToCanvasTransform();
-      originalCanvasToScene_ = locker.GetController().GetScene().GetCanvasToSceneTransform();
-
-      if (event.GetPositionsCount() == 1)
-      {
-        state_ = State_OneFinger;
-        pivot_ = event.GetPosition(0).Apply(originalCanvasToScene_);
-        originalDistance_ = 0;
-      }
-      else if (event.GetPositionsCount() == 2)
-      {
-        state_ = State_TwoFingers;
-        pivot_ = GetCenter(event).Apply(originalCanvasToScene_);
-        originalDistance_ = ScenePoint2D::DistancePtPt(event.GetPosition(0), event.GetPosition(1));
-      }
+      state_ = State_OneFinger;
+      pivot_ = event.GetPosition(0).Apply(originalCanvasToScene_);
+      originalDistance_ = 0;
+    }
+    else if (event.GetPositionsCount() == 2)
+    {
+      state_ = State_TwoFingers;
+      pivot_ = GetCenter(event).Apply(originalCanvasToScene_);
+      originalDistance_ = ScenePoint2D::DistancePtPt(event.GetPosition(0), event.GetPosition(1));
     }
   }
 
@@ -97,7 +91,7 @@ namespace OrthancStone
       else
       {
         state_ = State_Dead;
-        return true;
+        return false;
       }
 
       double distance = ScenePoint2D::DistancePtPt(event.GetPosition(0), event.GetPosition(1));
@@ -106,27 +100,16 @@ namespace OrthancStone
     else
     {
       state_ = State_Dead;
-      return true;
+      return false;
     }
 
-    {
-      ViewportLocker locker(viewport_);
+    scene.SetSceneToCanvasTransform(
+      AffineTransform2D::Combine(
+        originalSceneToCanvas_,
+        AffineTransform2D::CreateOffset(p.GetX(), p.GetY()),
+        AffineTransform2D::CreateScaling(zoom),
+        AffineTransform2D::CreateOffset(-pivot_.GetX(), -pivot_.GetY())));
 
-      if (locker.IsValid())
-      {
-        locker.GetController().SetSceneToCanvasTransform(
-          AffineTransform2D::Combine(
-            originalSceneToCanvas_,
-            AffineTransform2D::CreateOffset(p.GetX(), p.GetY()),
-            AffineTransform2D::CreateScaling(zoom),
-            AffineTransform2D::CreateOffset(-pivot_.GetX(), -pivot_.GetY())));
-        locker.Invalidate();
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-    }
+    return true;
   }
 }

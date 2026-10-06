@@ -34,6 +34,9 @@
 
 #include <OrthancException.h>
 
+#include <boost/lexical_cast.hpp>
+
+
 namespace OrthancStone
 {
   cairo_t* CairoCompositor::GetCairoContext()

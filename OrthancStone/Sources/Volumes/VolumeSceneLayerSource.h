@@ -27,11 +27,11 @@
 #include "../Viewport/IViewport.h"
 #include "IVolumeSlicer.h"
 
+#include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace OrthancStone
 {
-  class IViewport;
   /**
      This class applies one "volume slicer" to a "3D volume", in order
      to create one "2D scene layer" that will be set onto the "2D

@@ -23,6 +23,7 @@
 
 #include "Scene2D.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 
 #include "ScenePoint2D.h"
@@ -81,15 +82,6 @@ namespace OrthancStone
   };
   
   
-  Scene2D::Scene2D() :
-    layerCounter_(0),
-    canvasToSceneFactor_(canvasToScene_.ComputeZoom()),
-    transformRevision_(0)
-  {
-    assert(LinearAlgebra::IsNear(1, canvasToSceneFactor_));
-  }
-
-
   Scene2D::~Scene2D()
   {
     for (Content::iterator it = content_.begin(); 
@@ -222,7 +214,6 @@ namespace OrthancStone
 
     sceneToCanvas_ = transform;
     canvasToScene_ = inverse;
-    transformRevision_ ++;
   }
 
   void Scene2D::GetBoundingBox(Extent2D& target) const

@@ -32,7 +32,11 @@
 #include "Internals/OpenGLTextRenderer.h"
 #include "Internals/MacroLayerRenderer.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
+
+#include <boost/lexical_cast.hpp>
+
 
 namespace OrthancStone
 {

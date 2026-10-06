@@ -3948,7 +3948,7 @@ public:
           const OrthancStone::ScenePoint2D p = event.GetMainPosition();
           double x = p.GetX();
           double y = p.GetY();
-          viewportLock->GetController().GetCanvasToSceneTransform().Apply(x, y);
+          viewportLock->GetController().GetScene().GetCanvasToSceneTransform().Apply(x, y);
           
           OrthancStone::Vector click = plane.MapSliceToWorldCoordinates(x, y);
           if (viewer_.observer_.get() != NULL)

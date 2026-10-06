@@ -57,24 +57,17 @@ namespace OrthancStone
     AffineTransform2D  sceneToCanvas_;
     AffineTransform2D  canvasToScene_;
     uint64_t           layerCounter_;
+    double             canvasToSceneFactor_;  // This value is cached from "canvasToScene_.ComputeZoom()"
+    uint64_t           transformRevision_;
 
-    Scene2D(const Scene2D& other);
-    
     void FitContent(const AffineTransform2D& forcedTransform,
                     unsigned int canvasWidth,
                     unsigned int canvasHeight);
 
   public:
-    Scene2D() : layerCounter_(0)
-    {
-    }
+    Scene2D();
     
     ~Scene2D();
-
-    Scene2D* Clone() const
-    {
-      return new Scene2D(*this);
-    }
 
     ISceneLayer& SetLayer(int depth,
                           ISceneLayer* layer);  // Takes ownership
@@ -139,5 +132,15 @@ namespace OrthancStone
 
     void PreserveExtent(int depth,
                         const Extent2D& previousExtent);
+
+    double GetCanvasToSceneFactor() const
+    {
+      return canvasToSceneFactor_;
+    }
+
+    uint64_t GetTransformRevision() const
+    {
+      return transformRevision_;
+    }
   };
 }

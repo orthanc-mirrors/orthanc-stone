@@ -30,10 +30,9 @@
 
 namespace OrthancStone
 {
-  ViewportController::ViewportController(boost::weak_ptr<IViewport> viewport)
-    : scene_(new Scene2D)
-    , viewport_(viewport)
-    , canvasToSceneFactor_(1)
+  ViewportController::ViewportController(boost::weak_ptr<IViewport> viewport) :
+    scene_(new Scene2D),
+    viewport_(viewport)
   {
     // undoStack_ is not default-initialized, which basically means empty.
     // The controller must be able to cope with this.
@@ -135,7 +134,6 @@ namespace OrthancStone
   {
     scene_->SetSceneToCanvasTransform(transform);
 
-    canvasToSceneFactor_ = scene_->GetCanvasToSceneTransform().ComputeZoom();
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
@@ -148,7 +146,7 @@ namespace OrthancStone
                                       unsigned int viewportHeight)
   {
     scene_->FitContent(viewportWidth, viewportHeight);
-    canvasToSceneFactor_ = scene_->GetCanvasToSceneTransform().ComputeZoom();
+
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
@@ -172,31 +170,6 @@ namespace OrthancStone
     measureTools_.erase(
       std::remove(measureTools_.begin(), measureTools_.end(), measureTool), 
       measureTools_.end());
-  }
-
-  double ViewportController::GetCanvasToSceneFactor() const
-  {
-    return canvasToSceneFactor_;
-  }
-
-  double ViewportController::GetHandleSideLengthS() const
-  {
-    return HANDLE_SIDE_LENGTH_CANVAS_COORD * GetCanvasToSceneFactor();
-  }
-
-  double ViewportController::GetAngleToolArcRadiusS() const
-  {
-    return ARC_RADIUS_CANVAS_COORD * GetCanvasToSceneFactor();
-  }
-
-  double ViewportController::GetHitTestMaximumDistanceS() const
-  {
-    return HIT_TEST_MAX_DISTANCE_CANVAS_COORD * GetCanvasToSceneFactor();
-  }
-
-  double ViewportController::GetAngleTopTextLabelDistanceS() const
-  {
-    return TEXT_CENTER_DISTANCE_CANVAS_COORD * GetCanvasToSceneFactor();
   }
 
 

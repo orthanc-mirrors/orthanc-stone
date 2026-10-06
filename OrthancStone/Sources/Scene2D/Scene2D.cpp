@@ -81,19 +81,15 @@ namespace OrthancStone
   };
   
   
-  Scene2D::Scene2D(const Scene2D& other) 
-    : sceneToCanvas_(other.sceneToCanvas_)
-    , canvasToScene_(other.canvasToScene_)
-    , layerCounter_(0)
+  Scene2D::Scene2D() :
+    layerCounter_(0),
+    canvasToSceneFactor_(canvasToScene_.ComputeZoom()),
+    transformRevision_(0)
   {
-    for (Content::const_iterator it = other.content_.begin();
-         it != other.content_.end(); ++it)
-    {
-      content_[it->first] = new Item(it->second->GetLayer().Clone(), layerCounter_++);
-    }
+    assert(LinearAlgebra::IsNear(1, canvasToSceneFactor_));
   }
 
-    
+
   Scene2D::~Scene2D()
   {
     for (Content::iterator it = content_.begin(); 
@@ -226,6 +222,7 @@ namespace OrthancStone
 
     sceneToCanvas_ = transform;
     canvasToScene_ = inverse;
+    transformRevision_ ++;
   }
 
   void Scene2D::GetBoundingBox(Extent2D& target) const

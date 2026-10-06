@@ -95,7 +95,7 @@ namespace OrthancStone
       rightButtonAction_ = action;
     }
 
-    virtual IFlexiblePointerTracker* CreateTracker(const boost::shared_ptr<IViewport>& viewport,
+    virtual IFlexiblePointerTracker* CreateTracker(Scene2D& scene,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) ORTHANC_OVERRIDE;

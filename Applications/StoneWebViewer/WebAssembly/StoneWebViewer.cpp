@@ -3959,23 +3959,20 @@ public:
       SetGrayscaleWindowingObserverFactory(new GrayscaleFactory(viewer));
     }
 
-    virtual OrthancStone::IFlexiblePointerTracker* CreateTracker(
-      const boost::shared_ptr<OrthancStone::IViewport>& viewport,
-      const OrthancStone::PointerEvent& event,
-      unsigned int viewportWidth,
-      unsigned int viewportHeight) ORTHANC_OVERRIDE
+    virtual OrthancStone::IFlexiblePointerTracker* CreateTracker(OrthancStone::Scene2D& scene,
+                                                                 const OrthancStone::PointerEvent& event,
+                                                                 unsigned int viewportWidth,
+                                                                 unsigned int viewportHeight) ORTHANC_OVERRIDE
     {
       if (IsAction(event, WebViewerAction_Crosshair))
       {
         OrthancStone::CoordinateSystem3D plane;
         if (viewer_.GetCurrentPlane(plane))
         {
-          std::unique_ptr<OrthancStone::IViewport::ILock> viewportLock(viewport->Lock());
-
           const OrthancStone::ScenePoint2D p = event.GetMainPosition();
           double x = p.GetX();
           double y = p.GetY();
-          viewportLock->GetController().GetScene().GetCanvasToSceneTransform().Apply(x, y);
+          scene.GetCanvasToSceneTransform().Apply(x, y);
           
           OrthancStone::Vector click = plane.MapSliceToWorldCoordinates(x, y);
           if (viewer_.observer_.get() != NULL)
@@ -4031,10 +4028,8 @@ public:
           }
 
           {
-            std::unique_ptr<OrthancStone::IViewport::ILock> viewportLock(viewport->Lock());
-
             std::unique_ptr<OrthancStone::IFlexiblePointerTracker> t;
-            t.reset(viewer_.stoneAnnotations_->CreateTracker(event.GetMainPosition(), viewportLock->GetController().GetScene()));
+            t.reset(viewer_.stoneAnnotations_->CreateTracker(event.GetMainPosition(), scene));
 
             if (t.get() != NULL)
             {
@@ -4043,7 +4038,7 @@ public:
           }
         }
 
-        return DefaultViewportInteractor::CreateTracker(viewport, event, viewportWidth, viewportHeight);
+        return DefaultViewportInteractor::CreateTracker(scene, event, viewportWidth, viewportHeight);
       }
     }
 

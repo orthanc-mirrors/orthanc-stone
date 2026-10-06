@@ -34,7 +34,7 @@ namespace OrthancStone
     {
     }
 
-    virtual IFlexiblePointerTracker* CreateTracker(const boost::shared_ptr<IViewport>& viewport,  // TODO Refactoring - Why not reference here?
+    virtual IFlexiblePointerTracker* CreateTracker(Scene2D& scene,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) = 0;

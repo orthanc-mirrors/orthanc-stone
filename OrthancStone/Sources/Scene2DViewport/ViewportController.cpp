@@ -210,10 +210,11 @@ namespace OrthancStone
       }
 
       // No measure tool, create new tracker from the interactor
-      boost::shared_ptr<IViewport> lock(viewport_);
-      if (lock)
+      boost::shared_ptr<IViewport> sharedViewport(viewport_);
+      if (sharedViewport)
       {
-        activeTracker_.reset(interactor.CreateTracker(lock, event, viewportWidth, viewportHeight));
+        std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
+        activeTracker_.reset(interactor.CreateTracker(lock->GetController().GetScene(), event, viewportWidth, viewportHeight));
       }
       else
       {

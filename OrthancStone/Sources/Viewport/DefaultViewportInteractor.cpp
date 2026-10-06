@@ -87,16 +87,11 @@ namespace OrthancStone
 
 
   IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(
-    const boost::shared_ptr<IViewport>& viewport,
+    Scene2D& scene,
     const PointerEvent&         event,
     unsigned int                viewportWidth,
     unsigned int                viewportHeight)
   {
-    if (!viewport)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-
     MouseAction action;
     
     switch (event.GetMouseButton())
@@ -117,8 +112,7 @@ namespace OrthancStone
         if (event.GetPositionsCount() == 1 ||
             event.GetPositionsCount() == 2)
         {
-          std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
-          return new PinchZoomTracker(lock->GetController().GetScene(), event);
+          return new PinchZoomTracker(scene, event);
         }
         else
         {
@@ -129,10 +123,7 @@ namespace OrthancStone
         return NULL;
     }
 
-    {
-      std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
-      return CreateTrackerInternal(lock->GetController().GetScene(), action, event, viewportWidth, viewportHeight);
-    }
+    return CreateTrackerInternal(scene, action, event, viewportWidth, viewportHeight);
   }
 
 

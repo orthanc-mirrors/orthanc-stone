@@ -442,6 +442,8 @@ namespace OrthancStone
       emscripten_set_touchmove_callback(canvasCssSelector_.c_str(), reinterpret_cast<void*>(this), false, OnTouch);
       emscripten_set_touchcancel_callback(canvasCssSelector_.c_str(), reinterpret_cast<void*>(this), false, OnTouch);
     }
+
+    RefreshCanvasSize();
   }
 
   WebAssemblyViewport::~WebAssemblyViewport()

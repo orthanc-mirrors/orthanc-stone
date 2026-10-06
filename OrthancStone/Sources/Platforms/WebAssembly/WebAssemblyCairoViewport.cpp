@@ -102,7 +102,6 @@ namespace OrthancStone
                                                      bool enableEmscriptenMouseEvents) :
     WebAssemblyViewport(canvasId,enableEmscriptenMouseEvents)
   {
-    RefreshCanvasSize();
     AcquireCompositor(new CairoCompositor(GetCanvasWidth(), GetCanvasHeight()));
   }
   

@@ -34,6 +34,9 @@
 #include <Compatibility.h>  // For std::unique_ptr<>
 #include <Toolbox.h>
 
+#include <EmbeddedResources.h>  // For Orthanc::EmbeddedResources::UBUNTU_FONT
+
+
 #include <emscripten.h>
 #include <emscripten/html5.h>
 
@@ -123,11 +126,19 @@ namespace OrthancStone
       {
         if (useOpenGL)
         {
-          viewport_ = OrthancStone::WebAssemblyCairoViewport::Create(canvasId);
+          viewport_ = OrthancStone::WebGLViewport::Create(canvasId);
         }
         else
         {
-          viewport_ = OrthancStone::WebGLViewport::Create(canvasId);
+          viewport_ = OrthancStone::WebAssemblyCairoViewport::Create(canvasId);
+        }
+
+        std::string font;
+        Orthanc::EmbeddedResources::GetFileResource(font, Orthanc::EmbeddedResources::UBUNTU_FONT);
+
+        {
+          std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+          viewportLock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
         }
 
         core_->CreateComponents(GetContext(), viewport_);

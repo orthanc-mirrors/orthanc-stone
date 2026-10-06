@@ -25,6 +25,7 @@
 
 #include "../Scene2DViewport/OneGesturePointerTracker.h"
 #include "Internals/FixedPointAligner.h"
+
 #include <memory>
 
 namespace OrthancStone
@@ -32,16 +33,15 @@ namespace OrthancStone
   class RotateSceneTracker : public OneGesturePointerTracker
   {
   private:
-    boost::weak_ptr<IViewport>   viewport_;
-    ScenePoint2D                 click_;
-    double                       referenceAngle_;
-    bool                         isFirst_;
-    AffineTransform2D            originalSceneToCanvas_;
+    ScenePoint2D       click_;
+    double             referenceAngle_;
+    bool               isFirst_;
+    AffineTransform2D  originalSceneToCanvas_;
 
     std::unique_ptr<Internals::FixedPointAligner>  aligner_;
     
   public:
-    RotateSceneTracker(boost::weak_ptr<IViewport> viewport,
+    RotateSceneTracker(const Scene2D& scene,
                        const PointerEvent& event);
 
     virtual bool PointerMove(const PointerEvent& event,

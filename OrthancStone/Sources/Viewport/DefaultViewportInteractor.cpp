@@ -48,7 +48,10 @@ namespace OrthancStone
         return NULL;
 
       case MouseAction_Rotate:
-        return new RotateSceneTracker(viewport, event);
+      {
+        std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
+        return new RotateSceneTracker(lock->GetController().GetScene(), event);
+      }
 
       case MouseAction_GrayscaleWindowing:
       {
@@ -74,7 +77,10 @@ namespace OrthancStone
       }
 
       case MouseAction_Pan:
-        return new PanSceneTracker(viewport, event);
+      {
+        std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
+        return new PanSceneTracker(lock->GetController().GetScene(), event);
+      }
       
       case MouseAction_Zoom:
       {

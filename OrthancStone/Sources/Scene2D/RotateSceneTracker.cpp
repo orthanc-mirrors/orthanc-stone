@@ -20,27 +20,19 @@
  * <http://www.gnu.org/licenses/>.
  **/
 
-#include "RotateSceneTracker.h"
 
-#include "../Scene2DViewport/ViewportController.h"
-#include "../Viewport/ViewportLocker.h"
+#include "RotateSceneTracker.h"
 
 namespace OrthancStone
 {
-  RotateSceneTracker::RotateSceneTracker(boost::weak_ptr<IViewport> viewport,
+  RotateSceneTracker::RotateSceneTracker(const Scene2D& scene,
                                          const PointerEvent& event) :
-    viewport_(viewport),
     click_(event.GetMainPosition()),
     referenceAngle_(0),
     isFirst_(true)
   {
-    ViewportLocker locker(viewport_);
-    
-    if (locker.IsValid())
-    {
-      aligner_.reset(new Internals::FixedPointAligner(locker.GetController().GetScene(), click_));
-      originalSceneToCanvas_ = locker.GetController().GetScene().GetSceneToCanvasTransform();
-    }
+    aligner_.reset(new Internals::FixedPointAligner(scene, click_));
+    originalSceneToCanvas_ = scene.GetSceneToCanvasTransform();
   }
 
   
@@ -64,18 +56,11 @@ namespace OrthancStone
           isFirst_ = false;
         }
 
-        ViewportLocker locker(viewport_);
-    
-        if (locker.IsValid())
-        {
-          locker.GetController().SetSceneToCanvasTransform(
-            AffineTransform2D::Combine(
-              AffineTransform2D::CreateRotation(a - referenceAngle_),
-              originalSceneToCanvas_));
-          aligner_->Apply(locker.GetController().GetScene());
-          locker.Invalidate();
-          return true;
-        }
+        scene.SetSceneToCanvasTransform(AffineTransform2D::Combine(
+                                          AffineTransform2D::CreateRotation(a - referenceAngle_),
+                                          originalSceneToCanvas_));
+        aligner_->Apply(scene);
+        return true;
       }
     }
 
@@ -85,12 +70,6 @@ namespace OrthancStone
   
   void RotateSceneTracker::Cancel(Scene2D& scene)
   {
-    ViewportLocker locker(viewport_);
-    
-    if (locker.IsValid())
-    {
-      locker.GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
-      locker.Invalidate();
-    }
+    scene.SetSceneToCanvasTransform(originalSceneToCanvas_);
   }
 }

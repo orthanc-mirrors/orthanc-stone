@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "../Scene2D/Scene2D.h"
 #include "../Scene2DViewport/OneGesturePointerTracker.h"
 
 namespace OrthancStone
@@ -30,13 +31,12 @@ namespace OrthancStone
   class PanSceneTracker : public OneGesturePointerTracker
   {
   private:
-    boost::weak_ptr<IViewport> viewport_;
-    ScenePoint2D               pivot_;
-    AffineTransform2D          originalSceneToCanvas_;
-    AffineTransform2D          originalCanvasToScene_;
+    ScenePoint2D       pivot_;
+    AffineTransform2D  originalSceneToCanvas_;
+    AffineTransform2D  originalCanvasToScene_;
 
   public:
-    PanSceneTracker(boost::weak_ptr<IViewport> viewport,
+    PanSceneTracker(const Scene2D& scene,
                     const PointerEvent& event);
 
     virtual void Cancel(Scene2D& scene) ORTHANC_OVERRIDE;

@@ -23,23 +23,15 @@
 
 #include "PanSceneTracker.h"
 
-#include "../Scene2DViewport/ViewportController.h"
-#include "../Viewport/ViewportLocker.h"
 
 namespace OrthancStone
 {
-  PanSceneTracker::PanSceneTracker(boost::weak_ptr<IViewport> viewport,
-                                   const PointerEvent& event) :
-    viewport_(viewport)
+  PanSceneTracker::PanSceneTracker(const Scene2D& scene,
+                                   const PointerEvent& event)
   {
-    ViewportLocker locker(viewport_);
-    
-    if (locker.IsValid())
-    {
-      originalSceneToCanvas_ = locker.GetController().GetScene().GetSceneToCanvasTransform();
-      originalCanvasToScene_ = locker.GetController().GetScene().GetCanvasToSceneTransform();
-      pivot_ = event.GetMainPosition().Apply(originalCanvasToScene_);
-    }
+    originalSceneToCanvas_ = scene.GetSceneToCanvasTransform();
+    originalCanvasToScene_ = scene.GetCanvasToSceneTransform();
+    pivot_ = event.GetMainPosition().Apply(originalCanvasToScene_);
   }
 
 
@@ -48,29 +40,17 @@ namespace OrthancStone
   {
     ScenePoint2D p = event.GetMainPosition().Apply(originalCanvasToScene_);
 
-    ViewportLocker locker(viewport_);
-    
-    if (locker.IsValid())
-    {
-      locker.GetController().SetSceneToCanvasTransform(
-        AffineTransform2D::Combine(
-          originalSceneToCanvas_,
-          AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
-                                          p.GetY() - pivot_.GetY())));
-      locker.Invalidate();
-      return true;
-    }
-
-    return false;
+    scene.SetSceneToCanvasTransform(
+      AffineTransform2D::Combine(
+        originalSceneToCanvas_,
+        AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
+                                        p.GetY() - pivot_.GetY())));
+    return true;
   }
+
 
   void PanSceneTracker::Cancel(Scene2D& scene)
   {
-    ViewportLocker locker(viewport_);
-    
-    if (locker.IsValid())
-    {
-      locker.GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
-    }
+    scene.SetSceneToCanvasTransform(originalSceneToCanvas_);
   }
 }

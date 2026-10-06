@@ -24,7 +24,7 @@
 #include "PinchZoomTracker.h"
 
 #include "../Scene2DViewport/ViewportController.h"
-#include "../Viewport/ViewportLocker.h"
+
 
 namespace OrthancStone
 {

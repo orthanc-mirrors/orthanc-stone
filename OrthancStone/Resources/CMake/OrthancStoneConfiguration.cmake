@@ -374,7 +374,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Toolbox/Windowing.cpp
   
   ${ORTHANC_STONE_ROOT}/Viewport/DefaultViewportInteractor.cpp
-  ${ORTHANC_STONE_ROOT}/Viewport/ViewportLocker.cpp
   
   ${ORTHANC_STONE_ROOT}/Volumes/IVolumeSlicer.cpp
   ${ORTHANC_STONE_ROOT}/Volumes/OrientedVolumeBoundingBox.cpp

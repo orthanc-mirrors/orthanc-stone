@@ -45,8 +45,8 @@ namespace OrthancStone
 
     if (locker.IsValid())
     {
-      originalSceneToCanvas_ = locker.GetController().GetSceneToCanvasTransform();
-      originalCanvasToScene_ = locker.GetController().GetCanvasToSceneTransform();
+      originalSceneToCanvas_ = locker.GetController().GetScene().GetSceneToCanvasTransform();
+      originalCanvasToScene_ = locker.GetController().GetScene().GetCanvasToSceneTransform();
 
       if (event.GetPositionsCount() == 1)
       {

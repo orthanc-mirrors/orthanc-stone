@@ -138,12 +138,6 @@ namespace OrthancStone
       activeTracker_ = tracker;
     }
 
-    /** Forwarded to the underlying scene */
-    AffineTransform2D GetCanvasToSceneTransform() const;
-
-    /** Forwarded to the underlying scene */
-    AffineTransform2D GetSceneToCanvasTransform() const;
-
     /** Forwarded to the underlying scene, and broadcasted to the observers */
     void SetSceneToCanvasTransform(const AffineTransform2D& transform);
 

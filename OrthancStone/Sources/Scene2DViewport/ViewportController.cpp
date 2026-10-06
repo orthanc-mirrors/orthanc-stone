@@ -130,18 +130,6 @@ namespace OrthancStone
     }
   }
 
-  AffineTransform2D 
-    ViewportController::GetCanvasToSceneTransform() const
-  {
-    return scene_->GetCanvasToSceneTransform();
-  }
-
-  AffineTransform2D 
-    ViewportController::GetSceneToCanvasTransform() const
-  {
-    return scene_->GetSceneToCanvasTransform();
-  }
-
   void ViewportController::SetSceneToCanvasTransform(
     const AffineTransform2D& transform)
   {

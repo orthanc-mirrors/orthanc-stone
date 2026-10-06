@@ -39,7 +39,7 @@ namespace OrthancStone
     if (locker.IsValid())
     {
       aligner_.reset(new Internals::FixedPointAligner(locker.GetController().GetScene(), click_));
-      originalSceneToCanvas_ = locker.GetController().GetSceneToCanvasTransform();
+      originalSceneToCanvas_ = locker.GetController().GetScene().GetSceneToCanvasTransform();
     }
   }
 

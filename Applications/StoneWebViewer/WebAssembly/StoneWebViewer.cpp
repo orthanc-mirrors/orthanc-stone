@@ -3933,25 +3933,22 @@ public:
     }
 
     virtual OrthancStone::IFlexiblePointerTracker* CreateTracker(
-      boost::weak_ptr<OrthancStone::IViewport> viewport,
+      const boost::shared_ptr<OrthancStone::IViewport>& viewport,
       const OrthancStone::PointerEvent& event,
       unsigned int viewportWidth,
       unsigned int viewportHeight) ORTHANC_OVERRIDE
     {
-      boost::shared_ptr<OrthancStone::IViewport> lock1(viewport.lock());
-      
-      if (lock1 &&
-          IsAction(event, WebViewerAction_Crosshair))
+      if (IsAction(event, WebViewerAction_Crosshair))
       {
         OrthancStone::CoordinateSystem3D plane;
         if (viewer_.GetCurrentPlane(plane))
         {
-          std::unique_ptr<OrthancStone::IViewport::ILock> lock2(lock1->Lock());
+          std::unique_ptr<OrthancStone::IViewport::ILock> viewportLock(viewport->Lock());
 
           const OrthancStone::ScenePoint2D p = event.GetMainPosition();
           double x = p.GetX();
           double y = p.GetY();
-          lock2->GetController().GetCanvasToSceneTransform().Apply(x, y);
+          viewportLock->GetController().GetCanvasToSceneTransform().Apply(x, y);
           
           OrthancStone::Vector click = plane.MapSliceToWorldCoordinates(x, y);
           if (viewer_.observer_.get() != NULL)
@@ -4007,10 +4004,10 @@ public:
           }
 
           {
-            std::unique_ptr<OrthancStone::IViewport::ILock> lock2(lock1->Lock());
+            std::unique_ptr<OrthancStone::IViewport::ILock> viewportLock(viewport->Lock());
 
             std::unique_ptr<OrthancStone::IFlexiblePointerTracker> t;
-            t.reset(viewer_.stoneAnnotations_->CreateTracker(event.GetMainPosition(), lock2->GetController().GetScene()));
+            t.reset(viewer_.stoneAnnotations_->CreateTracker(event.GetMainPosition(), viewportLock->GetController().GetScene()));
 
             if (t.get() != NULL)
             {
@@ -4019,8 +4016,7 @@ public:
           }
         }
 
-        return DefaultViewportInteractor::CreateTracker(
-          viewport, event, viewportWidth, viewportHeight);
+        return DefaultViewportInteractor::CreateTracker(viewport, event, viewportWidth, viewportHeight);
       }
     }
 
@@ -4029,14 +4025,12 @@ public:
       return true;
     }
 
-    virtual void HandleMouseHover(OrthancStone::IViewport& viewport,
+    virtual void HandleMouseHover(OrthancStone::IViewport::ILock& viewportLock,
                                   const OrthancStone::PointerEvent& event) ORTHANC_OVERRIDE
     {
-      std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport.Lock());
-
-      viewer_.stoneAnnotations_->SetMouseHover(event.GetMainPosition(), lock->GetController().GetScene());
-      viewer_.stoneAnnotations_->Render(lock->GetController().GetScene());
-      lock->Invalidate();
+      viewer_.stoneAnnotations_->SetMouseHover(event.GetMainPosition(), viewportLock.GetController().GetScene());
+      viewer_.stoneAnnotations_->Render(viewportLock.GetController().GetScene());
+      viewportLock.Invalidate();
     }
   };
   

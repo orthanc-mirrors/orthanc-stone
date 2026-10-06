@@ -49,7 +49,7 @@ namespace OrthancStone
     double                     originalDistance_;
 
   public:
-    PinchZoomTracker(boost::weak_ptr<IViewport> viewport,
+    PinchZoomTracker(const boost::shared_ptr<IViewport>& viewport,
                      const PointerEvent& event);
 
     virtual void PointerMove(const PointerEvent &event,

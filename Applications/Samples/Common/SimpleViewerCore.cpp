@@ -165,7 +165,7 @@ namespace OrthancStone
       default_.SetWindowingLayer(0);
     }
 
-    virtual IFlexiblePointerTracker* CreateTracker(boost::weak_ptr<IViewport> viewport,  // TODO Refactoring - Should be std::shared_ptr
+    virtual IFlexiblePointerTracker* CreateTracker(const boost::shared_ptr<IViewport>& viewport,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) ORTHANC_OVERRIDE
@@ -190,12 +190,11 @@ namespace OrthancStone
       return true;
     }
 
-    virtual void HandleMouseHover(IViewport& viewport,  // TODO Refactoring - Should be a IViewport::ILock
+    virtual void HandleMouseHover(IViewport::ILock& viewportLock,
                                   const PointerEvent& event) ORTHANC_OVERRIDE
     {
-      std::unique_ptr<IViewport::ILock> viewportLock(viewport.Lock());
-      annotations_->SetMouseHover(event.GetMainPosition(), viewportLock->GetController().GetScene());
-      viewportLock->Invalidate();
+      annotations_->SetMouseHover(event.GetMainPosition(), viewportLock.GetController().GetScene());
+      viewportLock.Invalidate();
     }
   };
 

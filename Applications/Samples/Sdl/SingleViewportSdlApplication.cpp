@@ -136,7 +136,7 @@ namespace OrthancStone
               }
               else if (interactor->HasMouseHover())
               {
-                interactor->HandleMouseHover(*viewport_, p);
+                interactor->HandleMouseHover(*viewportLock, p);
                 viewportLock->Invalidate();
               }
               break;

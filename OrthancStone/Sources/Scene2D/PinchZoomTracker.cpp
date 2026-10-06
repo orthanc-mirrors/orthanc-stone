@@ -36,7 +36,7 @@ namespace OrthancStone
   }
 
 
-  PinchZoomTracker::PinchZoomTracker(boost::weak_ptr<IViewport> viewport,
+  PinchZoomTracker::PinchZoomTracker(const boost::shared_ptr<IViewport>& viewport,
                                      const PointerEvent& event) :
     viewport_(viewport),
     state_(State_Dead)

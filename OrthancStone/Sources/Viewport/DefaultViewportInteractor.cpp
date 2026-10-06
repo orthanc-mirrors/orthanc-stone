@@ -36,7 +36,7 @@
 namespace OrthancStone
 {
   IFlexiblePointerTracker* DefaultViewportInteractor::CreateTrackerInternal(
-    boost::weak_ptr<IViewport> viewport,
+    const boost::shared_ptr<IViewport>& viewport,
     MouseAction action,
     const PointerEvent& event,
     unsigned int viewportWidth,
@@ -52,14 +52,13 @@ namespace OrthancStone
 
       case MouseAction_GrayscaleWindowing:
       {
-        boost::shared_ptr<IViewport> v(viewport.lock());
-        if (v == NULL)
+        if (!viewport)
         {
           return NULL;
         }
         else
         {
-          std::unique_ptr<IViewport::ILock> lock(v->Lock());
+          std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
           if (lock->GetController().GetScene().HasLayer(windowingLayer_) &&
               lock->GetController().GetScene().GetLayer(windowingLayer_).GetType() == ISceneLayer::Type_FloatTexture)
           {
@@ -90,7 +89,7 @@ namespace OrthancStone
 
 
   IFlexiblePointerTracker* DefaultViewportInteractor::CreateTracker(
-    boost::weak_ptr<IViewport>  viewport,
+    const boost::shared_ptr<IViewport>& viewport,
     const PointerEvent&         event,
     unsigned int                viewportWidth,
     unsigned int                viewportHeight)
@@ -130,7 +129,7 @@ namespace OrthancStone
   }
 
 
-  void DefaultViewportInteractor::HandleMouseHover(IViewport& viewport,
+  void DefaultViewportInteractor::HandleMouseHover(IViewport::ILock& viewportLock,
                                                    const PointerEvent& event)
   {
     // "HasMouseOver()" returns "false"

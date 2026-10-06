@@ -208,7 +208,11 @@ namespace OrthancStone
         // New in Stone Web viewer 2.0
         PointerEvent pointer;
         ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);      
-        that->interactor_->HandleMouseHover(*that, pointer);
+
+        {
+          WebAssemblyViewport::WasmLock lock(*that);
+          that->interactor_->HandleMouseHover(lock, pointer);
+        }
       }
     }
 

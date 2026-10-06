@@ -37,7 +37,7 @@ namespace OrthancStone
     MouseAction  middleButtonAction_;
     MouseAction  rightButtonAction_;
 
-    IFlexiblePointerTracker* CreateTrackerInternal(boost::weak_ptr<IViewport> viewport,
+    IFlexiblePointerTracker* CreateTrackerInternal(const boost::shared_ptr<IViewport>& viewport,
                                                    MouseAction action,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
@@ -92,7 +92,7 @@ namespace OrthancStone
       rightButtonAction_ = action;
     }
     
-    virtual IFlexiblePointerTracker* CreateTracker(boost::weak_ptr<IViewport> viewport,
+    virtual IFlexiblePointerTracker* CreateTracker(const boost::shared_ptr<IViewport>& viewport,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) ORTHANC_OVERRIDE;
@@ -102,7 +102,7 @@ namespace OrthancStone
       return false;
     }
 
-    virtual void HandleMouseHover(IViewport& viewport,
+    virtual void HandleMouseHover(IViewport::ILock& viewportLock,
                                   const PointerEvent& event) ORTHANC_OVERRIDE;
   };
 }

@@ -23,14 +23,14 @@
 
 #pragma once
 
-#include "../Scene2DViewport/IFlexiblePointerTracker.h"
+#include "../Scene2DViewport/BaseFlexiblePointerTracker.h"
 #include "../Viewport/IViewport.h"
 #include "PointerEvent.h"
 
 
 namespace OrthancStone
 {
-  class PinchZoomTracker : public IFlexiblePointerTracker
+  class PinchZoomTracker : public BaseFlexiblePointerTracker
   {
   private:
     enum State

@@ -22,15 +22,27 @@
 
 #pragma once
 
-#include "../Scene2D/GrayscaleWindowingSceneTracker.h"
 #include "IViewportInteractor.h"
 
 #include <Compatibility.h>  // For ORTHANC_OVERRIDE
+
 
 namespace OrthancStone
 {
   class DefaultViewportInteractor : public IViewportInteractor
   {
+  public:
+    class IObserverFactory : public boost::noncopyable
+    {
+    public:
+      virtual ~IObserverFactory()
+      {
+      }
+
+      virtual IFlexiblePointerTracker::IObserver* CreateObserver() = 0;
+    };
+
+
   private:
     // Index of the layer whose windowing is altered by grayscale windowing action
     int          windowingLayer_;
@@ -38,7 +50,7 @@ namespace OrthancStone
     MouseAction  middleButtonAction_;
     MouseAction  rightButtonAction_;
 
-    std::unique_ptr<GrayscaleWindowingSceneTracker::IObserverFactory>  grayscaleFactory_;
+    std::unique_ptr<IObserverFactory>  observerFactory_;
 
     IFlexiblePointerTracker* CreateTrackerInternal(Scene2D& scene,
                                                    MouseAction action,
@@ -108,6 +120,6 @@ namespace OrthancStone
     virtual void HandleMouseHover(Scene2D& scene,
                                   const PointerEvent& event) ORTHANC_OVERRIDE;
 
-    void SetGrayscaleWindowingObserverFactory(GrayscaleWindowingSceneTracker::IObserverFactory* factory /* takes ownership */);
+    void SetObserverFactory(IObserverFactory* factory /* takes ownership */);
   };
 }

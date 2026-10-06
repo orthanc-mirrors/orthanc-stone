@@ -110,6 +110,11 @@ namespace OrthancStone
         AffineTransform2D::CreateScaling(zoom),
         AffineTransform2D::CreateOffset(-pivot_.GetX(), -pivot_.GetY())));
 
+    if (HasObserver())
+    {
+      GetObserver().HandleSceneTransformChange(scene);
+    }
+
     return true;
   }
 }

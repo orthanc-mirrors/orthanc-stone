@@ -20,41 +20,30 @@
  * <http://www.gnu.org/licenses/>.
  **/
 
+
 #pragma once
 
-#include "BaseFlexiblePointerTracker.h"
+#include "IFlexiblePointerTracker.h"
+
+#include <Compatibility.h>
 
 
 namespace OrthancStone
 {
-  /**
-  This base is class allows to write simple trackers that deal with single 
-  drag gestures with only one touch. It is *not* suitable for multi-touch and
-  multi-state trackers where various mouse operations need to be handled.
-
-  In order to write such a tracker:
-  - subclass this class
-  - you may store the initial click/touch position in the constructor
-  - implement PointerMove to react to pointer/touch events
-  - implement Cancel to restore the state at initial tracker creation time
-
-  */
-  class OneGesturePointerTracker : public BaseFlexiblePointerTracker
+  class BaseFlexiblePointerTracker : public IFlexiblePointerTracker
   {
   private:
-    bool  alive_;
-    int   currentTouchCount_;
+    std::unique_ptr<IObserver>  observer_;
+
+  protected:
+    bool HasObserver() const
+    {
+      return observer_.get() != NULL;
+    }
+
+    IObserver& GetObserver() const;
 
   public:
-    explicit OneGesturePointerTracker();
-    
-    virtual void PointerUp(const PointerEvent& event,
-                           Scene2D& scene) ORTHANC_OVERRIDE;
-    
-    virtual void PointerDown(const PointerEvent& event,
-                             Scene2D& scene) ORTHANC_OVERRIDE;
-    
-    virtual bool IsAlive() const ORTHANC_OVERRIDE;
+    virtual void SetObserver(IObserver* observer) ORTHANC_OVERRIDE;
   };
 }
-

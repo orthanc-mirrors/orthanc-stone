@@ -109,7 +109,7 @@ namespace OrthancStone
   }
 
 
-  void SimpleViewerCore::Handle(const ViewportController::SceneTransformChanged& message)
+  void SimpleViewerCore::RenderAnnotations()
   {
     // This is necessary to update the size of handles in the annotations layer while zoom level changes
     std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
@@ -146,8 +146,6 @@ namespace OrthancStone
     {
       std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
       viewportLock->GetController().SetUndoStack(boost::make_shared<UndoStack>());
-
-      Register<OrthancStone::ViewportController::SceneTransformChanged>(viewportLock->GetController(), &SimpleViewerCore::Handle);
     }
   }
 
@@ -155,14 +153,62 @@ namespace OrthancStone
   class SimpleViewerCore::Interactor : public IViewportInteractor
   {
   private:
+    class Observer : public IFlexiblePointerTracker::IObserver
+    {
+    private:
+      boost::shared_ptr<SimpleViewerCore>  core_;
+
+    public:
+      Observer(const boost::shared_ptr<SimpleViewerCore>& core) :
+        core_(core)
+      {
+        assert(core_);
+      }
+
+      virtual void HandleGrayscaleWindowingChange(const OrthancStone::Windowing& windowing) ORTHANC_OVERRIDE
+      {
+      }
+
+      virtual void HandleSceneTransformChange(const OrthancStone::Scene2D& scene) ORTHANC_OVERRIDE
+      {
+        core_->RenderAnnotations();
+      }
+    };
+
+    class Factory : public DefaultViewportInteractor::IObserverFactory
+    {
+    private:
+      boost::shared_ptr<SimpleViewerCore>  core_;
+
+    public:
+      Factory(const boost::shared_ptr<SimpleViewerCore>& core) :
+        core_(core)
+      {
+        assert(core_);
+      }
+
+      virtual IFlexiblePointerTracker::IObserver* CreateObserver()
+      {
+        return new Observer(core_);
+      }
+    };
+
     DefaultViewportInteractor                 default_;
     boost::shared_ptr<AnnotationsSceneLayer>  annotations_;
 
   public:
-    Interactor(const boost::shared_ptr<AnnotationsSceneLayer>& annotations) :
+    Interactor(const boost::shared_ptr<SimpleViewerCore>& core,
+               const boost::shared_ptr<AnnotationsSceneLayer>& annotations) :
       annotations_(annotations)
     {
+      if (!core ||
+          !annotations)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+
       default_.SetWindowingLayer(0);
+      default_.SetObserverFactory(new Factory(core));
     }
 
     virtual IFlexiblePointerTracker* CreateTracker(Scene2D& scene,
@@ -203,7 +249,7 @@ namespace OrthancStone
     }
     else
     {
-      return new Interactor(annotations_);
+      return new Interactor(shared_from_this(), annotations_);
     }
   }
 

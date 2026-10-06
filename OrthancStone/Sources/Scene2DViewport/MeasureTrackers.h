@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "IFlexiblePointerTracker.h"
+#include "BaseFlexiblePointerTracker.h"
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2D/PointerEvent.h"
 
@@ -36,7 +36,7 @@
 
 namespace OrthancStone
 {
-  class CreateMeasureTracker : public IFlexiblePointerTracker
+  class CreateMeasureTracker : public BaseFlexiblePointerTracker
   {
   private:
     bool  commitResult_;
@@ -63,7 +63,7 @@ namespace OrthancStone
   };
 
 
-  class EditMeasureTracker : public IFlexiblePointerTracker
+  class EditMeasureTracker : public BaseFlexiblePointerTracker
   {
   private:
     ScenePoint2D  originalClickPosition_;

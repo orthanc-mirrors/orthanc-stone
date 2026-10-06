@@ -76,6 +76,12 @@ namespace OrthancStone
                                         AffineTransform2D::CreateScaling(zoom, zoom),
                                         originalSceneToCanvas_));
       aligner_->Apply(scene);
+
+      if (HasObserver())
+      {
+        GetObserver().HandleSceneTransformChange(scene);
+      }
+
       return true;
     }
 
@@ -86,5 +92,10 @@ namespace OrthancStone
   void ZoomSceneTracker::Cancel(Scene2D& scene)
   {
     scene.SetSceneToCanvasTransform(originalSceneToCanvas_);
+
+    if (HasObserver())
+    {
+      GetObserver().HandleSceneTransformChange(scene);
+    }
   }
 }

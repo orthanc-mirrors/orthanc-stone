@@ -3885,13 +3885,13 @@ public:
   class Interactor : public OrthancStone::DefaultViewportInteractor
   {
   private:
-    class GrayscaleObserver : public OrthancStone::GrayscaleWindowingSceneTracker::IObserver
+    class Observer : public OrthancStone::IFlexiblePointerTracker::IObserver
     {
     private:
       ViewerViewport&  viewer_;
 
     public:
-      GrayscaleObserver(ViewerViewport& viewer) :
+      Observer(ViewerViewport& viewer) :
         viewer_(viewer)
       {
       }
@@ -3900,22 +3900,27 @@ public:
       {
         viewer_.UpdateWindowing(WindowingState_User, windowing);
       }
+
+      virtual void HandleSceneTransformChange(const OrthancStone::Scene2D& scene) ORTHANC_OVERRIDE
+      {
+        viewer_.RefreshAnnotations(false /* don't save */);
+      }
     };
 
-    class GrayscaleFactory : public OrthancStone::GrayscaleWindowingSceneTracker::IObserverFactory
+    class Factory : public OrthancStone::DefaultViewportInteractor::IObserverFactory
     {
     private:
       ViewerViewport&  viewer_;
 
     public:
-      GrayscaleFactory(ViewerViewport& viewer) :
+      Factory(ViewerViewport& viewer) :
         viewer_(viewer)
       {
       }
 
-      virtual OrthancStone::GrayscaleWindowingSceneTracker::IObserver* Create() ORTHANC_OVERRIDE
+      virtual OrthancStone::IFlexiblePointerTracker::IObserver* Create() ORTHANC_OVERRIDE
       {
-        return new GrayscaleObserver(viewer_);
+        return new Observer(viewer_);
       }
     };
 
@@ -3956,7 +3961,7 @@ public:
       SetLeftButtonAction(ConvertWebViewerAction(leftAction));
       SetMiddleButtonAction(ConvertWebViewerAction(middleAction));
       SetRightButtonAction(ConvertWebViewerAction(rightAction));
-      SetGrayscaleWindowingObserverFactory(new GrayscaleFactory(viewer));
+      SetObserverFactory(new Factory(viewer));
     }
 
     virtual OrthancStone::IFlexiblePointerTracker* CreateTracker(OrthancStone::Scene2D& scene,

@@ -26,33 +26,13 @@
 #include "../Scene2DViewport/OneGesturePointerTracker.h"
 #include "../Toolbox/Windowing.h"
 #include "../Viewport/IViewport.h"
+#include "../Viewport/IViewportInteractor.h"
 
 
 namespace OrthancStone
 {
   class GrayscaleWindowingSceneTracker : public OneGesturePointerTracker
   {
-  public:
-    class IObserver : public boost::noncopyable
-    {
-    public:
-      virtual ~IObserver()
-      {
-      }
-
-      virtual void HandleGrayscaleWindowingChange(const Windowing& windowing) = 0;
-    };
-
-    class IObserverFactory : public boost::noncopyable
-    {
-    public:
-      virtual ~IObserverFactory()
-      {
-      }
-
-      virtual IObserver* Create() = 0;
-    };
-
   private:
     bool    active_;
     int     layerIndex_;
@@ -61,8 +41,6 @@ namespace OrthancStone
     float   originalWidth_;
     double  clickX_;
     double  clickY_;
-
-    std::unique_ptr<IObserver>  observer_;
 
     bool SetWindowing(Scene2D& scene,
                       float center,
@@ -74,8 +52,6 @@ namespace OrthancStone
                                    const PointerEvent& event,
                                    unsigned int canvasWidth,
                                    unsigned int canvasHeight);
-
-    void SetObserver(IObserver* observer /* takes ownership */);
 
     virtual bool PointerMove(const PointerEvent& event,
                              Scene2D& scene) ORTHANC_OVERRIDE;

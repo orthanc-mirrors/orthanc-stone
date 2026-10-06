@@ -23,6 +23,7 @@
 
 #include "AnnotationsSceneLayer.h"
 
+#include "../Scene2DViewport/BaseFlexiblePointerTracker.h"
 #include "MacroSceneLayer.h"
 #include "PolylineSceneLayer.h"
 #include "TextSceneLayer.h"
@@ -1028,7 +1029,7 @@ namespace OrthancStone
   };
 
     
-  class AnnotationsSceneLayer::EditPrimitiveTracker : public IFlexiblePointerTracker
+  class AnnotationsSceneLayer::EditPrimitiveTracker : public BaseFlexiblePointerTracker
   {
   private:
     AnnotationsSceneLayer&  that_;
@@ -2360,7 +2361,7 @@ namespace OrthancStone
   };
 
   
-  class AnnotationsSceneLayer::CreateTwoHandlesTracker : public IFlexiblePointerTracker
+  class AnnotationsSceneLayer::CreateTwoHandlesTracker : public BaseFlexiblePointerTracker
   {
   private:
     AnnotationsSceneLayer&  layer_;
@@ -2445,7 +2446,7 @@ namespace OrthancStone
   };
 
 
-  class AnnotationsSceneLayer::CreateAngleTracker : public IFlexiblePointerTracker
+  class AnnotationsSceneLayer::CreateAngleTracker : public BaseFlexiblePointerTracker
   {
   private:
     AnnotationsSceneLayer&  that_;
@@ -2545,7 +2546,7 @@ namespace OrthancStone
   };
 
 
-  class AnnotationsSceneLayer::CreatePixelProbeTracker : public IFlexiblePointerTracker
+  class AnnotationsSceneLayer::CreatePixelProbeTracker : public BaseFlexiblePointerTracker
   {
   public:
     CreatePixelProbeTracker(AnnotationsSceneLayer& that,
@@ -2618,7 +2619,7 @@ namespace OrthancStone
 
   // Dummy tracker that is only used for deletion, in order to warn
   // the caller that the mouse action was taken into consideration
-  class AnnotationsSceneLayer::RemoveTracker : public IFlexiblePointerTracker
+  class AnnotationsSceneLayer::RemoveTracker : public BaseFlexiblePointerTracker
   {
   public:
     RemoveTracker()

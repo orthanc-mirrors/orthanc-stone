@@ -26,6 +26,8 @@
 #include "PredeclaredTypes.h"
 
 #include "../Scene2D/PointerEvent.h"
+#include "../Scene2D/Scene2D.h"
+#include "../Toolbox/Windowing.h"
 
 
 namespace OrthancStone
@@ -40,7 +42,22 @@ namespace OrthancStone
   class IFlexiblePointerTracker : public boost::noncopyable
   {
   public:
-    virtual ~IFlexiblePointerTracker() {}
+    class IObserver : public boost::noncopyable
+    {
+    public:
+      virtual ~IObserver()
+      {
+      }
+
+      virtual void HandleGrayscaleWindowingChange(const Windowing& windowing) = 0;
+
+      virtual void HandleSceneTransformChange(const Scene2D& scene) = 0;
+    };
+
+
+    virtual ~IFlexiblePointerTracker()
+    {
+    }
 
     /**
     This method will be repeatedly called during user interaction
@@ -83,5 +100,7 @@ namespace OrthancStone
     tracker lifetime, it must be restored to its initial value
     */
     virtual void Cancel(Scene2D& scene) = 0;   // TODO Refactoring - Seems unused
+
+    virtual void SetObserver(IObserver* observer /* takes ownership */) = 0;
   };
 }

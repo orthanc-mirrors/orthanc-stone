@@ -87,7 +87,7 @@ namespace OrthancStone
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, \
                                         SceneTransformChanged, \
-                                        ViewportController);
+                                        ViewportController);  // TODO Refactoring - Remove this
 
     explicit ViewportController(const boost::shared_ptr<IViewport>& viewport);
 

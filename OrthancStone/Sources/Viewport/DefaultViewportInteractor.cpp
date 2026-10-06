@@ -54,15 +54,7 @@ namespace OrthancStone
         if (scene.HasLayer(windowingLayer_) &&
             scene.GetLayer(windowingLayer_).GetType() == ISceneLayer::Type_FloatTexture)
         {
-          std::unique_ptr<GrayscaleWindowingSceneTracker> tracker(
-            new GrayscaleWindowingSceneTracker(scene, windowingLayer_, event, viewportWidth, viewportHeight));
-
-          if (grayscaleFactory_.get() != NULL)
-          {
-            tracker->SetObserver(grayscaleFactory_->Create());
-          }
-
-          return tracker.release();
+          return new GrayscaleWindowingSceneTracker(scene, windowingLayer_, event, viewportWidth, viewportHeight);
         }
         else
         {
@@ -92,6 +84,8 @@ namespace OrthancStone
     unsigned int                viewportWidth,
     unsigned int                viewportHeight)
   {
+    std::unique_ptr<IFlexiblePointerTracker> tracker;
+
     MouseAction action;
     
     switch (event.GetMouseButton())
@@ -112,7 +106,7 @@ namespace OrthancStone
         if (event.GetPositionsCount() == 1 ||
             event.GetPositionsCount() == 2)
         {
-          return new PinchZoomTracker(scene, event);
+          tracker.reset(new PinchZoomTracker(scene, event));
         }
         else
         {
@@ -123,7 +117,17 @@ namespace OrthancStone
         return NULL;
     }
 
-    return CreateTrackerInternal(scene, action, event, viewportWidth, viewportHeight);
+    if (tracker.get() == NULL)
+    {
+      tracker.reset(CreateTrackerInternal(scene, action, event, viewportWidth, viewportHeight));
+    }
+
+    if (observerFactory_.get() != NULL)
+    {
+      tracker->SetObserver(observerFactory_->CreateObserver());
+    }
+
+    return tracker.release();
   }
 
 
@@ -135,7 +139,7 @@ namespace OrthancStone
   }
 
 
-  void DefaultViewportInteractor::SetGrayscaleWindowingObserverFactory(GrayscaleWindowingSceneTracker::IObserverFactory* factory)
+  void DefaultViewportInteractor::SetObserverFactory(IObserverFactory* factory)
   {
     if (factory == NULL)
     {
@@ -143,7 +147,7 @@ namespace OrthancStone
     }
     else
     {
-      grayscaleFactory_.reset(factory);
+      observerFactory_.reset(factory);
     }
   }
 }

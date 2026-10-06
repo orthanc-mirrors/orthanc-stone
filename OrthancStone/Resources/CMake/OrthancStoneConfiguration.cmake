@@ -320,6 +320,7 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Scene2D/Internals/MacroLayerRenderer.cpp
   
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/AngleMeasureTool.cpp
+  ${ORTHANC_STONE_ROOT}/Scene2DViewport/BaseFlexiblePointerTracker.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/CreateAngleMeasureCommand.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/CreateAngleMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/CreateCircleMeasureTracker.cpp

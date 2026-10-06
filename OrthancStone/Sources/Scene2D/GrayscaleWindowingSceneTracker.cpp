@@ -83,9 +83,9 @@ namespace OrthancStone
       {
         accessor.GetLayer().SetCustomWindowing(center, width);
 
-        if (observer_.get() != NULL)
+        if (HasObserver())
         {
-          observer_->HandleGrayscaleWindowingChange(Windowing(center, width));
+          GetObserver().HandleGrayscaleWindowingChange(Windowing(center, width));
         }
 
         return true;
@@ -129,18 +129,6 @@ namespace OrthancStone
     }
   }
 
-  void GrayscaleWindowingSceneTracker::SetObserver(IObserver* observer)
-  {
-    if (observer == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-    else
-    {
-      observer_.reset(observer);
-    }
-  }
-  
   bool GrayscaleWindowingSceneTracker::PointerMove(const PointerEvent& event,
                                                    Scene2D& scene)
   {

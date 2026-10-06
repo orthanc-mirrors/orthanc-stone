@@ -56,7 +56,7 @@ namespace OrthancStone
     virtual void Handle(const New::IObservable& observable,
                         const DicomResourcesLoadedMessage& message) ORTHANC_OVERRIDE;
 
-    void Handle(const ViewportController::SceneTransformChanged& message);
+    void RenderAnnotations();
 
   protected:
     virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,

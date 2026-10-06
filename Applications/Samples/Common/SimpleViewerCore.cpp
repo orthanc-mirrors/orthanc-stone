@@ -109,6 +109,15 @@ namespace OrthancStone
   }
 
 
+  void SimpleViewerCore::Handle(const ViewportController::SceneTransformChanged& message)
+  {
+    // This is necessary to update the size of handles in the annotations layer while zoom level changes
+    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
+    annotations_->Render(lock->GetController().GetScene());
+    lock->Invalidate();
+  }
+
+
   void SimpleViewerCore::CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
                                           const boost::shared_ptr<IViewport>& viewport)
   {
@@ -137,6 +146,8 @@ namespace OrthancStone
     {
       std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
       viewportLock->GetController().SetUndoStack(boost::make_shared<UndoStack>());
+
+      Register<OrthancStone::ViewportController::SceneTransformChanged>(viewportLock->GetController(), &SimpleViewerCore::Handle);
     }
   }
 
@@ -154,7 +165,7 @@ namespace OrthancStone
       default_.SetWindowingLayer(0);
     }
 
-    virtual IFlexiblePointerTracker* CreateTracker(boost::weak_ptr<IViewport> viewport,
+    virtual IFlexiblePointerTracker* CreateTracker(boost::weak_ptr<IViewport> viewport,  // TODO Refactoring - Should be std::shared_ptr
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) ORTHANC_OVERRIDE
@@ -179,7 +190,7 @@ namespace OrthancStone
       return true;
     }
 
-    virtual void HandleMouseHover(IViewport& viewport,
+    virtual void HandleMouseHover(IViewport& viewport,  // TODO Refactoring - Should be a IViewport::ILock
                                   const PointerEvent& event) ORTHANC_OVERRIDE
     {
       std::unique_ptr<IViewport::ILock> viewportLock(viewport.Lock());

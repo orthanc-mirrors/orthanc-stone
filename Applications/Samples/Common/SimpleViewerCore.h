@@ -33,9 +33,10 @@ namespace OrthancStone
 {
   class SimpleViewerCore :
     public ISingleViewportApplicationCore,
-    public boost::enable_shared_from_this<SimpleViewerCore>,
+    //public boost::enable_shared_from_this<SimpleViewerCore>,  // TODO Refactoring - Revert
     public New::TypedObserver<FrameDecodedMessage>,
-    public New::TypedObserver<DicomResourcesLoadedMessage>
+    public New::TypedObserver<DicomResourcesLoadedMessage>,
+    public OrthancStone::ObserverBase<SimpleViewerCore>  // TODO Refactoring - Remove
   {
   protected:
     boost::shared_ptr<StoneApplication::Context>  context_;
@@ -54,6 +55,8 @@ namespace OrthancStone
 
     virtual void Handle(const New::IObservable& observable,
                         const DicomResourcesLoadedMessage& message) ORTHANC_OVERRIDE;
+
+    void Handle(const ViewportController::SceneTransformChanged& message);
 
   protected:
     virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,

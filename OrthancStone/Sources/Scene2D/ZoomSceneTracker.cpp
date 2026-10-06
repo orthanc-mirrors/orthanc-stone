@@ -23,31 +23,24 @@
 
 #include "ZoomSceneTracker.h"
 
-#include "../Scene2DViewport/ViewportController.h"
-#include "../Viewport/ViewportLocker.h"
 
 namespace OrthancStone
 {
-  ZoomSceneTracker::ZoomSceneTracker(boost::weak_ptr<IViewport> viewport,
+  ZoomSceneTracker::ZoomSceneTracker(const Scene2D& scene,
                                      const PointerEvent& event,
                                      unsigned int canvasHeight) :
-    viewport_(viewport),
     clickY_(event.GetMainPosition().GetY())
-  {    
-    ViewportLocker locker(viewport_);
-    
-    if (locker.IsValid())
-    {
-      originalSceneToCanvas_ = locker.GetController().GetScene().GetSceneToCanvasTransform();
+  {
+    originalSceneToCanvas_ = scene.GetSceneToCanvasTransform();
 
-      if (canvasHeight > 3)
-      {
-        normalization_ = 1.0 / static_cast<double>(canvasHeight - 1);
-        aligner_.reset(new Internals::FixedPointAligner(locker.GetController().GetScene(), event.GetMainPosition()));
-      }
+    if (canvasHeight > 3)
+    {
+      normalization_ = 1.0 / static_cast<double>(canvasHeight - 1);
+      aligner_.reset(new Internals::FixedPointAligner(scene, event.GetMainPosition()));
     }
   }
   
+
   bool ZoomSceneTracker::PointerMove(const PointerEvent& event,
                                      Scene2D& scene)
   {
@@ -77,33 +70,21 @@ namespace OrthancStone
         z = MIN_ZOOM + (MAX_ZOOM - MIN_ZOOM) * (dy + 1.0) / 2.0;
       }
 
-      ViewportLocker locker(viewport_);
-    
-      if (locker.IsValid())
-      {
-        const double zoom = pow(2.0, z);
+      const double zoom = pow(2.0, z);
 
-        locker.GetController().SetSceneToCanvasTransform(
-          AffineTransform2D::Combine(
-            AffineTransform2D::CreateScaling(zoom, zoom),
-            originalSceneToCanvas_));
-        aligner_->Apply(locker.GetController().GetScene());
-        locker.Invalidate();
-        return true;
-      }
+      scene.SetSceneToCanvasTransform(AffineTransform2D::Combine(
+                                        AffineTransform2D::CreateScaling(zoom, zoom),
+                                        originalSceneToCanvas_));
+      aligner_->Apply(scene);
+      return true;
     }
 
     return false;
   }
 
+
   void ZoomSceneTracker::Cancel(Scene2D& scene)
   {
-    ViewportLocker locker(viewport_);
-    
-    if (locker.IsValid())
-    {
-      locker.GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
-      locker.Invalidate();
-    }
+    scene.SetSceneToCanvasTransform(originalSceneToCanvas_);
   }
 }

@@ -23,41 +23,30 @@
 
 #include "MagnifyingGlassTracker.h"
 
-#include "../Scene2DViewport/ViewportController.h"
-#include "../Viewport/ViewportLocker.h"
-
 namespace OrthancStone
 {
-  void MagnifyingGlassTracker::Update(const ViewportLocker& locker,
+  void MagnifyingGlassTracker::Update(Scene2D& scene,
                                       const PointerEvent& event)
   {
     ScenePoint2D p = event.GetMainPosition().Apply(originalCanvasToScene_);
 
-    locker.GetController().SetSceneToCanvasTransform(
+    scene.SetSceneToCanvasTransform(
       AffineTransform2D::Combine(
         originalSceneToCanvas_,
         AffineTransform2D::CreateOffset(p.GetX(), p.GetY()),
         AffineTransform2D::CreateScaling(5, 5),
         AffineTransform2D::CreateOffset(-pivot_.GetX(), -pivot_.GetY())));
-
-    locker.Invalidate();
   }
     
 
-  MagnifyingGlassTracker::MagnifyingGlassTracker(boost::weak_ptr<IViewport> viewport,
-                                                 const PointerEvent& event) :
-    viewport_(viewport)
+  MagnifyingGlassTracker::MagnifyingGlassTracker(Scene2D& scene,
+                                                 const PointerEvent& event)
   {
-    ViewportLocker locker(viewport_);
-    
-    if (locker.IsValid())
-    {
-      originalSceneToCanvas_ = locker.GetController().GetScene().GetSceneToCanvasTransform();
-      originalCanvasToScene_ = locker.GetController().GetScene().GetCanvasToSceneTransform();
-      pivot_ = event.GetMainPosition().Apply(locker.GetController().GetScene().GetCanvasToSceneTransform());
+    originalSceneToCanvas_ = scene.GetSceneToCanvasTransform();
+    originalCanvasToScene_ = scene.GetCanvasToSceneTransform();
+    pivot_ = event.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
-      Update(locker, event);
-    }
+    Update(scene, event);
   }
       
 
@@ -72,28 +61,13 @@ namespace OrthancStone
   bool MagnifyingGlassTracker::PointerMove(const PointerEvent& event,
                                            Scene2D& scene)
   {
-    ViewportLocker locker(viewport_);
-    
-    if (locker.IsValid())
-    {
-      Update(locker, event);
-      return true;
-    }
-    else
-    {
-      return false;
-    }
+    Update(scene, event);
+    return true;
   }
     
 
   void MagnifyingGlassTracker::Cancel(Scene2D& scene)
   {
-    ViewportLocker locker(viewport_);
-    
-    if (locker.IsValid())
-    {
-      locker.GetController().SetSceneToCanvasTransform(originalSceneToCanvas_);
-      locker.Invalidate();
-    }
+    scene.SetSceneToCanvasTransform(originalSceneToCanvas_);
   }
 }

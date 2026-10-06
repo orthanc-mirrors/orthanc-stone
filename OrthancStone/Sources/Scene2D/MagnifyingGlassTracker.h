@@ -23,26 +23,24 @@
 
 #pragma once
 
+#include "../Scene2D/Scene2D.h"
 #include "../Scene2DViewport/OneGesturePointerTracker.h"
-#include "../Viewport/ViewportLocker.h"
 
-#include <boost/weak_ptr.hpp>
 
 namespace OrthancStone
 {
   class MagnifyingGlassTracker : public OneGesturePointerTracker
   {
   private:
-    boost::weak_ptr<IViewport>  viewport_;
-    ScenePoint2D                pivot_;
-    AffineTransform2D           originalSceneToCanvas_;
-    AffineTransform2D           originalCanvasToScene_;
+    ScenePoint2D       pivot_;
+    AffineTransform2D  originalSceneToCanvas_;
+    AffineTransform2D  originalCanvasToScene_;
 
-    void Update(const ViewportLocker& locker,
+    void Update(Scene2D& scene,
                 const PointerEvent& event);
     
   public:
-    MagnifyingGlassTracker(boost::weak_ptr<IViewport> viewport,
+    MagnifyingGlassTracker(Scene2D& scene,
                            const PointerEvent& event);
     
     virtual void PointerUp(const PointerEvent& event,

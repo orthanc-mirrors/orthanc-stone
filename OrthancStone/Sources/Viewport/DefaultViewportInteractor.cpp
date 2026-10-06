@@ -36,7 +36,7 @@
 namespace OrthancStone
 {
   IFlexiblePointerTracker* DefaultViewportInteractor::CreateTrackerInternal(
-    const boost::shared_ptr<IViewport>& viewport,
+    const boost::shared_ptr<IViewport>& viewport,   // TODO Refactoring - Should be Scene2D&
     MouseAction action,
     const PointerEvent& event,
     unsigned int viewportWidth,
@@ -77,10 +77,16 @@ namespace OrthancStone
         return new PanSceneTracker(viewport, event);
       
       case MouseAction_Zoom:
-        return new ZoomSceneTracker(viewport, event, viewportHeight);
+      {
+        std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
+        return new ZoomSceneTracker(lock->GetController().GetScene(), event, viewportHeight);
+      }
       
       case MouseAction_MagnifyingGlass:
-        return new MagnifyingGlassTracker(viewport, event);
+      {
+        std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
+        return new MagnifyingGlassTracker(lock->GetController().GetScene(), event);
+      }
 
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);

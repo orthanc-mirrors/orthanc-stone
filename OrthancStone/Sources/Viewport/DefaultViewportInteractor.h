@@ -105,7 +105,7 @@ namespace OrthancStone
       return false;
     }
 
-    virtual void HandleMouseHover(IViewport::ILock& viewportLock,
+    virtual void HandleMouseHover(Scene2D& scene,
                                   const PointerEvent& event) ORTHANC_OVERRIDE;
 
     void SetGrayscaleWindowingObserverFactory(GrayscaleWindowingSceneTracker::IObserverFactory* factory /* takes ownership */);

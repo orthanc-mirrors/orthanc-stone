@@ -29,6 +29,7 @@
 #include "../Scene2D/TextSceneLayer.h"
 #include "../Scene2DViewport/PredeclaredTypes.h"
 #include "../Scene2DViewport/ViewportController.h"
+#include "../Viewport/IViewport.h"
 
 #include <boost/weak_ptr.hpp>
 

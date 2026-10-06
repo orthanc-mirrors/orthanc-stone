@@ -205,9 +205,11 @@ namespace OrthancStone
         PointerEvent pointer;
         ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);      
 
+        that->interactor_->HandleMouseHover(that->controller_->GetScene(), pointer);
+
         {
           WebAssemblyViewport::WasmLock lock(*that);
-          that->interactor_->HandleMouseHover(lock, pointer);
+          lock.Invalidate();
         }
       }
     }

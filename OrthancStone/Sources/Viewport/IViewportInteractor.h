@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "IViewport.h"
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"
 
 namespace OrthancStone
@@ -41,7 +40,8 @@ namespace OrthancStone
 
     virtual bool HasMouseHover() const = 0;
 
-    virtual void HandleMouseHover(IViewport::ILock& viewportLock,
-                                  const PointerEvent& event) = 0;  // TODO Refactoring - Should return "true" to invalidate
+    // TODO Refactoring - Could this be called only if change in hover?
+    virtual void HandleMouseHover(Scene2D& scene,
+                                  const PointerEvent& event) = 0;
   };
 }

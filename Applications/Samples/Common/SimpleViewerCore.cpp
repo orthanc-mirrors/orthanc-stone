@@ -187,11 +187,10 @@ namespace OrthancStone
       return true;
     }
 
-    virtual void HandleMouseHover(IViewport::ILock& viewportLock,
+    virtual void HandleMouseHover(Scene2D& scene,
                                   const PointerEvent& event) ORTHANC_OVERRIDE
     {
-      annotations_->SetMouseHover(event.GetMainPosition(), viewportLock.GetController().GetScene());
-      viewportLock.Invalidate();
+      annotations_->SetMouseHover(event.GetMainPosition(), scene);
     }
   };
 

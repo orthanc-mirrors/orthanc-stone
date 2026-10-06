@@ -127,7 +127,7 @@ namespace OrthancStone
   }
 
 
-  void DefaultViewportInteractor::HandleMouseHover(IViewport::ILock& viewportLock,
+  void DefaultViewportInteractor::HandleMouseHover(Scene2D& scene,
                                                    const PointerEvent& event)
   {
     // "HasMouseOver()" returns "false"

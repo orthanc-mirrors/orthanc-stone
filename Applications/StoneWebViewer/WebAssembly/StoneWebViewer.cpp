@@ -4047,12 +4047,11 @@ public:
       return true;
     }
 
-    virtual void HandleMouseHover(OrthancStone::IViewport::ILock& viewportLock,
+    virtual void HandleMouseHover(OrthancStone::Scene2D& scene,
                                   const OrthancStone::PointerEvent& event) ORTHANC_OVERRIDE
     {
-      viewer_.stoneAnnotations_->SetMouseHover(event.GetMainPosition(), viewportLock.GetController().GetScene());
-      viewer_.stoneAnnotations_->Render(viewportLock.GetController().GetScene());
-      viewportLock.Invalidate();
+      viewer_.stoneAnnotations_->SetMouseHover(event.GetMainPosition(), scene);
+      viewer_.stoneAnnotations_->Render(scene);
     }
   };
   

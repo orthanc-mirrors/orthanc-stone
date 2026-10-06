@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../Scene2D/GrayscaleWindowingSceneTracker.h"
 #include "IViewportInteractor.h"
 
 #include <Compatibility.h>  // For ORTHANC_OVERRIDE
@@ -37,7 +38,9 @@ namespace OrthancStone
     MouseAction  middleButtonAction_;
     MouseAction  rightButtonAction_;
 
-    IFlexiblePointerTracker* CreateTrackerInternal(const boost::shared_ptr<IViewport>& viewport,
+    std::unique_ptr<GrayscaleWindowingSceneTracker::IObserverFactory>  grayscaleFactory_;
+
+    IFlexiblePointerTracker* CreateTrackerInternal(Scene2D& scene,
                                                    MouseAction action,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
@@ -91,7 +94,7 @@ namespace OrthancStone
     {
       rightButtonAction_ = action;
     }
-    
+
     virtual IFlexiblePointerTracker* CreateTracker(const boost::shared_ptr<IViewport>& viewport,
                                                    const PointerEvent& event,
                                                    unsigned int viewportWidth,
@@ -104,5 +107,7 @@ namespace OrthancStone
 
     virtual void HandleMouseHover(IViewport::ILock& viewportLock,
                                   const PointerEvent& event) ORTHANC_OVERRIDE;
+
+    void SetGrayscaleWindowingObserverFactory(GrayscaleWindowingSceneTracker::IObserverFactory* factory /* takes ownership */);
   };
 }

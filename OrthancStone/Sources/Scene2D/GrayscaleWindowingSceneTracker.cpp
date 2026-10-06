@@ -35,26 +35,19 @@ namespace OrthancStone
     class GrayscaleLayerAccessor : public boost::noncopyable
     {
     private:
-      std::unique_ptr<IViewport::ILock>   lock_;
-      FloatTextureSceneLayer*             layer_;
+      FloatTextureSceneLayer*  layer_;
 
     public:
-      GrayscaleLayerAccessor(boost::weak_ptr<IViewport> viewportWeak,
+      GrayscaleLayerAccessor(Scene2D& scene,
                              int layerIndex) :
         layer_(NULL)
       {
-        boost::shared_ptr<IViewport> viewport = viewportWeak.lock();
-        if (viewport != NULL)
+        if (scene.HasLayer(layerIndex))
         {
-          lock_.reset(viewport->Lock());
-
-          if (lock_->GetController().GetScene().HasLayer(layerIndex))
+          ISceneLayer& layer = scene.GetLayer(layerIndex);
+          if (layer.GetType() == ISceneLayer::Type_FloatTexture)
           {
-            ISceneLayer& layer = lock_->GetController().GetScene().GetLayer(layerIndex);
-            if (layer.GetType() == ISceneLayer::Type_FloatTexture)
-            {
-              layer_ = &dynamic_cast<FloatTextureSceneLayer&>(layer);
-            }
+            layer_ = &dynamic_cast<FloatTextureSceneLayer&>(layer);
           }
         }
       }
@@ -75,39 +68,26 @@ namespace OrthancStone
           return *layer_;
         }
       }
-
-      void Invalidate()
-      {
-        if (lock_.get() != NULL)
-        {
-          lock_->Invalidate();
-        }
-      }
-
-      void BroadcastGrayscaleWindowingChanged(double center,
-                                              double width)
-      {
-        if (lock_.get() != NULL)
-        {
-          lock_->GetController().BroadcastGrayscaleWindowingChanged(Windowing(center, width));
-        }
-      }        
     };
   }
   
-  bool GrayscaleWindowingSceneTracker::SetWindowing(float center,
+  bool GrayscaleWindowingSceneTracker::SetWindowing(Scene2D& scene,
+                                                    float center,
                                                     float width)
   {
     if (active_)
     {
-      boost::shared_ptr<IViewport> viewport = viewport_.lock();
-      GrayscaleLayerAccessor accessor(viewport, layerIndex_);
+      GrayscaleLayerAccessor accessor(scene, layerIndex_);
       
       if (accessor.IsValid())
       {
         accessor.GetLayer().SetCustomWindowing(center, width);
-        accessor.BroadcastGrayscaleWindowingChanged(center, width);
-        accessor.Invalidate();
+
+        if (observer_.get() != NULL)
+        {
+          observer_->HandleGrayscaleWindowingChange(Windowing(center, width));
+        }
+
         return true;
       }
     }
@@ -116,12 +96,11 @@ namespace OrthancStone
   }
     
 
-  GrayscaleWindowingSceneTracker::GrayscaleWindowingSceneTracker(boost::weak_ptr<IViewport> viewport,
+  GrayscaleWindowingSceneTracker::GrayscaleWindowingSceneTracker(Scene2D& scene,
                                                                  int layerIndex,
                                                                  const PointerEvent& event,
                                                                  unsigned int canvasWidth,
                                                                  unsigned int canvasHeight) :
-    viewport_(viewport),
     layerIndex_(layerIndex),
     clickX_(event.GetMainPosition().GetX()),
     clickY_(event.GetMainPosition().GetY())
@@ -131,29 +110,34 @@ namespace OrthancStone
     if (canvasWidth > 3 &&
         canvasHeight > 3)
     {
-      boost::shared_ptr<IViewport> locked = viewport_.lock();
+      GrayscaleLayerAccessor accessor(scene, layerIndex_);
 
-      if (locked)
+      if (accessor.IsValid())
       {
-        GrayscaleLayerAccessor accessor(locked, layerIndex_);
-      
-        if (accessor.IsValid())
-        {
-          FloatTextureSceneLayer& layer = accessor.GetLayer();
+        accessor.GetLayer().GetWindowing(originalCenter_, originalWidth_);
         
-          layer.GetWindowing(originalCenter_, originalWidth_);
+        float minValue, maxValue;
+        accessor.GetLayer().GetRange(minValue, maxValue);
         
-          float minValue, maxValue;
-          layer.GetRange(minValue, maxValue);
-        
-          normalization_ = (maxValue - minValue) / static_cast<double>(std::min(canvasWidth, canvasHeight) - 1);
-          active_ = true;
-        }
-        else
-        {
-          LOG(INFO) << "Cannot create GrayscaleWindowingSceneTracker on a non-float texture";
-        }
+        normalization_ = (maxValue - minValue) / static_cast<double>(std::min(canvasWidth, canvasHeight) - 1);
+        active_ = true;
       }
+      else
+      {
+        LOG(INFO) << "Cannot create GrayscaleWindowingSceneTracker on a non-float texture";
+      }
+    }
+  }
+
+  void GrayscaleWindowingSceneTracker::SetObserver(IObserver* observer)
+  {
+    if (observer == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else
+    {
+      observer_.reset(observer);
     }
   }
   
@@ -173,7 +157,7 @@ namespace OrthancStone
         width = 1;
       }
       
-      return SetWindowing(center, width);
+      return SetWindowing(scene, center, width);
     }
     else
     {
@@ -183,6 +167,6 @@ namespace OrthancStone
 
   void GrayscaleWindowingSceneTracker::Cancel(Scene2D& scene)
   {
-    SetWindowing(originalCenter_, originalWidth_);
+    SetWindowing(scene, originalCenter_, originalWidth_);
   }
 }

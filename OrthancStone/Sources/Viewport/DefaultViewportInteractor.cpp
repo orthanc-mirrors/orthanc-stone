@@ -35,12 +35,11 @@
 
 namespace OrthancStone
 {
-  IFlexiblePointerTracker* DefaultViewportInteractor::CreateTrackerInternal(
-    const boost::shared_ptr<IViewport>& viewport,   // TODO Refactoring - Should be Scene2D&
-    MouseAction action,
-    const PointerEvent& event,
-    unsigned int viewportWidth,
-    unsigned int viewportHeight)
+  IFlexiblePointerTracker* DefaultViewportInteractor::CreateTrackerInternal(Scene2D& scene,
+                                                                            MouseAction action,
+                                                                            const PointerEvent& event,
+                                                                            unsigned int viewportWidth,
+                                                                            unsigned int viewportHeight)
   {
     switch (action)
     {
@@ -48,51 +47,38 @@ namespace OrthancStone
         return NULL;
 
       case MouseAction_Rotate:
-      {
-        std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
-        return new RotateSceneTracker(lock->GetController().GetScene(), event);
-      }
+        return new RotateSceneTracker(scene, event);
 
       case MouseAction_GrayscaleWindowing:
       {
-        if (!viewport)
+        if (scene.HasLayer(windowingLayer_) &&
+            scene.GetLayer(windowingLayer_).GetType() == ISceneLayer::Type_FloatTexture)
         {
-          return NULL;
+          std::unique_ptr<GrayscaleWindowingSceneTracker> tracker(
+            new GrayscaleWindowingSceneTracker(scene, windowingLayer_, event, viewportWidth, viewportHeight));
+
+          if (grayscaleFactory_.get() != NULL)
+          {
+            tracker->SetObserver(grayscaleFactory_->Create());
+          }
+
+          return tracker.release();
         }
         else
         {
-          std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
-          if (lock->GetController().GetScene().HasLayer(windowingLayer_) &&
-              lock->GetController().GetScene().GetLayer(windowingLayer_).GetType() == ISceneLayer::Type_FloatTexture)
-          {
-            return new GrayscaleWindowingSceneTracker(
-              viewport, windowingLayer_, event, viewportWidth, viewportHeight);
-          }
-          else
-          {
-            // Don't create the tracker if the layer is not a float texture
-            return NULL;
-          }
+          // Don't create the tracker if the layer is not a float texture
+          return NULL;
         }
       }
 
       case MouseAction_Pan:
-      {
-        std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
-        return new PanSceneTracker(lock->GetController().GetScene(), event);
-      }
+        return new PanSceneTracker(scene, event);
       
       case MouseAction_Zoom:
-      {
-        std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
-        return new ZoomSceneTracker(lock->GetController().GetScene(), event, viewportHeight);
-      }
+        return new ZoomSceneTracker(scene, event, viewportHeight);
       
       case MouseAction_MagnifyingGlass:
-      {
-        std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
-        return new MagnifyingGlassTracker(lock->GetController().GetScene(), event);
-      }
+        return new MagnifyingGlassTracker(scene, event);
 
       default:
         throw Orthanc::OrthancException(Orthanc::ErrorCode_ParameterOutOfRange);
@@ -106,6 +92,11 @@ namespace OrthancStone
     unsigned int                viewportWidth,
     unsigned int                viewportHeight)
   {
+    if (!viewport)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+
     MouseAction action;
     
     switch (event.GetMouseButton())
@@ -137,7 +128,10 @@ namespace OrthancStone
         return NULL;
     }
 
-    return CreateTrackerInternal(viewport, action, event, viewportWidth, viewportHeight);
+    {
+      std::unique_ptr<IViewport::ILock> lock(viewport->Lock());
+      return CreateTrackerInternal(lock->GetController().GetScene(), action, event, viewportWidth, viewportHeight);
+    }
   }
 
 
@@ -146,5 +140,18 @@ namespace OrthancStone
   {
     // "HasMouseOver()" returns "false"
     throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+  }
+
+
+  void DefaultViewportInteractor::SetGrayscaleWindowingObserverFactory(GrayscaleWindowingSceneTracker::IObserverFactory* factory)
+  {
+    if (factory == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else
+    {
+      grayscaleFactory_.reset(factory);
+    }
   }
 }

@@ -42,6 +42,6 @@ namespace OrthancStone
     virtual bool HasMouseHover() const = 0;
 
     virtual void HandleMouseHover(IViewport::ILock& viewportLock,
-                                  const PointerEvent& event) = 0;
+                                  const PointerEvent& event) = 0;  // TODO Refactoring - Should return "true" to invalidate
   };
 }

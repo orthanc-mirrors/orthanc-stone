@@ -27,7 +27,6 @@
 #include "../Messages/IObservable.h"
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"
-#include "../Toolbox/Windowing.h"
 #include "../Viewport/IViewportInteractor.h"
 
 #include <Compatibility.h>
@@ -90,27 +89,6 @@ namespace OrthancStone
                                         SceneTransformChanged, \
                                         ViewportController);
 
-    class GrayscaleWindowingChanged : public OriginMessage<ViewportController>
-    {
-      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
-      
-    private:
-      Windowing windowing_;
-      
-    public:
-      GrayscaleWindowingChanged(const ViewportController& origin,
-                                const Windowing& windowing) :
-        OriginMessage(origin),
-        windowing_(windowing)
-      {
-      }
-
-      const Windowing& GetWindowing() const
-      {
-        return windowing_;
-      }
-    };
-
     explicit ViewportController(const boost::shared_ptr<IViewport>& viewport);
 
     ~ViewportController();
@@ -140,9 +118,6 @@ namespace OrthancStone
 
     /** Forwarded to the underlying scene, and broadcasted to the observers */
     void SetSceneToCanvasTransform(const AffineTransform2D& transform);
-
-    /** Info broadcasted to the observers */
-    void BroadcastGrayscaleWindowingChanged(const Windowing& windowing);
 
     /** Forwarded to the underlying scene, and broadcasted to the observers */
     void FitContent(unsigned int viewportWidth,

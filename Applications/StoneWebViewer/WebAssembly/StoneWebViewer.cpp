@@ -3278,13 +3278,6 @@ private:
   }
 
 
-  void Handle(const OrthancStone::ViewportController::GrayscaleWindowingChanged& message)
-  {
-    // This event is triggered by the windowing mouse action, from class "GrayscaleWindowingSceneTracker"
-    UpdateWindowing(WindowingState_User, message.GetWindowing());
-  }
-
-  
   static EM_BOOL OnWheel(int eventType,
                          const EmscriptenWheelEvent *wheelEvent,
                          void *userData)
@@ -3470,7 +3463,6 @@ public:
 
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->viewport_->Lock());
-      viewport->Register<OrthancStone::ViewportController::GrayscaleWindowingChanged>(lock->GetController(), &ViewerViewport::Handle);
       viewport->Register<OrthancStone::ViewportController::SceneTransformChanged>(lock->GetController(), &ViewerViewport::Handle);
     }
 

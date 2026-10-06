@@ -137,11 +137,6 @@ namespace OrthancStone
     BroadcastMessage(SceneTransformChanged(*this));
   }
 
-  void ViewportController::BroadcastGrayscaleWindowingChanged(const Windowing& windowing)
-  {
-    BroadcastMessage(GrayscaleWindowingChanged(*this, windowing));
-  }
-
   void ViewportController::FitContent(unsigned int viewportWidth,
                                       unsigned int viewportHeight)
   {

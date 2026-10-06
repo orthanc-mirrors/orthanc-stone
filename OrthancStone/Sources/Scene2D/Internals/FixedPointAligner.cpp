@@ -23,26 +23,24 @@
 
 #include "FixedPointAligner.h"
 
-#include <OrthancException.h>
-
 namespace OrthancStone
 {
   namespace Internals
   {
-    FixedPointAligner::FixedPointAligner(const ViewportController& controller,
+    FixedPointAligner::FixedPointAligner(const Scene2D& scene,
                                          const ScenePoint2D& p) :
       canvas_(p)
     {
-      pivot_ = canvas_.Apply(controller.GetCanvasToSceneTransform());
+      pivot_ = canvas_.Apply(scene.GetCanvasToSceneTransform());
     }
 
-    void FixedPointAligner::Apply(ViewportController& controller)
+    void FixedPointAligner::Apply(Scene2D& scene)
     {
-      ScenePoint2D p = canvas_.Apply(controller.GetCanvasToSceneTransform());
+      const ScenePoint2D p = canvas_.Apply(scene.GetCanvasToSceneTransform());
 
-      controller.SetSceneToCanvasTransform(
+      scene.SetSceneToCanvasTransform(
         AffineTransform2D::Combine(
-          controller.GetSceneToCanvasTransform(),
+          scene.GetSceneToCanvasTransform(),
           AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
                                           p.GetY() - pivot_.GetY())));
     }

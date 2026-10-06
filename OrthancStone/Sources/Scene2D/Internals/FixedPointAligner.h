@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include "../../Scene2DViewport/ViewportController.h"
+#include "../../Scene2D/Scene2D.h"
+#include "../../Scene2D/ScenePoint2D.h"
 
 namespace OrthancStone
 {
@@ -37,10 +38,10 @@ namespace OrthancStone
       ScenePoint2D  canvas_;
 
     public:
-      FixedPointAligner(const ViewportController& controller,
+      FixedPointAligner(const Scene2D& scene,
                         const ScenePoint2D& p);
 
-      void Apply(ViewportController& controller);
+      void Apply(Scene2D& scene);
     };
   }
 }

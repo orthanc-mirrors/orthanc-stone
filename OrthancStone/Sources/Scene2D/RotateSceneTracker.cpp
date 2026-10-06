@@ -38,7 +38,7 @@ namespace OrthancStone
     
     if (locker.IsValid())
     {
-      aligner_.reset(new Internals::FixedPointAligner(locker.GetController(), click_));
+      aligner_.reset(new Internals::FixedPointAligner(locker.GetController().GetScene(), click_));
       originalSceneToCanvas_ = locker.GetController().GetSceneToCanvasTransform();
     }
   }
@@ -72,7 +72,7 @@ namespace OrthancStone
             AffineTransform2D::Combine(
               AffineTransform2D::CreateRotation(a - referenceAngle_),
               originalSceneToCanvas_));
-          aligner_->Apply(locker.GetController());
+          aligner_->Apply(locker.GetController().GetScene());
           locker.Invalidate();
         }
       }

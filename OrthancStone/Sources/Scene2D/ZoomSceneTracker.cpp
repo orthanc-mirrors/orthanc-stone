@@ -43,7 +43,7 @@ namespace OrthancStone
       if (canvasHeight > 3)
       {
         normalization_ = 1.0 / static_cast<double>(canvasHeight - 1);
-        aligner_.reset(new Internals::FixedPointAligner(locker.GetController(), event.GetMainPosition()));
+        aligner_.reset(new Internals::FixedPointAligner(locker.GetController().GetScene(), event.GetMainPosition()));
       }
     }
   }
@@ -87,7 +87,7 @@ namespace OrthancStone
           AffineTransform2D::Combine(
             AffineTransform2D::CreateScaling(zoom, zoom),
             originalSceneToCanvas_));
-        aligner_->Apply(locker.GetController());
+        aligner_->Apply(locker.GetController().GetScene());
         locker.Invalidate();
       }
     }

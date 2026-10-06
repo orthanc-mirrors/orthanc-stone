@@ -39,9 +39,9 @@ namespace OrthancStone
     PanSceneTracker(boost::weak_ptr<IViewport> viewport,
                     const PointerEvent& event);
 
-    virtual void PointerMove(const PointerEvent& event,
-                             Scene2D& scene) ORTHANC_OVERRIDE;
-    
     virtual void Cancel(Scene2D& scene) ORTHANC_OVERRIDE;
+
+    virtual bool PointerMove(const PointerEvent& event,
+                             Scene2D& scene) ORTHANC_OVERRIDE;
   };
 }

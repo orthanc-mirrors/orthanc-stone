@@ -178,7 +178,6 @@ namespace OrthancStone
       that->controller_->HandleMousePress(*that->interactor_, pointer,
                                           that->compositor_->GetCanvasWidth(),
                                           that->compositor_->GetCanvasHeight());        
-      that->Invalidate();
     }
 
     LOG(TRACE) << "Exiting: " << __func__;
@@ -196,11 +195,8 @@ namespace OrthancStone
       {
         PointerEvent pointer;
         ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
-      
-        if (that->controller_->HandleMouseMove(pointer))
-        {
-          that->Invalidate();
-        }
+
+        that->controller_->HandleMouseMove(pointer);
       }
       else if (that->interactor_.get() != NULL &&
                that->interactor_->HasMouseHover())
@@ -230,7 +226,6 @@ namespace OrthancStone
       PointerEvent pointer;
       ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
       that->controller_->HandleMouseRelease(pointer);
-      that->Invalidate();
     }
 
     LOG(TRACE) << "Exiting: " << __func__;
@@ -357,14 +352,12 @@ namespace OrthancStone
           that->controller_->HandleMousePress(*that->interactor_, event,
                                               that->compositor_->GetCanvasWidth(),
                                               that->compositor_->GetCanvasHeight());
-          that->Invalidate();
           break;
 
         case EMSCRIPTEN_EVENT_TOUCHMOVE:
-          if (that->controller_->HasActiveTracker() &&
-              that->controller_->HandleMouseMove(event))
+          if (that->controller_->HasActiveTracker())
           {
-            that->Invalidate();
+            that->controller_->HandleMouseMove(event);
           }
           break;
 
@@ -373,7 +366,6 @@ namespace OrthancStone
           if (that->controller_->HasActiveTracker())
           {
             that->controller_->HandleMouseRelease(event);
-            that->Invalidate();
           }
           break;
 

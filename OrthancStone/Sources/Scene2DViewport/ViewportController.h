@@ -111,7 +111,7 @@ namespace OrthancStone
       }
     };
 
-    explicit ViewportController(boost::weak_ptr<IViewport> viewport);
+    explicit ViewportController(const boost::shared_ptr<IViewport>& viewport);
 
     ~ViewportController();
 
@@ -203,9 +203,8 @@ namespace OrthancStone
                           unsigned int viewportWidth,
                           unsigned int viewportHeight);
 
-    // Must be expressed in canvas coordinates. Returns "true" if the
-    // state has changed, so that "Invalidate()" can be called.
-    bool HandleMouseMove(const PointerEvent& event);
+    // Must be expressed in canvas coordinates
+    void HandleMouseMove(const PointerEvent& event);
 
     // Must be expressed in canvas coordinates
     void HandleMouseRelease(const PointerEvent& event);
@@ -264,5 +263,7 @@ namespace OrthancStone
     boost::weak_ptr<UndoStack>                    undoStackW_;  // Global stack, possibly shared by all viewports
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
     boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Couldn't this be a "std::unique_ptr"?
+
+    void InvalidateViewport();
   };
 }

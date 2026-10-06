@@ -47,7 +47,7 @@ namespace OrthancStone
   {
   }
 
-  void CreateAngleMeasureTracker::PointerMove(const PointerEvent& event,
+  bool CreateAngleMeasureTracker::PointerMove(const PointerEvent& event,
                                               Scene2D& scene)
   {
     if (!alive_)
@@ -81,6 +81,7 @@ namespace OrthancStone
       //LOG(TRACE) << "scenePos.GetX() = " << scenePos.GetX() << "     " <<
       //  "scenePos.GetY() = " << scenePos.GetY();
       lock->Invalidate();
+      return true;
     }
   }
 

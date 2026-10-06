@@ -69,7 +69,7 @@ namespace OrthancStone
   }
 
   
-  void MagnifyingGlassTracker::PointerMove(const PointerEvent& event,
+  bool MagnifyingGlassTracker::PointerMove(const PointerEvent& event,
                                            Scene2D& scene)
   {
     ViewportLocker locker(viewport_);
@@ -77,6 +77,11 @@ namespace OrthancStone
     if (locker.IsValid())
     {
       Update(locker, event);
+      return true;
+    }
+    else
+    {
+      return false;
     }
   }
     

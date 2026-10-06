@@ -45,7 +45,7 @@ namespace OrthancStone
 
     ~EditAngleMeasureTracker();
 
-    virtual void PointerMove(const PointerEvent& e,
+    virtual bool PointerMove(const PointerEvent& e,
                              Scene2D& scene) ORTHANC_OVERRIDE;
     
     virtual void PointerUp(const PointerEvent& e,

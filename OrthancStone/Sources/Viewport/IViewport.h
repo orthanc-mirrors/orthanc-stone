@@ -61,7 +61,7 @@ namespace OrthancStone
       Do not store the result! Only access the compositor interface through
       the lock.
       */
-      virtual ViewportController& GetController() = 0;
+      virtual ViewportController& GetController() = 0;  // TODO Refactoring - Remove this
 
       virtual void Invalidate() = 0;
 

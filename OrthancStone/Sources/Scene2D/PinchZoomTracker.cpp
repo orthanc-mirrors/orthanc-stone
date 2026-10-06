@@ -64,7 +64,7 @@ namespace OrthancStone
   }
 
 
-  void PinchZoomTracker::PointerMove(const PointerEvent &event,
+  bool PinchZoomTracker::PointerMove(const PointerEvent &event,
                                      Scene2D &scene)
   {
     if (state_ == State_OneFinger &&
@@ -97,7 +97,7 @@ namespace OrthancStone
       else
       {
         state_ = State_Dead;
-        return;
+        return true;
       }
 
       double distance = ScenePoint2D::DistancePtPt(event.GetPosition(0), event.GetPosition(1));
@@ -106,7 +106,7 @@ namespace OrthancStone
     else
     {
       state_ = State_Dead;
-      return;
+      return true;
     }
 
     {
@@ -121,6 +121,11 @@ namespace OrthancStone
             AffineTransform2D::CreateScaling(zoom),
             AffineTransform2D::CreateOffset(-pivot_.GetX(), -pivot_.GetY())));
         locker.Invalidate();
+        return true;
+      }
+      else
+      {
+        return false;
       }
     }
   }

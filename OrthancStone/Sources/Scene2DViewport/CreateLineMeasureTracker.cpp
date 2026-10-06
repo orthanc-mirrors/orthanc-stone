@@ -48,7 +48,7 @@ namespace OrthancStone
 
   }
 
-  void CreateLineMeasureTracker::PointerMove(const PointerEvent& event,
+  bool CreateLineMeasureTracker::PointerMove(const PointerEvent& event,
                                              Scene2D& scene)
   {
     if (!alive_)
@@ -72,6 +72,7 @@ namespace OrthancStone
       assert(concreteThis != NULL);*/
 
     GetCommand()->SetEnd(scenePos);
+    return true;
   }
 
   void CreateLineMeasureTracker::PointerUp(const PointerEvent& e,

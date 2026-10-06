@@ -52,7 +52,7 @@ namespace OrthancStone
     PinchZoomTracker(const boost::shared_ptr<IViewport>& viewport,
                      const PointerEvent& event);
 
-    virtual void PointerMove(const PointerEvent &event,
+    virtual bool PointerMove(const PointerEvent &event,
                              Scene2D &scene) ORTHANC_OVERRIDE;
 
     virtual void PointerUp(const PointerEvent &event,

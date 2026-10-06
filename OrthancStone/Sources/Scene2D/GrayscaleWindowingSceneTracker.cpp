@@ -95,7 +95,7 @@ namespace OrthancStone
     };
   }
   
-  void GrayscaleWindowingSceneTracker::SetWindowing(float center,
+  bool GrayscaleWindowingSceneTracker::SetWindowing(float center,
                                                     float width)
   {
     if (active_)
@@ -108,8 +108,11 @@ namespace OrthancStone
         accessor.GetLayer().SetCustomWindowing(center, width);
         accessor.BroadcastGrayscaleWindowingChanged(center, width);
         accessor.Invalidate();
+        return true;
       }
-    }      
+    }
+
+    return false;
   }
     
 
@@ -154,7 +157,7 @@ namespace OrthancStone
     }
   }
   
-  void GrayscaleWindowingSceneTracker::PointerMove(const PointerEvent& event,
+  bool GrayscaleWindowingSceneTracker::PointerMove(const PointerEvent& event,
                                                    Scene2D& scene)
   {
     if (active_)
@@ -170,7 +173,11 @@ namespace OrthancStone
         width = 1;
       }
       
-      SetWindowing(center, width);
+      return SetWindowing(center, width);
+    }
+    else
+    {
+      return false;
     }
   }
 

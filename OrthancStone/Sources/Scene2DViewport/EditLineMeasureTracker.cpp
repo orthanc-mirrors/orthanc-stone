@@ -46,7 +46,7 @@ namespace OrthancStone
     command_.reset(new EditLineMeasureCommand(measureTool, viewport));
   }
 
-  void EditLineMeasureTracker::PointerMove(const PointerEvent& e,
+  bool EditLineMeasureTracker::PointerMove(const PointerEvent& e,
                                            Scene2D& scene)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
@@ -90,6 +90,8 @@ namespace OrthancStone
         LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
         break;
     }
+
+    return true;
   }
 
   void EditLineMeasureTracker::PointerUp(const PointerEvent& e,

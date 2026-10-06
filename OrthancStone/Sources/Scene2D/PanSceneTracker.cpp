@@ -43,7 +43,7 @@ namespace OrthancStone
   }
 
 
-  void PanSceneTracker::PointerMove(const PointerEvent& event,
+  bool PanSceneTracker::PointerMove(const PointerEvent& event,
                                     Scene2D& scene)
   {
     ScenePoint2D p = event.GetMainPosition().Apply(originalCanvasToScene_);
@@ -58,7 +58,10 @@ namespace OrthancStone
           AffineTransform2D::CreateOffset(p.GetX() - pivot_.GetX(),
                                           p.GetY() - pivot_.GetY())));
       locker.Invalidate();
+      return true;
     }
+
+    return false;
   }
 
   void PanSceneTracker::Cancel(Scene2D& scene)

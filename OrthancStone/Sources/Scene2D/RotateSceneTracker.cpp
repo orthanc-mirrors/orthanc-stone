@@ -44,7 +44,7 @@ namespace OrthancStone
   }
 
   
-  void RotateSceneTracker::PointerMove(const PointerEvent& event,
+  bool RotateSceneTracker::PointerMove(const PointerEvent& event,
                                        Scene2D& scene)
   {
     if (aligner_.get() != NULL)
@@ -74,9 +74,12 @@ namespace OrthancStone
               originalSceneToCanvas_));
           aligner_->Apply(locker.GetController().GetScene());
           locker.Invalidate();
+          return true;
         }
       }
     }
+
+    return false;
   }
 
   

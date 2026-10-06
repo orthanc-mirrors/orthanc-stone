@@ -353,19 +353,14 @@ namespace OrthancStone
                 lock->GetController().HandleMousePress(interactor, p,
                                                        lock->GetCompositor().GetCanvasWidth(),
                                                        lock->GetCompositor().GetCanvasHeight());
-                lock->Invalidate();
                 break;
 
               case SDL_MOUSEMOTION:
-                if (lock->GetController().HandleMouseMove(p))
-                {
-                  lock->Invalidate();
-                }
+                lock->GetController().HandleMouseMove(p);
                 break;
 
               case SDL_MOUSEBUTTONUP:
                 lock->GetController().HandleMouseRelease(p);
-                lock->Invalidate();
                 break;
 
               default:

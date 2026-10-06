@@ -48,7 +48,7 @@ namespace OrthancStone
     }
   }
   
-  void ZoomSceneTracker::PointerMove(const PointerEvent& event,
+  bool ZoomSceneTracker::PointerMove(const PointerEvent& event,
                                      Scene2D& scene)
   {
     static const double MIN_ZOOM = -4;
@@ -89,8 +89,11 @@ namespace OrthancStone
             originalSceneToCanvas_));
         aligner_->Apply(locker.GetController().GetScene());
         locker.Invalidate();
+        return true;
       }
     }
+
+    return false;
   }
 
   void ZoomSceneTracker::Cancel(Scene2D& scene)

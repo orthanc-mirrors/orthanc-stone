@@ -48,7 +48,7 @@ namespace OrthancStone
     virtual void PointerUp(const PointerEvent& event,
                            Scene2D& scene) ORTHANC_OVERRIDE;
     
-    virtual void PointerMove(const PointerEvent& event,
+    virtual bool PointerMove(const PointerEvent& event,
                              Scene2D& scene) ORTHANC_OVERRIDE;
     
     virtual void Cancel(Scene2D& scene) ORTHANC_OVERRIDE;

@@ -50,7 +50,7 @@ namespace OrthancStone
 
   }
 
-  void EditAngleMeasureTracker::PointerMove(const PointerEvent& e,
+  bool EditAngleMeasureTracker::PointerMove(const PointerEvent& e,
                                             Scene2D& scene)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
@@ -105,6 +105,8 @@ namespace OrthancStone
         LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
         break;
     }
+
+    return true;
   }
 
   void EditAngleMeasureTracker::PointerUp(const PointerEvent& e,

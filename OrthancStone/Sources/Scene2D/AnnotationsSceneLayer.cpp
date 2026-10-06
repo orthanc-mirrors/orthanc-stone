@@ -1050,13 +1050,15 @@ namespace OrthancStone
     {
     }
 
-    virtual void PointerMove(const PointerEvent& event,
+    virtual bool PointerMove(const PointerEvent& event,
                              Scene2D& scene) ORTHANC_OVERRIDE
     {
       primitive_.MovePreview(event.GetMainPosition().Apply(canvasToScene_) - sceneClick_, scene);
 
       that_.BroadcastMessage(AnnotationChangedMessage(that_));
       that_.Render(scene);
+
+      return true;
     }
       
     virtual void PointerUp(const PointerEvent& event,
@@ -2395,7 +2397,7 @@ namespace OrthancStone
              annotation_->GetHandlesCount() >= 2);
     }
 
-    virtual void PointerMove(const PointerEvent& event,
+    virtual bool PointerMove(const PointerEvent& event,
                              Scene2D& scene) ORTHANC_OVERRIDE
     {
       if (annotation_ != NULL)
@@ -2405,6 +2407,11 @@ namespace OrthancStone
 
         layer_.BroadcastMessage(AnnotationChangedMessage(layer_));
         layer_.Render(scene);
+        return true;
+      }
+      else
+      {
+        return false;
       }
     }
       
@@ -2458,15 +2465,18 @@ namespace OrthancStone
       length_ = new LengthAnnotation(that, that.GetUnits(), false /* no length label */, sceneClick, sceneClick);
     }
 
-    virtual void PointerMove(const PointerEvent& event,
+    virtual bool PointerMove(const PointerEvent& event,
                              Scene2D& scene) ORTHANC_OVERRIDE
     {
+      bool redraw = false;
+
       if (length_ != NULL)
       {
         length_->GetHandle(1).SetCenter(event.GetMainPosition().Apply(canvasToScene_));
         length_->SignalMove(length_->GetHandle(1), scene);
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
         that_.Render(scene);
+        redraw = true;
       }
 
       if (angle_ != NULL)
@@ -2475,7 +2485,10 @@ namespace OrthancStone
         angle_->SignalMove(angle_->GetHandle(2), scene);
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
         that_.Render(scene);
+        redraw = true;
       }
+
+      return redraw;
     }
       
     virtual void PointerUp(const PointerEvent& event,
@@ -2546,9 +2559,10 @@ namespace OrthancStone
       that.Render(scene);
     }
 
-    virtual void PointerMove(const PointerEvent& event,
+    virtual bool PointerMove(const PointerEvent& event,
                              Scene2D& scene) ORTHANC_OVERRIDE
     {
+      return false;
     }
       
     virtual void PointerUp(const PointerEvent& event,
@@ -2611,9 +2625,10 @@ namespace OrthancStone
     {
     }
 
-    virtual void PointerMove(const PointerEvent& event,
+    virtual bool PointerMove(const PointerEvent& event,
                              Scene2D& scene) ORTHANC_OVERRIDE
     {
+      return false;
     }
       
     virtual void PointerUp(const PointerEvent& event,

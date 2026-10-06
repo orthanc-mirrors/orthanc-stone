@@ -27,6 +27,7 @@
 
 namespace OrthancStone
 {
+  // TODO Refactoring - Remove this class
   class ViewportLocker : public boost::noncopyable
   {
   private:

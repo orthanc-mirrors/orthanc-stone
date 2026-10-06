@@ -44,8 +44,10 @@ namespace OrthancStone
 
     /**
     This method will be repeatedly called during user interaction
+
+    Return "true" if the scene must be redrawn.
     */
-    virtual void PointerMove(const PointerEvent& event,
+    virtual bool PointerMove(const PointerEvent& event,
                              Scene2D& scene) = 0;
 
     /**
@@ -80,6 +82,6 @@ namespace OrthancStone
     its changes to the underlying model. If the model has been modified during
     tracker lifetime, it must be restored to its initial value
     */
-    virtual void Cancel(Scene2D& scene) = 0;
+    virtual void Cancel(Scene2D& scene) = 0;   // TODO Refactoring - Seems unused
   };
 }

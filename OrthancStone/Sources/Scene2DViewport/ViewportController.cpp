@@ -30,7 +30,7 @@
 
 namespace OrthancStone
 {
-  ViewportController::ViewportController(boost::weak_ptr<IViewport> viewport) :
+  ViewportController::ViewportController(const boost::shared_ptr<IViewport>& viewport) :
     scene_(new Scene2D),
     viewport_(viewport)
   {
@@ -173,6 +173,18 @@ namespace OrthancStone
   }
 
 
+  void ViewportController::InvalidateViewport()
+  {
+    boost::shared_ptr<IViewport> sharedViewport(viewport_.lock());
+
+    if (sharedViewport)
+    {
+      std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
+      lock->Invalidate();
+    }
+  }
+
+
   void ViewportController::HandleMousePress(IViewportInteractor&  interactor,
                                             const PointerEvent&   event,
                                             unsigned int          viewportWidth,
@@ -197,6 +209,7 @@ namespace OrthancStone
         if (measureTools_[i]->HitTest(event.GetMainPosition()))
         {
           activeTracker_ = measureTools_[i]->CreateEditionTracker(event);
+          InvalidateViewport();
           return;
         }
       }
@@ -212,20 +225,20 @@ namespace OrthancStone
         activeTracker_.reset();
       }
     }
+
+    InvalidateViewport();
   }
 
-  bool ViewportController::HandleMouseMove(const PointerEvent& event)
+
+  void ViewportController::HandleMouseMove(const PointerEvent& event)
   {
-    if (activeTracker_)
+    if (activeTracker_ &&
+        activeTracker_->PointerMove(event, GetScene()))
     {
-      activeTracker_->PointerMove(event, GetScene());
-      return true;
-    }
-    else
-    {
-      return false;
+      InvalidateViewport();
     }
   }
+
 
   void ViewportController::HandleMouseRelease(const PointerEvent& event)
   {
@@ -237,6 +250,8 @@ namespace OrthancStone
       {
         activeTracker_.reset();
       }
+
+      InvalidateViewport();
     }
   }
 }

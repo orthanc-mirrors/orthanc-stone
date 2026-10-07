@@ -3918,7 +3918,7 @@ public:
       {
       }
 
-      virtual OrthancStone::IFlexiblePointerTracker::IObserver* Create() ORTHANC_OVERRIDE
+      virtual OrthancStone::IFlexiblePointerTracker::IObserver* CreateObserver() ORTHANC_OVERRIDE
       {
         return new Observer(viewer_);
       }

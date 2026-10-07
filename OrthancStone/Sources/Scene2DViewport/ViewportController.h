@@ -130,11 +130,15 @@ namespace OrthancStone
     void RemoveMeasureTool(boost::shared_ptr<MeasureTool> measureTool);
 
     /**
+       TODO Refactoring - Remove this?
+
     The square handle side length in *scene* coordinates
     */
     double GetHandleSideLengthS() const;
 
     /**
+       TODO Refactoring - Remove this?
+
     The angle measure too arc  radius in *scene* coordinates
 
     Note: you might wonder why this is not part of the AngleMeasureTool itself,
@@ -143,6 +147,8 @@ namespace OrthancStone
     double GetAngleToolArcRadiusS() const;
 
     /**
+       TODO Refactoring - Remove this?
+
     The hit test maximum distance in *scene* coordinates.
     If a pointer event is less than GetHandleSideLengthS() to a GUI element,
     the hit test for this GUI element is seen as true
@@ -150,6 +156,8 @@ namespace OrthancStone
     double GetHitTestMaximumDistanceS() const;
 
     /**
+       TODO Refactoring - Remove this?
+
     Distance between the top of the angle measuring tool and the center of 
     the label showing the actual measure, in *scene* coordinates
     */

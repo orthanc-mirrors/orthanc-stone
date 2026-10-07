@@ -168,6 +168,30 @@ namespace OrthancStone
   }
 
 
+  double ViewportController::GetHandleSideLengthS() const
+  {
+    return HANDLE_SIDE_LENGTH_CANVAS_COORD * scene_->GetCanvasToSceneTransform().ComputeZoom();
+  }
+
+
+  double ViewportController::GetAngleToolArcRadiusS() const
+  {
+    return ARC_RADIUS_CANVAS_COORD * scene_->GetCanvasToSceneTransform().ComputeZoom();
+  }
+
+
+  double ViewportController::GetHitTestMaximumDistanceS() const
+  {
+    return HIT_TEST_MAX_DISTANCE_CANVAS_COORD * scene_->GetCanvasToSceneTransform().ComputeZoom();
+  }
+
+
+  double ViewportController::GetAngleTopTextLabelDistanceS() const
+  {
+    return TEXT_CENTER_DISTANCE_CANVAS_COORD * scene_->GetCanvasToSceneTransform().ComputeZoom();
+  }
+
+
   void ViewportController::InvalidateViewport()
   {
     boost::shared_ptr<IViewport> sharedViewport(viewport_.lock());

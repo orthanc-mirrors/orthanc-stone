@@ -56,6 +56,11 @@ namespace OrthancStone
     virtual void Handle(const New::IObservable& observable,
                         const DicomResourcesLoadedMessage& message) ORTHANC_OVERRIDE;
 
+    void Handle(const AnnotationsSceneLayer::AnnotationRemovedMessage& message)
+    {
+      RenderAnnotations();
+    }
+
     void RenderAnnotations();
 
   protected:

@@ -143,6 +143,8 @@ namespace OrthancStone
     annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
     annotations_->SetProbedLayer(0);
 
+    Register<AnnotationsSceneLayer::AnnotationRemovedMessage>(*annotations_, &SimpleViewerCore::Handle);
+
     {
       std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
       viewportLock->GetController().SetUndoStack(boost::make_shared<UndoStack>());

@@ -321,11 +321,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/AngleMeasureTool.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/BaseFlexiblePointerTracker.cpp
-  #${ORTHANC_STONE_ROOT}/Scene2DViewport/CreateAngleMeasureCommand.cpp
-  #${ORTHANC_STONE_ROOT}/Scene2DViewport/CreateAngleMeasureTracker.cpp
-  #${ORTHANC_STONE_ROOT}/Scene2DViewport/CreateMeasureTracker.cpp
-  ${ORTHANC_STONE_ROOT}/Scene2DViewport/EditAngleMeasureCommand.cpp
-  ${ORTHANC_STONE_ROOT}/Scene2DViewport/EditAngleMeasureTracker.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/LayerHolder.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/LineMeasureTool.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/MeasureCommands.cpp

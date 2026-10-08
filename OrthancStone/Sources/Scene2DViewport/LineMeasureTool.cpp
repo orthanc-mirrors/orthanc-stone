@@ -155,7 +155,7 @@ namespace OrthancStone
     return LineHitTest(p) != LineHighlightArea_None;
   }
 
-  boost::shared_ptr<IFlexiblePointerTracker> LineMeasureTool::CreateEditionTracker(const PointerEvent& e)
+  IFlexiblePointerTracker* LineMeasureTool::CreateEditionTracker(const PointerEvent& e)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     if (lock.get() != NULL)
@@ -168,18 +168,16 @@ namespace OrthancStone
 
       if (!HitTest(scenePos))
       {
-        return boost::shared_ptr<IFlexiblePointerTracker>();  // NULL
+        return NULL;
       }
       else
       {
-        boost::shared_ptr<EditLineMeasureTracker> editLineMeasureTracker(
-          new EditLineMeasureTracker(shared_from_this(), viewport_, e));
-        return editLineMeasureTracker;
+        return new EditLineMeasureTracker(shared_from_this(), viewport_, e);
       }
     }
     else
     {
-      return boost::shared_ptr<IFlexiblePointerTracker>();  // NULL
+      return NULL;
     }
   }
 

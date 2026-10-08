@@ -198,7 +198,7 @@ namespace OrthancStone
   }
 
 
-  boost::shared_ptr<IFlexiblePointerTracker> AngleMeasureTool::CreateEditionTracker(const PointerEvent& e)
+  IFlexiblePointerTracker* AngleMeasureTool::CreateEditionTracker(const PointerEvent& e)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     ViewportController& controller = lock->GetController();
@@ -209,7 +209,7 @@ namespace OrthancStone
 
     if (!HitTest(scenePos))
     {
-      return boost::shared_ptr<IFlexiblePointerTracker>(); // NULL
+      return NULL;
     }
     else
     {
@@ -221,9 +221,7 @@ namespace OrthancStone
          const PointerEvent & e);
       */
 
-      boost::shared_ptr<EditAngleMeasureTracker> editAngleMeasureTracker(
-        new EditAngleMeasureTracker(shared_from_this(), viewport_, e));
-      return editAngleMeasureTracker;
+      return new EditAngleMeasureTracker(shared_from_this(), viewport_, e);
     }
   }
 

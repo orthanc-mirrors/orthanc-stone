@@ -22,11 +22,18 @@
 
 #pragma once
 
+// TODO Refactoring - Remove
+#define TEST_LINE_MEASURE_TOOL   1
+#define TEST_ANGLE_MEASURE_TOOL  1
+
 #include "../../../OrthancStone/Sources/Loaders/DicomResourcesLoader.h"
 #include "../../../OrthancStone/Sources/Loaders/SeriesFramesLoader.h"
 #include "../../../OrthancStone/Sources/Scene2D/AnnotationsSceneLayer.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
 #include "ISingleViewportApplicationCore.h"
+
+#include "../../../OrthancStone/Sources/Scene2DViewport/LineMeasureTool.h"  // TODO Refactoring - Remove
+#include "../../../OrthancStone/Sources/Scene2DViewport/AngleMeasureTool.h"  // TODO Refactoring - Remove
 
 
 namespace OrthancStone
@@ -48,6 +55,14 @@ namespace OrthancStone
     boost::shared_ptr<AnnotationsSceneLayer>      annotations_;
     boost::shared_ptr<DicomResourcesLoader>       dicomLoader_;
     boost::shared_ptr<SeriesFramesLoader>         framesLoader_;
+
+#if TEST_LINE_MEASURE_TOOL == 1
+    boost::shared_ptr<LineMeasureTool>  lineMeasureTool_;  // TODO Refactoring - Remove
+#endif
+
+#if TEST_ANGLE_MEASURE_TOOL == 1
+    boost::shared_ptr<AngleMeasureTool>  angleMeasureTool_;  // TODO Refactoring - Remove
+#endif
 
   public:
     virtual void Handle(const New::IObservable& observable,

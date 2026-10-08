@@ -149,6 +149,21 @@ namespace OrthancStone
       std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
       viewportLock->GetController().SetUndoStack(boost::make_shared<UndoStack>());
     }
+
+#if TEST_LINE_MEASURE_TOOL == 1
+    lineMeasureTool_ = OrthancStone::LineMeasureTool::Create(viewport);
+    lineMeasureTool_->Enable();
+    lineMeasureTool_->Set(OrthancStone::ScenePoint2D(200, 100),
+                          OrthancStone::ScenePoint2D(100, 200));
+#endif
+
+#if TEST_ANGLE_MEASURE_TOOL == 1
+    angleMeasureTool_ = OrthancStone::AngleMeasureTool::Create(viewport);
+    angleMeasureTool_->Enable();
+    angleMeasureTool_->SetCenter(OrthancStone::ScenePoint2D(300, 300));
+    angleMeasureTool_->SetSide1End(OrthancStone::ScenePoint2D(200, 400));
+    angleMeasureTool_->SetSide2End(OrthancStone::ScenePoint2D(400, 400));
+#endif
   }
 
 
@@ -198,16 +213,31 @@ namespace OrthancStone
     DefaultViewportInteractor                 default_;
     boost::shared_ptr<AnnotationsSceneLayer>  annotations_;
 
+#if TEST_LINE_MEASURE_TOOL == 1
+    boost::shared_ptr<LineMeasureTool>  lineMeasureTool_;  // TODO Refactoring - Remove
+#endif
+
+#if TEST_ANGLE_MEASURE_TOOL == 1
+    boost::shared_ptr<AngleMeasureTool>  angleMeasureTool_;  // TODO Refactoring - Remove
+#endif
+
   public:
-    Interactor(const boost::shared_ptr<SimpleViewerCore>& core,
-               const boost::shared_ptr<AnnotationsSceneLayer>& annotations) :
-      annotations_(annotations)
+    Interactor(const boost::shared_ptr<SimpleViewerCore>& core)
     {
-      if (!core ||
-          !annotations)
+      if (!core)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
+
+      annotations_ = core->annotations_;
+
+#if TEST_LINE_MEASURE_TOOL == 1
+      lineMeasureTool_ = core->lineMeasureTool_;
+#endif
+
+#if TEST_ANGLE_MEASURE_TOOL == 1
+      angleMeasureTool_ = core->angleMeasureTool_;
+#endif
 
       default_.SetWindowingLayer(0);
       default_.SetObserverFactory(new Factory(core));
@@ -218,6 +248,14 @@ namespace OrthancStone
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) ORTHANC_OVERRIDE
     {
+#if TEST_LINE_MEASURE_TOOL == 1
+      return lineMeasureTool_->CreateEditionTracker(event);
+#endif
+
+#if TEST_ANGLE_MEASURE_TOOL == 1
+      return angleMeasureTool_->CreateEditionTracker(event);
+#endif
+
       annotations_->ClearHover();
 
       if (event.GetMouseButton() == MouseButton_Left)
@@ -251,7 +289,7 @@ namespace OrthancStone
     }
     else
     {
-      return new Interactor(shared_from_this(), annotations_);
+      return new Interactor(shared_from_this());
     }
   }
 
@@ -261,68 +299,68 @@ namespace OrthancStone
   {
     switch (key)
     {
-    case 's':
-    {
-      std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
-      viewportLock->GetCompositor().FitContent(viewportLock->GetController().GetScene());
-      viewportLock->Invalidate();
-      break;
-    }
-
-    case 'u':
-    {
-      std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
-      if (viewportLock->GetController().CanUndo())
+      case 's':
       {
-        viewportLock->GetController().Undo();
+        std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+        viewportLock->GetCompositor().FitContent(viewportLock->GetController().GetScene());
+        viewportLock->Invalidate();
+        break;
       }
-      break;
-    }
 
-    case 'U':
-    {
-      std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
-      if (viewportLock->GetController().CanRedo())
+      case 'u':
       {
-        viewportLock->GetController().Redo();
+        std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+        if (viewportLock->GetController().CanUndo())
+        {
+          viewportLock->GetController().Undo();
+        }
+        break;
       }
-      break;
-    }
 
-    case 'c':
-      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Circle);
-      break;
+      case 'U':
+      {
+        std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+        if (viewportLock->GetController().CanRedo())
+        {
+          viewportLock->GetController().Redo();
+        }
+        break;
+      }
 
-    case 'm':
-      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
-      break;
+      case 'c':
+        annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Circle);
+        break;
 
-    case 'd':
-      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Remove);
-      break;
+      case 'm':
+        annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
+        break;
 
-    case 'l':
-      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Length);
-      break;
+      case 'd':
+        annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Remove);
+        break;
 
-    case 'a':
-      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Angle);
-      break;
+      case 'l':
+        annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Length);
+        break;
 
-    case 'p':
-      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_PixelProbe);
-      break;
+      case 'a':
+        annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Angle);
+        break;
 
-    case 'e':
-      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_EllipseProbe);
-      break;
+      case 'p':
+        annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_PixelProbe);
+        break;
 
-    case 'r':
-      annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_RectangleProbe);
-      break;
+      case 'e':
+        annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_EllipseProbe);
+        break;
 
-    default:
-      break;
+      case 'r':
+        annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_RectangleProbe);
+        break;
+
+      default:
+        break;
     }
   }
 

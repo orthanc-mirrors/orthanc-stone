@@ -44,7 +44,7 @@ namespace OrthancStone
     In other words, when a new command is pushed, all the undone (and not
     redone) commands are removed.
     */
-    void PushCommand(boost::shared_ptr<MeasureCommand> command);
+    void PushCommand(const boost::shared_ptr<MeasureCommand>& command);
 
     /**
     Undoes the command at the top of the undo stack, or throws if there is no

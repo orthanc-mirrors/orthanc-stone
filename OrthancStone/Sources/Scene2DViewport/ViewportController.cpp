@@ -38,17 +38,11 @@ namespace OrthancStone
     // The controller must be able to cope with this.
   }
 
-  ViewportController::~ViewportController()
+  void ViewportController::PushCommand(const boost::shared_ptr<MeasureCommand>& command)
   {
-  }
-
-  void ViewportController::PushCommand(
-    boost::shared_ptr<MeasureCommand> command)
-  {
-    boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
-    if (undoStack.get() != NULL)
+    if (undoStackW_)
     {
-      undoStack->PushCommand(command);
+      undoStackW_->PushCommand(command);
     }
     else
     {
@@ -58,10 +52,9 @@ namespace OrthancStone
 
   void ViewportController::Undo()
   {
-    boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
-    if (undoStack.get() != NULL)
+    if (undoStackW_)
     {
-      undoStack->Undo();
+      undoStackW_->Undo();
     }
     else
     {
@@ -71,10 +64,9 @@ namespace OrthancStone
 
   void ViewportController::Redo()
   {
-    boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
-    if (undoStack.get() != NULL)
+    if (undoStackW_)
     {
-      undoStack->Redo();
+      undoStackW_->Redo();
     }
     else
     {
@@ -84,10 +76,9 @@ namespace OrthancStone
 
   bool ViewportController::CanUndo() const
   {
-    boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
-    if (undoStack.get() != NULL)
+    if (undoStackW_)
     {
-      return undoStack->CanUndo();
+      return undoStackW_->CanUndo();
     }
     else
     {
@@ -97,10 +88,9 @@ namespace OrthancStone
 
   bool ViewportController::CanRedo() const
   {
-    boost::shared_ptr<UndoStack> undoStack = undoStackW_.lock();
-    if (undoStack.get() != NULL)
+    if (undoStackW_)
     {
-      return undoStack->CanRedo();
+      return undoStackW_->CanRedo();
     }
     else
     {
@@ -272,6 +262,19 @@ namespace OrthancStone
       }
 
       InvalidateViewport();
+    }
+  }
+
+
+  void ViewportController::SetUndoStack(const boost::shared_ptr<UndoStack>& undoStackW)
+  {
+    if (undoStackW)
+    {
+      undoStackW_ = undoStackW;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
   }
 }

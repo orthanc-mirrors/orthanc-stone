@@ -92,15 +92,12 @@ namespace OrthancStone
 
     explicit ViewportController(const boost::shared_ptr<IViewport>& viewport);
 
-    ~ViewportController();
-
     /**
     This method returns the list of measure tools containing the supplied point
     (in scene coords). A tracker can then be requested from the chosen 
     measure tool, if needed
     */
-    std::vector<boost::shared_ptr<MeasureTool> > HitTestMeasureTools(
-      ScenePoint2D p);
+    std::vector<boost::shared_ptr<MeasureTool> > HitTestMeasureTools(ScenePoint2D p);
 
     /**
     This function will traverse the measuring tools and will clear their 
@@ -166,7 +163,7 @@ namespace OrthancStone
 
 
     /** forwarded to the UndoStack */
-    void PushCommand(boost::shared_ptr<MeasureCommand> command);
+    void PushCommand(const boost::shared_ptr<MeasureCommand>& command);
 
     /** forwarded to the UndoStack */
     void Undo();
@@ -226,11 +223,8 @@ namespace OrthancStone
     /**
     Sets the undo stack that is used by PushCommand, Undo...
     */
-    void SetUndoStack(boost::weak_ptr<UndoStack> undoStackW)
-    {
-      undoStackW_ = undoStackW;
-    }
-    
+    void SetUndoStack(const boost::shared_ptr<UndoStack>& undoStackW);
+
     bool HasActiveTracker() const
     {
       return activeTracker_.get() != NULL;
@@ -243,8 +237,7 @@ namespace OrthancStone
     std::unique_ptr<Scene2D>   scene_;
 
     boost::weak_ptr<IViewport>                    viewport_;
-
-    boost::weak_ptr<UndoStack>                    undoStackW_;  // Global stack, possibly shared by all viewports
+    boost::shared_ptr<UndoStack>                  undoStackW_;  // Global stack, possibly shared by all viewports
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
     boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Couldn't this be a "std::unique_ptr"?
 

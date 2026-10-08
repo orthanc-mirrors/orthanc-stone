@@ -80,8 +80,10 @@ namespace OrthancStone
     void SetCenter(ScenePoint2D start);
     void SetSide2End(ScenePoint2D start);
 
-    virtual bool HitTest(ScenePoint2D p) ORTHANC_OVERRIDE;
-    virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
+    virtual bool HitTest(const Scene2D& scene,
+                         ScenePoint2D p) ORTHANC_OVERRIDE;
+    virtual void Highlight(const Scene2D& scene,
+                           ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void ResetHighlightState() ORTHANC_OVERRIDE;
     virtual IFlexiblePointerTracker* CreateEditionTracker(bool isCreation,
                                                           const PointerEvent& e) ORTHANC_OVERRIDE;
@@ -100,7 +102,8 @@ namespace OrthancStone
     };
 
 
-    AngleHighlightArea AngleHitTest(ScenePoint2D p) const;
+    AngleHighlightArea AngleHitTest(const Scene2D& scene,
+                                    ScenePoint2D p) const;
 
   private:
     class Tracker;

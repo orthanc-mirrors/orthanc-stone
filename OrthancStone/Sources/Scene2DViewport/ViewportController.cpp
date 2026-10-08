@@ -107,7 +107,7 @@ namespace OrthancStone
     
     for (size_t i = 0; i < measureTools_.size(); ++i)
     {
-      if (measureTools_[i]->HitTest(p))
+      if (measureTools_[i]->HitTest(*scene_, p))
         ret.push_back(measureTools_[i]);
     }
     return ret;
@@ -224,7 +224,7 @@ namespace OrthancStone
       // Check whether there is already a measure tool at that position
       for (size_t i = 0; i < measureTools_.size(); ++i)
       {
-        if (measureTools_[i]->HitTest(event.GetMainPosition()))
+        if (measureTools_[i]->HitTest(*scene_, event.GetMainPosition()))
         {
           activeTracker_.reset(measureTools_[i]->CreateEditionTracker(false, event));
           InvalidateViewport();

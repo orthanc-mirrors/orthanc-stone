@@ -61,7 +61,7 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
 
-      modifiedZone_ = tool_->LineHitTest(originalClickPosition_);
+      modifiedZone_ = tool_->LineHitTest(scene, originalClickPosition_);
       originalMemento_.reset(dynamic_cast<LineMeasureTool::Memento*>(tool->CreateMemento()));
 
       boost::shared_ptr<IViewport> sharedViewport = viewport.lock();
@@ -236,49 +236,45 @@ namespace OrthancStone
     SetLineHighlightArea(LineHighlightArea_None);
   }
  
-  void LineMeasureTool::Highlight(ScenePoint2D p)
+  void LineMeasureTool::Highlight(const Scene2D& scene,
+                                  ScenePoint2D p)
   {
-    LineHighlightArea lineHighlightArea = LineHitTest(p);
+    LineHighlightArea lineHighlightArea = LineHitTest(scene, p);
     SetLineHighlightArea(lineHighlightArea);
   }
 
-  LineMeasureTool::LineHighlightArea LineMeasureTool::LineHitTest(ScenePoint2D p)
+  LineMeasureTool::LineHighlightArea LineMeasureTool::LineHitTest(const Scene2D& scene,
+                                                                  ScenePoint2D p)
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    if (lock.get() != NULL)
-    {
-      ViewportController& controller = lock->GetController();
-      const Scene2D& scene = controller.GetScene();
+    const double pixelToScene = scene.GetCanvasToSceneTransform().ComputeZoom();
+    const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD =
+      pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD *
+      pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
 
-      const double pixelToScene = scene.GetCanvasToSceneTransform().ComputeZoom();
-      const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = 
-        pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD * 
-        pixelToScene * HIT_TEST_MAX_DISTANCE_CANVAS_COORD;
+    const double sqDistanceFromStart =
+      ScenePoint2D::SquaredDistancePtPt(p, start_);
 
-      const double sqDistanceFromStart = 
-        ScenePoint2D::SquaredDistancePtPt(p, start_);
-
-      if (sqDistanceFromStart <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
-        return LineHighlightArea_Start;
+    if (sqDistanceFromStart <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+      return LineHighlightArea_Start;
     
-      const double sqDistanceFromEnd = ScenePoint2D::SquaredDistancePtPt(p, end_);
+    const double sqDistanceFromEnd = ScenePoint2D::SquaredDistancePtPt(p, end_);
 
-      if (sqDistanceFromEnd <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
-        return LineHighlightArea_End;
+    if (sqDistanceFromEnd <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+      return LineHighlightArea_End;
 
-      const double sqDistanceFromPtSegment = 
-        ScenePoint2D::SquaredDistancePtSegment(start_, end_, p);
+    const double sqDistanceFromPtSegment =
+      ScenePoint2D::SquaredDistancePtSegment(start_, end_, p);
     
-      if (sqDistanceFromPtSegment <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
-        return LineHighlightArea_Segment;
-    }
+    if (sqDistanceFromPtSegment <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
+      return LineHighlightArea_Segment;
 
     return LineHighlightArea_None;
   }
 
-  bool LineMeasureTool::HitTest(ScenePoint2D p)
+  bool LineMeasureTool::HitTest(const Scene2D& scene,
+                                ScenePoint2D p)
   {
-    return LineHitTest(p) != LineHighlightArea_None;
+    return LineHitTest(scene, p) != LineHighlightArea_None;
   }
 
   IFlexiblePointerTracker* LineMeasureTool::CreateEditionTracker(bool isCreation,
@@ -290,7 +286,7 @@ namespace OrthancStone
     const Scene2D& scene = controller.GetScene();
     ScenePoint2D scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
-    if (!HitTest(scenePos))
+    if (!HitTest(scene, scenePos))
     {
       return NULL;
     }
@@ -319,7 +315,6 @@ namespace OrthancStone
     {
       if (IsEnabled())
       {
-        
         std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
         ViewportController& controller = lock->GetController();
         Scene2D& scene = controller.GetScene();
@@ -379,6 +374,7 @@ namespace OrthancStone
             }
           }
         }
+
         {
           // Set the text layer propreties
           double deltaX = end_.GetX() - start_.GetX();

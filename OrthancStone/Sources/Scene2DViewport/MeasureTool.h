@@ -124,7 +124,8 @@ namespace OrthancStone
        true, then a click at that position will return a tracker to edit the 
        measuring tool
     */
-    virtual bool HitTest(ScenePoint2D p) = 0;
+    virtual bool HitTest(const Scene2D& scene,
+                         ScenePoint2D p) = 0;
 
     /**
        This method must return a memento the captures the tool state (not including
@@ -150,7 +151,8 @@ namespace OrthancStone
        Will change the measuring tool to provide visual feedback on the GUI 
        element that is in the pointer hit zone
     */
-    virtual void Highlight(ScenePoint2D p) = 0;
+    virtual void Highlight(const Scene2D& scene,
+                           ScenePoint2D p) = 0;
 
     /**
        This function must reset the visual highlighted hot zone feedback

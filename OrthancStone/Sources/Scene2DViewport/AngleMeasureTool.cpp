@@ -67,7 +67,7 @@ namespace OrthancStone
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
 
-      modifiedZone_ = tool_->AngleHitTest(originalClickPosition_);
+      modifiedZone_ = tool_->AngleHitTest(scene, originalClickPosition_);
       originalMemento_.reset(dynamic_cast<AngleMeasureTool::Memento*>(tool->CreateMemento()));
 
       boost::shared_ptr<IViewport> sharedViewport = viewport.lock();
@@ -267,18 +267,16 @@ namespace OrthancStone
     return ss.str();
   }
 
-  void AngleMeasureTool::Highlight(ScenePoint2D p)
+  void AngleMeasureTool::Highlight(const Scene2D& scene,
+                                   ScenePoint2D p)
   {
-    AngleHighlightArea angleHighlightArea = AngleHitTest(p);
+    AngleHighlightArea angleHighlightArea = AngleHitTest(scene, p);
     SetAngleHighlightArea(angleHighlightArea);
   }
 
-  AngleMeasureTool::AngleHighlightArea AngleMeasureTool::AngleHitTest(ScenePoint2D p) const
+  AngleMeasureTool::AngleHighlightArea AngleMeasureTool::AngleHitTest(const Scene2D& scene,
+                                                                      ScenePoint2D p) const
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    const ViewportController& controller = lock->GetController();
-    const Scene2D& scene = controller.GetScene();
-    
     const double pixelToScene = scene.GetCanvasToSceneTransform().ComputeZoom();
 
     const double SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD = 
@@ -327,9 +325,10 @@ namespace OrthancStone
     return AngleHighlightArea_None;
   }
 
-  bool AngleMeasureTool::HitTest(ScenePoint2D p)
+  bool AngleMeasureTool::HitTest(const Scene2D& scene,
+                                 ScenePoint2D p)
   {
-    return AngleHitTest(p) != AngleHighlightArea_None;
+    return AngleHitTest(scene, p) != AngleHighlightArea_None;
   }
 
 
@@ -342,7 +341,7 @@ namespace OrthancStone
     const Scene2D& scene = controller.GetScene();
     ScenePoint2D scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
-    if (!HitTest(scenePos))
+    if (!HitTest(scene, scenePos))
     {
       return NULL;
     }

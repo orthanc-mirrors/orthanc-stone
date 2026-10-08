@@ -249,55 +249,53 @@ namespace OrthancStone
                                                    unsigned int viewportHeight) ORTHANC_OVERRIDE
     {
 #if TEST_MEASURE_TOOLS == 1
-      const ScenePoint2D p = event.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
-
-      std::vector< boost::shared_ptr<MeasureTool> > tools;
-
+      if (event.GetMouseButton() == MouseButton_Middle ||
+          event.GetMouseButton() == MouseButton_Right)
       {
-        std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
-        tools = viewportLock->GetController().HitTestMeasureTools(p);
-      }
-
-      if (!tools.empty())
-      {
-        if (core_->annotations_->GetActiveTool() == AnnotationsSceneLayer::Tool_Remove)
-        {
-          std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
-
-          boost::shared_ptr<MeasureCommand> command(new DeleteMeasureCommand(viewportLock->GetController(), tools[0]));
-          viewportLock->GetController().PushCommand(command);
-          return NULL;
-        }
-        else
-        {
-          return tools[0]->CreateEditionTracker(false, event);
-        }
+        return default_.CreateTracker(scene, event, viewportWidth, viewportHeight);
       }
       else
       {
-        switch (core_->annotations_->GetActiveTool())
+        const ScenePoint2D p = event.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
+
+        std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
+
+        std::vector< boost::shared_ptr<MeasureTool> > tools;
+        tools = viewportLock->GetController().HitTestMeasureTools(p);
+
+        if (!tools.empty())
         {
-          case AnnotationsSceneLayer::Tool_Remove:
-            LOG(WARNING) << "Nothing to delete there";
-            break;
-
-          case AnnotationsSceneLayer::Tool_Length:
+          if (core_->annotations_->GetActiveTool() == AnnotationsSceneLayer::Tool_Remove)
           {
-            std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
-            return viewportLock->GetController().CreateLineMeasure(event);
+            boost::shared_ptr<MeasureCommand> command(new DeleteMeasureCommand(viewportLock->GetController(), tools[0]));
+            viewportLock->GetController().PushCommand(command);
+            return NULL;
           }
-
-          case AnnotationsSceneLayer::Tool_Angle:
+          else
           {
-            std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
-            return viewportLock->GetController().CreateAngleMeasure(event);
+            return tools[0]->CreateEditionTracker(false, event);
           }
-
-          default:
-            LOG(ERROR) << "This tool is not supported if not using the annotations layer";
         }
+        else
+        {
+          switch (core_->annotations_->GetActiveTool())
+          {
+            case AnnotationsSceneLayer::Tool_Remove:
+              LOG(WARNING) << "Nothing to delete there";
+              break;
 
-        return NULL;
+            case AnnotationsSceneLayer::Tool_Length:
+              return viewportLock->GetController().CreateLineMeasure(event);
+
+            case AnnotationsSceneLayer::Tool_Angle:
+              return viewportLock->GetController().CreateAngleMeasure(event);
+
+            default:
+              LOG(ERROR) << "This tool is not supported if not using the annotations layer";
+          }
+
+          return NULL;
+        }
       }
 #endif
 

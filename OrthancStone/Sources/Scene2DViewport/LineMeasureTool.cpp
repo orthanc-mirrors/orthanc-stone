@@ -70,11 +70,13 @@ namespace OrthancStone
         std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
         if (isCreation)
         {
-          lock->GetController().PushCommand(boost::make_shared<CreateMeasureCommand>(lock->GetController(), boost::dynamic_pointer_cast<MeasureTool>(tool_)));
+          boost::shared_ptr<MeasureCommand> command(new CreateMeasureCommand(lock->GetController(), tool_));
+          lock->GetController().PushCommand(command);
         }
         else
         {
-          editCommand_ = boost::make_shared<EditMeasureCommand>(lock->GetController(), boost::dynamic_pointer_cast<MeasureTool>(tool_));
+          boost::shared_ptr<EditMeasureCommand> command(new EditMeasureCommand(lock->GetController(), tool_));
+          editCommand_ = command;
         }
       }
     }

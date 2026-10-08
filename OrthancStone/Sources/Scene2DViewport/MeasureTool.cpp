@@ -20,16 +20,16 @@
  * <http://www.gnu.org/licenses/>.
  **/
 
+
 #include "MeasureTool.h"
+
+#include "../Viewport/IViewport.h"
 
 #include <Logging.h>
 #include <Enumerations.h>
 #include <OrthancException.h>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/math/constants/constants.hpp>
-
-#include "../Viewport/IViewport.h"
 
 namespace OrthancStone
 {

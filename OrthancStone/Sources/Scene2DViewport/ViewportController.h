@@ -44,10 +44,6 @@ namespace OrthancStone
   const double HANDLE_SIDE_LENGTH_CANVAS_COORD = 10.0;
   const double HIT_TEST_MAX_DISTANCE_CANVAS_COORD = 15.0;
 
-  const uint8_t TEXT_COLOR_RED = 0;
-  const uint8_t TEXT_COLOR_GREEN = 223;
-  const uint8_t TEXT_COLOR_BLUE = 81;
-
   const uint8_t TOOL_ANGLE_LINES_COLOR_RED = 0;
   const uint8_t TOOL_ANGLE_LINES_COLOR_GREEN = 183;
   const uint8_t TOOL_ANGLE_LINES_COLOR_BLUE = 17;

@@ -21,19 +21,20 @@
  **/
 
 #include "MeasureToolsToolbox.h"
-#include "LayerHolder.h"
-#include "ViewportController.h"
 
-#include "../Scene2D/TextSceneLayer.h"
 #include "../Scene2D/Scene2D.h"
+#include "../Scene2D/TextSceneLayer.h"
 #include "../StoneException.h"
+#include "LayerHolder.h"
 
 #include <boost/math/constants/constants.hpp>
 
-namespace
-{
-  double g_pi = boost::math::constants::pi<double>();
-}
+
+static const double g_pi = boost::math::constants::pi<double>();
+static const uint8_t TEXT_COLOR_RED = 0;
+static const uint8_t TEXT_COLOR_GREEN = 223;
+static const uint8_t TEXT_COLOR_BLUE = 81;
+
 
 namespace OrthancStone
 {

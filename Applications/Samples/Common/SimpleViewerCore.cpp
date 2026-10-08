@@ -263,7 +263,9 @@ namespace OrthancStone
         if (core_->annotations_->GetActiveTool() == AnnotationsSceneLayer::Tool_Remove)
         {
           std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
-          viewportLock->GetController().PushCommand(boost::make_shared<DeleteMeasureCommand>(viewportLock->GetController(), tools[0]));
+
+          boost::shared_ptr<MeasureCommand> command(new DeleteMeasureCommand(viewportLock->GetController(), tools[0]));
+          viewportLock->GetController().PushCommand(command);
           return NULL;
         }
         else

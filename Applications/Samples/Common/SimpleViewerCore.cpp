@@ -23,16 +23,12 @@
 #include "SimpleViewerCore.h"
 
 // TODO Refactoring - Remove
-#define TEST_LINE_MEASURE_TOOL   1
-#define TEST_ANGLE_MEASURE_TOOL  1
+#define TEST_MEASURE_TOOLS   1
 
 
 #include "../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"
 #include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 
-
-#include "../../../OrthancStone/Sources/Scene2DViewport/LineMeasureTool.h"  // TODO Refactoring - Remove
-#include "../../../OrthancStone/Sources/Scene2DViewport/AngleMeasureTool.h"  // TODO Refactoring - Remove
 #include "../../../OrthancStone/Sources/Scene2DViewport/MeasureCommands.h"  // TODO Refactoring - Remove
 
 
@@ -161,7 +157,7 @@ namespace OrthancStone
       viewportLock->GetController().SetUndoStack(boost::make_shared<UndoStack>());
     }
 
-#if TEST_LINE_MEASURE_TOOL == 1
+#if TEST_MEASURE_TOOLS == 1
     {
       boost::shared_ptr<LineMeasureTool> tool = OrthancStone::LineMeasureTool::Create(viewport);
       tool->Enable();
@@ -171,9 +167,7 @@ namespace OrthancStone
       std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
       viewportLock->GetController().AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
     }
-#endif
 
-#if TEST_ANGLE_MEASURE_TOOL == 1
     {
       boost::shared_ptr<AngleMeasureTool> tool = OrthancStone::AngleMeasureTool::Create(viewport);
       tool->Enable();
@@ -252,7 +246,7 @@ namespace OrthancStone
                                                    unsigned int viewportWidth,
                                                    unsigned int viewportHeight) ORTHANC_OVERRIDE
     {
-#if TEST_LINE_MEASURE_TOOL == 1
+#if TEST_MEASURE_TOOLS == 1
       const ScenePoint2D p = event.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
       std::vector< boost::shared_ptr<MeasureTool> > tools;

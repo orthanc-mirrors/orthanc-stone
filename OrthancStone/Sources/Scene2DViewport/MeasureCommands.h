@@ -111,15 +111,6 @@ namespace OrthancStone
   private:
     boost::shared_ptr<MeasureTool> measureTool_;
 
-    /** This memento is updated by the subclasses upon modifications */
-    std::unique_ptr<MeasureTool::IMemento> mementoModified_;   // TODO Refactoring - Memento shouldn't be used on deletion
-
-    /** This memento is the original object state */
-    std::unique_ptr<MeasureTool::IMemento> mementoOriginal_;
-
-  protected:
-    void SetMementoModified(MeasureTool::IMemento* memento);  // takes ownership
-
   public:
     DeleteMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
                          boost::weak_ptr<IViewport> viewport);
@@ -127,7 +118,5 @@ namespace OrthancStone
     virtual void Undo() ORTHANC_OVERRIDE;
     
     virtual void Redo() ORTHANC_OVERRIDE;
-
-    const MeasureTool::IMemento& GetMementoOriginal() const;
   };
 }

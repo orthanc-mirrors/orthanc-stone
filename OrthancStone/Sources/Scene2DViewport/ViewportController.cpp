@@ -145,6 +145,7 @@ namespace OrthancStone
     measureTools_.push_back(measureTool);
   }
 
+
   void ViewportController::RemoveMeasureTool(
     boost::shared_ptr<MeasureTool> measureTool)
   {
@@ -155,6 +156,36 @@ namespace OrthancStone
     measureTools_.erase(
       std::remove(measureTools_.begin(), measureTools_.end(), measureTool), 
       measureTools_.end());
+  }
+
+
+  IFlexiblePointerTracker* ViewportController::CreateLineMeasure(const PointerEvent& event)
+  {
+    const ScenePoint2D p = event.GetMainPosition().Apply(scene_->GetCanvasToSceneTransform());
+
+    boost::shared_ptr<LineMeasureTool> tool = LineMeasureTool::Create(viewport_);
+    tool->Enable();
+    tool->Set(p, p);
+
+    AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
+
+    return tool->CreateEditionTracker(true, event);
+  }
+
+
+  IFlexiblePointerTracker* ViewportController::CreateAngleMeasure(const PointerEvent& event)
+  {
+    const ScenePoint2D p = event.GetMainPosition().Apply(scene_->GetCanvasToSceneTransform());
+
+    boost::shared_ptr<AngleMeasureTool> tool = AngleMeasureTool::Create(viewport_);
+    tool->Enable();
+    tool->SetCenter(p);
+    tool->SetSide1End(p);
+    tool->SetSide2End(p);
+
+    AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
+
+    return tool->CreateEditionTracker(true, event);
   }
 
 

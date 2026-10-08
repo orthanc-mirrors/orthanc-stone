@@ -81,8 +81,8 @@ namespace OrthancStone
                                              boost::weak_ptr<IViewport> viewport) :
     MeasureCommand(viewport),
     measureTool_(measureTool),
-    mementoModified_(measureTool->CreateMemento()),
-    mementoOriginal_(measureTool->CreateMemento())
+    mementoModified_(measureTool->CreateMemento()),  // TODO Refactoring - Why this?
+    mementoOriginal_(measureTool->CreateMemento())  // TODO Refactoring - Why this?
   {
     if (!measureTool)
     {
@@ -92,7 +92,7 @@ namespace OrthancStone
     {
       std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
       measureTool_->Disable();
-      lock->GetController().RemoveMeasureTool(measureTool_);
+      lock->GetController().RemoveMeasureTool(measureTool_);  // TODO Refactoring - Should probably be moved into ViewportController
     }
   }
 

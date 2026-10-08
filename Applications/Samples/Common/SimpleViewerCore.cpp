@@ -264,7 +264,16 @@ namespace OrthancStone
 
       if (!tools.empty())
       {
-        return tools[0]->CreateEditionTracker(false, event);
+        if (core_->annotations_->GetActiveTool() == AnnotationsSceneLayer::Tool_Remove)
+        {
+          std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
+          viewportLock->GetController().PushCommand(boost::make_shared<DeleteMeasureCommand>(tools[0], core_->viewport_));
+          return NULL;
+        }
+        else
+        {
+          return tools[0]->CreateEditionTracker(false, event);
+        }
       }
       else
       {
@@ -276,19 +285,15 @@ namespace OrthancStone
 
           case AnnotationsSceneLayer::Tool_Length:
           {
-            boost::shared_ptr<LineMeasureTool> tool = OrthancStone::LineMeasureTool::Create(core_->viewport_);
-            tool->Enable();
-            tool->Set(p, p);
-
-            {
-              std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
-              viewportLock->GetController().AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
-            }
-
-            return tool->CreateEditionTracker(true, event);
+            std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
+            return viewportLock->GetController().CreateLineMeasure(event);
           }
 
           case AnnotationsSceneLayer::Tool_Angle:
+          {
+            std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
+            return viewportLock->GetController().CreateAngleMeasure(event);
+          }
 
           default:
             LOG(ERROR) << "This tool is not supported if not using the annotations layer";

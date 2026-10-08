@@ -126,6 +126,10 @@ namespace OrthancStone
     /** Removes a measure tool or throws if it cannot be found */
     void RemoveMeasureTool(boost::shared_ptr<MeasureTool> measureTool);
 
+    IFlexiblePointerTracker* CreateLineMeasure(const PointerEvent& event);
+
+    IFlexiblePointerTracker* CreateAngleMeasure(const PointerEvent& event);
+
     /**
        TODO Refactoring - Remove this?
 

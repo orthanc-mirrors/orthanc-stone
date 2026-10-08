@@ -326,7 +326,6 @@ list(APPEND ORTHANC_STONE_SOURCES
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/MeasureCommands.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/MeasureTool.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/MeasureToolsToolbox.cpp
-  ${ORTHANC_STONE_ROOT}/Scene2DViewport/MeasureTrackers.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/OneGesturePointerTracker.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/UndoStack.cpp
   ${ORTHANC_STONE_ROOT}/Scene2DViewport/ViewportController.cpp

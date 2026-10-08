@@ -38,10 +38,6 @@ namespace OrthancStone
 {
   class MeasureTool;
 
-  const double ARC_RADIUS_CANVAS_COORD = 30.0;
-  const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 90;
-
-  const double HANDLE_SIDE_LENGTH_CANVAS_COORD = 10.0;
   const double HIT_TEST_MAX_DISTANCE_CANVAS_COORD = 15.0;
 
   const uint8_t TOOL_ANGLE_LINES_COLOR_RED = 0;
@@ -125,40 +121,6 @@ namespace OrthancStone
     IFlexiblePointerTracker* CreateLineMeasure(const PointerEvent& event);
 
     IFlexiblePointerTracker* CreateAngleMeasure(const PointerEvent& event);
-
-    /**
-       TODO Refactoring - Remove this?
-
-    The square handle side length in *scene* coordinates
-    */
-    double GetHandleSideLengthS() const;
-
-    /**
-       TODO Refactoring - Remove this?
-
-    The angle measure too arc  radius in *scene* coordinates
-
-    Note: you might wonder why this is not part of the AngleMeasureTool itself,
-    but we prefer to put all such constants in the same location, to ease 
-    */
-    double GetAngleToolArcRadiusS() const;
-
-    /**
-       TODO Refactoring - Remove this?
-
-    The hit test maximum distance in *scene* coordinates.
-    If a pointer event is less than GetHandleSideLengthS() to a GUI element,
-    the hit test for this GUI element is seen as true
-    */
-    double GetHitTestMaximumDistanceS() const;
-
-    /**
-       TODO Refactoring - Remove this?
-
-    Distance between the top of the angle measuring tool and the center of 
-    the label showing the actual measure, in *scene* coordinates
-    */
-    double GetAngleTopTextLabelDistanceS() const;
 
 
     /** forwarded to the UndoStack */

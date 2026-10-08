@@ -357,8 +357,7 @@ namespace OrthancStone
                 PolylineSceneLayer::Chain chain;
               
                 //TODO: take DPI into account
-                AddSquare(chain, controller.GetScene(), start_, 
-                          controller.GetHandleSideLengthS());
+                AddSquare(chain, controller.GetScene(), start_, GetHandleSideLengthS(controller.GetScene()));
               
                 if (lineHighlightArea_ == LineHighlightArea_Start)
                   polylineLayer->AddChain(chain, true, highlightColor);
@@ -370,8 +369,7 @@ namespace OrthancStone
                 PolylineSceneLayer::Chain chain;
               
                 //TODO: take DPI into account
-                AddSquare(chain, controller.GetScene(), end_, 
-                          controller.GetHandleSideLengthS());
+                AddSquare(chain, controller.GetScene(), end_, GetHandleSideLengthS(controller.GetScene()));
               
                 if (lineHighlightArea_ == LineHighlightArea_End)
                   polylineLayer->AddChain(chain, true, highlightColor);

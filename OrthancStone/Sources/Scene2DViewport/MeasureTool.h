@@ -87,6 +87,8 @@ namespace OrthancStone
     IViewport::ILock* GetViewportLock();
     IViewport::ILock* GetViewportLock() const;
 
+    static double GetHandleSideLengthS(const Scene2D& scene);
+
   public:
     virtual ~MeasureTool()
     {

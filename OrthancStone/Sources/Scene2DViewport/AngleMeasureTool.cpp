@@ -34,6 +34,10 @@
 #include <boost/make_shared.hpp>
 
 
+static const double ARC_RADIUS_CANVAS_COORD = 30.0;
+static const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 90;
+
+
 namespace OrthancStone
 {
   class AngleMeasureTool::Tracker : public IFlexiblePointerTracker
@@ -419,8 +423,7 @@ namespace OrthancStone
               {
                 PolylineSceneLayer::Chain chain;
                 //TODO: take DPI into account
-                AddSquare(chain, controller.GetScene(), side1End_, 
-                          controller.GetHandleSideLengthS());
+                AddSquare(chain, controller.GetScene(), side1End_, GetHandleSideLengthS(controller.GetScene()));
               
                 if (angleHighlightArea_ == AngleHighlightArea_Side1End)
                   polylineLayer->AddChain(chain, true, highlightColor);
@@ -431,8 +434,7 @@ namespace OrthancStone
               {
                 PolylineSceneLayer::Chain chain;
                 //TODO: take DPI into account
-                AddSquare(chain, controller.GetScene(), side2End_, 
-                          controller.GetHandleSideLengthS());
+                AddSquare(chain, controller.GetScene(), side2End_, GetHandleSideLengthS(controller.GetScene()));
 
                 if (angleHighlightArea_ == AngleHighlightArea_Side2End)
                   polylineLayer->AddChain(chain, true, highlightColor);
@@ -445,8 +447,7 @@ namespace OrthancStone
             {
               PolylineSceneLayer::Chain chain;
 
-              AddShortestArc(chain, side1End_, center_, side2End_,
-                             controller.GetAngleToolArcRadiusS());
+              AddShortestArc(chain, side1End_, center_, side2End_, GetAngleToolArcRadiusS(controller.GetScene()));
               if (angleHighlightArea_ == AngleHighlightArea_Center)
                 polylineLayer->AddChain(chain, false, highlightColor);
               else
@@ -468,8 +469,8 @@ namespace OrthancStone
           double delta = NormalizeAngle(p2cAngle - p1cAngle);
           double theta = p1cAngle + delta / 2;
 
-          double ox = controller.GetAngleTopTextLabelDistanceS() * cos(theta);
-          double oy = controller.GetAngleTopTextLabelDistanceS() * sin(theta);
+          double ox = GetAngleTopTextLabelDistanceS(controller.GetScene()) * cos(theta);
+          double oy = GetAngleTopTextLabelDistanceS(controller.GetScene()) * sin(theta);
 
           double pointX = center_.GetX() + ox;
           double pointY = center_.GetY() + oy;
@@ -547,5 +548,17 @@ namespace OrthancStone
       }
       lock->Invalidate();
     }
+  }
+
+
+  double AngleMeasureTool::GetAngleToolArcRadiusS(const Scene2D& scene)
+  {
+    return ARC_RADIUS_CANVAS_COORD * scene.GetCanvasToSceneTransform().ComputeZoom();
+  }
+
+
+  double AngleMeasureTool::GetAngleTopTextLabelDistanceS(const Scene2D& scene)
+  {
+    return TEXT_CENTER_DISTANCE_CANVAS_COORD * scene.GetCanvasToSceneTransform().ComputeZoom();
   }
 }

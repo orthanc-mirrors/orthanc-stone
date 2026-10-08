@@ -111,6 +111,22 @@ namespace OrthancStone
     void                RemoveFromScene();
     void                SetAngleHighlightArea(AngleHighlightArea area);
 
+    /**
+    The angle measure too arc  radius in *scene* coordinates
+
+    Note: you might wonder why this is not part of the AngleMeasureTool itself,
+    but we prefer to put all such constants in the same location, to ease 
+    */
+    static double GetAngleToolArcRadiusS(const Scene2D& scene);
+
+    /**
+       TODO Refactoring - Remove this?
+
+    Distance between the top of the angle measuring tool and the center of 
+    the label showing the actual measure, in *scene* coordinates
+    */
+    static double GetAngleTopTextLabelDistanceS(const Scene2D& scene);
+
   private:
     ScenePoint2D                    side1End_;
     ScenePoint2D                    side2End_;

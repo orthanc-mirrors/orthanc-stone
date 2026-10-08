@@ -31,6 +31,10 @@
 
 #include <boost/shared_ptr.hpp>
 
+
+static const double HANDLE_SIDE_LENGTH_CANVAS_COORD = 10.0;
+
+
 namespace OrthancStone
 {
   void MeasureTool::Enable()
@@ -66,6 +70,11 @@ namespace OrthancStone
       return viewport->Lock();
     else
       return NULL;
+  }
+
+  double MeasureTool::GetHandleSideLengthS(const Scene2D& scene)
+  {
+    return HANDLE_SIDE_LENGTH_CANVAS_COORD * scene.GetCanvasToSceneTransform().ComputeZoom();
   }
 
   MeasureTool::MeasureTool(boost::weak_ptr<IViewport> viewport) :

@@ -28,18 +28,10 @@ namespace OrthancStone
   class EditLineMeasureCommand : public EditMeasureCommand
   {
   public:
-    EditLineMeasureCommand(
-      boost::shared_ptr<MeasureTool>  measureTool,
-      boost::weak_ptr<IViewport> viewport);
+    EditLineMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
+                           boost::weak_ptr<IViewport> viewport);
 
     void SetStart(ScenePoint2D scenePos);
     void SetEnd(ScenePoint2D scenePos);
-
-  private:
-    virtual boost::shared_ptr<MeasureTool> GetMeasureTool() ORTHANC_OVERRIDE
-    {
-      return measureTool_;
-    }
-    boost::shared_ptr<MeasureTool> measureTool_;
   };
 }

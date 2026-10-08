@@ -81,8 +81,7 @@ namespace OrthancStone
   class EditMeasureCommand : public MeasureCommand
   {
   private:
-    /** Must be implemented by the subclasses that edit the actual tool */
-    virtual boost::shared_ptr<MeasureTool> GetMeasureTool() = 0;
+    boost::shared_ptr<MeasureTool>  measureTool_;
 
     /** This memento is updated by the subclasses upon modifications */
     std::unique_ptr<MeasureTool::IMemento> mementoModified_;
@@ -91,13 +90,16 @@ namespace OrthancStone
     std::unique_ptr<MeasureTool::IMemento> mementoOriginal_;
 
   protected:
+    MeasureTool& GetMeasureTool() const
+    {
+      return *measureTool_;
+    }
+
     void SetMementoModified(MeasureTool::IMemento* memento);  // takes ownership
 
   public:
-    EditMeasureCommand(boost::shared_ptr<MeasureTool> measureTool,
+    EditMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
                        boost::weak_ptr<IViewport> viewport);
-
-    virtual ~EditMeasureCommand();
 
     virtual void Undo() ORTHANC_OVERRIDE;
 
@@ -106,16 +108,10 @@ namespace OrthancStone
     const MeasureTool::IMemento& GetMementoOriginal() const;
   };
 
-  
+
   class DeleteMeasureCommand : public MeasureCommand
   {
   private:
-    /** Must be implemented by the subclasses that edit the actual tool */
-    virtual boost::shared_ptr<MeasureTool> GetMeasureTool()
-    {
-      return measureTool_;
-    }
-
     boost::shared_ptr<MeasureTool> measureTool_;
 
     /** This memento is updated by the subclasses upon modifications */
@@ -128,7 +124,7 @@ namespace OrthancStone
     void SetMementoModified(MeasureTool::IMemento* memento);  // takes ownership
 
   public:
-    DeleteMeasureCommand(boost::shared_ptr<MeasureTool> measureTool,
+    DeleteMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
                          boost::weak_ptr<IViewport> viewport);
 
     virtual ~DeleteMeasureCommand();
@@ -140,4 +136,3 @@ namespace OrthancStone
     const MeasureTool::IMemento& GetMementoOriginal() const;
   };
 }
-

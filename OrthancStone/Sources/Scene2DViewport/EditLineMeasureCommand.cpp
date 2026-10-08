@@ -24,25 +24,23 @@
 
 namespace OrthancStone
 {
-  EditLineMeasureCommand::EditLineMeasureCommand(
-    boost::shared_ptr<MeasureTool>  measureTool,
-    boost::weak_ptr<IViewport> viewport)
-    : EditMeasureCommand(measureTool, viewport)
-    , measureTool_(measureTool)
+  EditLineMeasureCommand::EditLineMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
+                                                 boost::weak_ptr<IViewport> viewport) :
+  EditMeasureCommand(measureTool, viewport)
   {
   }
 
 
   void EditLineMeasureCommand::SetStart(ScenePoint2D scenePos)
   {
-    dynamic_cast<LineMeasureTool&>(*measureTool_).SetStart(scenePos);
-    SetMementoModified(measureTool_->CreateMemento());
+    dynamic_cast<LineMeasureTool&>(GetMeasureTool()).SetStart(scenePos);
+    SetMementoModified(GetMeasureTool().CreateMemento());
   }
 
 
   void EditLineMeasureCommand::SetEnd(ScenePoint2D scenePos)
   {
-    dynamic_cast<LineMeasureTool&>(*measureTool_).SetEnd(scenePos);
-    SetMementoModified(measureTool_->CreateMemento());
+    dynamic_cast<LineMeasureTool&>(GetMeasureTool()).SetEnd(scenePos);
+    SetMementoModified(GetMeasureTool().CreateMemento());
   }
 }

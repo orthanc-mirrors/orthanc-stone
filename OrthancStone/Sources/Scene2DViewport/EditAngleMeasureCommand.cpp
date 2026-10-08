@@ -24,31 +24,29 @@
 
 namespace OrthancStone
 {
-  EditAngleMeasureCommand::EditAngleMeasureCommand(
-    boost::shared_ptr<MeasureTool>  measureTool,
-    boost::weak_ptr<IViewport> viewport)
-    : EditMeasureCommand(measureTool, viewport)
-    , measureTool_(measureTool)
+  EditAngleMeasureCommand::EditAngleMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
+                                                   boost::weak_ptr<IViewport> viewport) :
+    EditMeasureCommand(measureTool, viewport)
   {
   }
 
   void EditAngleMeasureCommand::SetCenter(ScenePoint2D scenePos)
   {
-    dynamic_cast<AngleMeasureTool&>(*measureTool_).SetCenter(scenePos);
-    SetMementoModified(measureTool_->CreateMemento());
+    dynamic_cast<AngleMeasureTool&>(GetMeasureTool()).SetCenter(scenePos);
+    SetMementoModified(GetMeasureTool().CreateMemento());
   }
 
 
   void EditAngleMeasureCommand::SetSide1End(ScenePoint2D scenePos)
   {
-    dynamic_cast<AngleMeasureTool&>(*measureTool_).SetSide1End(scenePos);
-    SetMementoModified(measureTool_->CreateMemento());
+    dynamic_cast<AngleMeasureTool&>(GetMeasureTool()).SetSide1End(scenePos);
+    SetMementoModified(GetMeasureTool().CreateMemento());
   }
 
 
   void EditAngleMeasureCommand::SetSide2End(ScenePoint2D scenePos)
   {
-    dynamic_cast<AngleMeasureTool&>(*measureTool_).SetSide2End(scenePos);
-    SetMementoModified(measureTool_->CreateMemento());
+    dynamic_cast<AngleMeasureTool&>(GetMeasureTool()).SetSide2End(scenePos);
+    SetMementoModified(GetMeasureTool().CreateMemento());
   }
 }

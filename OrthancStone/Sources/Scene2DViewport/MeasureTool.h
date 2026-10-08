@@ -39,10 +39,18 @@
 namespace OrthancStone
 {
   class IFlexiblePointerTracker;
-  class MeasureToolMemento;
 
   class MeasureTool : public ObserverBase<MeasureTool>
   {
+  public:
+    class IMemento : public boost::noncopyable
+    {
+    public:
+      virtual ~IMemento()
+      {
+      }
+    };
+
   private:
     bool     enabled_;
 
@@ -126,13 +134,13 @@ namespace OrthancStone
        This method must return a memento the captures the tool state (not including
        the highlighting state
     */
-    virtual MeasureToolMemento* CreateMemento() const = 0;
+    virtual IMemento* CreateMemento() const = 0;
 
     /**
        This method must apply the supplied memento (this requires RTTI to check
        the type)
     */
-    virtual void SetMemento(const MeasureToolMemento& memento) = 0;
+    virtual void SetMemento(const IMemento& memento) = 0;
 
     /**
        This must create an edition tracker suitable for the supplied click position,
@@ -157,15 +165,6 @@ namespace OrthancStone
     */
     virtual std::string GetDescription() = 0;
   };
-
-  class MeasureToolMemento : public boost::noncopyable
-  {
-  public:
-    virtual ~MeasureToolMemento()
-    {
-    }
-  };
-
 }
 
 //extern void TrackerSample_SetInfoDisplayMessage(

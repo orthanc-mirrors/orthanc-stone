@@ -106,18 +106,18 @@ namespace OrthancStone
   }
 
 
-  MeasureToolMemento* AngleMeasureTool::CreateMemento() const
+  MeasureTool::IMemento* AngleMeasureTool::CreateMemento() const
   {
-    std::unique_ptr<AngleMeasureToolMemento> memento(new AngleMeasureToolMemento());
+    std::unique_ptr<AngleMeasureTool::Memento> memento(new AngleMeasureTool::Memento());
     memento->center_ = center_;
     memento->side1End_ = side1End_;
     memento->side2End_ = side2End_;
     return memento.release();
   }
   
-  void AngleMeasureTool::SetMemento(const MeasureToolMemento& mementoBase)
+  void AngleMeasureTool::SetMemento(const MeasureTool::IMemento& mementoBase)
   {
-    const AngleMeasureToolMemento& memento = dynamic_cast<const AngleMeasureToolMemento&>(mementoBase);
+    const AngleMeasureTool::Memento& memento = dynamic_cast<const AngleMeasureTool::Memento&>(mementoBase);
     center_   = memento.center_;
     side1End_ = memento.side1End_;
     side2End_ = memento.side2End_;

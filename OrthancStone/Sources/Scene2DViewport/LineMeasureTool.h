@@ -40,6 +40,14 @@ namespace OrthancStone
   class LineMeasureTool : public MeasureTool
   {
   public:
+    class Memento : public IMemento
+    {
+    public:
+      ScenePoint2D                    start_;
+      ScenePoint2D                    end_;
+    };
+
+  public:
     static boost::shared_ptr<LineMeasureTool> Create(boost::weak_ptr<IViewport> viewport);
 
     ~LineMeasureTool();
@@ -53,8 +61,8 @@ namespace OrthancStone
     virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void ResetHighlightState() ORTHANC_OVERRIDE;
     virtual IFlexiblePointerTracker* CreateEditionTracker(const PointerEvent& e) ORTHANC_OVERRIDE;
-    virtual MeasureToolMemento* CreateMemento() const ORTHANC_OVERRIDE;
-    virtual void SetMemento(const MeasureToolMemento& memento) ORTHANC_OVERRIDE;
+    virtual IMemento* CreateMemento() const ORTHANC_OVERRIDE;
+    virtual void SetMemento(const IMemento& memento) ORTHANC_OVERRIDE;
     virtual std::string GetDescription() ORTHANC_OVERRIDE;
 
     enum LineHighlightArea
@@ -84,13 +92,5 @@ namespace OrthancStone
     int                             baseLayerIndex_;
     LineHighlightArea               lineHighlightArea_;
   };
-
-  class LineMeasureToolMemento : public MeasureToolMemento
-  {
-  public:
-    ScenePoint2D                    start_;
-    ScenePoint2D                    end_;
-  };
-
 }
 

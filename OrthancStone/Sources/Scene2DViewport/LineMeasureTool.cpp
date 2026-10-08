@@ -181,17 +181,17 @@ namespace OrthancStone
     }
   }
 
-  MeasureToolMemento* LineMeasureTool::CreateMemento() const
+  MeasureTool::IMemento* LineMeasureTool::CreateMemento() const
   {
-    std::unique_ptr<LineMeasureToolMemento> memento(new LineMeasureToolMemento());
+    std::unique_ptr<Memento> memento(new Memento());
     memento->start_ = start_;
     memento->end_ = end_;
     return memento.release();
   }
 
-  void LineMeasureTool::SetMemento(const MeasureToolMemento& mementoBase)
+  void LineMeasureTool::SetMemento(const MeasureTool::IMemento& mementoBase)
   {
-    const LineMeasureToolMemento& memento = dynamic_cast<const LineMeasureToolMemento&>(mementoBase);
+    const LineMeasureTool::Memento& memento = dynamic_cast<const LineMeasureTool::Memento&>(mementoBase);
     start_ = memento.start_;
     end_ = memento.end_;
     RefreshScene();

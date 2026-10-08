@@ -124,13 +124,13 @@ namespace OrthancStone
     GetMeasureTool()->SetMemento(*mementoModified_);
   }
 
-  const MeasureToolMemento& EditMeasureCommand::GetMementoOriginal() const
+  const MeasureTool::IMemento& EditMeasureCommand::GetMementoOriginal() const
   {
     assert(mementoOriginal_.get() != NULL);
     return *mementoOriginal_;
   }    
 
-  void EditMeasureCommand::SetMementoModified(MeasureToolMemento* memento)
+  void EditMeasureCommand::SetMementoModified(MeasureTool::IMemento* memento)
   {
     if (memento == NULL)
     {
@@ -142,13 +142,13 @@ namespace OrthancStone
     }
   }
 
-  const MeasureToolMemento& DeleteMeasureCommand::GetMementoOriginal() const
+  const MeasureTool::IMemento& DeleteMeasureCommand::GetMementoOriginal() const
   {
     assert(mementoOriginal_.get() != NULL);
     return *mementoOriginal_;
   }    
 
-  void DeleteMeasureCommand::SetMementoModified(MeasureToolMemento* memento)
+  void DeleteMeasureCommand::SetMementoModified(MeasureTool::IMemento* memento)
   {
     if (memento == NULL)
     {

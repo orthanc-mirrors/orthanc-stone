@@ -58,8 +58,8 @@ namespace OrthancStone
 
     ScenePoint2D delta = scenePos - GetOriginalClickPosition();
 
-    const LineMeasureToolMemento& memento =
-      dynamic_cast<const LineMeasureToolMemento&>(command_->GetMementoOriginal());
+    const LineMeasureTool::Memento& memento =
+      dynamic_cast<const LineMeasureTool::Memento&>(command_->GetMementoOriginal());
 
     switch (modifiedZone_)
     {

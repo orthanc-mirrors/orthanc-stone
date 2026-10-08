@@ -20,9 +20,11 @@
  * <http://www.gnu.org/licenses/>.
  **/
 
+
+#include "LineMeasureTool.h"
+
 #include "../StoneException.h"
 #include "LayerHolder.h"
-#include "LineMeasureTool.h"
 #include "MeasureCommands.h"
 #include "MeasureToolsToolbox.h"
 
@@ -144,6 +146,7 @@ namespace OrthancStone
     void Cancel(Scene2D &scene) ORTHANC_OVERRIDE
     {
       alive_ = false;
+      tool_->SetMemento(*originalMemento_);
     }
 
     void SetObserver(IObserver *observer) ORTHANC_OVERRIDE
@@ -280,24 +283,18 @@ namespace OrthancStone
                                                                  const PointerEvent& e)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    if (lock.get() != NULL)
-    {
-      ViewportController& controller = lock->GetController();
-      const Scene2D& scene = controller.GetScene();
-      ScenePoint2D scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
-      if (!HitTest(scenePos))
-      {
-        return NULL;
-      }
-      else
-      {
-        return new Tracker(boost::dynamic_pointer_cast<LineMeasureTool>(shared_from_this()), isCreation, scene, e, viewport_);
-      }
+    ViewportController& controller = lock->GetController();
+    const Scene2D& scene = controller.GetScene();
+    ScenePoint2D scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
+
+    if (!HitTest(scenePos))
+    {
+      return NULL;
     }
     else
     {
-      return NULL;
+      return new Tracker(boost::dynamic_pointer_cast<LineMeasureTool>(shared_from_this()), isCreation, scene, e, viewport_);
     }
   }
 

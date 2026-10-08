@@ -20,27 +20,160 @@
  * <http://www.gnu.org/licenses/>.
  **/
 
+
 #include "AngleMeasureTool.h"
-#include "MeasureToolsToolbox.h"
-#include "EditAngleMeasureTracker.h"
-#include "LayerHolder.h"
+
 #include "../StoneException.h"
+#include "LayerHolder.h"
+#include "MeasureCommands.h"
+#include "MeasureToolsToolbox.h"
 
 #include <Logging.h>
 
 #include <boost/math/constants/constants.hpp>
 #include <boost/make_shared.hpp>
 
-//// <HACK>
-//// REMOVE THIS
-//#ifndef NDEBUG
-//extern void 
-//TrackerSample_SetInfoDisplayMessage(std::string key, std::string value);
-//#endif
-//// </HACK>
 
 namespace OrthancStone
 {
+  class AngleMeasureTool::Tracker : public IFlexiblePointerTracker
+  {
+  private:
+    boost::shared_ptr<AngleMeasureTool>         tool_;
+    std::unique_ptr<AngleMeasureTool::Memento>  originalMemento_;
+    ScenePoint2D                                originalClickPosition_;
+    AngleMeasureTool::AngleHighlightArea        modifiedZone_;
+    bool                                        alive_;
+    boost::weak_ptr<IViewport>&                 viewport_;  // TODO Refactoring
+    boost::shared_ptr<EditMeasureCommand>       editCommand_;
+
+  public:
+    Tracker(const boost::shared_ptr<AngleMeasureTool>& tool,
+            bool isCreation,
+            const Scene2D& scene,
+            const PointerEvent& e,
+            boost::weak_ptr<IViewport>& viewport) :
+      tool_(tool),
+      originalClickPosition_(e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())),
+      alive_(true),
+      viewport_(viewport)
+    {
+      if (!tool)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+
+      modifiedZone_ = tool_->AngleHitTest(originalClickPosition_);
+      originalMemento_.reset(dynamic_cast<AngleMeasureTool::Memento*>(tool->CreateMemento()));
+
+      if (isCreation)
+      {
+        boost::shared_ptr<IViewport> sharedViewport = viewport.lock();
+        if (sharedViewport)
+        {
+          std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
+          lock->GetController().PushCommand(boost::make_shared<CreateMeasureCommand>(boost::dynamic_pointer_cast<MeasureTool>(tool_), viewport));
+        }
+      }
+      else
+      {
+        editCommand_ = boost::make_shared<EditMeasureCommand>(boost::dynamic_pointer_cast<MeasureTool>(tool_), viewport_);
+      }
+    }
+
+    bool PointerMove(const PointerEvent &event,
+                     Scene2D &scene) ORTHANC_OVERRIDE
+    {
+      if (alive_)
+      {
+        const ScenePoint2D scenePos = event.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
+        const ScenePoint2D delta = scenePos - originalClickPosition_;
+
+        switch (modifiedZone_)
+        {
+          case AngleMeasureTool::AngleHighlightArea_Center:
+          {
+            tool_->SetCenter(originalMemento_->GetCenter() + delta);
+            break;
+          }
+
+          case AngleMeasureTool::AngleHighlightArea_Side1:
+          case AngleMeasureTool::AngleHighlightArea_Side2:
+          {
+            tool_->SetCenter(originalMemento_->GetCenter() + delta);
+            tool_->SetSide1End(originalMemento_->GetSide1End() + delta);
+            tool_->SetSide2End(originalMemento_->GetSide2End() + delta);
+            break;
+          }
+
+          case AngleMeasureTool::AngleHighlightArea_Side1End:
+          {
+            tool_->SetSide1End(originalMemento_->GetSide1End() + delta);
+            break;
+          }
+
+          case AngleMeasureTool::AngleHighlightArea_Side2End:
+          {
+            tool_->SetSide2End(originalMemento_->GetSide2End() + delta);
+            break;
+          }
+
+          default:
+            LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
+            break;
+        }
+
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+
+    void PointerUp(const PointerEvent &event,
+                   Scene2D &scene) ORTHANC_OVERRIDE
+    {
+      if (alive_ && editCommand_)
+      {
+        editCommand_->SetMementoModified(tool_->CreateMemento());
+
+        boost::shared_ptr<IViewport> sharedViewport = viewport_.lock();
+        if (sharedViewport)
+        {
+          std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
+          lock->GetController().PushCommand(editCommand_);
+        }
+      }
+
+      alive_ = false;
+    }
+
+    void PointerDown(const PointerEvent &event,
+                     Scene2D &scene) ORTHANC_OVERRIDE
+    {
+      LOG(WARNING) << "Additional touches (fingers, pen, mouse buttons...) "
+                   << "are ignored when the edit angle tracker is active";
+    }
+
+    bool IsAlive() const ORTHANC_OVERRIDE
+    {
+      return alive_;
+    }
+
+    void Cancel(Scene2D &scene) ORTHANC_OVERRIDE
+    {
+      alive_ = false;
+      tool_->SetMemento(*originalMemento_);
+    }
+
+    void SetObserver(IObserver *observer) ORTHANC_OVERRIDE
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+  };
+
+
   // the params in the LayerHolder ctor specify the number of polyline and text
   // layers
   AngleMeasureTool::AngleMeasureTool(
@@ -198,11 +331,10 @@ namespace OrthancStone
                                                                   const PointerEvent& e)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
+
     ViewportController& controller = lock->GetController();
     const Scene2D& scene = controller.GetScene();
-
-    ScenePoint2D scenePos = e.GetMainPosition().Apply(
-      scene.GetCanvasToSceneTransform());
+    ScenePoint2D scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
     if (!HitTest(scenePos))
     {
@@ -210,15 +342,7 @@ namespace OrthancStone
     }
     else
     {
-      /**
-         new EditLineMeasureTracker(
-         boost::shared_ptr<LineMeasureTool> measureTool;
-         MessageBroker & broker,
-         boost::weak_ptr<IViewport>          viewport,
-         const PointerEvent & e);
-      */
-
-      return new EditAngleMeasureTracker(shared_from_this(), viewport_, e);
+      return new Tracker(boost::dynamic_pointer_cast<AngleMeasureTool>(shared_from_this()), isCreation, scene, e, viewport_);
     }
   }
 

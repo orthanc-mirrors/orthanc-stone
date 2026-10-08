@@ -103,6 +103,8 @@ namespace OrthancStone
     AngleHighlightArea AngleHitTest(ScenePoint2D p) const;
 
   private:
+    class Tracker;
+
     explicit AngleMeasureTool(boost::weak_ptr<IViewport> viewport);
 
     virtual void        RefreshScene() ORTHANC_OVERRIDE;

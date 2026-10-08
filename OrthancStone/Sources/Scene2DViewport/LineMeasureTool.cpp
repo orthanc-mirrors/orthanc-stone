@@ -32,6 +32,127 @@
 
 namespace OrthancStone
 {
+  class LineMeasureTool::Tracker : public IFlexiblePointerTracker
+  {
+  private:
+    boost::shared_ptr<LineMeasureTool>         tool_;
+    std::unique_ptr<LineMeasureTool::Memento>  originalMemento_;
+    ScenePoint2D                               originalClickPosition_;
+    LineMeasureTool::LineHighlightArea         modifiedZone_;
+    bool                                       alive_;
+    boost::weak_ptr<IViewport>&                viewport_;  // TODO Refactoring
+    boost::shared_ptr<EditMeasureCommand>      editCommand_;
+
+  public:
+    Tracker(const boost::shared_ptr<LineMeasureTool>& tool,
+            bool isCreation,
+            const Scene2D& scene,
+            const PointerEvent& e,
+            boost::weak_ptr<IViewport>& viewport) :
+      tool_(tool),
+      originalClickPosition_(e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())),
+      alive_(true),
+      viewport_(viewport)
+    {
+      if (!tool)
+      {
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
+
+      modifiedZone_ = tool_->LineHitTest(originalClickPosition_);
+      originalMemento_.reset(dynamic_cast<LineMeasureTool::Memento*>(tool->CreateMemento()));
+
+      if (isCreation)
+      {
+        boost::shared_ptr<IViewport> sharedViewport = viewport.lock();
+        if (sharedViewport)
+        {
+          std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
+          lock->GetController().PushCommand(boost::make_shared<CreateMeasureCommand>(boost::dynamic_pointer_cast<MeasureTool>(tool_), viewport));
+        }
+      }
+      else
+      {
+        editCommand_ = boost::make_shared<EditMeasureCommand>(boost::dynamic_pointer_cast<MeasureTool>(tool_), viewport_);
+      }
+    }
+
+    bool PointerMove(const PointerEvent &event,
+                     Scene2D &scene) ORTHANC_OVERRIDE
+    {
+      if (alive_)
+      {
+        const ScenePoint2D scenePos = event.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
+        const ScenePoint2D delta = scenePos - originalClickPosition_;
+
+        switch (modifiedZone_)
+        {
+          case LineMeasureTool::LineHighlightArea_Start:
+            tool_->SetStart(originalMemento_->GetStart() + delta);
+            break;
+
+          case LineMeasureTool::LineHighlightArea_End:
+            tool_->SetEnd(originalMemento_->GetEnd() + delta);
+            break;
+
+          case LineMeasureTool::LineHighlightArea_Segment:
+            tool_->SetStart(originalMemento_->GetStart() + delta);
+            tool_->SetEnd(originalMemento_->GetEnd() + delta);
+            break;
+
+          default:
+            LOG(WARNING) << "Warning: please retry the measuring tool editing operation!";
+            break;
+        }
+
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+
+    void PointerUp(const PointerEvent &event,
+                   Scene2D &scene) ORTHANC_OVERRIDE
+    {
+      if (alive_ && editCommand_)
+      {
+        editCommand_->SetMementoModified(tool_->CreateMemento());
+
+        boost::shared_ptr<IViewport> sharedViewport = viewport_.lock();
+        if (sharedViewport)
+        {
+          std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
+          lock->GetController().PushCommand(editCommand_);
+        }
+      }
+
+      alive_ = false;
+    }
+
+    void PointerDown(const PointerEvent &event,
+                     Scene2D &scene) ORTHANC_OVERRIDE
+    {
+    }
+
+    bool IsAlive() const ORTHANC_OVERRIDE
+    {
+      return alive_;
+    }
+
+    void Cancel(Scene2D &scene) ORTHANC_OVERRIDE
+    {
+      alive_ = false;
+    }
+
+    void SetObserver(IObserver *observer) ORTHANC_OVERRIDE
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NotImplemented);
+    }
+  };
+
+
   LineMeasureTool::LineMeasureTool(
     boost::weak_ptr<IViewport> viewport):
     MeasureTool(viewport),
@@ -131,7 +252,7 @@ namespace OrthancStone
 
       const double sqDistanceFromStart = 
         ScenePoint2D::SquaredDistancePtPt(p, start_);
-    
+
       if (sqDistanceFromStart <= SQUARED_HIT_TEST_MAX_DISTANCE_SCENE_COORD)
         return LineHighlightArea_Start;
     
@@ -155,16 +276,15 @@ namespace OrthancStone
     return LineHitTest(p) != LineHighlightArea_None;
   }
 
-  IFlexiblePointerTracker* LineMeasureTool::CreateEditionTracker(const PointerEvent& e)
+  IFlexiblePointerTracker* LineMeasureTool::CreateEditionTracker(bool isCreation,
+                                                                 const PointerEvent& e)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     if (lock.get() != NULL)
     {
       ViewportController& controller = lock->GetController();
       const Scene2D& scene = controller.GetScene();
-
-      ScenePoint2D scenePos = e.GetMainPosition().Apply(
-        scene.GetCanvasToSceneTransform());
+      ScenePoint2D scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
       if (!HitTest(scenePos))
       {
@@ -172,7 +292,7 @@ namespace OrthancStone
       }
       else
       {
-        return new EditLineMeasureTracker(shared_from_this(), viewport_, e);
+        return new Tracker(boost::dynamic_pointer_cast<LineMeasureTool>(shared_from_this()), isCreation, scene, e, viewport_);
       }
     }
     else
@@ -183,17 +303,14 @@ namespace OrthancStone
 
   MeasureTool::IMemento* LineMeasureTool::CreateMemento() const
   {
-    std::unique_ptr<Memento> memento(new Memento());
-    memento->start_ = start_;
-    memento->end_ = end_;
-    return memento.release();
+    return new Memento(start_, end_);
   }
 
   void LineMeasureTool::SetMemento(const MeasureTool::IMemento& mementoBase)
   {
     const LineMeasureTool::Memento& memento = dynamic_cast<const LineMeasureTool::Memento&>(mementoBase);
-    start_ = memento.start_;
-    end_ = memento.end_;
+    start_ = memento.GetStart();
+    end_ = memento.GetEnd();
     RefreshScene();
   }
 
@@ -286,7 +403,7 @@ namespace OrthancStone
               scene, layerHolder_, buf, ScenePoint2D(midX, midY), 0);
 #else
             SetTextLayerProperties(
-              scene, layerHolder_, buf, ScenePoint2D(midX, midY), 0);
+                                   scene, layerHolder_, buf, ScenePoint2D(midX, midY), 0);
 #endif
             lock->Invalidate();
           }

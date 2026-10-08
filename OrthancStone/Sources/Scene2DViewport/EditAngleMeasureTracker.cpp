@@ -70,7 +70,7 @@ namespace OrthancStone
     {
       case AngleMeasureTool::AngleHighlightArea_Center:
       {
-        ScenePoint2D newCenter = memento.center_ + delta;
+        ScenePoint2D newCenter = memento.GetCenter() + delta;
         GetCommand()->SetCenter(newCenter);
         break;
       }
@@ -78,9 +78,9 @@ namespace OrthancStone
       case AngleMeasureTool::AngleHighlightArea_Side1:
       case AngleMeasureTool::AngleHighlightArea_Side2:
       {
-        ScenePoint2D newCenter = memento.center_ + delta;
-        ScenePoint2D newSide1End = memento.side1End_ + delta;
-        ScenePoint2D newSide2End = memento.side2End_ + delta;
+        ScenePoint2D newCenter = memento.GetCenter() + delta;
+        ScenePoint2D newSide1End = memento.GetSide1End() + delta;
+        ScenePoint2D newSide2End = memento.GetSide2End() + delta;
         GetCommand()->SetCenter(newCenter);
         GetCommand()->SetSide1End(newSide1End);
         GetCommand()->SetSide2End(newSide2End);
@@ -89,14 +89,14 @@ namespace OrthancStone
       
       case AngleMeasureTool::AngleHighlightArea_Side1End:
       {
-        ScenePoint2D newSide1End = memento.side1End_ + delta;
+        ScenePoint2D newSide1End = memento.GetSide1End() + delta;
         GetCommand()->SetSide1End(newSide1End);
         break;
       }
 
       case AngleMeasureTool::AngleHighlightArea_Side2End:
       {
-        ScenePoint2D newSide2End = memento.side2End_ + delta;
+        ScenePoint2D newSide2End = memento.GetSide2End() + delta;
         GetCommand()->SetSide2End(newSide2End);
         break;
       }

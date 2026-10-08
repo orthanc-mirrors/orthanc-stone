@@ -43,27 +43,23 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     // simply disable the measure tool upon undo
-    GetMeasureTool()->Disable();
-    lock->GetController().RemoveMeasureTool(GetMeasureTool());
+    measureTool_->Disable();
+    lock->GetController().RemoveMeasureTool(measureTool_);
   }
 
   void CreateMeasureCommand::Redo()
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    GetMeasureTool()->Enable();
-    lock->GetController().AddMeasureTool(GetMeasureTool());
+    measureTool_->Enable();
+    lock->GetController().AddMeasureTool(measureTool_);
   }
 
-  CreateMeasureCommand::CreateMeasureCommand(boost::weak_ptr<IViewport> viewport)
-    : MeasureCommand(viewport)
+  CreateMeasureCommand::CreateMeasureCommand(const boost::shared_ptr<MeasureTool>& tool,
+                                             boost::weak_ptr<IViewport> viewport) :
+    MeasureCommand(viewport),
+  measureTool_(tool)
   {
 
-  }
-
-  CreateMeasureCommand::~CreateMeasureCommand()
-  {
-    // deleting the command should not change the model state
-    // we thus leave it as is
   }
 
   void DeleteMeasureCommand::Redo()
@@ -79,12 +75,6 @@ namespace OrthancStone
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     measureTool_->Enable();
     lock->GetController().AddMeasureTool(measureTool_);
-  }
-
-  DeleteMeasureCommand::~DeleteMeasureCommand()
-  {
-    // deleting the command should not change the model state
-    // we thus leave it as is
   }
 
   DeleteMeasureCommand::DeleteMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,

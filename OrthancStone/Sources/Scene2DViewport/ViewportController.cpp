@@ -217,7 +217,7 @@ namespace OrthancStone
       {
         if (measureTools_[i]->HitTest(event.GetMainPosition()))
         {
-          activeTracker_.reset(measureTools_[i]->CreateEditionTracker(event));
+          activeTracker_.reset(measureTools_[i]->CreateEditionTracker(false, event));
           InvalidateViewport();
           return;
         }

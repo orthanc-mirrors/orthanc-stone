@@ -45,7 +45,7 @@ namespace OrthancStone
     };
 
   private:
-    std::vector<boost::shared_ptr<ICommand> > commandStack_;
+    std::vector<boost::shared_ptr<ICommand> > commandStack_;   // TODO Refactoring - Shouldn't this be "ICommand*" ?
 
     /**
     This is always between >= 0 and <= undoStack_.size() and gives the

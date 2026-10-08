@@ -37,8 +37,6 @@
 #include "../../../OrthancStone/Sources/Scene2D/PanSceneTracker.h"
 #include "../../../OrthancStone/Sources/Scene2D/RotateSceneTracker.h"
 #include "../../../OrthancStone/Sources/Scene2D/ZoomSceneTracker.h"
-#include "../../../OrthancStone/Sources/Scene2DViewport/CreateAngleMeasureTracker.h"
-#include "../../../OrthancStone/Sources/Scene2DViewport/CreateLineMeasureTracker.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/IFlexiblePointerTracker.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/MeasureTool.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"

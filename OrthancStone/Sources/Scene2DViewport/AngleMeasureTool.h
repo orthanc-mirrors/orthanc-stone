@@ -40,10 +40,35 @@ namespace OrthancStone
   public:
     class Memento : public IMemento
     {
-    public:
+    private:
+      ScenePoint2D   center_;
       ScenePoint2D   side1End_;
       ScenePoint2D   side2End_;
-      ScenePoint2D   center_;
+
+    public:
+      Memento(const ScenePoint2D& center,
+              const ScenePoint2D& side1End,
+              const ScenePoint2D& side2End) :
+        center_(center),
+        side1End_(side1End),
+        side2End_(side2End)
+      {
+      }
+
+      const ScenePoint2D& GetCenter() const
+      {
+        return center_;
+      }
+
+      const ScenePoint2D& GetSide1End() const
+      {
+        return side1End_;
+      }
+
+      const ScenePoint2D& GetSide2End() const
+      {
+        return side2End_;
+      }
     };
 
   public:
@@ -58,7 +83,8 @@ namespace OrthancStone
     virtual bool HitTest(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void ResetHighlightState() ORTHANC_OVERRIDE;
-    virtual IFlexiblePointerTracker* CreateEditionTracker(const PointerEvent& e) ORTHANC_OVERRIDE;
+    virtual IFlexiblePointerTracker* CreateEditionTracker(bool isCreation,
+                                                          const PointerEvent& e) ORTHANC_OVERRIDE;
     virtual IMemento* CreateMemento() const ORTHANC_OVERRIDE;
     virtual void SetMemento(const IMemento& memento) ORTHANC_OVERRIDE;
     virtual std::string GetDescription() ORTHANC_OVERRIDE;
@@ -91,5 +117,3 @@ namespace OrthancStone
     AngleHighlightArea              angleHighlightArea_;
   };
 }
-
-

@@ -141,7 +141,8 @@ namespace OrthancStone
        or an empty pointer if no hit test (although this should have been checked
        first)
     */
-    virtual IFlexiblePointerTracker* CreateEditionTracker(const PointerEvent& e) = 0;
+    virtual IFlexiblePointerTracker* CreateEditionTracker(bool isCreation,
+                                                          const PointerEvent& e) = 0;
 
     /**
        Will change the measuring tool to provide visual feedback on the GUI 

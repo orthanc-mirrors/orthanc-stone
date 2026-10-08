@@ -22,8 +22,19 @@
 
 #include "SimpleViewerCore.h"
 
+// TODO Refactoring - Remove
+#define TEST_LINE_MEASURE_TOOL   1
+#define TEST_ANGLE_MEASURE_TOOL  1
+
+
 #include "../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"
 #include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
+
+
+#include "../../../OrthancStone/Sources/Scene2DViewport/LineMeasureTool.h"  // TODO Refactoring - Remove
+#include "../../../OrthancStone/Sources/Scene2DViewport/AngleMeasureTool.h"  // TODO Refactoring - Remove
+#include "../../../OrthancStone/Sources/Scene2DViewport/MeasureCommands.h"  // TODO Refactoring - Remove
+
 
 #include <boost/make_shared.hpp>
 
@@ -151,18 +162,28 @@ namespace OrthancStone
     }
 
 #if TEST_LINE_MEASURE_TOOL == 1
-    lineMeasureTool_ = OrthancStone::LineMeasureTool::Create(viewport);
-    lineMeasureTool_->Enable();
-    lineMeasureTool_->Set(OrthancStone::ScenePoint2D(200, 100),
-                          OrthancStone::ScenePoint2D(100, 200));
+    {
+      boost::shared_ptr<LineMeasureTool> tool = OrthancStone::LineMeasureTool::Create(viewport);
+      tool->Enable();
+      tool->Set(OrthancStone::ScenePoint2D(200, 100),
+                OrthancStone::ScenePoint2D(100, 200));
+
+      std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
+      viewportLock->GetController().AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
+    }
 #endif
 
 #if TEST_ANGLE_MEASURE_TOOL == 1
-    angleMeasureTool_ = OrthancStone::AngleMeasureTool::Create(viewport);
-    angleMeasureTool_->Enable();
-    angleMeasureTool_->SetCenter(OrthancStone::ScenePoint2D(300, 300));
-    angleMeasureTool_->SetSide1End(OrthancStone::ScenePoint2D(200, 400));
-    angleMeasureTool_->SetSide2End(OrthancStone::ScenePoint2D(400, 400));
+    {
+      boost::shared_ptr<AngleMeasureTool> tool = OrthancStone::AngleMeasureTool::Create(viewport);
+      tool->Enable();
+      tool->SetCenter(OrthancStone::ScenePoint2D(300, 300));
+      tool->SetSide1End(OrthancStone::ScenePoint2D(200, 400));
+      tool->SetSide2End(OrthancStone::ScenePoint2D(400, 400));
+
+      std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
+      viewportLock->GetController().AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
+    }
 #endif
   }
 
@@ -210,34 +231,17 @@ namespace OrthancStone
       }
     };
 
-    DefaultViewportInteractor                 default_;
-    boost::shared_ptr<AnnotationsSceneLayer>  annotations_;
-
-#if TEST_LINE_MEASURE_TOOL == 1
-    boost::shared_ptr<LineMeasureTool>  lineMeasureTool_;  // TODO Refactoring - Remove
-#endif
-
-#if TEST_ANGLE_MEASURE_TOOL == 1
-    boost::shared_ptr<AngleMeasureTool>  angleMeasureTool_;  // TODO Refactoring - Remove
-#endif
+    DefaultViewportInteractor            default_;
+    boost::shared_ptr<SimpleViewerCore>  core_;
 
   public:
-    Interactor(const boost::shared_ptr<SimpleViewerCore>& core)
+    Interactor(const boost::shared_ptr<SimpleViewerCore>& core) :
+      core_(core)
     {
       if (!core)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
       }
-
-      annotations_ = core->annotations_;
-
-#if TEST_LINE_MEASURE_TOOL == 1
-      lineMeasureTool_ = core->lineMeasureTool_;
-#endif
-
-#if TEST_ANGLE_MEASURE_TOOL == 1
-      angleMeasureTool_ = core->angleMeasureTool_;
-#endif
 
       default_.SetWindowingLayer(0);
       default_.SetObserverFactory(new Factory(core));
@@ -249,18 +253,56 @@ namespace OrthancStone
                                                    unsigned int viewportHeight) ORTHANC_OVERRIDE
     {
 #if TEST_LINE_MEASURE_TOOL == 1
-      return lineMeasureTool_->CreateEditionTracker(event);
+      const ScenePoint2D p = event.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
+
+      std::vector< boost::shared_ptr<MeasureTool> > tools;
+
+      {
+        std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
+        tools = viewportLock->GetController().HitTestMeasureTools(p);
+      }
+
+      if (!tools.empty())
+      {
+        return tools[0]->CreateEditionTracker(false, event);
+      }
+      else
+      {
+        switch (core_->annotations_->GetActiveTool())
+        {
+          case AnnotationsSceneLayer::Tool_Remove:
+            LOG(WARNING) << "Nothing to delete there";
+            break;
+
+          case AnnotationsSceneLayer::Tool_Length:
+          {
+            boost::shared_ptr<LineMeasureTool> tool = OrthancStone::LineMeasureTool::Create(core_->viewport_);
+            tool->Enable();
+            tool->Set(p, p);
+
+            {
+              std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
+              viewportLock->GetController().AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
+            }
+
+            return tool->CreateEditionTracker(true, event);
+          }
+
+          case AnnotationsSceneLayer::Tool_Angle:
+
+          default:
+            LOG(ERROR) << "This tool is not supported if not using the annotations layer";
+        }
+
+        return NULL;
+      }
 #endif
 
-#if TEST_ANGLE_MEASURE_TOOL == 1
-      return angleMeasureTool_->CreateEditionTracker(event);
-#endif
-
-      annotations_->ClearHover();
+      core_->annotations_->ClearHover();
 
       if (event.GetMouseButton() == MouseButton_Left)
       {
-        return annotations_->CreateTracker(event.GetMainPosition(), scene);
+        return core_->annotations_->CreateTracker(event.GetMainPosition(), scene);
       }
       else
       {
@@ -276,7 +318,7 @@ namespace OrthancStone
     virtual void HandleMouseHover(Scene2D& scene,
                                   const PointerEvent& event) ORTHANC_OVERRIDE
     {
-      annotations_->SetMouseHover(event.GetMainPosition(), scene);
+      core_->annotations_->SetMouseHover(event.GetMainPosition(), scene);
     }
   };
 

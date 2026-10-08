@@ -65,22 +65,22 @@ namespace OrthancStone
     {
       case LineMeasureTool::LineHighlightArea_Start:
       {
-        ScenePoint2D newStart = memento.start_ + delta;
+        ScenePoint2D newStart = memento.GetStart() + delta;
         GetCommand()->SetStart(newStart);
         break;
       }
       
       case LineMeasureTool::LineHighlightArea_End:
       {
-        ScenePoint2D newEnd = memento.end_ + delta;
+        ScenePoint2D newEnd = memento.GetEnd() + delta;
         GetCommand()->SetEnd(newEnd);
         break;
       }
       
       case LineMeasureTool::LineHighlightArea_Segment:
       {
-        ScenePoint2D newStart = memento.start_ + delta;
-        ScenePoint2D newEnd = memento.end_ + delta;
+        ScenePoint2D newStart = memento.GetStart() + delta;
+        ScenePoint2D newEnd = memento.GetEnd() + delta;
         GetCommand()->SetStart(newStart);
         GetCommand()->SetEnd(newEnd);
         break;

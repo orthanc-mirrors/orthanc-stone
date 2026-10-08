@@ -43,9 +43,27 @@ namespace OrthancStone
   public:
     class Memento : public IMemento
     {
+    private:
+      ScenePoint2D  start_;
+      ScenePoint2D  end_;
+
     public:
-      ScenePoint2D                    start_;
-      ScenePoint2D                    end_;
+      Memento(const ScenePoint2D& start,
+              const ScenePoint2D& end) :
+        start_(start),
+        end_(end)
+      {
+      }
+
+      const ScenePoint2D& GetStart() const
+      {
+        return start_;
+      }
+
+      const ScenePoint2D& GetEnd() const
+      {
+        return end_;
+      }
     };
 
   public:
@@ -61,7 +79,8 @@ namespace OrthancStone
     virtual bool HitTest(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void Highlight(ScenePoint2D p) ORTHANC_OVERRIDE;
     virtual void ResetHighlightState() ORTHANC_OVERRIDE;
-    virtual IFlexiblePointerTracker* CreateEditionTracker(const PointerEvent& e) ORTHANC_OVERRIDE;
+    virtual IFlexiblePointerTracker* CreateEditionTracker(bool isCreation,
+                                                          const PointerEvent& e) ORTHANC_OVERRIDE;
     virtual IMemento* CreateMemento() const ORTHANC_OVERRIDE;
     virtual void SetMemento(const IMemento& memento) ORTHANC_OVERRIDE;
     virtual std::string GetDescription() ORTHANC_OVERRIDE;
@@ -78,13 +97,13 @@ namespace OrthancStone
     LineHighlightArea LineHitTest(ScenePoint2D p);
 
   private:
+    class Tracker;
+
     explicit LineMeasureTool(boost::weak_ptr<IViewport> viewport);
 
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();
     void                SetLineHighlightArea(LineHighlightArea area);
-
-  private:
 
   private:
     ScenePoint2D                    start_;

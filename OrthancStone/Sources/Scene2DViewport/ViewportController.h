@@ -237,8 +237,8 @@ namespace OrthancStone
 
     boost::weak_ptr<IViewport>                    viewport_;
     boost::shared_ptr<UndoStack>                  undoStackW_;  // Global stack, possibly shared by all viewports
-    std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;
-    boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO - Couldn't this be a "std::unique_ptr"?
+    std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;  // TODO Refactoring - Make this a std::set?
+    boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO Refactoring - Couldn't this be a "std::unique_ptr"?
 
     void InvalidateViewport();
   };

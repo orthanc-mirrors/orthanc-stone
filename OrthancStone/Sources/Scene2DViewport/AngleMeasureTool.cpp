@@ -108,19 +108,15 @@ namespace OrthancStone
 
   MeasureTool::IMemento* AngleMeasureTool::CreateMemento() const
   {
-    std::unique_ptr<AngleMeasureTool::Memento> memento(new AngleMeasureTool::Memento());
-    memento->center_ = center_;
-    memento->side1End_ = side1End_;
-    memento->side2End_ = side2End_;
-    return memento.release();
+    return new AngleMeasureTool::Memento(center_, side1End_, side2End_);
   }
   
   void AngleMeasureTool::SetMemento(const MeasureTool::IMemento& mementoBase)
   {
     const AngleMeasureTool::Memento& memento = dynamic_cast<const AngleMeasureTool::Memento&>(mementoBase);
-    center_   = memento.center_;
-    side1End_ = memento.side1End_;
-    side2End_ = memento.side2End_;
+    center_   = memento.GetCenter();
+    side1End_ = memento.GetSide1End();
+    side2End_ = memento.GetSide2End();
     RefreshScene();
   }
 
@@ -198,7 +194,8 @@ namespace OrthancStone
   }
 
 
-  IFlexiblePointerTracker* AngleMeasureTool::CreateEditionTracker(const PointerEvent& e)
+  IFlexiblePointerTracker* AngleMeasureTool::CreateEditionTracker(bool isCreation,
+                                                                  const PointerEvent& e)
   {
     std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     ViewportController& controller = lock->GetController();

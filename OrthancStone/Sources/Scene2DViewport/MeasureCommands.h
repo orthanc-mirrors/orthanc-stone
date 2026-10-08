@@ -63,14 +63,12 @@ namespace OrthancStone
   class CreateMeasureCommand : public MeasureCommand
   {
   private:
-    /** Must be implemented by the subclasses that create the actual tool */
-    virtual boost::shared_ptr<MeasureTool> GetMeasureTool() = 0;
+    boost::shared_ptr<MeasureTool>  measureTool_;
 
   public:
-    explicit CreateMeasureCommand(boost::weak_ptr<IViewport> viewport);
-    
-    virtual ~CreateMeasureCommand();
-    
+    CreateMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
+                         boost::weak_ptr<IViewport> viewport);
+
     virtual void Undo() ORTHANC_OVERRIDE;
     
     virtual void Redo() ORTHANC_OVERRIDE;
@@ -94,8 +92,6 @@ namespace OrthancStone
       return *measureTool_;
     }
 
-    void SetMementoModified(MeasureTool::IMemento* memento);  // takes ownership
-
   public:
     EditMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
                        boost::weak_ptr<IViewport> viewport);
@@ -105,6 +101,8 @@ namespace OrthancStone
     virtual void Redo() ORTHANC_OVERRIDE;
 
     const MeasureTool::IMemento& GetMementoOriginal() const;
+
+    void SetMementoModified(MeasureTool::IMemento* memento);  // takes ownership
   };
 
 
@@ -114,7 +112,7 @@ namespace OrthancStone
     boost::shared_ptr<MeasureTool> measureTool_;
 
     /** This memento is updated by the subclasses upon modifications */
-    std::unique_ptr<MeasureTool::IMemento> mementoModified_;
+    std::unique_ptr<MeasureTool::IMemento> mementoModified_;   // TODO Refactoring - Memento shouldn't be used on deletion
 
     /** This memento is the original object state */
     std::unique_ptr<MeasureTool::IMemento> mementoOriginal_;
@@ -126,8 +124,6 @@ namespace OrthancStone
     DeleteMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
                          boost::weak_ptr<IViewport> viewport);
 
-    virtual ~DeleteMeasureCommand();
-    
     virtual void Undo() ORTHANC_OVERRIDE;
     
     virtual void Redo() ORTHANC_OVERRIDE;

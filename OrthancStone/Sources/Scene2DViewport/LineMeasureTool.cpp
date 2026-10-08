@@ -20,11 +20,11 @@
  * <http://www.gnu.org/licenses/>.
  **/
 
-#include "LineMeasureTool.h"
-#include "MeasureToolsToolbox.h"
-#include "EditLineMeasureTracker.h"
-#include "LayerHolder.h"
 #include "../StoneException.h"
+#include "LayerHolder.h"
+#include "LineMeasureTool.h"
+#include "MeasureCommands.h"
+#include "MeasureToolsToolbox.h"
 
 #include <Logging.h>
 

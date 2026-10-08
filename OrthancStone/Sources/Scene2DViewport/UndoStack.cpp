@@ -22,23 +22,17 @@
 
 #include "UndoStack.h"
 
-#include "MeasureCommands.h"
-
 #include "../StoneException.h"
 
 namespace OrthancStone
 {
-  UndoStack::UndoStack() : numAppliedCommands_(0)
-  {}
-
-  void UndoStack::PushCommand(const boost::shared_ptr<MeasureCommand>& command)
+  void UndoStack::PushCommand(const boost::shared_ptr<ICommand>& command)
   {
     commandStack_.erase(
       commandStack_.begin() + numAppliedCommands_,
       commandStack_.end());
 
-    ORTHANC_ASSERT(std::find(commandStack_.begin(), commandStack_.end(), command)
-      == commandStack_.end(), "Duplicate command");
+    ORTHANC_ASSERT(std::find(commandStack_.begin(), commandStack_.end(), command) == commandStack_.end(), "Duplicate command");
     commandStack_.push_back(command);
     numAppliedCommands_++;
   }
@@ -66,5 +60,4 @@ namespace OrthancStone
   {
     return numAppliedCommands_ < commandStack_.size();
   }
-
 }

@@ -22,11 +22,10 @@
 #pragma once
 
 #include "../Viewport/IViewport.h"
-
-// to be moved into Stone
 #include "MeasureTool.h"
 #include "LineMeasureTool.h"
 #include "AngleMeasureTool.h"
+#include "UndoStack.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -34,7 +33,7 @@
 
 namespace OrthancStone
 {
-  class MeasureCommand : public boost::noncopyable
+  class MeasureCommand : public UndoStack::ICommand
   {
   protected:
     boost::weak_ptr<IViewport> viewport_;

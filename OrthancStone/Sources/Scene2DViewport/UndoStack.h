@@ -24,17 +24,42 @@
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-
 #include <vector>
+
 
 namespace OrthancStone
 {
-  class MeasureCommand;
-
   class UndoStack : public boost::noncopyable
   {
   public:
-    UndoStack();
+    class ICommand : public boost::noncopyable
+    {
+    public:
+      virtual ~ICommand()
+      {
+      }
+
+      virtual void Undo() = 0;
+
+      virtual void Redo() = 0;
+    };
+
+  private:
+    std::vector<boost::shared_ptr<ICommand> > commandStack_;
+
+    /**
+    This is always between >= 0 and <= undoStack_.size() and gives the
+    position where the controller is in the undo stack.
+    - If numAppliedCommands_ > 0, one can undo
+    - If numAppliedCommands_ < numAppliedCommands_.size(), one can redo
+    */
+    size_t                      numAppliedCommands_;
+
+  public:
+    UndoStack() :
+      numAppliedCommands_(0)
+    {
+    }
 
     /**
     Stores a command :
@@ -44,37 +69,24 @@ namespace OrthancStone
     In other words, when a new command is pushed, all the undone (and not
     redone) commands are removed.
     */
-    void PushCommand(const boost::shared_ptr<MeasureCommand>& command);
+    void PushCommand(const boost::shared_ptr<ICommand>& command);
 
     /**
     Undoes the command at the top of the undo stack, or throws if there is no
     command to undo.
-    You can check "CanUndo" first to protect against extraneous redo.
+    You can check "CanUndo()" first to protect against extraneous undo.
     */
     void Undo();
 
     /**
     Redoes the command that is just above the last applied command in the undo
     stack or throws if there is no command to redo.
-    You can check "CanRedo" first to protect against extraneous redo.
+    You can check "CanRedo()" first to protect against extraneous redo.
     */
     void Redo();
 
-    /** selfexpl */
     bool CanUndo() const;
 
-    /** selfexpl */
     bool CanRedo() const;
-  
-  private:
-    std::vector<boost::shared_ptr<MeasureCommand> > commandStack_;
-
-    /**
-    This is always between >= 0 and <= undoStack_.size() and gives the
-    position where the controller is in the undo stack.
-    - If numAppliedCommands_ > 0, one can undo
-    - If numAppliedCommands_ < numAppliedCommands_.size(), one can redo
-    */
-    size_t                      numAppliedCommands_;
   };
 }

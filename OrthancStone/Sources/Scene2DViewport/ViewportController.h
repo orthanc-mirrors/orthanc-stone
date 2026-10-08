@@ -27,6 +27,7 @@
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"
 #include "../Viewport/IViewport.h"
 #include "../Viewport/IViewportInteractor.h"
+#include "UndoStack.h"
 
 #include <Compatibility.h>
 
@@ -35,9 +36,7 @@
 
 namespace OrthancStone
 {
-  class MeasureCommand;
   class MeasureTool;
-  class UndoStack;
 
   const double ARC_RADIUS_CANVAS_COORD = 30.0;
   const double TEXT_CENTER_DISTANCE_CANVAS_COORD = 90;
@@ -163,7 +162,7 @@ namespace OrthancStone
 
 
     /** forwarded to the UndoStack */
-    void PushCommand(const boost::shared_ptr<MeasureCommand>& command);
+    void PushCommand(const boost::shared_ptr<UndoStack::ICommand>& command);
 
     /** forwarded to the UndoStack */
     void Undo();

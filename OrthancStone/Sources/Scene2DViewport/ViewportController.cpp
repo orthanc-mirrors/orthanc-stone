@@ -38,7 +38,7 @@ namespace OrthancStone
     // The controller must be able to cope with this.
   }
 
-  void ViewportController::PushCommand(const boost::shared_ptr<MeasureCommand>& command)
+  void ViewportController::PushCommand(const boost::shared_ptr<UndoStack::ICommand>& command)
   {
     if (undoStackW_)
     {

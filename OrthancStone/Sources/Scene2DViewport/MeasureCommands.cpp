@@ -20,81 +20,61 @@
  * <http://www.gnu.org/licenses/>.
  **/
 
+
 #include "MeasureCommands.h"
 
-#include <memory>
-
-#include <boost/make_shared.hpp>
-#include <boost/ref.hpp>
 
 namespace OrthancStone
 {
-  IViewport::ILock* MeasureCommand::GetViewportLock()
-  {
-    boost::shared_ptr<IViewport> viewport = viewport_.lock();
-    if (viewport)
-    {
-      return viewport->Lock();
-    }
-    else
-    {
-      return NULL;
-    }
-  }
-
-
-
-  CreateMeasureCommand::CreateMeasureCommand(const boost::shared_ptr<MeasureTool>& tool,
-                                             boost::weak_ptr<IViewport> viewport) :
-    MeasureCommand(viewport),
+  MeasureCommand::MeasureCommand(ViewportController& controller,
+                                 const boost::shared_ptr<MeasureTool>& tool) :
+    controller_(controller),
     measureTool_(tool)
   {
+    if (!tool)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
   }
+
 
 
   void CreateMeasureCommand::Undo()
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     // simply disable the measure tool upon undo
-    measureTool_->Disable();
-    lock->GetController().RemoveMeasureTool(measureTool_);
+    GetMeasureTool()->Disable();
+    GetController().RemoveMeasureTool(GetMeasureTool());
   }
 
 
   void CreateMeasureCommand::Redo()
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    measureTool_->Enable();
-    lock->GetController().AddMeasureTool(measureTool_);
+    GetMeasureTool()->Enable();
+    GetController().AddMeasureTool(GetMeasureTool());
   }
 
 
 
 
-  EditMeasureCommand::EditMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
-                                         boost::weak_ptr<IViewport> viewport) :
-    MeasureCommand(viewport),
-    measureTool_(measureTool),
-    mementoModified_(measureTool->CreateMemento()),
-    mementoOriginal_(measureTool->CreateMemento())
+  EditMeasureCommand::EditMeasureCommand(ViewportController& controller,
+                                         const boost::shared_ptr<MeasureTool>& tool) :
+    MeasureCommand(controller, tool),
+    mementoModified_(tool->CreateMemento()),
+    mementoOriginal_(tool->CreateMemento())
   {
-    if (!measureTool)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
   }
 
   void EditMeasureCommand::Undo()
   {
     // simply disable the measure tool upon undo
     assert(mementoOriginal_.get() != NULL);
-    GetMeasureTool().SetMemento(*mementoOriginal_);
+    GetMeasureTool()->SetMemento(*mementoOriginal_);
   }
 
   void EditMeasureCommand::Redo()
   {
     assert(mementoModified_.get() != NULL);
-    GetMeasureTool().SetMemento(*mementoModified_);
+    GetMeasureTool()->SetMemento(*mementoModified_);
   }
 
   const MeasureTool::IMemento& EditMeasureCommand::GetMementoOriginal() const
@@ -117,37 +97,26 @@ namespace OrthancStone
 
 
 
-  DeleteMeasureCommand::DeleteMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
-                                             boost::weak_ptr<IViewport> viewport) :
-    MeasureCommand(viewport),
-    measureTool_(measureTool)
+  DeleteMeasureCommand::DeleteMeasureCommand(ViewportController& controller,
+                                             const boost::shared_ptr<MeasureTool>& tool) :
+    MeasureCommand(controller, tool)
   {
-    if (!measureTool)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-
-    {
-      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-      measureTool_->Disable();
-      lock->GetController().RemoveMeasureTool(measureTool_);  // TODO Refactoring - Should probably be moved into ViewportController
-    }
+    GetMeasureTool()->Disable();
+    GetController().RemoveMeasureTool(GetMeasureTool());  // TODO Refactoring - Should probably be moved into ViewportController
   }
 
 
   void DeleteMeasureCommand::Undo()
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    measureTool_->Enable();
-    lock->GetController().AddMeasureTool(measureTool_);
+    GetMeasureTool()->Enable();
+    GetController().AddMeasureTool(GetMeasureTool());
   }
 
 
   void DeleteMeasureCommand::Redo()
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
     // simply disable the measure tool upon undo
-    measureTool_->Disable();
-    lock->GetController().RemoveMeasureTool(measureTool_);
+    GetMeasureTool()->Disable();
+    GetController().RemoveMeasureTool(GetMeasureTool());
   }
 }

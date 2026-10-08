@@ -19,36 +19,38 @@
  * License along with this program. If not, see
  * <http://www.gnu.org/licenses/>.
  **/
+
+
 #pragma once
 
-#include "../Viewport/IViewport.h"
 #include "MeasureTool.h"
-#include "LineMeasureTool.h"
-#include "AngleMeasureTool.h"
 #include "UndoStack.h"
 
 #include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
-#include <boost/noncopyable.hpp>
+
 
 namespace OrthancStone
 {
   class MeasureCommand : public UndoStack::ICommand
   {
-  protected:
-    boost::weak_ptr<IViewport> viewport_;
+  private:
+    ViewportController&             controller_;   // TODO Refactoring - Should be a boost::shared_ptr
+    boost::shared_ptr<MeasureTool>  measureTool_;
 
-    /**
-    This will return a scoped lock to the viewport.
-    If the viewport does not exist anymore, then nullptr is returned.
-    */
-    IViewport::ILock* GetViewportLock();
+  protected:
+    ViewportController& GetController() const
+    {
+      return controller_;
+    }
+
+    const boost::shared_ptr<MeasureTool>& GetMeasureTool() const
+    {
+      return measureTool_;
+    }
 
   public:
-    explicit MeasureCommand(boost::weak_ptr<IViewport> viewport) :
-      viewport_(viewport)
-    {
-    }
+    explicit MeasureCommand(ViewportController& controller,
+                            const boost::shared_ptr<MeasureTool>& measureTool);
 
     virtual ~MeasureCommand()
     {
@@ -62,12 +64,12 @@ namespace OrthancStone
   
   class CreateMeasureCommand : public MeasureCommand
   {
-  private:
-    boost::shared_ptr<MeasureTool>  measureTool_;
-
   public:
-    CreateMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
-                         boost::weak_ptr<IViewport> viewport);
+    CreateMeasureCommand(ViewportController& controller,
+                         const boost::shared_ptr<MeasureTool>& measureTool) :
+      MeasureCommand(controller, measureTool)
+    {
+    }
 
     virtual void Undo() ORTHANC_OVERRIDE;
     
@@ -78,23 +80,15 @@ namespace OrthancStone
   class EditMeasureCommand : public MeasureCommand
   {
   private:
-    boost::shared_ptr<MeasureTool>  measureTool_;
-
     /** This memento is updated by the subclasses upon modifications */
     std::unique_ptr<MeasureTool::IMemento> mementoModified_;
     
     /** This memento is the original object state */
     std::unique_ptr<MeasureTool::IMemento> mementoOriginal_;
 
-  protected:
-    MeasureTool& GetMeasureTool() const
-    {
-      return *measureTool_;
-    }
-
   public:
-    EditMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
-                       boost::weak_ptr<IViewport> viewport);
+    EditMeasureCommand(ViewportController& controller,
+                       const boost::shared_ptr<MeasureTool>& measureTool);
 
     virtual void Undo() ORTHANC_OVERRIDE;
 
@@ -108,12 +102,9 @@ namespace OrthancStone
 
   class DeleteMeasureCommand : public MeasureCommand
   {
-  private:
-    boost::shared_ptr<MeasureTool> measureTool_;
-
   public:
-    DeleteMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool,
-                         boost::weak_ptr<IViewport> viewport);
+    DeleteMeasureCommand(ViewportController& controller,
+                         const boost::shared_ptr<MeasureTool>& measureTool);
 
     virtual void Undo() ORTHANC_OVERRIDE;
     

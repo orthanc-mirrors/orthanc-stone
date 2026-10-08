@@ -25,6 +25,8 @@
 #include "../StoneException.h"   // For ORTHANC_ASSERT
 #include "MeasureCommands.h"
 #include "UndoStack.h"
+#include "LineMeasureTool.h"
+#include "AngleMeasureTool.h"
 
 #include <boost/make_shared.hpp>
 

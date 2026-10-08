@@ -26,6 +26,8 @@
 #define TEST_MEASURE_TOOLS   1
 
 
+#include "../../../OrthancStone/Sources/Scene2DViewport/AngleMeasureTool.h"
+#include "../../../OrthancStone/Sources/Scene2DViewport/LineMeasureTool.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"
 #include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 
@@ -261,7 +263,7 @@ namespace OrthancStone
         if (core_->annotations_->GetActiveTool() == AnnotationsSceneLayer::Tool_Remove)
         {
           std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
-          viewportLock->GetController().PushCommand(boost::make_shared<DeleteMeasureCommand>(tools[0], core_->viewport_));
+          viewportLock->GetController().PushCommand(boost::make_shared<DeleteMeasureCommand>(viewportLock->GetController(), tools[0]));
           return NULL;
         }
         else

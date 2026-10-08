@@ -64,18 +64,18 @@ namespace OrthancStone
       modifiedZone_ = tool_->LineHitTest(originalClickPosition_);
       originalMemento_.reset(dynamic_cast<LineMeasureTool::Memento*>(tool->CreateMemento()));
 
-      if (isCreation)
+      boost::shared_ptr<IViewport> sharedViewport = viewport.lock();
+      if (sharedViewport)
       {
-        boost::shared_ptr<IViewport> sharedViewport = viewport.lock();
-        if (sharedViewport)
+        std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
+        if (isCreation)
         {
-          std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
-          lock->GetController().PushCommand(boost::make_shared<CreateMeasureCommand>(boost::dynamic_pointer_cast<MeasureTool>(tool_), viewport));
+          lock->GetController().PushCommand(boost::make_shared<CreateMeasureCommand>(lock->GetController(), boost::dynamic_pointer_cast<MeasureTool>(tool_)));
         }
-      }
-      else
-      {
-        editCommand_ = boost::make_shared<EditMeasureCommand>(boost::dynamic_pointer_cast<MeasureTool>(tool_), viewport_);
+        else
+        {
+          editCommand_ = boost::make_shared<EditMeasureCommand>(lock->GetController(), boost::dynamic_pointer_cast<MeasureTool>(tool_));
+        }
       }
     }
 

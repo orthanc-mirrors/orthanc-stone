@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "CreateLineMeasureCommand.h"
 #include "MeasureTrackers.h"
 
 #include <boost/shared_ptr.hpp>

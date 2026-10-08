@@ -23,13 +23,9 @@
 #pragma once
 
 #include "../Messages/ObserverBase.h"
-#include "../Scene2D/PolylineSceneLayer.h"
-#include "../Scene2D/Scene2D.h"
 #include "../Scene2D/ScenePoint2D.h"
 #include "../Scene2D/TextSceneLayer.h"
-#include "../Scene2DViewport/PredeclaredTypes.h"
-#include "../Scene2DViewport/ViewportController.h"
-#include "../Viewport/IViewport.h"
+#include "ViewportController.h"
 
 #include <boost/weak_ptr.hpp>
 
@@ -38,8 +34,6 @@
 
 namespace OrthancStone
 {
-  class IFlexiblePointerTracker;
-
   class MeasureTool : public ObserverBase<MeasureTool>
   {
   public:

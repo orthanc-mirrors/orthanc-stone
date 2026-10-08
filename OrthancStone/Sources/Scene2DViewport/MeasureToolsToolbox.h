@@ -23,9 +23,11 @@
 
 #pragma once
 
-#include "PredeclaredTypes.h"
+#include "LayerHolder.h"
 #include "../Scene2D/PolylineSceneLayer.h"
 #include "../Scene2D/Scene2D.h"
+
+#include <boost/shared_ptr.hpp>
 
 namespace OrthancStone
 {

@@ -22,10 +22,10 @@
 
 #pragma once
 
+#include "CreateAngleMeasureCommand.h"
 #include "MeasureTrackers.h"
 #include "MeasureCommands.h"
 
-#include <vector>
 
 namespace OrthancStone
 {

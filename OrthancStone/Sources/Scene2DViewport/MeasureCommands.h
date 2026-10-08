@@ -24,7 +24,6 @@
 #include "../Viewport/IViewport.h"
 
 // to be moved into Stone
-#include "PredeclaredTypes.h"
 #include "MeasureTool.h"
 #include "LineMeasureTool.h"
 #include "AngleMeasureTool.h"

@@ -23,8 +23,6 @@
 
 #pragma once
 
-#include "PredeclaredTypes.h"
-
 #include "../Scene2D/PointerEvent.h"
 #include "../Scene2D/Scene2D.h"
 #include "../Toolbox/Windowing.h"

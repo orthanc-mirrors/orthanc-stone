@@ -22,16 +22,12 @@
 
 #pragma once
 
-#include "MeasureTool.h"
-
 #include "../Scene2DViewport/LayerHolder.h"
-#include "../Scene2D/Scene2D.h"
 #include "../Scene2D/ScenePoint2D.h"
 #include "../Scene2D/PolylineSceneLayer.h"
 #include "../Scene2D/TextSceneLayer.h"
+#include "MeasureTool.h"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <vector>

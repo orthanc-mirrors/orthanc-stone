@@ -21,7 +21,6 @@
  **/
 
 #include "MeasureToolsToolbox.h"
-#include "PredeclaredTypes.h"
 #include "LayerHolder.h"
 #include "ViewportController.h"
 

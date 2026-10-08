@@ -26,6 +26,7 @@
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2D/ScenePoint2D.h"
 #include "../Scene2D/TextSceneLayer.h"
+#include "LayerHolder.h"
 #include "MeasureTool.h"
 
 #include <boost/shared_ptr.hpp>

@@ -22,11 +22,10 @@
 
 #pragma once
 
-#include "PredeclaredTypes.h"
-
 #include "../Messages/IObservable.h"
 #include "../Scene2D/Scene2D.h"
 #include "../Scene2DViewport/IFlexiblePointerTracker.h"
+#include "../Viewport/IViewport.h"
 #include "../Viewport/IViewportInteractor.h"
 
 #include <Compatibility.h>
@@ -36,6 +35,8 @@
 
 namespace OrthancStone
 {
+  class MeasureCommand;
+  class MeasureTool;
   class UndoStack;
 
   const double ARC_RADIUS_CANVAS_COORD = 30.0;

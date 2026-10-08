@@ -22,8 +22,6 @@
 
 #pragma once
 
-#include "PredeclaredTypes.h"
-
 #include "../Viewport/IViewport.h"
 
 #include <boost/noncopyable.hpp>

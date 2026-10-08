@@ -41,7 +41,6 @@
 #include "../../../OrthancStone/Sources/Scene2DViewport/CreateLineMeasureTracker.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/IFlexiblePointerTracker.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/MeasureTool.h"
-#include "../../../OrthancStone/Sources/Scene2DViewport/PredeclaredTypes.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/UndoStack.h"
 #include "../../../OrthancStone/Sources/StoneException.h"
 #include "../../../OrthancStone/Sources/StoneInitialization.h"

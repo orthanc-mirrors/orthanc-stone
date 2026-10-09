@@ -162,9 +162,9 @@ namespace OrthancStone
     boost::weak_ptr<IViewport> viewport):
     MeasureTool(viewport),
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
-    layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,5))),
+    layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(1, 5))),
 #else
-    layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,1))),
+    layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(1, 1))),
 #endif
     baseLayerIndex_(0),
     lineHighlightArea_(LineHighlightArea_None)
@@ -190,9 +190,12 @@ namespace OrthancStone
 
   void LineMeasureTool::RemoveFromScene()
   {
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
+
     if (layerHolder_->AreLayersCreated() && IsSceneAlive())
     {
-      layerHolder_->DeleteLayers();
+      layerHolder_->DeleteLayers(lock->GetController().GetScene());
+      lock->Invalidate();
     }
   }
   
@@ -227,7 +230,9 @@ namespace OrthancStone
   std::string LineMeasureTool::GetDescription()
   {
     std::stringstream ss;
-    ss << "LineMeasureTool. Start = " << start_ << " End = " << end_;
+    ss << "LineMeasureTool. "
+       << "Start = (" << start_.GetX() << ", " << start_.GetY() << ") "
+       << "End = (" << end_.GetX() << ", " << end_.GetY() << ") ";
     return ss.str();
   }
 
@@ -319,11 +324,12 @@ namespace OrthancStone
         ViewportController& controller = lock->GetController();
         Scene2D& scene = controller.GetScene();
 
-        layerHolder_->CreateLayersIfNeeded();
+        layerHolder_->CreateLayersIfNeeded(scene);
+
         {
           // Fill the polyline layer with the measurement line
 
-          PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(0);
+          PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(scene, 0);
           if (polylineLayer)
           {
             polylineLayer->ClearAllChains();

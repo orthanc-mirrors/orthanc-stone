@@ -184,21 +184,17 @@ namespace OrthancStone
   The five text layers are supposed to already exist in the scene, starting
   from startingLayerIndex, up to (and not including) startingLayerIndex+5.
   */
-  void SetTextLayerOutlineProperties(
-    const Scene2D& scene
-    , boost::shared_ptr<LayerHolder> layerHolder
-    , const char* text
-    , ScenePoint2D p
-    , int startingLayerIndex);
+  void SetTextLayerOutlineProperties(Scene2D& scene,
+                                     boost::shared_ptr<LayerHolder> layerHolder,
+                                     const std::string& text,
+                                     ScenePoint2D p,
+                                     int startingLayerIndex);
 #else
-  void SetTextLayerProperties(
-    const Scene2D& scene
-    , boost::shared_ptr<LayerHolder> layerHolder
-    , const char* text
-    , ScenePoint2D p
-    , int layerIndex);
+  void SetTextLayerProperties(Scene2D& scene,
+                              boost::shared_ptr<LayerHolder> layerHolder,
+                              const std::string& text,
+                              ScenePoint2D p,
+                              int layerIndex);
 #endif
-
-  std::ostream& operator<<(std::ostream& os, const ScenePoint2D& p);
 }
 

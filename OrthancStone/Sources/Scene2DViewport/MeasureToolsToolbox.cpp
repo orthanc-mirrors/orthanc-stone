@@ -22,15 +22,12 @@
 
 #include "MeasureToolsToolbox.h"
 
-#include "../Scene2D/Scene2D.h"
 #include "../Scene2D/TextSceneLayer.h"
-#include "../StoneException.h"
-#include "LayerHolder.h"
 
 #include <boost/math/constants/constants.hpp>
 
 
-static const double g_pi = boost::math::constants::pi<double>();
+static const double G_PI = boost::math::constants::pi<double>();
 static const uint8_t TEXT_COLOR_RED = 0;
 static const uint8_t TEXT_COLOR_GREEN = 223;
 static const uint8_t TEXT_COLOR_BLUE = 81;
@@ -58,7 +55,7 @@ namespace OrthancStone
 
   double RadiansToDegrees(double angleRad)
   {
-    static const double factor = 180.0 / g_pi;
+    static const double factor = 180.0 / G_PI;
     return angleRad * factor;
   }
 
@@ -185,7 +182,7 @@ namespace OrthancStone
     // let's fix this:
     if (!clockwise)
     {
-      angle2Rad -= 2 * g_pi;
+      angle2Rad -= 2.0 * G_PI;
       // now we are sure angle2Rad < angle1Rad (since they were normalized) 
       // and, thus, going from 1 to 2 means the angle values will DECREASE,
       // which is the definition of anticlockwise
@@ -224,7 +221,7 @@ namespace OrthancStone
     chain.clear();
     chain.reserve(numSubdivisions);
 
-    double angleIncr = (2.0 * g_pi)
+    double angleIncr = (2.0 * G_PI)
       / static_cast<double>(numSubdivisions);
 
     double theta = 0;
@@ -242,10 +239,17 @@ namespace OrthancStone
   double NormalizeAngle(double angle)
   {
     double retAngle = angle;
-    while (retAngle < -1.0 * g_pi)
-      retAngle += 2 * g_pi;
-    while (retAngle >= g_pi)
-      retAngle -= 2 * g_pi;
+
+    while (retAngle < -G_PI)
+    {
+      retAngle += 2 * G_PI;
+    }
+
+    while (retAngle >= G_PI)
+    {
+      retAngle -= 2 * G_PI;
+    }
+
     return retAngle;
   }
 
@@ -296,12 +300,11 @@ namespace OrthancStone
   and will use the first four ones for the text background and the fifth one
   for the actual text
   */
-  void SetTextLayerOutlineProperties(
-    const Scene2D& scene
-    , boost::shared_ptr<LayerHolder> layerHolder
-    , const char* text
-    , ScenePoint2D p
-    , int startingLayerIndex) 
+  void SetTextLayerOutlineProperties(const Scene2D& scene,
+                                     boost::shared_ptr<LayerHolder> layerHolder,
+                                     const char* text,
+                                     ScenePoint2D p,
+                                     int startingLayerIndex) 
   {
     double xoffsets[5] = { 2, 0, -2, 0, 0 };
     double yoffsets[5] = { 0, -2, 0, 2, 0 };
@@ -339,14 +342,13 @@ namespace OrthancStone
     }
   }
 #else
-  void SetTextLayerProperties(
-    const Scene2D& scene
-    , boost::shared_ptr<LayerHolder> layerHolder
-    , const char* text
-    , ScenePoint2D p
-    , int layerIndex)
+  void SetTextLayerProperties(Scene2D& scene,
+                              boost::shared_ptr<LayerHolder> layerHolder,
+                              const std::string& text,
+                              ScenePoint2D p,
+                              int layerIndex)
   {
-    TextSceneLayer* textLayer = layerHolder->GetTextLayer(layerIndex);
+    TextSceneLayer* textLayer = layerHolder->GetTextLayer(scene, layerIndex);
     if (textLayer != NULL)
     {
       textLayer->SetText(text);
@@ -355,11 +357,4 @@ namespace OrthancStone
     }
   }
 #endif 
-
-  std::ostream& operator<<(std::ostream& os, const ScenePoint2D& p)
-  {
-    os << "x = " << p.GetX() << " , y = " << p.GetY();
-    return os;
-  }
-
 }

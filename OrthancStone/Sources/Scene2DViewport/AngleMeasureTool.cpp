@@ -186,9 +186,9 @@ namespace OrthancStone
     boost::weak_ptr<IViewport> viewport)
     : MeasureTool(viewport)
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
-    , layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,5)))
+    , layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(1, 5)))
 #else
-    , layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(viewport,1,1)))
+    , layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(1, 1)))
 #endif
     , angleHighlightArea_(AngleHighlightArea_None)
   {
@@ -212,9 +212,12 @@ namespace OrthancStone
 
   void AngleMeasureTool::RemoveFromScene()
   {
+    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
+
     if (layerHolder_->AreLayersCreated() && IsSceneAlive())
     {
-      layerHolder_->DeleteLayers();
+      layerHolder_->DeleteLayers(lock->GetController().GetScene());
+      lock->Invalidate();
     }
   }
 
@@ -259,11 +262,14 @@ namespace OrthancStone
     RefreshScene();
   }
 
+
   std::string AngleMeasureTool::GetDescription()
   {
     std::stringstream ss;
-    ss << "AngleMeasureTool. Center = " << center_ << " Side1End = " 
-       << side1End_ << " Side2End = " << side2End_;
+    ss << "AngleMeasureTool. "
+       << "Center = (" << center_.GetX() << ", " << center_.GetY() << ") "
+       << "Side1End = (" << side1End_.GetX() << ", " << side1End_.GetY() << ") "
+       << "Side2End = (" << side2End_.GetX() << ", " << side2End_.GetY() << ") ";
     return ss.str();
   }
 
@@ -367,11 +373,11 @@ namespace OrthancStone
 
       if (IsEnabled())
       {
-        layerHolder_->CreateLayersIfNeeded();
+        layerHolder_->CreateLayersIfNeeded(scene);
 
         {
           // Fill the polyline layer with the measurement lines
-          PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(0);
+          PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(scene, 0);
           if (polylineLayer)
           {
             polylineLayer->ClearAllChains();

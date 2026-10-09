@@ -22,11 +22,10 @@
 
 #pragma once
 
-#include "../Viewport/IViewport.h"
+#include "../Scene2D/Scene2D.h"
 
 #include <boost/noncopyable.hpp>
-#include <boost/weak_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+
 
 namespace OrthancStone
 {
@@ -39,25 +38,35 @@ namespace OrthancStone
   */
   class LayerHolder : public boost::noncopyable
   {
+  private:
+    int textLayerCount_;
+    int polylineLayerCount_;
+    int infoTextCount_;
+    int baseLayerIndex_;
+
+    int GetPolylineLayerIndex(int index);
+
+    int GetTextLayerIndex(int index);
+
+    int GetInfoTextLayerIndex(int index);
+
   public:
     /**
     This ctor merely stores the scene and layer counts. No layer creation
     performed at this time
     */
-    LayerHolder(
-      boost::weak_ptr<IViewport> viewport,
-      int polylineLayerCount, int textLayerCount, int infoTextCount = 0);
+    LayerHolder(int polylineLayerCount, int textLayerCount, int infoTextCount = 0);
 
     /**
     This actually creates the layers
     */
-    void CreateLayers();
+    void CreateLayers(Scene2D& scene);
 
     /**
     This creates the layers if they are not created yet. Can be useful in 
     some scenarios
     */
-    void CreateLayersIfNeeded();
+    void CreateLayersIfNeeded(Scene2D& scene);
 
     /**
     Whether the various text and polylines layers have all been created or 
@@ -68,12 +77,12 @@ namespace OrthancStone
     /**
     This removes the layers from the scene
     */
-    void DeleteLayers();
+    void DeleteLayers(Scene2D& scene);
 
     /**
     This removes the layers from the scene if they are already created
     */
-    void DeleteLayersIfNeeded();
+    void DeleteLayersIfNeeded(Scene2D& scene);
 
     /**
     Please note that the returned pointer belongs to the scene.Don't you dare
@@ -82,7 +91,8 @@ namespace OrthancStone
     This throws if the index is not valid or if the layers are not created or
     have been deleted
     */
-    PolylineSceneLayer* GetPolylineLayer(int index = 0);
+    PolylineSceneLayer* GetPolylineLayer(Scene2D& scene,
+                                         int index = 0);
 
     /**
     Please note that the returned pointer belongs to the scene. Don't you dare
@@ -91,27 +101,7 @@ namespace OrthancStone
     This throws if the index is not valid or if the layers are not created or
     have been deleted
     */
-    TextSceneLayer* GetTextLayer(int index = 0);
-
-    //TextSceneLayer* GetTextLayer(int index = 0);
-
-  private:
-
-    /**
-    This will return a scoped lock to the viewport.
-    If the viewport does not exist anymore, then nullptr is returned.
-    */
-    IViewport::ILock* GetViewportLock();
-
-    int GetPolylineLayerIndex(int index = 0);
-    int GetTextLayerIndex(int index = 0);
-    int GetInfoTextLayerIndex(int index = 0);
-
-    int textLayerCount_;
-    int polylineLayerCount_;
-    int infoTextCount_;
-    boost::weak_ptr<IViewport> viewport_;
-    int baseLayerIndex_;
+    TextSceneLayer* GetTextLayer(Scene2D& scene,
+                                 int index = 0);
   };
 }
-

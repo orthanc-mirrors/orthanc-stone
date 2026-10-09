@@ -67,8 +67,7 @@ namespace OrthancStone
     };
 
   public:
-    static boost::shared_ptr<LineMeasureTool> Create(boost::weak_ptr<IViewport> viewport,
-                                                     const boost::shared_ptr<ViewportController>& controller);
+    static boost::shared_ptr<LineMeasureTool> Create(const boost::shared_ptr<ViewportController>& controller);
 
     ~LineMeasureTool();
 
@@ -103,8 +102,7 @@ namespace OrthancStone
   private:
     class Tracker;
 
-    explicit LineMeasureTool(boost::weak_ptr<IViewport> viewport,
-                             const boost::shared_ptr<ViewportController>& controller);
+    explicit LineMeasureTool(const boost::shared_ptr<ViewportController>& controller);
 
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();

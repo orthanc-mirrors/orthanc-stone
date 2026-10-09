@@ -47,7 +47,7 @@ namespace OrthancStone
   public:
     Tracker(const boost::shared_ptr<LineMeasureTool>& tool,
             bool isCreation,
-            const Scene2D& scene,
+            const Scene2D& scene,   // TODO Refactoring - The scene can be retrieved from the tool
             const PointerEvent& e) :
       tool_(tool),
       originalClickPosition_(e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())),
@@ -145,9 +145,8 @@ namespace OrthancStone
   };
 
 
-  LineMeasureTool::LineMeasureTool(boost::weak_ptr<IViewport> viewport,
-                                   const boost::shared_ptr<ViewportController>& controller) :
-    MeasureTool(viewport, controller),
+  LineMeasureTool::LineMeasureTool(const boost::shared_ptr<ViewportController>& controller) :
+    MeasureTool(controller),
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
     layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(1, 5))),
 #else
@@ -159,10 +158,9 @@ namespace OrthancStone
 
   }
 
-  boost::shared_ptr<LineMeasureTool> LineMeasureTool::Create(boost::weak_ptr<IViewport> viewport,
-                                                             const boost::shared_ptr<ViewportController>& controller)
+  boost::shared_ptr<LineMeasureTool> LineMeasureTool::Create(const boost::shared_ptr<ViewportController>& controller)
   {
-    boost::shared_ptr<LineMeasureTool> obj(new LineMeasureTool(viewport, controller));
+    boost::shared_ptr<LineMeasureTool> obj(new LineMeasureTool(controller));
     obj->MeasureTool::PostConstructor();
     obj->RefreshScene();
     return obj;
@@ -178,12 +176,10 @@ namespace OrthancStone
 
   void LineMeasureTool::RemoveFromScene()
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-
-    if (layerHolder_->AreLayersCreated() && IsSceneAlive())
+    if (layerHolder_->AreLayersCreated())
     {
-      layerHolder_->DeleteLayers(lock->GetController().GetScene());
-      lock->Invalidate();
+      layerHolder_->DeleteLayers(GetController().GetScene());
+      GetController().InvalidateViewport();
     }
   }
   
@@ -273,10 +269,7 @@ namespace OrthancStone
   IFlexiblePointerTracker* LineMeasureTool::CreateEditionTracker(bool isCreation,
                                                                  const PointerEvent& e)
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-
-    ViewportController& controller = lock->GetController();
-    const Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = GetController().GetScene();
     ScenePoint2D scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
     if (!HitTest(scene, scenePos))
@@ -304,103 +297,98 @@ namespace OrthancStone
 
   void LineMeasureTool::RefreshScene()
   {
-    if (IsSceneAlive())
+    if (IsEnabled())
     {
-      if (IsEnabled())
+      Scene2D& scene = GetController().GetScene();
+
+      layerHolder_->CreateLayersIfNeeded(scene);
+
       {
-        std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-        ViewportController& controller = lock->GetController();
-        Scene2D& scene = controller.GetScene();
+        // Fill the polyline layer with the measurement line
 
-        layerHolder_->CreateLayersIfNeeded(scene);
-
+        PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(scene, 0);
+        if (polylineLayer)
         {
-          // Fill the polyline layer with the measurement line
+          polylineLayer->ClearAllChains();
 
-          PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(scene, 0);
-          if (polylineLayer)
+          const Color color(TOOL_LINES_COLOR_RED, 
+                            TOOL_LINES_COLOR_GREEN, 
+                            TOOL_LINES_COLOR_BLUE);
+
+          const Color highlightColor(TOOL_LINES_HL_COLOR_RED,
+                                     TOOL_LINES_HL_COLOR_GREEN,
+                                     TOOL_LINES_HL_COLOR_BLUE);
+
           {
-            polylineLayer->ClearAllChains();
+            PolylineSceneLayer::Chain chain;
+            chain.push_back(start_);
+            chain.push_back(end_);
+            if(lineHighlightArea_ == LineHighlightArea_Segment)
+              polylineLayer->AddChain(chain, false, highlightColor);
+            else
+              polylineLayer->AddChain(chain, false, color);
+          }
 
-            const Color color(TOOL_LINES_COLOR_RED, 
-                              TOOL_LINES_COLOR_GREEN, 
-                              TOOL_LINES_COLOR_BLUE);
-
-            const Color highlightColor(TOOL_LINES_HL_COLOR_RED,
-                                       TOOL_LINES_HL_COLOR_GREEN,
-                                       TOOL_LINES_HL_COLOR_BLUE);
+          // handles
+          {
+            {
+              PolylineSceneLayer::Chain chain;
+              
+              //TODO: take DPI into account
+              AddSquare(chain, scene, start_, GetHandleSideLengthS(scene));
+              
+              if (lineHighlightArea_ == LineHighlightArea_Start)
+                polylineLayer->AddChain(chain, true, highlightColor);
+              else
+                polylineLayer->AddChain(chain, true, color);
+            }
 
             {
               PolylineSceneLayer::Chain chain;
-              chain.push_back(start_);
-              chain.push_back(end_);
-              if(lineHighlightArea_ == LineHighlightArea_Segment)
-                polylineLayer->AddChain(chain, false, highlightColor);
+              
+              //TODO: take DPI into account
+              AddSquare(chain, scene, end_, GetHandleSideLengthS(scene));
+              
+              if (lineHighlightArea_ == LineHighlightArea_End)
+                polylineLayer->AddChain(chain, true, highlightColor);
               else
-                polylineLayer->AddChain(chain, false, color);
-            }
-
-            // handles
-            {
-              {
-                PolylineSceneLayer::Chain chain;
-              
-                //TODO: take DPI into account
-                AddSquare(chain, controller.GetScene(), start_, GetHandleSideLengthS(controller.GetScene()));
-              
-                if (lineHighlightArea_ == LineHighlightArea_Start)
-                  polylineLayer->AddChain(chain, true, highlightColor);
-                else
-                  polylineLayer->AddChain(chain, true, color);
-              }
-
-              {
-                PolylineSceneLayer::Chain chain;
-              
-                //TODO: take DPI into account
-                AddSquare(chain, controller.GetScene(), end_, GetHandleSideLengthS(controller.GetScene()));
-              
-                if (lineHighlightArea_ == LineHighlightArea_End)
-                  polylineLayer->AddChain(chain, true, highlightColor);
-                else
-                  polylineLayer->AddChain(chain, true, color);
-              }
+                polylineLayer->AddChain(chain, true, color);
             }
           }
         }
+      }
+
+      {
+        // Set the text layer propreties
+        double deltaX = end_.GetX() - start_.GetX();
+        double deltaY = end_.GetY() - start_.GetY();
+        double squareDist = deltaX * deltaX + deltaY * deltaY;
+        double dist = sqrt(squareDist);
+        char buf[64];
+        sprintf(buf, "%0.02f mm", dist);
+
+        // TODO: for now we simply position the text overlay at the middle
+        // of the measuring segment
+        double midX = 0.5 * (end_.GetX() + start_.GetX());
+        double midY = 0.5 * (end_.GetY() + start_.GetY());
 
         {
-          // Set the text layer propreties
-          double deltaX = end_.GetX() - start_.GetX();
-          double deltaY = end_.GetY() - start_.GetY();
-          double squareDist = deltaX * deltaX + deltaY * deltaY;
-          double dist = sqrt(squareDist);
-          char buf[64];
-          sprintf(buf, "%0.02f mm", dist);
-
-          // TODO: for now we simply position the text overlay at the middle
-          // of the measuring segment
-          double midX = 0.5 * (end_.GetX() + start_.GetX());
-          double midY = 0.5 * (end_.GetY() + start_.GetY());
-
-          {
 
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
-            SetTextLayerOutlineProperties(
-              scene, layerHolder_, buf, ScenePoint2D(midX, midY), 0);
+          SetTextLayerOutlineProperties(
+            scene, layerHolder_, buf, ScenePoint2D(midX, midY), 0);
 #else
-            SetTextLayerProperties(
-              scene, layerHolder_, buf, ScenePoint2D(midX, midY), 0);
+          SetTextLayerProperties(
+            scene, layerHolder_, buf, ScenePoint2D(midX, midY), 0);
 #endif
-            lock->Invalidate();
-          }
         }
-        lock->Invalidate();
       }
-      else
-      {
-        RemoveFromScene();
-      }
+
+      GetController().InvalidateViewport();
+    }
+    else
+    {
+      RemoveFromScene();
     }
   }
 }

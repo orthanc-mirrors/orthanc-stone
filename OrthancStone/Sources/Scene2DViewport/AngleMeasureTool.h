@@ -72,8 +72,7 @@ namespace OrthancStone
     };
 
   public:
-    static boost::shared_ptr<AngleMeasureTool> Create(boost::weak_ptr<IViewport> viewport,
-                                                      const boost::shared_ptr<ViewportController>& controller);
+    static boost::shared_ptr<AngleMeasureTool> Create(const boost::shared_ptr<ViewportController>& controller);
 
     ~AngleMeasureTool();
 
@@ -109,8 +108,7 @@ namespace OrthancStone
   private:
     class Tracker;
 
-    explicit AngleMeasureTool(boost::weak_ptr<IViewport> viewport,
-                              const boost::shared_ptr<ViewportController>& controller);
+    explicit AngleMeasureTool(const boost::shared_ptr<ViewportController>& controller);
 
     virtual void        RefreshScene() ORTHANC_OVERRIDE;
     void                RemoveFromScene();

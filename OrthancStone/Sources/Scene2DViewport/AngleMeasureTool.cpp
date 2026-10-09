@@ -53,7 +53,7 @@ namespace OrthancStone
   public:
     Tracker(const boost::shared_ptr<AngleMeasureTool>& tool,
             bool isCreation,
-            const Scene2D& scene,
+            const Scene2D& scene,   // TODO Refactoring - The scene can be retrieved from the tool
             const PointerEvent& e) :
       tool_(tool),
       originalClickPosition_(e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())),
@@ -169,9 +169,8 @@ namespace OrthancStone
 
   // the params in the LayerHolder ctor specify the number of polyline and text
   // layers
-  AngleMeasureTool::AngleMeasureTool(boost::weak_ptr<IViewport> viewport,
-                                     const boost::shared_ptr<ViewportController>& controller) :
-    MeasureTool(viewport, controller)
+  AngleMeasureTool::AngleMeasureTool(const boost::shared_ptr<ViewportController>& controller) :
+    MeasureTool(controller)
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
     , layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(1, 5)))
 #else
@@ -181,10 +180,9 @@ namespace OrthancStone
   {
   }
 
-  boost::shared_ptr<AngleMeasureTool> AngleMeasureTool::Create(boost::weak_ptr<IViewport> viewport,
-                                                               const boost::shared_ptr<ViewportController>& controller)
+  boost::shared_ptr<AngleMeasureTool> AngleMeasureTool::Create(const boost::shared_ptr<ViewportController>& controller)
   {
-    boost::shared_ptr<AngleMeasureTool> obj(new AngleMeasureTool(viewport, controller));
+    boost::shared_ptr<AngleMeasureTool> obj(new AngleMeasureTool(controller));
     obj->MeasureTool::PostConstructor();
     obj->RefreshScene();
     return obj;
@@ -200,12 +198,10 @@ namespace OrthancStone
 
   void AngleMeasureTool::RemoveFromScene()
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-
-    if (layerHolder_->AreLayersCreated() && IsSceneAlive())
+    if (layerHolder_->AreLayersCreated())
     {
-      layerHolder_->DeleteLayers(lock->GetController().GetScene());
-      lock->Invalidate();
+      layerHolder_->DeleteLayers(GetController().GetScene());
+      GetController().InvalidateViewport();
     }
   }
 
@@ -329,10 +325,7 @@ namespace OrthancStone
   IFlexiblePointerTracker* AngleMeasureTool::CreateEditionTracker(bool isCreation,
                                                                   const PointerEvent& e)
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-
-    ViewportController& controller = lock->GetController();
-    const Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = GetController().GetScene();
     ScenePoint2D scenePos = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
     if (!HitTest(scene, scenePos))
@@ -353,194 +346,190 @@ namespace OrthancStone
   
   void AngleMeasureTool::RefreshScene()
   {
-    if (IsSceneAlive())
+    Scene2D& scene = GetController().GetScene();
+
+    if (IsEnabled())
     {
-      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-      ViewportController& controller = lock->GetController();
-      Scene2D& scene = controller.GetScene();
+      layerHolder_->CreateLayersIfNeeded(scene);
 
-      if (IsEnabled())
       {
-        layerHolder_->CreateLayersIfNeeded(scene);
-
+        // Fill the polyline layer with the measurement lines
+        PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(scene, 0);
+        if (polylineLayer)
         {
-          // Fill the polyline layer with the measurement lines
-          PolylineSceneLayer* polylineLayer = layerHolder_->GetPolylineLayer(scene, 0);
-          if (polylineLayer)
+          polylineLayer->ClearAllChains();
+
+          const Color color(TOOL_ANGLE_LINES_COLOR_RED, 
+                            TOOL_ANGLE_LINES_COLOR_GREEN, 
+                            TOOL_ANGLE_LINES_COLOR_BLUE);
+
+          const Color highlightColor(TOOL_ANGLE_LINES_HL_COLOR_RED, 
+                                     TOOL_ANGLE_LINES_HL_COLOR_GREEN, 
+                                     TOOL_ANGLE_LINES_HL_COLOR_BLUE);
+
+          // sides
           {
-            polylineLayer->ClearAllChains();
-
-            const Color color(TOOL_ANGLE_LINES_COLOR_RED, 
-                              TOOL_ANGLE_LINES_COLOR_GREEN, 
-                              TOOL_ANGLE_LINES_COLOR_BLUE);
-
-            const Color highlightColor(TOOL_ANGLE_LINES_HL_COLOR_RED, 
-                                       TOOL_ANGLE_LINES_HL_COLOR_GREEN, 
-                                       TOOL_ANGLE_LINES_HL_COLOR_BLUE);
-
-            // sides
-            {
-              {
-                PolylineSceneLayer::Chain chain;
-                chain.push_back(side1End_);
-                chain.push_back(center_);
-
-                if ((angleHighlightArea_ == AngleHighlightArea_Side1) ||
-                    (angleHighlightArea_ == AngleHighlightArea_Side2))
-                {
-                  polylineLayer->AddChain(chain, false, highlightColor);
-                } 
-                else
-                {
-                  polylineLayer->AddChain(chain, false, color);
-                }
-              }
-              {
-                PolylineSceneLayer::Chain chain;
-                chain.push_back(side2End_);
-                chain.push_back(center_);
-                if ((angleHighlightArea_ == AngleHighlightArea_Side1) ||
-                    (angleHighlightArea_ == AngleHighlightArea_Side2))
-                {
-                  polylineLayer->AddChain(chain, false, highlightColor);
-                }
-                else
-                {
-                  polylineLayer->AddChain(chain, false, color);
-                }
-              }
-            }
-
-            // Create the handles
-            {
-              {
-                PolylineSceneLayer::Chain chain;
-                //TODO: take DPI into account
-                AddSquare(chain, controller.GetScene(), side1End_, GetHandleSideLengthS(controller.GetScene()));
-              
-                if (angleHighlightArea_ == AngleHighlightArea_Side1End)
-                  polylineLayer->AddChain(chain, true, highlightColor);
-                else
-                  polylineLayer->AddChain(chain, true, color);
-              
-              }
-              {
-                PolylineSceneLayer::Chain chain;
-                //TODO: take DPI into account
-                AddSquare(chain, controller.GetScene(), side2End_, GetHandleSideLengthS(controller.GetScene()));
-
-                if (angleHighlightArea_ == AngleHighlightArea_Side2End)
-                  polylineLayer->AddChain(chain, true, highlightColor);
-                else
-                  polylineLayer->AddChain(chain, true, color);
-              }
-            }
-
-            // Create the arc
             {
               PolylineSceneLayer::Chain chain;
+              chain.push_back(side1End_);
+              chain.push_back(center_);
 
-              AddShortestArc(chain, side1End_, center_, side2End_, GetAngleToolArcRadiusS(controller.GetScene()));
-              if (angleHighlightArea_ == AngleHighlightArea_Center)
+              if ((angleHighlightArea_ == AngleHighlightArea_Side1) ||
+                  (angleHighlightArea_ == AngleHighlightArea_Side2))
+              {
                 polylineLayer->AddChain(chain, false, highlightColor);
+              } 
               else
+              {
                 polylineLayer->AddChain(chain, false, color);
+              }
+            }
+            {
+              PolylineSceneLayer::Chain chain;
+              chain.push_back(side2End_);
+              chain.push_back(center_);
+              if ((angleHighlightArea_ == AngleHighlightArea_Side1) ||
+                  (angleHighlightArea_ == AngleHighlightArea_Side2))
+              {
+                polylineLayer->AddChain(chain, false, highlightColor);
+              }
+              else
+              {
+                polylineLayer->AddChain(chain, false, color);
+              }
             }
           }
+
+          // Create the handles
+          {
+            {
+              PolylineSceneLayer::Chain chain;
+              //TODO: take DPI into account
+              AddSquare(chain, scene, side1End_, GetHandleSideLengthS(scene));
+              
+              if (angleHighlightArea_ == AngleHighlightArea_Side1End)
+                polylineLayer->AddChain(chain, true, highlightColor);
+              else
+                polylineLayer->AddChain(chain, true, color);
+              
+            }
+            {
+              PolylineSceneLayer::Chain chain;
+              //TODO: take DPI into account
+              AddSquare(chain, scene, side2End_, GetHandleSideLengthS(scene));
+
+              if (angleHighlightArea_ == AngleHighlightArea_Side2End)
+                polylineLayer->AddChain(chain, true, highlightColor);
+              else
+                polylineLayer->AddChain(chain, true, color);
+            }
+          }
+
+          // Create the arc
+          {
+            PolylineSceneLayer::Chain chain;
+
+            AddShortestArc(chain, side1End_, center_, side2End_, GetAngleToolArcRadiusS(scene));
+            if (angleHighlightArea_ == AngleHighlightArea_Center)
+              polylineLayer->AddChain(chain, false, highlightColor);
+            else
+              polylineLayer->AddChain(chain, false, color);
+          }
         }
-        {
-          // Set the text layer
+      }
+      {
+        // Set the text layer
 
-          double p1cAngle = atan2(
-            side1End_.GetY() - center_.GetY(),
-            side1End_.GetX() - center_.GetX());
+        double p1cAngle = atan2(
+          side1End_.GetY() - center_.GetY(),
+          side1End_.GetX() - center_.GetX());
 
-          double p2cAngle = atan2(
-            side2End_.GetY() - center_.GetY(),
-            side2End_.GetX() - center_.GetX());
+        double p2cAngle = atan2(
+          side2End_.GetY() - center_.GetY(),
+          side2End_.GetX() - center_.GetX());
 
-          double delta = NormalizeAngle(p2cAngle - p1cAngle);
-          double theta = p1cAngle + delta / 2;
+        double delta = NormalizeAngle(p2cAngle - p1cAngle);
+        double theta = p1cAngle + delta / 2;
 
-          double ox = GetAngleTopTextLabelDistanceS(controller.GetScene()) * cos(theta);
-          double oy = GetAngleTopTextLabelDistanceS(controller.GetScene()) * sin(theta);
+        double ox = GetAngleTopTextLabelDistanceS(scene) * cos(theta);
+        double oy = GetAngleTopTextLabelDistanceS(scene) * sin(theta);
 
-          double pointX = center_.GetX() + ox;
-          double pointY = center_.GetY() + oy;
+        double pointX = center_.GetX() + ox;
+        double pointY = center_.GetY() + oy;
 
-          char buf[64];
-          double angleDeg = std::abs(RadiansToDegrees(delta));
+        char buf[64];
+        double angleDeg = std::abs(RadiansToDegrees(delta));
 
-          // http://www.ltg.ed.ac.uk/~richard/utf-8.cgi?input=00B0&mode=hex
-          sprintf(buf, "%0.02f\xc2\xb0", angleDeg);
+        // http://www.ltg.ed.ac.uk/~richard/utf-8.cgi?input=00B0&mode=hex
+        sprintf(buf, "%0.02f\xc2\xb0", angleDeg);
 
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
-          SetTextLayerOutlineProperties(
-            scene, layerHolder_, buf, ScenePoint2D(pointX, pointY), 0);
+        SetTextLayerOutlineProperties(
+          scene, layerHolder_, buf, ScenePoint2D(pointX, pointY), 0);
 #else
-          SetTextLayerProperties(
-            scene, layerHolder_, buf, ScenePoint2D(pointX, pointY) , 0);
+        SetTextLayerProperties(
+          scene, layerHolder_, buf, ScenePoint2D(pointX, pointY) , 0);
 #endif
 
 #if 0
-          // TODO:make it togglable
-          bool enableInfoDisplay = true;
-          if (enableInfoDisplay)
-          {
-            TrackerSample_SetInfoDisplayMessage("center_.GetX()",
-                                                boost::lexical_cast<std::string>(center_.GetX()));
+        // TODO:make it togglable
+        bool enableInfoDisplay = true;
+        if (enableInfoDisplay)
+        {
+          TrackerSample_SetInfoDisplayMessage("center_.GetX()",
+                                              boost::lexical_cast<std::string>(center_.GetX()));
 
-            TrackerSample_SetInfoDisplayMessage("center_.GetY()",
-                                                boost::lexical_cast<std::string>(center_.GetY()));
+          TrackerSample_SetInfoDisplayMessage("center_.GetY()",
+                                              boost::lexical_cast<std::string>(center_.GetY()));
 
-            TrackerSample_SetInfoDisplayMessage("side1End_.GetX()",
-                                                boost::lexical_cast<std::string>(side1End_.GetX()));
+          TrackerSample_SetInfoDisplayMessage("side1End_.GetX()",
+                                              boost::lexical_cast<std::string>(side1End_.GetX()));
 
-            TrackerSample_SetInfoDisplayMessage("side1End_.GetY()",
-                                                boost::lexical_cast<std::string>(side1End_.GetY()));
+          TrackerSample_SetInfoDisplayMessage("side1End_.GetY()",
+                                              boost::lexical_cast<std::string>(side1End_.GetY()));
 
-            TrackerSample_SetInfoDisplayMessage("side2End_.GetX()",
-                                                boost::lexical_cast<std::string>(side2End_.GetX()));
+          TrackerSample_SetInfoDisplayMessage("side2End_.GetX()",
+                                              boost::lexical_cast<std::string>(side2End_.GetX()));
 
-            TrackerSample_SetInfoDisplayMessage("side2End_.GetY()",
-                                                boost::lexical_cast<std::string>(side2End_.GetY()));
+          TrackerSample_SetInfoDisplayMessage("side2End_.GetY()",
+                                              boost::lexical_cast<std::string>(side2End_.GetY()));
 
-            TrackerSample_SetInfoDisplayMessage("p1cAngle (deg)",
-                                                boost::lexical_cast<std::string>(RadiansToDegrees(p1cAngle)));
+          TrackerSample_SetInfoDisplayMessage("p1cAngle (deg)",
+                                              boost::lexical_cast<std::string>(RadiansToDegrees(p1cAngle)));
 
-            TrackerSample_SetInfoDisplayMessage("delta (deg)",
-                                                boost::lexical_cast<std::string>(RadiansToDegrees(delta)));
+          TrackerSample_SetInfoDisplayMessage("delta (deg)",
+                                              boost::lexical_cast<std::string>(RadiansToDegrees(delta)));
 
-            TrackerSample_SetInfoDisplayMessage("theta (deg)",
-                                                boost::lexical_cast<std::string>(RadiansToDegrees(theta)));
+          TrackerSample_SetInfoDisplayMessage("theta (deg)",
+                                              boost::lexical_cast<std::string>(RadiansToDegrees(theta)));
 
-            TrackerSample_SetInfoDisplayMessage("p2cAngle (deg)",
-                                                boost::lexical_cast<std::string>(RadiansToDegrees(p2cAngle)));
+          TrackerSample_SetInfoDisplayMessage("p2cAngle (deg)",
+                                              boost::lexical_cast<std::string>(RadiansToDegrees(p2cAngle)));
 
-            TrackerSample_SetInfoDisplayMessage("ox (scene)",
-                                                boost::lexical_cast<std::string>(ox));
+          TrackerSample_SetInfoDisplayMessage("ox (scene)",
+                                              boost::lexical_cast<std::string>(ox));
 
-            TrackerSample_SetInfoDisplayMessage("offsetY (scene)",
-                                                boost::lexical_cast<std::string>(oy));
+          TrackerSample_SetInfoDisplayMessage("offsetY (scene)",
+                                              boost::lexical_cast<std::string>(oy));
 
-            TrackerSample_SetInfoDisplayMessage("pointX",
-                                                boost::lexical_cast<std::string>(pointX));
+          TrackerSample_SetInfoDisplayMessage("pointX",
+                                              boost::lexical_cast<std::string>(pointX));
 
-            TrackerSample_SetInfoDisplayMessage("pointY",
-                                                boost::lexical_cast<std::string>(pointY));
+          TrackerSample_SetInfoDisplayMessage("pointY",
+                                              boost::lexical_cast<std::string>(pointY));
 
-            TrackerSample_SetInfoDisplayMessage("angleDeg",
-                                                boost::lexical_cast<std::string>(angleDeg));
-          }
-#endif
+          TrackerSample_SetInfoDisplayMessage("angleDeg",
+                                              boost::lexical_cast<std::string>(angleDeg));
         }
+#endif
       }
-      else
-      {
-        RemoveFromScene();
-      }
-      lock->Invalidate();
     }
+    else
+    {
+      RemoveFromScene();
+    }
+
+    GetController().InvalidateViewport();
   }
 
 

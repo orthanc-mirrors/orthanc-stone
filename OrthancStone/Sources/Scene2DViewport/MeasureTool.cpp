@@ -54,34 +54,14 @@ namespace OrthancStone
     return enabled_;
   }
 
-  IViewport::ILock* MeasureTool::GetViewportLock()
-  {
-    boost::shared_ptr<IViewport> viewport = viewport_.lock();
-    if (viewport)
-      return viewport->Lock();
-    else
-      return NULL;
-  }
-
-  IViewport::ILock* MeasureTool::GetViewportLock() const
-  {
-    boost::shared_ptr<IViewport> viewport = viewport_.lock();
-    if (viewport)
-      return viewport->Lock();
-    else
-      return NULL;
-  }
-
   double MeasureTool::GetHandleSideLengthS(const Scene2D& scene)
   {
     return HANDLE_SIDE_LENGTH_CANVAS_COORD * scene.GetCanvasToSceneTransform().ComputeZoom();
   }
 
-  MeasureTool::MeasureTool(boost::weak_ptr<IViewport> viewport,
-                           const boost::shared_ptr<ViewportController>& controller) :
+  MeasureTool::MeasureTool(const boost::shared_ptr<ViewportController>& controller) :
     enabled_(true),
-    controller_(controller),
-    viewport_(viewport)
+    controller_(controller)
   {
     if (!controller)
     {
@@ -92,16 +72,6 @@ namespace OrthancStone
   void MeasureTool::PostConstructor()
   {
     Register<ViewportController::SceneTransformChanged>(*controller_, &MeasureTool::OnSceneTransformChanged);
-  }
-
-  bool MeasureTool::IsSceneAlive() const
-  {
-    // since the lifetimes of the viewport, viewportcontroller (and the
-    // measuring tools inside it) are linked, the scene is alive as 
-    // long as the viewport is alive (which is technically not the case
-    // during its dtor)
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    return (lock != NULL);
   }
 
   void MeasureTool::OnSceneTransformChanged(const ViewportController::SceneTransformChanged& message)

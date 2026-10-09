@@ -191,6 +191,8 @@ namespace OrthancStone
       return activeTracker_.get() != NULL;
     }
 
+    void InvalidateViewport();
+
   private:
     // The scene can be used by the higher-level objects (including the
     // measuring tools), possibly in their destructor, and so it must be 
@@ -201,7 +203,5 @@ namespace OrthancStone
     boost::shared_ptr<UndoStack>                  undoStackW_;  // Global stack, possibly shared by all viewports
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;  // TODO Refactoring - Make this a std::set?
     boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO Refactoring - Couldn't this be a "std::unique_ptr"?
-
-    void InvalidateViewport();
   };
 }

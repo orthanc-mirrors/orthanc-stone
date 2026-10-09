@@ -51,17 +51,9 @@ namespace OrthancStone
 
 
   protected:
-    explicit MeasureTool(boost::weak_ptr<IViewport> viewport,  // TODO Refactoring - Remove
-                         const boost::shared_ptr<ViewportController>& controller);
+    explicit MeasureTool(const boost::shared_ptr<ViewportController>& controller);
 
     void PostConstructor();
-
-    /**
-       The measuring tool may exist in a standalone fashion, without any available
-       scene (because the controller is dead or dying). This call allows to check 
-       before accessing the scene.
-    */
-    bool IsSceneAlive() const;
 
     /**
        This is the meat of the tool: this method must [create (if needed) and]
@@ -75,19 +67,6 @@ namespace OrthancStone
        that we do not wanna mess with
     */
     bool IsEnabled() const;
-
-    /**
-       Protected to allow sub-classes to use this weak pointer in factory methods
-       (pass them to created objects)
-    */
-    boost::weak_ptr<IViewport> viewport_;   // TODO Refactoring - Remove
-
-    /**
-    This will return a scoped lock to the viewport. 
-    If the viewport does not exist anymore, then nullptr is returned.
-    */
-    IViewport::ILock* GetViewportLock();
-    IViewport::ILock* GetViewportLock() const;
 
     static double GetHandleSideLengthS(const Scene2D& scene);
 
@@ -113,8 +92,7 @@ namespace OrthancStone
        This method is called when the scene transform changes. It allows to 
        recompute the visual elements whose content depend upon the scene transform
     */
-    void OnSceneTransformChanged(
-      const ViewportController::SceneTransformChanged& message);
+    void OnSceneTransformChanged(const ViewportController::SceneTransformChanged& message);
     
     /**
        This function must be implemented by the measuring tool to return whether

@@ -236,8 +236,7 @@ namespace OrthancStone
       boost::shared_ptr<IViewport> sharedViewport(viewport_);
       if (sharedViewport)
       {
-        std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
-        activeTracker_.reset(interactor.CreateTracker(lock->GetController().GetScene(), event, viewportWidth, viewportHeight));
+        activeTracker_.reset(interactor.CreateTracker(GetScene(), event, viewportWidth, viewportHeight));
       }
       else
       {

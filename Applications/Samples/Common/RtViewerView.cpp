@@ -234,15 +234,15 @@ namespace OrthancStone
     {
       if (ctVolumeLayerSource_.get() != NULL)
       {
-        ctVolumeLayerSource_->Update(planes_[currentPlane_]);
+        ctVolumeLayerSource_->Update(lock->GetController().GetScene(), planes_[currentPlane_]);
       }
       if (doseVolumeLayerSource_.get() != NULL)
       {
-        doseVolumeLayerSource_->Update(planes_[currentPlane_]);
+        doseVolumeLayerSource_->Update(lock->GetController().GetScene(), planes_[currentPlane_]);
       }
       if (structLayerSource_.get() != NULL)
       {
-        structLayerSource_->Update(planes_[currentPlane_]);
+        structLayerSource_->Update(lock->GetController().GetScene(), planes_[currentPlane_]);
       }
     }
     lock->Invalidate();
@@ -322,10 +322,10 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    const Scene2D& scene = controller.GetScene();
+    Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    ctVolumeLayerSource_.reset(new VolumeSceneLayerSource(viewport_, depth, volume));
+    ctVolumeLayerSource_.reset(new VolumeSceneLayerSource(scene, depth, volume));
 
     if (style != NULL)
     {
@@ -340,10 +340,10 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    const Scene2D& scene = controller.GetScene();
+    Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    doseVolumeLayerSource_.reset(new VolumeSceneLayerSource(viewport_, depth, volume));
+    doseVolumeLayerSource_.reset(new VolumeSceneLayerSource(scene, depth, volume));
 
     if (style != NULL)
     {
@@ -355,9 +355,9 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     ViewportController& controller = lock->GetController();
-    const Scene2D& scene = controller.GetScene();
+    Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    structLayerSource_.reset(new VolumeSceneLayerSource(viewport_, depth, volume));
+    structLayerSource_.reset(new VolumeSceneLayerSource(scene, depth, volume));
   }
 }

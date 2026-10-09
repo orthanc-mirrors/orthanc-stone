@@ -24,11 +24,11 @@
 #include "VolumeSceneLayerSource.h"
 
 #include "../Scene2D/NullLayer.h"
-#include "../Viewport/IViewport.h"
 #include "../StoneException.h"
-#include "../Scene2DViewport/ViewportController.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
+
 
 namespace OrthancStone
 {
@@ -41,43 +41,15 @@ namespace OrthancStone
             LinearAlgebra::IsCloseToZero(distance));
   }
 
-  void VolumeSceneLayerSource::ClearLayer()
+  void VolumeSceneLayerSource::ClearLayer(Scene2D& scene)
   {
-    {
-      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-      if (lock.get())
-      {
-        ViewportController& controller = lock->GetController();
-        Scene2D& scene = controller.GetScene();
-        scene.DeleteLayer(layerDepth_);
-      }
-    }
+    scene.DeleteLayer(layerDepth_);
     lastPlane_.reset(NULL);
   }
 
-  IViewport::ILock* VolumeSceneLayerSource::GetViewportLock()
-  {
-    boost::shared_ptr<IViewport> viewport = viewport_.lock();
-    if (viewport)
-      return viewport->Lock();
-    else
-      return NULL;
-  }
-
-  IViewport::ILock* VolumeSceneLayerSource::GetViewportLock() const
-  {
-    boost::shared_ptr<IViewport> viewport = viewport_.lock();
-    if (viewport)
-      return viewport->Lock();
-    else
-      return NULL;
-  }
-
-
-  VolumeSceneLayerSource::VolumeSceneLayerSource(boost::weak_ptr<IViewport>  viewport,
+  VolumeSceneLayerSource::VolumeSceneLayerSource(Scene2D& scene,
                                                  int layerDepth,
                                                  const boost::shared_ptr<IVolumeSlicer>& slicer) :
-    viewport_(viewport),
     layerDepth_(layerDepth),
     slicer_(slicer),
     lastRevision_(0),
@@ -88,22 +60,15 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
 
+    if (scene.HasLayer(layerDepth_))
     {
-      std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-      ViewportController& controller = lock->GetController();
-      Scene2D& scene = controller.GetScene();
-      ORTHANC_ASSERT(!scene.HasLayer(layerDepth_));
-
-      // we need to book the scene layer depth by adding a dummy layer
-      std::unique_ptr<NullLayer> nullLayer(new NullLayer);
-      scene.SetLayer(layerDepth_,nullLayer.release());
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
+
+    // we need to book the scene layer depth by adding a dummy layer
+    scene.SetLayer(layerDepth_, new NullLayer);
   }
 
-  VolumeSceneLayerSource::~VolumeSceneLayerSource()
-  {
-    ClearLayer();
-  }
 
   void VolumeSceneLayerSource::RemoveConfigurator()
   {
@@ -138,65 +103,59 @@ namespace OrthancStone
   }
 
 
-  void VolumeSceneLayerSource::Update(const CoordinateSystem3D& plane)
+  void VolumeSceneLayerSource::Update(Scene2D& scene,
+                                      const CoordinateSystem3D& plane)
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-    if(lock)
+    assert(slicer_.get() != NULL);
+    std::unique_ptr<IVolumeSlicer::IExtractedSlice> slice(slicer_->ExtractSlice(plane));
+
+    if (slice.get() == NULL)
     {
-      ViewportController& controller = lock->GetController();
-      Scene2D& scene = controller.GetScene();
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
 
-      assert(slicer_.get() != NULL);
-      std::unique_ptr<IVolumeSlicer::IExtractedSlice> slice(slicer_->ExtractSlice(plane));
+    if (!slice->IsValid())
+    {
+      // The slicer cannot handle this cutting plane: Clear the layer
+      ClearLayer(scene);
+    }
+    else if (lastPlane_.get() != NULL &&
+             IsSameCuttingPlane(*lastPlane_, plane) &&
+             lastRevision_ == slice->GetRevision())
+    {
+      // The content of the slice has not changed: Don't update the
+      // layer content, but possibly update its style
 
-      if (slice.get() == NULL)
+      if (configurator_.get() != NULL &&
+          configurator_->GetRevision() != lastConfiguratorRevision_ &&
+          scene.HasLayer(layerDepth_))
       {
-        throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);        
+        configurator_->ApplyStyle(scene.GetLayer(layerDepth_));
       }
+    }
+    else
+    {
+      LOG(TRACE) << "VolumeSceneLayerSource::Update -- Content has changed: An update is needed";
+      // Content has changed: An update is needed
+      lastPlane_.reset(new CoordinateSystem3D(plane));
+      lastRevision_ = slice->GetRevision();
 
-      if (!slice->IsValid())
+      std::unique_ptr<ISceneLayer> layer(slice->CreateSceneLayer(configurator_.get(), plane));
+      if (layer.get() == NULL)
       {
-        // The slicer cannot handle this cutting plane: Clear the layer
-        ClearLayer();
-      }
-      else if (lastPlane_.get() != NULL &&
-              IsSameCuttingPlane(*lastPlane_, plane) &&
-              lastRevision_ == slice->GetRevision())
-      {
-        // The content of the slice has not changed: Don't update the
-        // layer content, but possibly update its style
-
-        if (configurator_.get() != NULL &&
-            configurator_->GetRevision() != lastConfiguratorRevision_ &&
-            scene.HasLayer(layerDepth_))
-        {
-          configurator_->ApplyStyle(scene.GetLayer(layerDepth_));
-        }
+        LOG(TRACE) << "VolumeSceneLayerSource::Update -- (layer.get() == NULL)";
+        ClearLayer(scene);
       }
       else
       {
-        LOG(TRACE) << "VolumeSceneLayerSource::Update -- Content has changed: An update is needed";
-        // Content has changed: An update is needed
-        lastPlane_.reset(new CoordinateSystem3D(plane));
-        lastRevision_ = slice->GetRevision();
-
-        std::unique_ptr<ISceneLayer> layer(slice->CreateSceneLayer(configurator_.get(), plane));
-        if (layer.get() == NULL)
+        LOG(TRACE) << "VolumeSceneLayerSource::Update -- (layer.get() != NULL)";
+        if (configurator_.get() != NULL)
         {
-          LOG(TRACE) << "VolumeSceneLayerSource::Update -- (layer.get() == NULL)";
-          ClearLayer();
+          lastConfiguratorRevision_ = configurator_->GetRevision();
+          configurator_->ApplyStyle(*layer);
         }
-        else
-        {
-          LOG(TRACE) << "VolumeSceneLayerSource::Update -- (layer.get() != NULL)";
-          if (configurator_.get() != NULL)
-          {
-            lastConfiguratorRevision_ = configurator_->GetRevision();
-            configurator_->ApplyStyle(*layer);
-          }
 
-          scene.SetLayer(layerDepth_, layer.release());
-        }
+        scene.SetLayer(layerDepth_, layer.release());
       }
     }
   }

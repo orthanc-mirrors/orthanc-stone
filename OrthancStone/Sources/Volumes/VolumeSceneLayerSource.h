@@ -24,7 +24,6 @@
 #pragma once
 
 #include "../Scene2D/Scene2D.h"
-#include "../Viewport/IViewport.h"
 #include "IVolumeSlicer.h"
 
 #include <boost/weak_ptr.hpp>
@@ -42,7 +41,6 @@ namespace OrthancStone
   class VolumeSceneLayerSource : public boost::noncopyable
   {
   private:
-    boost::weak_ptr<IViewport>                viewport_;
     int                                       layerDepth_;
     boost::shared_ptr<IVolumeSlicer>          slicer_;
     std::unique_ptr<ILayerStyleConfigurator>  configurator_;
@@ -50,21 +48,12 @@ namespace OrthancStone
     uint64_t                                  lastRevision_;
     uint64_t                                  lastConfiguratorRevision_;
 
-    void ClearLayer();
-
-    /**
-    This will return a scoped lock to the viewport.
-    If the viewport does not exist anymore, then nullptr is returned.
-    */
-    IViewport::ILock* GetViewportLock();
-    IViewport::ILock* GetViewportLock() const;
+    void ClearLayer(Scene2D& scene);
 
   public:
-    VolumeSceneLayerSource(boost::weak_ptr<IViewport>  viewport,
+    VolumeSceneLayerSource(Scene2D& scene,
                            int layerDepth,
                            const boost::shared_ptr<IVolumeSlicer>& slicer);
-
-    ~VolumeSceneLayerSource();
 
     const IVolumeSlicer& GetSlicer() const
     {
@@ -90,6 +79,7 @@ namespace OrthancStone
     you can lock the whole viewport data (including scene) by means of the 
     IViewport::Lock method.
     */ 
-    void Update(const CoordinateSystem3D& plane); 
+    void Update(Scene2D& scene,
+                const CoordinateSystem3D& plane);
   };
 }

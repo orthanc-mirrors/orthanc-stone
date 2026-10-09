@@ -34,23 +34,16 @@ namespace OrthancStone
   class MeasureCommand : public UndoStack::ICommand
   {
   private:
-    ViewportController&             controller_;   // TODO Refactoring - Should be a boost::shared_ptr
     boost::shared_ptr<MeasureTool>  measureTool_;
 
   protected:
-    ViewportController& GetController() const
-    {
-      return controller_;
-    }
-
     const boost::shared_ptr<MeasureTool>& GetMeasureTool() const
     {
       return measureTool_;
     }
 
   public:
-    explicit MeasureCommand(ViewportController& controller,
-                            const boost::shared_ptr<MeasureTool>& measureTool);
+    explicit MeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool);
 
     virtual ~MeasureCommand()
     {
@@ -65,9 +58,8 @@ namespace OrthancStone
   class CreateMeasureCommand : public MeasureCommand
   {
   public:
-    CreateMeasureCommand(ViewportController& controller,
-                         const boost::shared_ptr<MeasureTool>& measureTool) :
-      MeasureCommand(controller, measureTool)
+    CreateMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool) :
+      MeasureCommand(measureTool)
     {
     }
 
@@ -87,8 +79,7 @@ namespace OrthancStone
     std::unique_ptr<MeasureTool::IMemento> mementoOriginal_;
 
   public:
-    EditMeasureCommand(ViewportController& controller,
-                       const boost::shared_ptr<MeasureTool>& measureTool);
+    EditMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool);
 
     virtual void Undo() ORTHANC_OVERRIDE;
 
@@ -103,8 +94,7 @@ namespace OrthancStone
   class DeleteMeasureCommand : public MeasureCommand
   {
   public:
-    DeleteMeasureCommand(ViewportController& controller,
-                         const boost::shared_ptr<MeasureTool>& measureTool);
+    DeleteMeasureCommand(const boost::shared_ptr<MeasureTool>& measureTool);
 
     virtual void Undo() ORTHANC_OVERRIDE;
     

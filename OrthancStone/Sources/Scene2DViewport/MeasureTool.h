@@ -46,11 +46,13 @@ namespace OrthancStone
     };
 
   private:
-    bool     enabled_;
+    bool                                   enabled_;
+    boost::shared_ptr<ViewportController>  controller_;
 
 
   protected:
-    explicit MeasureTool(boost::weak_ptr<IViewport> viewport);
+    explicit MeasureTool(boost::weak_ptr<IViewport> viewport,  // TODO Refactoring - Remove
+                         const boost::shared_ptr<ViewportController>& controller);
 
     void PostConstructor();
 
@@ -60,7 +62,7 @@ namespace OrthancStone
        before accessing the scene.
     */
     bool IsSceneAlive() const;
-    
+
     /**
        This is the meat of the tool: this method must [create (if needed) and]
        update the layers and their data according to the measure tool kind and
@@ -78,7 +80,7 @@ namespace OrthancStone
        Protected to allow sub-classes to use this weak pointer in factory methods
        (pass them to created objects)
     */
-    boost::weak_ptr<IViewport> viewport_;
+    boost::weak_ptr<IViewport> viewport_;   // TODO Refactoring - Remove
 
     /**
     This will return a scoped lock to the viewport. 
@@ -163,8 +165,10 @@ namespace OrthancStone
        A description of the measuring tool, useful in debug logs
     */
     virtual std::string GetDescription() = 0;
+
+    ViewportController& GetController() const
+    {
+      return *controller_;
+    }
   };
 }
-
-//extern void TrackerSample_SetInfoDisplayMessage(
-//  std::string key, std::string value);

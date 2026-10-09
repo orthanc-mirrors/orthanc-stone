@@ -165,7 +165,7 @@ namespace OrthancStone
   {
     const ScenePoint2D p = event.GetMainPosition().Apply(scene_->GetCanvasToSceneTransform());
 
-    boost::shared_ptr<LineMeasureTool> tool = LineMeasureTool::Create(viewport_);
+    boost::shared_ptr<LineMeasureTool> tool = LineMeasureTool::Create(viewport_, shared_from_this());
     tool->Enable();
     tool->Set(p, p);
 
@@ -179,7 +179,7 @@ namespace OrthancStone
   {
     const ScenePoint2D p = event.GetMainPosition().Apply(scene_->GetCanvasToSceneTransform());
 
-    boost::shared_ptr<AngleMeasureTool> tool = AngleMeasureTool::Create(viewport_);
+    boost::shared_ptr<AngleMeasureTool> tool = AngleMeasureTool::Create(viewport_, shared_from_this());
     tool->Enable();
     tool->SetCenter(p);
     tool->SetSide1End(p);

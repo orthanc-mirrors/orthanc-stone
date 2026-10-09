@@ -42,19 +42,16 @@ namespace OrthancStone
     ScenePoint2D                               originalClickPosition_;
     LineMeasureTool::LineHighlightArea         modifiedZone_;
     bool                                       alive_;
-    boost::weak_ptr<IViewport>&                viewport_;  // TODO Refactoring
     boost::shared_ptr<EditMeasureCommand>      editCommand_;
 
   public:
     Tracker(const boost::shared_ptr<LineMeasureTool>& tool,
             bool isCreation,
             const Scene2D& scene,
-            const PointerEvent& e,
-            boost::weak_ptr<IViewport>& viewport) :
+            const PointerEvent& e) :
       tool_(tool),
       originalClickPosition_(e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform())),
-      alive_(true),
-      viewport_(viewport)
+      alive_(true)
     {
       if (!tool)
       {
@@ -64,20 +61,15 @@ namespace OrthancStone
       modifiedZone_ = tool_->LineHitTest(scene, originalClickPosition_);
       originalMemento_.reset(dynamic_cast<LineMeasureTool::Memento*>(tool->CreateMemento()));
 
-      boost::shared_ptr<IViewport> sharedViewport = viewport.lock();
-      if (sharedViewport)
+      if (isCreation)
       {
-        std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
-        if (isCreation)
-        {
-          boost::shared_ptr<MeasureCommand> command(new CreateMeasureCommand(lock->GetController(), tool_));
-          lock->GetController().PushCommand(command);
-        }
-        else
-        {
-          boost::shared_ptr<EditMeasureCommand> command(new EditMeasureCommand(lock->GetController(), tool_));
-          editCommand_ = command;
-        }
+        boost::shared_ptr<MeasureCommand> command(new CreateMeasureCommand(tool_));
+        tool->GetController().PushCommand(command);
+      }
+      else
+      {
+        boost::shared_ptr<EditMeasureCommand> command(new EditMeasureCommand(tool_));
+        editCommand_ = command;
       }
     }
 
@@ -123,13 +115,8 @@ namespace OrthancStone
       if (alive_ && editCommand_)
       {
         editCommand_->SetMementoModified(tool_->CreateMemento());
-
-        boost::shared_ptr<IViewport> sharedViewport = viewport_.lock();
-        if (sharedViewport)
-        {
-          std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
-          lock->GetController().PushCommand(editCommand_);
-        }
+        tool_->GetController().PushCommand(editCommand_);
+        editCommand_.reset();
       }
 
       alive_ = false;
@@ -158,9 +145,9 @@ namespace OrthancStone
   };
 
 
-  LineMeasureTool::LineMeasureTool(
-    boost::weak_ptr<IViewport> viewport):
-    MeasureTool(viewport),
+  LineMeasureTool::LineMeasureTool(boost::weak_ptr<IViewport> viewport,
+                                   const boost::shared_ptr<ViewportController>& controller) :
+    MeasureTool(viewport, controller),
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
     layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(1, 5))),
 #else
@@ -172,9 +159,10 @@ namespace OrthancStone
 
   }
 
-  boost::shared_ptr<LineMeasureTool> LineMeasureTool::Create(boost::weak_ptr<IViewport> viewport)
+  boost::shared_ptr<LineMeasureTool> LineMeasureTool::Create(boost::weak_ptr<IViewport> viewport,
+                                                             const boost::shared_ptr<ViewportController>& controller)
   {
-    boost::shared_ptr<LineMeasureTool> obj(new LineMeasureTool(viewport));
+    boost::shared_ptr<LineMeasureTool> obj(new LineMeasureTool(viewport, controller));
     obj->MeasureTool::PostConstructor();
     obj->RefreshScene();
     return obj;
@@ -297,7 +285,7 @@ namespace OrthancStone
     }
     else
     {
-      return new Tracker(boost::dynamic_pointer_cast<LineMeasureTool>(shared_from_this()), isCreation, scene, e, viewport_);
+      return new Tracker(boost::dynamic_pointer_cast<LineMeasureTool>(shared_from_this()), isCreation, scene, e);
     }
   }
 
@@ -402,7 +390,7 @@ namespace OrthancStone
               scene, layerHolder_, buf, ScenePoint2D(midX, midY), 0);
 #else
             SetTextLayerProperties(
-                                   scene, layerHolder_, buf, ScenePoint2D(midX, midY), 0);
+              scene, layerHolder_, buf, ScenePoint2D(midX, midY), 0);
 #endif
             lock->Invalidate();
           }

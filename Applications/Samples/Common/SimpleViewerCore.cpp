@@ -159,7 +159,7 @@ namespace OrthancStone
       viewportLock->GetController().SetUndoStack(boost::make_shared<UndoStack>());
     }
 
-#if TEST_MEASURE_TOOLS == 1
+#if 0 && TEST_MEASURE_TOOLS == 1    // TODO Refactoring - Reenable this
     {
       boost::shared_ptr<LineMeasureTool> tool = OrthancStone::LineMeasureTool::Create(viewport);
       tool->Enable();
@@ -267,7 +267,7 @@ namespace OrthancStone
         {
           if (core_->annotations_->GetActiveTool() == AnnotationsSceneLayer::Tool_Remove)
           {
-            boost::shared_ptr<MeasureCommand> command(new DeleteMeasureCommand(viewportLock->GetController(), tools[0]));
+            boost::shared_ptr<MeasureCommand> command(new DeleteMeasureCommand(tools[0]));
             viewportLock->GetController().PushCommand(command);
             return NULL;
           }

@@ -77,22 +77,21 @@ namespace OrthancStone
     return HANDLE_SIDE_LENGTH_CANVAS_COORD * scene.GetCanvasToSceneTransform().ComputeZoom();
   }
 
-  MeasureTool::MeasureTool(boost::weak_ptr<IViewport> viewport) :
+  MeasureTool::MeasureTool(boost::weak_ptr<IViewport> viewport,
+                           const boost::shared_ptr<ViewportController>& controller) :
     enabled_(true),
+    controller_(controller),
     viewport_(viewport)
   {
+    if (!controller)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
   }
 
   void MeasureTool::PostConstructor()
   {
-    std::unique_ptr<IViewport::ILock> lock(GetViewportLock());
-
-    if (lock.get() != NULL)
-    {
-      Register<ViewportController::SceneTransformChanged>(
-        lock->GetController(), 
-        &MeasureTool::OnSceneTransformChanged);
-    }
+    Register<ViewportController::SceneTransformChanged>(*controller_, &MeasureTool::OnSceneTransformChanged);
   }
 
   bool MeasureTool::IsSceneAlive() const
@@ -105,9 +104,9 @@ namespace OrthancStone
     return (lock != NULL);
   }
 
-  void MeasureTool::OnSceneTransformChanged(
-    const ViewportController::SceneTransformChanged& message)
+  void MeasureTool::OnSceneTransformChanged(const ViewportController::SceneTransformChanged& message)
   {
+    // TODO Refactoring - This is not called
     RefreshScene();
   }
 }

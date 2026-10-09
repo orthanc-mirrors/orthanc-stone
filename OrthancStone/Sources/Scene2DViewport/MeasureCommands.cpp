@@ -26,9 +26,7 @@
 
 namespace OrthancStone
 {
-  MeasureCommand::MeasureCommand(ViewportController& controller,
-                                 const boost::shared_ptr<MeasureTool>& tool) :
-    controller_(controller),
+  MeasureCommand::MeasureCommand(const boost::shared_ptr<MeasureTool>& tool) :
     measureTool_(tool)
   {
     if (!tool)
@@ -43,22 +41,21 @@ namespace OrthancStone
   {
     // simply disable the measure tool upon undo
     GetMeasureTool()->Disable();
-    GetController().RemoveMeasureTool(GetMeasureTool());
+    GetMeasureTool()->GetController().RemoveMeasureTool(GetMeasureTool());
   }
 
 
   void CreateMeasureCommand::Redo()
   {
     GetMeasureTool()->Enable();
-    GetController().AddMeasureTool(GetMeasureTool());
+    GetMeasureTool()->GetController().AddMeasureTool(GetMeasureTool());
   }
 
 
 
 
-  EditMeasureCommand::EditMeasureCommand(ViewportController& controller,
-                                         const boost::shared_ptr<MeasureTool>& tool) :
-    MeasureCommand(controller, tool),
+  EditMeasureCommand::EditMeasureCommand(const boost::shared_ptr<MeasureTool>& tool) :
+    MeasureCommand(tool),
     mementoModified_(tool->CreateMemento()),
     mementoOriginal_(tool->CreateMemento())
   {
@@ -97,19 +94,18 @@ namespace OrthancStone
 
 
 
-  DeleteMeasureCommand::DeleteMeasureCommand(ViewportController& controller,
-                                             const boost::shared_ptr<MeasureTool>& tool) :
-    MeasureCommand(controller, tool)
+  DeleteMeasureCommand::DeleteMeasureCommand(const boost::shared_ptr<MeasureTool>& tool) :
+    MeasureCommand(tool)
   {
     GetMeasureTool()->Disable();
-    GetController().RemoveMeasureTool(GetMeasureTool());  // TODO Refactoring - Should probably be moved into ViewportController
+    GetMeasureTool()->GetController().RemoveMeasureTool(GetMeasureTool());  // TODO Refactoring - Should probably be moved into ViewportController
   }
 
 
   void DeleteMeasureCommand::Undo()
   {
     GetMeasureTool()->Enable();
-    GetController().AddMeasureTool(GetMeasureTool());
+    GetMeasureTool()->GetController().AddMeasureTool(GetMeasureTool());
   }
 
 
@@ -117,6 +113,6 @@ namespace OrthancStone
   {
     // simply disable the measure tool upon undo
     GetMeasureTool()->Disable();
-    GetController().RemoveMeasureTool(GetMeasureTool());
+    GetMeasureTool()->GetController().RemoveMeasureTool(GetMeasureTool());
   }
 }

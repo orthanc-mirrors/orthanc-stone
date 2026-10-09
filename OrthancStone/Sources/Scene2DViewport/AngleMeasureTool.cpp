@@ -76,12 +76,12 @@ namespace OrthancStone
         std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
         if (isCreation)
         {
-          boost::shared_ptr<MeasureCommand> command(new CreateMeasureCommand(lock->GetController(), tool_));
+          boost::shared_ptr<MeasureCommand> command(new CreateMeasureCommand(tool_));
           lock->GetController().PushCommand(command);
         }
         else
         {
-          boost::shared_ptr<EditMeasureCommand> command(new EditMeasureCommand(lock->GetController(), tool_));
+          boost::shared_ptr<EditMeasureCommand> command(new EditMeasureCommand(tool_));
           editCommand_ = command;
         }
       }
@@ -182,9 +182,9 @@ namespace OrthancStone
 
   // the params in the LayerHolder ctor specify the number of polyline and text
   // layers
-  AngleMeasureTool::AngleMeasureTool(
-    boost::weak_ptr<IViewport> viewport)
-    : MeasureTool(viewport)
+  AngleMeasureTool::AngleMeasureTool(boost::weak_ptr<IViewport> viewport,
+                                     const boost::shared_ptr<ViewportController>& controller) :
+    MeasureTool(viewport, controller)
 #if ORTHANC_STONE_ENABLE_OUTLINED_TEXT == 1
     , layerHolder_(boost::shared_ptr<LayerHolder>(new LayerHolder(1, 5)))
 #else
@@ -194,9 +194,10 @@ namespace OrthancStone
   {
   }
 
-  boost::shared_ptr<AngleMeasureTool> AngleMeasureTool::Create(boost::weak_ptr<IViewport> viewport)
+  boost::shared_ptr<AngleMeasureTool> AngleMeasureTool::Create(boost::weak_ptr<IViewport> viewport,
+                                                               const boost::shared_ptr<ViewportController>& controller)
   {
-    boost::shared_ptr<AngleMeasureTool> obj(new AngleMeasureTool(viewport));
+    boost::shared_ptr<AngleMeasureTool> obj(new AngleMeasureTool(viewport, controller));
     obj->MeasureTool::PostConstructor();
     obj->RefreshScene();
     return obj;
@@ -412,7 +413,7 @@ namespace OrthancStone
                 chain.push_back(side2End_);
                 chain.push_back(center_);
                 if ((angleHighlightArea_ == AngleHighlightArea_Side1) ||
-                  (angleHighlightArea_ == AngleHighlightArea_Side2))
+                    (angleHighlightArea_ == AngleHighlightArea_Side2))
                 {
                   polylineLayer->AddChain(chain, false, highlightColor);
                 }
@@ -500,49 +501,49 @@ namespace OrthancStone
           if (enableInfoDisplay)
           {
             TrackerSample_SetInfoDisplayMessage("center_.GetX()",
-              boost::lexical_cast<std::string>(center_.GetX()));
+                                                boost::lexical_cast<std::string>(center_.GetX()));
 
             TrackerSample_SetInfoDisplayMessage("center_.GetY()",
-              boost::lexical_cast<std::string>(center_.GetY()));
+                                                boost::lexical_cast<std::string>(center_.GetY()));
 
             TrackerSample_SetInfoDisplayMessage("side1End_.GetX()",
-              boost::lexical_cast<std::string>(side1End_.GetX()));
+                                                boost::lexical_cast<std::string>(side1End_.GetX()));
 
             TrackerSample_SetInfoDisplayMessage("side1End_.GetY()",
-              boost::lexical_cast<std::string>(side1End_.GetY()));
+                                                boost::lexical_cast<std::string>(side1End_.GetY()));
 
             TrackerSample_SetInfoDisplayMessage("side2End_.GetX()",
-              boost::lexical_cast<std::string>(side2End_.GetX()));
+                                                boost::lexical_cast<std::string>(side2End_.GetX()));
 
             TrackerSample_SetInfoDisplayMessage("side2End_.GetY()",
-              boost::lexical_cast<std::string>(side2End_.GetY()));
+                                                boost::lexical_cast<std::string>(side2End_.GetY()));
 
             TrackerSample_SetInfoDisplayMessage("p1cAngle (deg)",
-              boost::lexical_cast<std::string>(RadiansToDegrees(p1cAngle)));
+                                                boost::lexical_cast<std::string>(RadiansToDegrees(p1cAngle)));
 
             TrackerSample_SetInfoDisplayMessage("delta (deg)",
-              boost::lexical_cast<std::string>(RadiansToDegrees(delta)));
+                                                boost::lexical_cast<std::string>(RadiansToDegrees(delta)));
 
             TrackerSample_SetInfoDisplayMessage("theta (deg)",
-              boost::lexical_cast<std::string>(RadiansToDegrees(theta)));
+                                                boost::lexical_cast<std::string>(RadiansToDegrees(theta)));
 
             TrackerSample_SetInfoDisplayMessage("p2cAngle (deg)",
-              boost::lexical_cast<std::string>(RadiansToDegrees(p2cAngle)));
+                                                boost::lexical_cast<std::string>(RadiansToDegrees(p2cAngle)));
 
             TrackerSample_SetInfoDisplayMessage("ox (scene)",
-              boost::lexical_cast<std::string>(ox));
+                                                boost::lexical_cast<std::string>(ox));
 
             TrackerSample_SetInfoDisplayMessage("offsetY (scene)",
-              boost::lexical_cast<std::string>(oy));
+                                                boost::lexical_cast<std::string>(oy));
 
             TrackerSample_SetInfoDisplayMessage("pointX",
-              boost::lexical_cast<std::string>(pointX));
+                                                boost::lexical_cast<std::string>(pointX));
 
             TrackerSample_SetInfoDisplayMessage("pointY",
-              boost::lexical_cast<std::string>(pointY));
+                                                boost::lexical_cast<std::string>(pointY));
 
             TrackerSample_SetInfoDisplayMessage("angleDeg",
-              boost::lexical_cast<std::string>(angleDeg));
+                                                boost::lexical_cast<std::string>(angleDeg));
           }
 #endif
         }

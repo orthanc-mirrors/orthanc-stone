@@ -25,6 +25,7 @@
 
 #include <OrthancException.h>
 
+#include <algorithm>
 #include <boost/filesystem/path.hpp>
 
 namespace OrthancStone

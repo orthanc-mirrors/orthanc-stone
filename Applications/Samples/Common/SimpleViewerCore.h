@@ -40,7 +40,7 @@ namespace OrthancStone
   {
   protected:
     boost::shared_ptr<StoneApplication::Context>  context_;
-    boost::shared_ptr<IViewport>                  viewport_;
+    boost::shared_ptr<ViewportController>         controller_;
 
   private:
     class Interactor;

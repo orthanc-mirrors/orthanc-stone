@@ -51,8 +51,8 @@ namespace OrthancStone
     //layer->SetLinearInterpolation(true);
     layer->SetLinearInterpolation(false);
 
-    viewport_->GetController()->GetScene().SetLayer(0, layer.release());
-    viewport_->GetController()->FitContent();
+    controller_->GetScene().SetLayer(0, layer.release());
+    controller_->FitContent();
   }
 
 
@@ -116,8 +116,8 @@ namespace OrthancStone
 
   void SimpleViewerCore::RenderAnnotations()
   {
-    annotations_->Render(viewport_->GetController()->GetScene());
-    viewport_->GetController()->InvalidateViewport();
+    annotations_->Render(controller_->GetScene());
+    controller_->InvalidateViewport();
   }
 
 
@@ -136,14 +136,14 @@ namespace OrthancStone
     }
 
     if (context_ ||
-        viewport_ ||
+        controller_ ||
         annotations_)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
     }
 
     context_ = context;
-    viewport_ = viewport;
+    controller_ = viewport->GetController();
 
     dicomLoader_ = DicomResourcesLoader::Create(*context);
 
@@ -159,26 +159,26 @@ namespace OrthancStone
 
     Register<AnnotationsSceneLayer::AnnotationRemovedMessage>(*annotations_, &SimpleViewerCore::Handle);
 
-    viewport_->GetController()->SetUndoStack(boost::make_shared<UndoStack>());
+    controller_->SetUndoStack(boost::make_shared<UndoStack>());
 
 #if TEST_MEASURE_TOOLS == 1
     {
-      boost::shared_ptr<LineMeasureTool> tool = OrthancStone::LineMeasureTool::Create(viewport_->GetController());
+      boost::shared_ptr<LineMeasureTool> tool = OrthancStone::LineMeasureTool::Create(controller_);
       tool->Enable();
       tool->Set(OrthancStone::ScenePoint2D(200, 100),
                 OrthancStone::ScenePoint2D(100, 200));
 
-      viewport_->GetController()->AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
+      controller_->AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
     }
 
     {
-      boost::shared_ptr<AngleMeasureTool> tool = OrthancStone::AngleMeasureTool::Create(viewport_->GetController());
+      boost::shared_ptr<AngleMeasureTool> tool = OrthancStone::AngleMeasureTool::Create(controller_);
       tool->Enable();
       tool->SetCenter(OrthancStone::ScenePoint2D(300, 300));
       tool->SetSide1End(OrthancStone::ScenePoint2D(200, 400));
       tool->SetSide2End(OrthancStone::ScenePoint2D(400, 400));
 
-      viewport_->GetController()->AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
+      controller_->AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
     }
 #endif
   }
@@ -259,14 +259,14 @@ namespace OrthancStone
         const ScenePoint2D p = event.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
         std::vector< boost::shared_ptr<MeasureTool> > tools;
-        tools = core_->viewport_->GetController()->HitTestMeasureTools(p);
+        tools = core_->controller_->HitTestMeasureTools(p);
 
         if (!tools.empty())
         {
           if (core_->annotations_->GetActiveTool() == AnnotationsSceneLayer::Tool_Remove)
           {
             boost::shared_ptr<MeasureCommand> command(new DeleteMeasureCommand(tools[0]));
-            core_->viewport_->GetController()->PushCommand(command);
+            core_->controller_->PushCommand(command);
             return NULL;
           }
           else
@@ -283,10 +283,10 @@ namespace OrthancStone
               break;
 
             case AnnotationsSceneLayer::Tool_Length:
-              return core_->viewport_->GetController()->CreateLineMeasure(event);
+              return core_->controller_->CreateLineMeasure(event);
 
             case AnnotationsSceneLayer::Tool_Angle:
-              return core_->viewport_->GetController()->CreateAngleMeasure(event);
+              return core_->controller_->CreateAngleMeasure(event);
 
             default:
               LOG(ERROR) << "This tool is not supported if not using the annotations layer";
@@ -341,23 +341,23 @@ namespace OrthancStone
     switch (key)
     {
       case 's':
-        viewport_->GetController()->FitContent();
+        controller_->FitContent();
         break;
 
       case 'u':
       {
-        if (viewport_->GetController()->CanUndo())
+        if (controller_->CanUndo())
         {
-          viewport_->GetController()->Undo();
+          controller_->Undo();
         }
         break;
       }
 
       case 'U':
       {
-        if (viewport_->GetController()->CanRedo())
+        if (controller_->CanRedo())
         {
-          viewport_->GetController()->Redo();
+          controller_->Redo();
         }
         break;
       }

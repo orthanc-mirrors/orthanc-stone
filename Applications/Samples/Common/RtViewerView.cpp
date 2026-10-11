@@ -118,9 +118,7 @@ namespace OrthancStone
 
   void RtViewerView::DisplayFloatingCtrlInfoText(const PointerEvent& e)
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = *viewport_->GetController();
-    Scene2D& scene = controller.GetScene();
+    Scene2D& scene = viewport_->GetController()->GetScene();
 
     ScenePoint2D p = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
@@ -150,11 +148,7 @@ namespace OrthancStone
 
   void RtViewerView::HideInfoText()
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = *viewport_->GetController();
-    Scene2D& scene = controller.GetScene();
-
-    scene.DeleteLayer(FLOATING_INFOTEXT_LAYER_ZINDEX);
+    viewport_->GetController()->GetScene().DeleteLayer(FLOATING_INFOTEXT_LAYER_ZINDEX);
   }
 
   void RtViewerView::OnSceneTransformChanged(
@@ -165,16 +159,12 @@ namespace OrthancStone
 
   void RtViewerView::Invalidate()
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    lock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
-    lock->Invalidate();
+    viewport_->GetController()->InvalidateViewport();
   }
 
   void RtViewerView::FitContent()
   {
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    lock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
-    lock->Invalidate();
+    viewport_->GetController()->FitContent();
   }
 
   void RtViewerView::Scroll(int delta)
@@ -223,6 +213,7 @@ namespace OrthancStone
 
   void RtViewerView::UpdateLayers()
   {
+    // TODO Refactoring - Moving this lock down results in crash => is the environment mutex locked?
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
 
     if (planes_.size() == 0)

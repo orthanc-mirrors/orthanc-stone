@@ -174,7 +174,7 @@ namespace OrthancStone
                                    unsigned int canvasHeight)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
+    ViewportController& controller = *viewport_->GetController();
     const Scene2D& scene = controller.GetScene();
 
     std::string ttf;
@@ -319,7 +319,7 @@ namespace OrthancStone
             case SDLK_s:
             {
               std::unique_ptr<IViewport::ILock> lock(view->GetViewport()->Lock());
-              lock->GetCompositor().FitContent(lock->GetController().GetScene());
+              lock->GetCompositor().FitContent(view->GetViewport()->GetController()->GetScene());
               lock->Invalidate();
             }
             break;
@@ -350,17 +350,17 @@ namespace OrthancStone
               {
               case SDL_MOUSEBUTTONDOWN:
                 interactor.SetWindowingLayer(view->GetCtLayerIndex());
-                lock->GetController().HandleMousePress(interactor, p,
-                                                       lock->GetCompositor().GetCanvasWidth(),
-                                                       lock->GetCompositor().GetCanvasHeight());
+                view->GetViewport()->GetController()->HandleMousePress(interactor, p,
+                                                                       lock->GetCompositor().GetCanvasWidth(),
+                                                                       lock->GetCompositor().GetCanvasHeight());
                 break;
 
               case SDL_MOUSEMOTION:
-                lock->GetController().HandleMouseMove(p);
+                view->GetViewport()->GetController()->HandleMouseMove(p);
                 break;
 
               case SDL_MOUSEBUTTONUP:
-                lock->GetController().HandleMouseRelease(p);
+                view->GetViewport()->GetController()->HandleMouseRelease(p);
                 break;
 
               default:

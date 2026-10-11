@@ -29,6 +29,8 @@
 
 namespace OrthancStone
 {
+  // TODO Refactoring - Move this class to graveyard
+
   /**
    * This singleton class must be used if many WebGL viewports are
    * created by the higher-level application, implying possible loss

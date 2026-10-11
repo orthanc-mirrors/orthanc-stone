@@ -146,7 +146,7 @@ namespace OrthancStone
   void SdlOpenGLViewport::Paint()
   {
     SdlLock lock(*this);
-    lock.GetCompositor().Refresh(lock.GetController().GetScene());
+    lock.GetCompositor().Refresh(GetController()->GetScene());
   }
 #endif
 
@@ -196,7 +196,7 @@ namespace OrthancStone
   {
     SdlLock lock(*this);
 
-    lock.GetCompositor().Refresh(lock.GetController().GetScene());
+    lock.GetCompositor().Refresh(GetController()->GetScene());
     CreateSdlSurfaceFromCompositor(dynamic_cast<CairoCompositor&>(lock.GetCompositor()));
     
     if (sdlSurface_ != NULL)

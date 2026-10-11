@@ -87,11 +87,6 @@ namespace OrthancStone
 
       virtual ICompositor& GetCompositor() ORTHANC_OVERRIDE;
       
-      virtual ViewportController& GetController() ORTHANC_OVERRIDE
-      {
-        return *that_.controller_;
-      }
-
       virtual void Invalidate() ORTHANC_OVERRIDE
       {
         that_.SendRefreshEvent();
@@ -137,6 +132,11 @@ namespace OrthancStone
 
     // Must be invoked from the main SDL thread
     virtual void Paint() = 0;
+
+    virtual const boost::shared_ptr<ViewportController>& GetController() const ORTHANC_OVERRIDE
+    {
+      return controller_;
+    }
   };
 
 

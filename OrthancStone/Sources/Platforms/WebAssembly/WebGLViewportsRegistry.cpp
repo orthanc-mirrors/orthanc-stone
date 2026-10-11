@@ -82,12 +82,12 @@ namespace OrthancStone
           std::unique_ptr<IViewport::ILock> lock(it->second->Lock());
 
           // TODO: remove ViewportController
-          Scene2D* scene = lock->GetController().ReleaseScene();
+          Scene2D* scene = it->second->GetController()->ReleaseScene();
           viewport = WebGLViewport::Create(it->first);
 
           {
             std::unique_ptr<IViewport::ILock> newLock(viewport->Lock());
-            newLock->GetController().AcquireScene(scene);
+            it->second->GetController()->AcquireScene(scene);
           }
         }
 

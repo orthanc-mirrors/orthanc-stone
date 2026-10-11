@@ -105,12 +105,6 @@ namespace OrthancStone
       }
     }
 
-    virtual ViewportController& GetController() ORTHANC_OVERRIDE
-    {
-      assert(that_.controller_);
-      return *that_.controller_;
-    }
-
     virtual void Invalidate() ORTHANC_OVERRIDE
     {
       that_.Invalidate();

@@ -119,27 +119,27 @@ namespace OrthancStone
             {
             case SDL_MOUSEBUTTONDOWN:
             {
-              viewportLock->GetController().HandleMousePress(*interactor, p, viewportLock->GetCompositor().GetCanvasWidth(),
-                                                             viewportLock->GetCompositor().GetCanvasHeight());
+              viewport_->GetController()->HandleMousePress(*interactor, p, viewportLock->GetCompositor().GetCanvasWidth(),
+                                                           viewportLock->GetCompositor().GetCanvasHeight());
               break;
             }
 
             case SDL_MOUSEMOTION:
             {
-              if (viewportLock->GetController().HasActiveTracker())
+              if (viewport_->GetController()->HasActiveTracker())
               {
-                viewportLock->GetController().HandleMouseMove(p);
+                viewport_->GetController()->HandleMouseMove(p);
               }
               else if (interactor->HasMouseHover())
               {
-                interactor->HandleMouseHover(viewportLock->GetController().GetScene(), p);
+                interactor->HandleMouseHover(viewport_->GetController()->GetScene(), p);
                 viewportLock->Invalidate();
               }
               break;
             }
 
             case SDL_MOUSEBUTTONUP:
-              viewportLock->GetController().HandleMouseRelease(p);
+              viewport_->GetController()->HandleMouseRelease(p);
               break;
 
             default:

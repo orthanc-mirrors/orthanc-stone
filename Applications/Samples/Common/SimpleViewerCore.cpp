@@ -51,10 +51,11 @@ namespace OrthancStone
     //layer->SetLinearInterpolation(true);
     layer->SetLinearInterpolation(false);
 
+    viewport_->GetController()->GetScene().SetLayer(0, layer.release());
+
     {
       std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
-      viewportLock->GetController().GetScene().SetLayer(0, layer.release());
-      viewportLock->GetCompositor().FitContent(viewportLock->GetController().GetScene());
+      viewportLock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
       viewportLock->Invalidate();
     }
   }
@@ -122,7 +123,7 @@ namespace OrthancStone
   {
     // This is necessary to update the size of handles in the annotations layer while zoom level changes
     std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-    annotations_->Render(lock->GetController().GetScene());
+    annotations_->Render(viewport_->GetController()->GetScene());
     lock->Invalidate();
   }
 
@@ -154,10 +155,7 @@ namespace OrthancStone
 
     Register<AnnotationsSceneLayer::AnnotationRemovedMessage>(*annotations_, &SimpleViewerCore::Handle);
 
-    {
-      std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
-      viewportLock->GetController().SetUndoStack(boost::make_shared<UndoStack>());
-    }
+    viewport_->GetController()->SetUndoStack(boost::make_shared<UndoStack>());
 
 #if 0 && TEST_MEASURE_TOOLS == 1    // TODO Refactoring - Reenable this
     {
@@ -261,14 +259,14 @@ namespace OrthancStone
         std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
 
         std::vector< boost::shared_ptr<MeasureTool> > tools;
-        tools = viewportLock->GetController().HitTestMeasureTools(p);
+        tools = core_->viewport_->GetController()->HitTestMeasureTools(p);
 
         if (!tools.empty())
         {
           if (core_->annotations_->GetActiveTool() == AnnotationsSceneLayer::Tool_Remove)
           {
             boost::shared_ptr<MeasureCommand> command(new DeleteMeasureCommand(tools[0]));
-            viewportLock->GetController().PushCommand(command);
+            core_->viewport_->GetController()->PushCommand(command);
             return NULL;
           }
           else
@@ -285,10 +283,10 @@ namespace OrthancStone
               break;
 
             case AnnotationsSceneLayer::Tool_Length:
-              return viewportLock->GetController().CreateLineMeasure(event);
+              return core_->viewport_->GetController()->CreateLineMeasure(event);
 
             case AnnotationsSceneLayer::Tool_Angle:
-              return viewportLock->GetController().CreateAngleMeasure(event);
+              return core_->viewport_->GetController()->CreateAngleMeasure(event);
 
             default:
               LOG(ERROR) << "This tool is not supported if not using the annotations layer";
@@ -345,7 +343,7 @@ namespace OrthancStone
       case 's':
       {
         std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
-        viewportLock->GetCompositor().FitContent(viewportLock->GetController().GetScene());
+        viewportLock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
         viewportLock->Invalidate();
         break;
       }
@@ -353,19 +351,18 @@ namespace OrthancStone
       case 'u':
       {
         std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
-        if (viewportLock->GetController().CanUndo())
+        if (viewport_->GetController()->CanUndo())
         {
-          viewportLock->GetController().Undo();
+          viewport_->GetController()->Undo();
         }
         break;
       }
 
       case 'U':
       {
-        std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
-        if (viewportLock->GetController().CanRedo())
+        if (viewport_->GetController()->CanRedo())
         {
-          viewportLock->GetController().Redo();
+          viewport_->GetController()->Redo();
         }
         break;
       }

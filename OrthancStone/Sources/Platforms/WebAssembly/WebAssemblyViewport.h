@@ -179,5 +179,10 @@ namespace OrthancStone
     }
 
     void FitForPrint();
+
+    virtual const boost::shared_ptr<ViewportController>& GetController() const ORTHANC_OVERRIDE
+    {
+      return controller_;
+    }
   };
 }

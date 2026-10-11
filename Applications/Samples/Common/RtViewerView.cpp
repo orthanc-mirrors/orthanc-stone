@@ -83,7 +83,7 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
 
-    ViewportController& controller = lock->GetController();
+    ViewportController& controller = *viewport_->GetController();
     Scene2D& scene = controller.GetScene();
 
     std::stringstream msg;
@@ -119,7 +119,7 @@ namespace OrthancStone
   void RtViewerView::DisplayFloatingCtrlInfoText(const PointerEvent& e)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
+    ViewportController& controller = *viewport_->GetController();
     Scene2D& scene = controller.GetScene();
 
     ScenePoint2D p = e.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
@@ -151,7 +151,7 @@ namespace OrthancStone
   void RtViewerView::HideInfoText()
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
+    ViewportController& controller = *viewport_->GetController();
     Scene2D& scene = controller.GetScene();
 
     scene.DeleteLayer(FLOATING_INFOTEXT_LAYER_ZINDEX);
@@ -166,14 +166,14 @@ namespace OrthancStone
   void RtViewerView::Invalidate()
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    lock->GetCompositor().FitContent(lock->GetController().GetScene());
+    lock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
     lock->Invalidate();
   }
 
   void RtViewerView::FitContent()
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    lock->GetCompositor().FitContent(lock->GetController().GetScene());
+    lock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
     lock->Invalidate();
   }
 
@@ -234,15 +234,15 @@ namespace OrthancStone
     {
       if (ctVolumeLayerSource_.get() != NULL)
       {
-        ctVolumeLayerSource_->Update(lock->GetController().GetScene(), planes_[currentPlane_]);
+        ctVolumeLayerSource_->Update(viewport_->GetController()->GetScene(), planes_[currentPlane_]);
       }
       if (doseVolumeLayerSource_.get() != NULL)
       {
-        doseVolumeLayerSource_->Update(lock->GetController().GetScene(), planes_[currentPlane_]);
+        doseVolumeLayerSource_->Update(viewport_->GetController()->GetScene(), planes_[currentPlane_]);
       }
       if (structLayerSource_.get() != NULL)
       {
-        structLayerSource_->Update(lock->GetController().GetScene(), planes_[currentPlane_]);
+        structLayerSource_->Update(viewport_->GetController()->GetScene(), planes_[currentPlane_]);
       }
     }
     lock->Invalidate();
@@ -259,7 +259,7 @@ namespace OrthancStone
      **/
     lock->RefreshCanvasSize();
     
-    ViewportController& controller = lock->GetController();
+    ViewportController& controller = *viewport_->GetController();
     ICompositor& compositor = lock->GetCompositor();
 
     // False means we do NOT let a hi-DPI aware desktop managedr treat this as a legacy application that requires
@@ -285,7 +285,7 @@ namespace OrthancStone
   void RtViewerView::RegisterMessages()
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
+    ViewportController& controller = *viewport_->GetController();
     Register<ViewportController::SceneTransformChanged>(controller, &RtViewerView::OnSceneTransformChanged);
   }
 
@@ -321,7 +321,7 @@ namespace OrthancStone
                                        ILayerStyleConfigurator* style)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
+    ViewportController& controller = *viewport_->GetController();
     Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
@@ -339,7 +339,7 @@ namespace OrthancStone
                                          ILayerStyleConfigurator* style)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
+    ViewportController& controller = *viewport_->GetController();
     Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
@@ -354,7 +354,7 @@ namespace OrthancStone
   void RtViewerView::SetStructureSet(const boost::shared_ptr<DicomStructureSetLoader>& volume)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = lock->GetController();
+    ViewportController& controller = *viewport_->GetController();
     Scene2D& scene = controller.GetScene();
     int depth = scene.GetMaxDepth() + 1;
 

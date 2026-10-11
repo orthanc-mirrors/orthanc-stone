@@ -57,12 +57,6 @@ namespace OrthancStone
       */
       virtual ICompositor& GetCompositor() = 0;
 
-      /**
-      Do not store the result! Only access the compositor interface through
-      the lock.
-      */
-      virtual ViewportController& GetController() = 0;  // TODO Refactoring - Remove this
-
       virtual void Invalidate() = 0;
 
 
@@ -82,5 +76,7 @@ namespace OrthancStone
     }
 
     virtual ILock* Lock() = 0;
+
+    virtual const boost::shared_ptr<ViewportController>& GetController() const = 0;  // TODO Refactoring - Remove this
   };
 }

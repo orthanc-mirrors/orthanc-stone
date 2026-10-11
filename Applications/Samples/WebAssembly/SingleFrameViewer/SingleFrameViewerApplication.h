@@ -59,10 +59,11 @@ namespace OrthancStone
         message.GetInstanceParameters().CreateTexture(message.GetImage()));
       layer->SetLinearInterpolation(true);
 
+      viewport_->GetController()->GetScene().SetLayer(0, layer.release());
+
       {
         std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-        lock->GetController().GetScene().SetLayer(0, layer.release());
-        lock->GetCompositor().FitContent(lock->GetController().GetScene());
+        lock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
         lock->Invalidate();
       }
     }
@@ -137,7 +138,7 @@ namespace OrthancStone
     void FitContent()
     {
       std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-      lock->GetCompositor().FitContent(lock->GetController().GetScene());
+      lock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
       lock->Invalidate();
     }
   };

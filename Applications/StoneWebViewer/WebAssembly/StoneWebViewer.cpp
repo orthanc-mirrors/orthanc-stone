@@ -2775,8 +2775,8 @@ private:
   {
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-      lock->GetController().GetScene().DeleteLayer(LAYER_TEXTURE);
-      //lock->GetCompositor().Refresh(lock->GetController().GetScene());
+      viewport_->GetController()->GetScene().DeleteLayer(LAYER_TEXTURE);
+      //lock->GetCompositor().Refresh(viewport_->GetController()->GetScene());
       lock->Invalidate();
     }
   }
@@ -2982,7 +2982,7 @@ private:
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
 
-      OrthancStone::Scene2D& scene = lock->GetController().GetScene();
+      OrthancStone::Scene2D& scene = viewport_->GetController()->GetScene();
 
       bool hasPreviousSize = false;
       unsigned int previousWidth, previousHeight;
@@ -3213,13 +3213,13 @@ private:
   {
     std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
 
-    if (lock->GetController().GetScene().HasLayer(LAYER_TEXTURE))
+    if (viewport_->GetController()->GetScene().HasLayer(LAYER_TEXTURE))
     {
-      if (lock->GetController().GetScene().GetLayer(LAYER_TEXTURE).GetType() ==
+      if (viewport_->GetController()->GetScene().GetLayer(LAYER_TEXTURE).GetType() ==
           OrthancStone::ISceneLayer::Type_FloatTexture)
       {
         dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(
-          lock->GetController().GetScene().GetLayer(LAYER_TEXTURE)).
+          viewport_->GetController()->GetScene().GetLayer(LAYER_TEXTURE)).
           SetCustomWindowing(windowingTracker_.GetWindowing().GetCenter(), windowingTracker_.GetWindowing().GetWidth());
       }
         
@@ -3344,7 +3344,7 @@ private:
   {
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-      stoneAnnotations_->Render(lock->GetController().GetScene());
+      stoneAnnotations_->Render(viewport_->GetController()->GetScene());
       lock->Invalidate();
     }
 
@@ -3463,7 +3463,7 @@ public:
 
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->viewport_->Lock());
-      viewport->Register<OrthancStone::ViewportController::SceneTransformChanged>(lock->GetController(), &ViewerViewport::Handle);
+      viewport->Register<OrthancStone::ViewportController::SceneTransformChanged>(*viewport->viewport_->GetController(), &ViewerViewport::Handle);
     }
 
     return viewport;    
@@ -3571,11 +3571,11 @@ public:
 
     if (fitContent)
     {
-      lock->GetCompositor().FitContent(lock->GetController().GetScene());
+      lock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
     }
 
     stoneAnnotations_->ClearHover();
-    stoneAnnotations_->Render(lock->GetController().GetScene());
+    stoneAnnotations_->Render(viewport_->GetController()->GetScene());
     
     lock->Invalidate();
   }
@@ -3764,14 +3764,14 @@ public:
 
       if (layer->GetChainsCount() == 0)
       {
-        lock->GetController().GetScene().DeleteLayer(LAYER_REFERENCE_LINES);
+        viewport_->GetController()->GetScene().DeleteLayer(LAYER_REFERENCE_LINES);
       }
       else
       {
-        lock->GetController().GetScene().SetLayer(LAYER_REFERENCE_LINES, layer.release());
+        viewport_->GetController()->GetScene().SetLayer(LAYER_REFERENCE_LINES, layer.release());
       }
       
-      //lock->GetCompositor().Refresh(lock->GetController().GetScene());
+      //lock->GetCompositor().Refresh(viewport_->GetController()->GetScene());
       lock->Invalidate();
     }
   }
@@ -3781,7 +3781,7 @@ public:
   {
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-      lock->GetController().GetScene().DeleteLayer(LAYER_REFERENCE_LINES);
+      viewport_->GetController()->GetScene().DeleteLayer(LAYER_REFERENCE_LINES);
       lock->Invalidate();
     }
   }
@@ -3794,8 +3794,8 @@ public:
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
 
-      if (!lock->GetController().GetScene().HasLayer(LAYER_TEXTURE) ||
-          lock->GetController().GetScene().GetLayer(LAYER_TEXTURE).GetType() !=
+      if (!viewport_->GetController()->GetScene().HasLayer(LAYER_TEXTURE) ||
+          viewport_->GetController()->GetScene().GetLayer(LAYER_TEXTURE).GetType() !=
           OrthancStone::ISceneLayer::Type_FloatTexture)
       {
         return;
@@ -3803,7 +3803,7 @@ public:
 
       const Orthanc::ImageAccessor& texture =
         dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(
-          lock->GetController().GetScene().GetLayer(LAYER_TEXTURE)).GetTexture();
+          viewport_->GetController()->GetScene().GetLayer(LAYER_TEXTURE)).GetTexture();
       if (texture.GetFormat() != Orthanc::PixelFormat_Float32)
       {
         throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
@@ -3821,7 +3821,7 @@ public:
   {
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-      lock->GetController().GetScene().FlipViewportX(
+      viewport_->GetController()->GetScene().FlipViewportX(
         lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
       lock->Invalidate();
     }    
@@ -3831,7 +3831,7 @@ public:
   {
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-      lock->GetController().GetScene().FlipViewportY(
+      viewport_->GetController()->GetScene().FlipViewportY(
         lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
       lock->Invalidate();
     }
@@ -3841,7 +3841,7 @@ public:
   {
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-      lock->GetController().GetScene().RotateViewport(
+      viewport_->GetController()->GetScene().RotateViewport(
         -PI / 2.0, lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
       lock->Invalidate();
     }    
@@ -3851,7 +3851,7 @@ public:
   {
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-      lock->GetController().GetScene().RotateViewport(
+      viewport_->GetController()->GetScene().RotateViewport(
         PI / 2.0, lock->GetCompositor().GetCanvasWidth(), lock->GetCompositor().GetCanvasHeight());
       lock->Invalidate();
     }
@@ -3864,13 +3864,13 @@ public:
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
 
-      if (lock->GetController().GetScene().HasLayer(LAYER_TEXTURE) &&
-          lock->GetController().GetScene().GetLayer(LAYER_TEXTURE).GetType() ==
+      if (viewport_->GetController()->GetScene().HasLayer(LAYER_TEXTURE) &&
+          viewport_->GetController()->GetScene().GetLayer(LAYER_TEXTURE).GetType() ==
           OrthancStone::ISceneLayer::Type_FloatTexture)
       {
         OrthancStone::FloatTextureSceneLayer& layer = 
           dynamic_cast<OrthancStone::FloatTextureSceneLayer&>(
-            lock->GetController().GetScene().GetLayer(LAYER_TEXTURE));
+            viewport_->GetController()->GetScene().GetLayer(LAYER_TEXTURE));
 
         // NB: Using "IsInverted()" instead of "inverted_" is for
         // compatibility with MONOCHROME1 images
@@ -4177,7 +4177,7 @@ public:
 
         {
           std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
-          stoneAnnotations_->Render(lock->GetController().GetScene());
+          stoneAnnotations_->Render(viewport_->GetController()->GetScene());
           lock->Invalidate();
         }
       }

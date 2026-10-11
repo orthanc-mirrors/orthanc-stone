@@ -23,7 +23,7 @@
 #include "SimpleViewerCore.h"
 
 // TODO Refactoring - Remove
-#define TEST_MEASURE_TOOLS   1
+#define TEST_MEASURE_TOOLS   0
 
 
 #include "../../../OrthancStone/Sources/Scene2DViewport/AngleMeasureTool.h"
@@ -52,12 +52,7 @@ namespace OrthancStone
     layer->SetLinearInterpolation(false);
 
     viewport_->GetController()->GetScene().SetLayer(0, layer.release());
-
-    {
-      std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
-      viewportLock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
-      viewportLock->Invalidate();
-    }
+    viewport_->GetController()->FitContent();
   }
 
 
@@ -121,16 +116,25 @@ namespace OrthancStone
 
   void SimpleViewerCore::RenderAnnotations()
   {
-    // This is necessary to update the size of handles in the annotations layer while zoom level changes
-    std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport_->Lock());
     annotations_->Render(viewport_->GetController()->GetScene());
-    lock->Invalidate();
+    viewport_->GetController()->InvalidateViewport();
   }
 
 
   void SimpleViewerCore::CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
                                           const boost::shared_ptr<IViewport>& viewport)
   {
+    if (!context ||
+        !viewport)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
+
+    if (!viewport->GetController())
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+    }
+
     if (context_ ||
         viewport_ ||
         annotations_)
@@ -157,26 +161,24 @@ namespace OrthancStone
 
     viewport_->GetController()->SetUndoStack(boost::make_shared<UndoStack>());
 
-#if 0 && TEST_MEASURE_TOOLS == 1    // TODO Refactoring - Reenable this
+#if TEST_MEASURE_TOOLS == 1
     {
-      boost::shared_ptr<LineMeasureTool> tool = OrthancStone::LineMeasureTool::Create(viewport);
+      boost::shared_ptr<LineMeasureTool> tool = OrthancStone::LineMeasureTool::Create(viewport_->GetController());
       tool->Enable();
       tool->Set(OrthancStone::ScenePoint2D(200, 100),
                 OrthancStone::ScenePoint2D(100, 200));
 
-      std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
-      viewportLock->GetController().AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
+      viewport_->GetController()->AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
     }
 
     {
-      boost::shared_ptr<AngleMeasureTool> tool = OrthancStone::AngleMeasureTool::Create(viewport);
+      boost::shared_ptr<AngleMeasureTool> tool = OrthancStone::AngleMeasureTool::Create(viewport_->GetController());
       tool->Enable();
       tool->SetCenter(OrthancStone::ScenePoint2D(300, 300));
       tool->SetSide1End(OrthancStone::ScenePoint2D(200, 400));
       tool->SetSide2End(OrthancStone::ScenePoint2D(400, 400));
 
-      std::unique_ptr<IViewport::ILock> viewportLock(viewport->Lock());
-      viewportLock->GetController().AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
+      viewport_->GetController()->AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
     }
 #endif
   }
@@ -256,8 +258,6 @@ namespace OrthancStone
       {
         const ScenePoint2D p = event.GetMainPosition().Apply(scene.GetCanvasToSceneTransform());
 
-        std::unique_ptr<IViewport::ILock> viewportLock(core_->viewport_->Lock());
-
         std::vector< boost::shared_ptr<MeasureTool> > tools;
         tools = core_->viewport_->GetController()->HitTestMeasureTools(p);
 
@@ -295,8 +295,7 @@ namespace OrthancStone
           return NULL;
         }
       }
-#endif
-
+#else
       core_->annotations_->ClearHover();
 
       if (event.GetMouseButton() == MouseButton_Left)
@@ -307,6 +306,7 @@ namespace OrthancStone
       {
         return default_.CreateTracker(scene, event, viewportWidth, viewportHeight);
       }
+#endif
     }
 
     virtual bool HasMouseHover() const ORTHANC_OVERRIDE
@@ -341,16 +341,11 @@ namespace OrthancStone
     switch (key)
     {
       case 's':
-      {
-        std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
-        viewportLock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
-        viewportLock->Invalidate();
+        viewport_->GetController()->FitContent();
         break;
-      }
 
       case 'u':
       {
-        std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
         if (viewport_->GetController()->CanUndo())
         {
           viewport_->GetController()->Undo();
@@ -423,6 +418,8 @@ namespace OrthancStone
                                                const std::string& sopInstanceUid,
                                                unsigned int frameIndex)
   {
+    std::unique_ptr<IEnvironment::ILock> environmentLock(context_->GetEnvironment().AcquireLock());
+
     OrthancStone::DicomSource source;
     source.SetDicomWebThroughOrthancSource(server);
 

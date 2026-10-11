@@ -111,20 +111,20 @@ static bool IsDicomTemplate(DcmItem& dataset,
 static bool IsValidConcept(DcmItem& dataset,
                            const DcmTagKey& key,
                            const std::string& scheme,
-                           const std::string& concept)
+                           const std::string& conceptValue)
 {
   DcmSequenceOfItems& sequence = GetSequenceValue(dataset, key);
 
   return (sequence.card() == 1 &&
           GetStringValue(*sequence.getItem(0), DCM_CodingSchemeDesignator) == scheme &&
-          GetStringValue(*sequence.getItem(0), DCM_CodeValue) == concept);
+          GetStringValue(*sequence.getItem(0), DCM_CodeValue) == conceptValue);
 }
 
 
 static bool IsDicomConcept(DcmItem& dataset,
-                           const std::string& concept)
+                           const std::string& conceptValue)
 {
-  return IsValidConcept(dataset, DCM_ConceptNameCodeSequence, "DCM", concept);
+  return IsValidConcept(dataset, DCM_ConceptNameCodeSequence, "DCM", conceptValue);
 }
 
 
@@ -529,10 +529,10 @@ namespace OrthancStone
           if (concepts.card() == 1 &&
               concepts.getItem(0) != NULL)
           {
-            DcmItem& concept = *concepts.getItem(0);
-            if (concept.tagExists(DCM_CodeMeaning))
+            DcmItem& conceptValue = *concepts.getItem(0);
+            if (conceptValue.tagExists(DCM_CodeMeaning))
             {
-              const std::string codeMeaning = GetStringValue(concept, DCM_CodeMeaning);
+              const std::string codeMeaning = GetStringValue(conceptValue, DCM_CodeMeaning);
 
               bool hasValue = false;
               std::string value;

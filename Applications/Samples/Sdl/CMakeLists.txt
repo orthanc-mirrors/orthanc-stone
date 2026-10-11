@@ -137,4 +137,4 @@ add_custom_command(
     "$<TARGET_FILE_DIR:UnitTests>/72c773ac-5059f2c4-2e6a9120-4fd4bca1-45701661.json"
 )
 
-target_link_libraries(UnitTests OrthancStone ${DCMTK_LIBRARIES})
+target_link_libraries(UnitTests OrthancStone ${DCMTK_LIBRARIES} ${GOOGLE_TEST_LIBRARIES})

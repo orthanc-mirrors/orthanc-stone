@@ -193,6 +193,11 @@ namespace OrthancStone
 
     void InvalidateViewport();
 
+    void FitContent();
+
+    void GetCanvasSize(unsigned int& width,
+                       unsigned int& height);
+
   private:
     // The scene can be used by the higher-level objects (including the
     // measuring tools), possibly in their destructor, and so it must be 

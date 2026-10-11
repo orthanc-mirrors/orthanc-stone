@@ -101,7 +101,7 @@ namespace OrthancStone
   }
   
   std::vector<boost::shared_ptr<MeasureTool> > 
-    ViewportController::HitTestMeasureTools(ScenePoint2D p)
+  ViewportController::HitTestMeasureTools(ScenePoint2D p)
   {
     std::vector<boost::shared_ptr<MeasureTool> > ret;
     
@@ -143,7 +143,7 @@ namespace OrthancStone
     ORTHANC_ASSERT(std::find(measureTools_.begin(), 
                              measureTools_.end(), 
                              measureTool) == measureTools_.end(), 
-                  "Duplicate measure tool");
+                   "Duplicate measure tool");
     measureTools_.push_back(measureTool);
   }
 
@@ -154,7 +154,7 @@ namespace OrthancStone
     ORTHANC_ASSERT(std::find(measureTools_.begin(), 
                              measureTools_.end(), 
                              measureTool) != measureTools_.end(), 
-                  "Measure tool not found");
+                   "Measure tool not found");
     measureTools_.erase(
       std::remove(measureTools_.begin(), measureTools_.end(), measureTool), 
       measureTools_.end());
@@ -188,18 +188,6 @@ namespace OrthancStone
     AddMeasureTool(boost::dynamic_pointer_cast<MeasureTool>(tool));
 
     return tool->CreateEditionTracker(true, event);
-  }
-
-
-  void ViewportController::InvalidateViewport()
-  {
-    boost::shared_ptr<IViewport> sharedViewport(viewport_.lock());
-
-    if (sharedViewport)
-    {
-      std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
-      lock->Invalidate();
-    }
   }
 
 
@@ -284,5 +272,56 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
+  }
+
+
+  void ViewportController::InvalidateViewport()
+  {
+    boost::shared_ptr<IViewport> sharedViewport(viewport_.lock());
+
+    if (sharedViewport)
+    {
+      std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
+      lock->Invalidate();
+    }
+  }
+
+
+  void ViewportController::FitContent()
+  {
+    boost::shared_ptr<IViewport> sharedViewport(viewport_.lock());
+
+    if (sharedViewport)
+    {
+      std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
+      if (lock->HasCompositor())
+      {
+        lock->GetCompositor().FitContent(*scene_);
+        lock->Invalidate();
+
+        BroadcastMessage(SceneTransformChanged(*this));
+      }
+    }
+  }
+
+
+  void ViewportController::GetCanvasSize(unsigned int& width,
+                                         unsigned int& height)
+  {
+    boost::shared_ptr<IViewport> sharedViewport(viewport_.lock());
+
+    if (sharedViewport)
+    {
+      std::unique_ptr<IViewport::ILock> lock(sharedViewport->Lock());
+      if (lock->HasCompositor())
+      {
+        width = lock->GetCompositor().GetCanvasWidth();
+        height = lock->GetCompositor().GetCanvasHeight();
+        return;
+      }
+    }
+
+    width = 0;
+    height = 0;
   }
 }

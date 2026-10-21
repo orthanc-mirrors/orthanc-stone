@@ -24,8 +24,8 @@
 #pragma once
 
 #include "../../Oracle/IEnvironment.h"
-#include "PeriodicRunnableThread.h"
 
+#include <MultiThreading/PeriodicRunnableThread.h>
 #include <MultiThreading/SharedMessageQueue.h>
 
 
@@ -40,10 +40,10 @@ namespace OrthancStone
     class ErrorNotification;
 
     // TODO Refactoring - Is it necessary to have "recursive_mutex", not plain "mutex"?
-    boost::recursive_mutex       mutex_;  // Main mutex of the application, to go single-threaded
-    Orthanc::SharedMessageQueue  notificationQueue_;
-    PeriodicRunnableThread       notificationThread_;
-    unsigned int                 countLocks_;  // Only for debugging
+    boost::recursive_mutex           mutex_;  // Main mutex of the application, to go single-threaded
+    Orthanc::SharedMessageQueue      notificationQueue_;
+    Orthanc::PeriodicRunnableThread  notificationThread_;
+    unsigned int                     countLocks_;  // Only for debugging
 
   public:
     class Lock : public ILock

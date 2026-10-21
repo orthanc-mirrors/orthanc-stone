@@ -21,14 +21,14 @@
  **/
 
 
-#include "RunnableThread.h"
+#include "PeriodicRunnableThread.h"
 
 #include <OrthancException.h>
 
 
 namespace OrthancStone
 {
-  void RunnableThread::Worker(RunnableThread* that)
+  void PeriodicRunnableThread::Worker(PeriodicRunnableThread* that)
   {
     for (;;)
     {
@@ -50,7 +50,7 @@ namespace OrthancStone
   }
 
 
-  void RunnableThread::StopInternal(bool throws)
+  void PeriodicRunnableThread::StopInternal(bool throws)
   {
     {
       boost::mutex::scoped_lock lock(mutex_);
@@ -75,8 +75,8 @@ namespace OrthancStone
   }
 
 
-  RunnableThread::RunnableThread(Orthanc::IRunnable* runnable,
-                                 unsigned int timeResolution) :
+  PeriodicRunnableThread::PeriodicRunnableThread(Orthanc::IRunnable* runnable,
+                                                 unsigned int timeResolution) :
     runnable_(runnable),
     timeResolution_(timeResolution),
     state_(State_Initialization)
@@ -88,7 +88,7 @@ namespace OrthancStone
   }
 
 
-  void RunnableThread::Start()
+  void PeriodicRunnableThread::Start()
   {
     boost::mutex::scoped_lock lock(mutex_);
 

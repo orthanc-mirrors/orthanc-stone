@@ -34,7 +34,7 @@
 namespace OrthancStone
 {
   // This is a thread that periodically executes a runnable
-  class RunnableThread : public boost::noncopyable
+  class PeriodicRunnableThread : public boost::noncopyable
   {
   private:
     enum State
@@ -44,7 +44,7 @@ namespace OrthancStone
       State_Done
     };
 
-    static void Worker(RunnableThread* that);
+    static void Worker(PeriodicRunnableThread* that);
 
     void StopInternal(bool throws);
 
@@ -55,10 +55,10 @@ namespace OrthancStone
     boost::thread                        thread_;
 
   public:
-    RunnableThread(Orthanc::IRunnable* runnable,
-                   unsigned int timeResolution);
+    PeriodicRunnableThread(Orthanc::IRunnable* runnable,
+                           unsigned int timeResolution);
 
-    ~RunnableThread()
+    ~PeriodicRunnableThread()
     {
       StopInternal(false /* no exception in destructors */);
     }

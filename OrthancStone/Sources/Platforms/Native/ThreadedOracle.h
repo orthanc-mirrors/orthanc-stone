@@ -44,7 +44,7 @@
 
 #include "../../Oracle/OracleCallback.h"
 #include "../../StoneApplication.h"
-#include "RunnableThread.h"
+#include "PeriodicRunnableThread.h"
 
 #include <MultiThreading/ThreadPool.h>
 
@@ -58,7 +58,7 @@ namespace OrthancStone
     class SleepRunnable;
 
     StoneApplication::Configuration  configuration_;
-    RunnableThread                   sleepingThread_;
+    PeriodicRunnableThread           sleepingThread_;
     Orthanc::ThreadPool              threadPool_;
 
 #if ORTHANC_ENABLE_DCMTK == 1

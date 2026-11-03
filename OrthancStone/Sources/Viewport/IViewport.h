@@ -27,8 +27,8 @@
 namespace OrthancStone
 {
   /**
-   * Class that combines a Scene2D with a canvas where to draw the
-   * scene. A call to "Refresh()" will update the content of the
+   * Class that represents a canvas where to draw a Scene2D object.
+   * A call to "Invalidate()" will update the content of the
    * canvas. A "IViewport" can possibly be accessed from several
    * threads depending on the rendering back-end (e.g. in SDL or Qt):
    * The "ILock" subclass implements the locking mechanism to modify

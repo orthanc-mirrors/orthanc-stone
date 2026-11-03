@@ -357,9 +357,16 @@ namespace OrthancStone
     {
       if (!context_.IsContextLost() && !IsEmpty())
       {
-        context_.MakeCurrent();
-        ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteBuffers");
-        glDeleteBuffers(3, buffers_);
+        try
+        {
+          context_.MakeCurrent();
+          ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("About to call glDeleteBuffers");
+          glDeleteBuffers(3, buffers_);
+        }
+        catch (Orthanc::OrthancException& e)  // Don't throw in destructors
+        {
+          LOG(ERROR) << "Exception in OpenGLLinesProgram::~Data(): " << e.What();
+        }
       }
     }
 

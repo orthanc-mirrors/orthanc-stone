@@ -124,8 +124,16 @@ namespace OrthancStone
       if (!context_.IsContextLost())
       {
         ORTHANC_OPENGL_TRACE_CURRENT_CONTEXT("OpenGLTextureProgram::~OpenGLTextureProgram() | About to call glDeleteBuffers");
-        context_.MakeCurrent();
-        glDeleteBuffers(2, buffers_);
+
+        try
+        {
+          context_.MakeCurrent();
+          glDeleteBuffers(2, buffers_);
+        }
+        catch (Orthanc::OrthancException& e)  // Don't throw in destructors
+        {
+          LOG(ERROR) << "Exception in ~OpenGLTextureProgram(): " << e.What();
+        }
       }
     }
 

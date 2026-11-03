@@ -430,8 +430,6 @@ static bool HasArgument(const std::map<std::string, std::string>& arguments,
 }
 
 
-boost::weak_ptr<OrthancStone::RtViewerApp> g_app;
-
 /**
  * IMPORTANT: The full arguments to "main()" are needed for SDL on
  * Windows. Otherwise, one gets the linking error "undefined reference
@@ -489,7 +487,6 @@ int main(int argc, char* argv[])
       app->SetArgument(it->first, it->second);
     }
 
-    g_app = app;
     app->RunSdl();
   }
   catch (Orthanc::OrthancException& e)
@@ -497,9 +494,9 @@ int main(int argc, char* argv[])
     LOG(ERROR) << "EXCEPTION: " << e.What();
     status = 1;
   }
-  
-  OrthancStone::SdlWindow::GlobalFinalize();
+
   OrthancStone::StoneApplication::Finalize();
+  OrthancStone::SdlWindow::GlobalFinalize();
   OrthancStone::StoneFinalize();
 
   return status;

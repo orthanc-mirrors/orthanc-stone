@@ -84,10 +84,10 @@ namespace OrthancStone
 #endif
   }
 
-  IViewport* RtViewerView::CreateViewport(const std::string& canvasId)
+  boost::shared_ptr<IViewport> RtViewerView::CreateViewport(const std::string& canvasId)
   {
     // False means we do NOT let Windows treat this as a legacy application that needs to be scaled
-    return new SdlOpenGLViewport(canvasId, 1024, 1024, false);
+    return boost::shared_ptr<SdlOpenGLViewport>(new SdlOpenGLViewport(canvasId, 1024, 1024, false));
   }
 
   void RtViewerView::CleanupViewportEvents()

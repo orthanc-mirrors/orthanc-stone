@@ -108,7 +108,7 @@ namespace OrthancStone
     };
 
 
-    class Context : public IMessageEmitter  // TODO Refactoring - Remove this
+    class Context : public Old::IMessageEmitter  // TODO Refactoring - Remove this
     {
       friend class StoneApplication;
 
@@ -121,7 +121,7 @@ namespace OrthancStone
       boost::shared_ptr<OracleScheduler>  oracleScheduler_;
 
       Orthanc::Mutex   loadersMutex_;  // TODO Refactoring - Remove this
-      std::list< boost::shared_ptr<IObserver> >  loaders_;  // TODO Refactoring - Remove this
+      std::list< boost::shared_ptr<Old::IObserver> >  loaders_;  // TODO Refactoring - Remove this
 
     public:
       Context(const Configuration& configuration);
@@ -137,12 +137,12 @@ namespace OrthancStone
         return oracleScheduler_;
       }
 
-      virtual void EmitMessage(boost::weak_ptr<IObserver> observer,
+      virtual void EmitMessage(boost::weak_ptr<Old::IObserver> observer,
                                const IMessage& message) ORTHANC_OVERRIDE;
 
-      IObservable& GetOracleObservable();  // TODO Refactoring - Remove this
+      Old::IObservable& GetOracleObservable();  // TODO Refactoring - Remove this
 
-      void Schedule(boost::shared_ptr<IObserver> receiver,
+      void Schedule(boost::shared_ptr<Old::IObserver> receiver,
                     int priority,
                     IOracleCommand* command /* Takes ownership */);  // TODO Refactoring - Remove this
 
@@ -155,7 +155,7 @@ namespace OrthancStone
        * make the loader disappear as soon as the scope of the
        * variable is left.
        **/
-      void AddLoader(const boost::shared_ptr<IObserver>& loader);  // TODO Refactoring - Remove this
+      void AddLoader(const boost::shared_ptr<Old::IObserver>& loader);  // TODO Refactoring - Remove this
     };
 
 

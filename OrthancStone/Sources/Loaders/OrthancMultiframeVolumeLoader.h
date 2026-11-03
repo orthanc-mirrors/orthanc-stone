@@ -34,7 +34,7 @@ namespace OrthancStone
 {
   class OrthancMultiframeVolumeLoader :
     public LoaderStateMachine,
-    public IObservable,
+    public Old::IObservable,
     public IGeometryProvider
   {
   private:

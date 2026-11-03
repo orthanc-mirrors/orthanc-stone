@@ -28,8 +28,8 @@
 namespace OrthancStone
 {
   class SeriesMetadataLoader :
-    public ObserverBase<SeriesMetadataLoader>,
-    public IObservable
+    public Old::ObserverBase<SeriesMetadataLoader>,
+    public Old::IObservable
   {
   private:
     enum State

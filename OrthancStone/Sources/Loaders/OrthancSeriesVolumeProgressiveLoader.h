@@ -49,8 +49,8 @@ namespace OrthancStone
     is stored in a Dicom series.
   */
   class OrthancSeriesVolumeProgressiveLoader : 
-    public ObserverBase<OrthancSeriesVolumeProgressiveLoader>,
-    public IObservable,
+    public Old::ObserverBase<OrthancSeriesVolumeProgressiveLoader>,
+    public Old::IObservable,
     public IVolumeSlicer,
     public IGeometryProvider
   {

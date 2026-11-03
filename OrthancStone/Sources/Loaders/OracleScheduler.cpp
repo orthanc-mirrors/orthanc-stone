@@ -31,12 +31,12 @@ namespace OrthancStone
   {
   private:
     Priority   priority_;
-    boost::weak_ptr<IObserver>  receiver_;
+    boost::weak_ptr<Old::IObserver>  receiver_;
     std::unique_ptr<IOracleCommand>  command_;
 
   public:
     ReceiverPayload(Priority priority,
-                    boost::weak_ptr<IObserver> receiver,
+                    boost::weak_ptr<Old::IObserver> receiver,
                     IOracleCommand* command) :
       priority_(priority),
       receiver_(receiver),
@@ -53,7 +53,7 @@ namespace OrthancStone
       return priority_;
     }
 
-    boost::weak_ptr<IObserver> GetOriginalReceiver() const
+    boost::weak_ptr<Old::IObserver> GetOriginalReceiver() const
     {
       return receiver_;
     }
@@ -69,11 +69,11 @@ namespace OrthancStone
   class OracleScheduler::ScheduledCommand : public boost::noncopyable
   {
   private:
-    boost::weak_ptr<IObserver>     receiver_;
+    boost::weak_ptr<Old::IObserver>  receiver_;
     std::unique_ptr<IOracleCommand>  command_;
 
   public:
-    ScheduledCommand(boost::shared_ptr<IObserver> receiver,
+    ScheduledCommand(boost::shared_ptr<Old::IObserver> receiver,
                      IOracleCommand* command) :
       receiver_(receiver),
       command_(command)
@@ -84,14 +84,14 @@ namespace OrthancStone
       }
     }
 
-    boost::weak_ptr<IObserver> GetReceiver() 
+    boost::weak_ptr<Old::IObserver> GetReceiver()
     {
       return receiver_;
     }
   
-    bool IsSameReceiver(boost::shared_ptr<IObserver> receiver) const
+    bool IsSameReceiver(boost::shared_ptr<Old::IObserver> receiver) const
     {
-      boost::shared_ptr<IObserver> lock(receiver_.lock());
+      boost::shared_ptr<Old::IObserver> lock(receiver_.lock());
 
       return (lock &&
               lock.get() == receiver.get());
@@ -129,7 +129,7 @@ namespace OrthancStone
 
   
   void OracleScheduler::RemoveReceiverFromQueue(Queue& queue,
-                                                boost::shared_ptr<IObserver> receiver)
+                                                boost::shared_ptr<Old::IObserver> receiver)
   {
     if (!receiver)
     {
@@ -237,7 +237,7 @@ namespace OrthancStone
        * Only schedule the command for execution in the oracle, if its
        * receiver has not been destroyed yet.
        **/
-      boost::shared_ptr<IObserver> observer(command->GetReceiver().lock());
+      boost::shared_ptr<Old::IObserver> observer(command->GetReceiver().lock());
       if (observer)
       {
         ModifyNumberOfActiveCommands(priority, 1);
@@ -466,7 +466,7 @@ namespace OrthancStone
   }
 
 
-  void OracleScheduler::CancelRequests(boost::shared_ptr<IObserver> receiver)
+  void OracleScheduler::CancelRequests(boost::shared_ptr<Old::IObserver> receiver)
   {
     RemoveReceiverFromQueue(standardPriorityQueue_, receiver);
     RemoveReceiverFromQueue(highPriorityQueue_, receiver);
@@ -482,7 +482,7 @@ namespace OrthancStone
   }
 
 
-  void OracleScheduler::Schedule(boost::shared_ptr<IObserver> receiver,
+  void OracleScheduler::Schedule(boost::shared_ptr<Old::IObserver> receiver,
                                  int priority,
                                  IOracleCommand* command /* Takes ownership */)
   {

@@ -721,7 +721,7 @@ public:
 
 
 
-class ResourcesLoader : public OrthancStone::ObserverBase<ResourcesLoader>
+class ResourcesLoader : public OrthancStone::Old::ObserverBase<ResourcesLoader>
 {
 public:
   class IObserver : public boost::noncopyable
@@ -2276,7 +2276,7 @@ public:
 
 
 
-class ViewerViewport : public OrthancStone::ObserverBase<ViewerViewport>
+class ViewerViewport : public OrthancStone::Old::ObserverBase<ViewerViewport>
 {
 public:
   class IObserver : public boost::noncopyable

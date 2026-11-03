@@ -40,7 +40,7 @@ namespace OrthancStone
 {
   class RtViewerApp;
 
-  class RtViewerView : public ObserverBase<RtViewerView>
+  class RtViewerView : public Old::ObserverBase<RtViewerView>
   {
   public:
     RtViewerView(boost::weak_ptr<RtViewerApp> app, 

@@ -29,15 +29,18 @@
 
 namespace OrthancStone 
 {
-  class IObserver : public boost::noncopyable
+  namespace Old
   {
-  public:
-    IObserver()
+    class IObserver : public boost::noncopyable
     {
-    }
+    public:
+      IObserver()
+      {
+      }
 
-    virtual ~IObserver()
-    {
-    }
-  };
+      virtual ~IObserver()
+      {
+      }
+    };
+  }
 }

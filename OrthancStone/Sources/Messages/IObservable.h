@@ -33,27 +33,30 @@
 
 namespace OrthancStone 
 {
-  class IObservable : public boost::noncopyable
+  namespace Old
   {
-  private:
-    typedef std::map<MessageIdentifier, std::set<ICallable*> >  Callables;
+    class IObservable : public boost::noncopyable
+    {
+    private:
+      typedef std::map<MessageIdentifier, std::set<ICallable*> >  Callables;
 
-    Callables       callables_;
+      Callables       callables_;
 
-    void EmitMessageInternal(const IObserver* receiver,
-                             const IMessage& message);
+      void EmitMessageInternal(const IObserver* receiver,
+                               const IMessage& message);
 
-  public:
-    virtual ~IObservable();
+    public:
+      virtual ~IObservable();
 
-    // Takes ownership of the callable
-    void RegisterCallable(ICallable* callable);
+      // Takes ownership of the callable
+      void RegisterCallable(ICallable* callable);
 
-    void BroadcastMessage(const IMessage& message);
+      void BroadcastMessage(const IMessage& message);
 
-    void EmitMessage(boost::weak_ptr<IObserver> observer,
-                     const IMessage& message);
-  };
+      void EmitMessage(boost::weak_ptr<IObserver> observer,
+                       const IMessage& message);
+    };
+  }
 
 
   namespace New

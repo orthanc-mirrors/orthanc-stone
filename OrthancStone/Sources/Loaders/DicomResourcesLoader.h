@@ -103,8 +103,8 @@ namespace OrthancStone
 
 
   class DicomResourcesLoader :
-    public ObserverBase<DicomResourcesLoader>,
-    public IObservable,
+    public Old::ObserverBase<DicomResourcesLoader>,
+    public Old::IObservable,
     public New::IObservable,
     public New::TypedObservable<DicomResourcesLoadedMessage>
   {

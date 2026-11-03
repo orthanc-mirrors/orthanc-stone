@@ -103,8 +103,8 @@ namespace OrthancStone
 
 
   class SeriesFramesLoader : 
-    public ObserverBase<SeriesFramesLoader>,
-    public IObservable,
+    public Old::ObserverBase<SeriesFramesLoader>,
+    public Old::IObservable,
     public New::IObservable,
     public New::TypedObservable<FrameDecodedMessage>
   {

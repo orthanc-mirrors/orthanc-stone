@@ -33,7 +33,7 @@ namespace {
   using namespace OrthancStone;
 
 
-  class MyObservable : public IObservable
+  class MyObservable : public Old::IObservable
   {
   public:
     struct MyCustomMessage : public IMessage
@@ -49,7 +49,7 @@ namespace {
     };
   };
 
-  class MyObserver : public ObserverBase<MyObserver>
+  class MyObserver : public Old::ObserverBase<MyObserver>
   {
   public:
     void HandleCompletedMessage(const MyObservable::MyCustomMessage& message)

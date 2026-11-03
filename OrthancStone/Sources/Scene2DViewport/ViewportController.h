@@ -73,7 +73,7 @@ namespace OrthancStone
   directly or through slicing must be assigned a ViewportController.
   */
   class ViewportController : 
-    public IObservable,
+    public Old::IObservable,
     public boost::enable_shared_from_this<ViewportController>
   {
   public:

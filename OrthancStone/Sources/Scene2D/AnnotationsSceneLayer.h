@@ -30,7 +30,7 @@
 
 namespace OrthancStone
 {
-  class AnnotationsSceneLayer : public IObservable
+  class AnnotationsSceneLayer : public Old::IObservable
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationAddedMessage, AnnotationsSceneLayer);

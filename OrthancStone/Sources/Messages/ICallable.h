@@ -34,64 +34,66 @@
 #include <string>
 #include <stdint.h>
 
-namespace OrthancStone 
+namespace OrthancStone
 {
-  // This is referencing an object and member function that can be notified
-  // by an IObservable.  The object must derive from IO
-  // The member functions must be of type "void Method(const IMessage& message)" or reference a derived class of IMessage
-  class ICallable : public boost::noncopyable
+  namespace Old
   {
-  public:
-    virtual ~ICallable()
+    // This is referencing an object and member function that can be notified
+    // by an IObservable.  The object must derive from IO
+    // The member functions must be of type "void Method(const IMessage& message)" or reference a derived class of IMessage
+    class ICallable : public boost::noncopyable
     {
-    }
-
-    virtual void Apply(const IMessage& message) = 0;
-
-    virtual const MessageIdentifier& GetMessageIdentifier() = 0;
-
-    // TODO - Is this needed?
-    virtual boost::weak_ptr<IObserver> GetObserver() const = 0;
-  };
-
-
-  template <typename TObserver,
-            typename TMessage>
-  class Callable : public ICallable
-  {
-  private:
-    typedef void (TObserver::* MemberMethod) (const TMessage&);
-
-    boost::weak_ptr<IObserver>  observer_;
-    MemberMethod                function_;
-
-  public:
-    Callable(boost::shared_ptr<TObserver> observer,
-             MemberMethod function) :
-      observer_(observer),
-      function_(function)
-    {
-    }
-
-    virtual void Apply(const IMessage& message)
-    {
-      boost::shared_ptr<IObserver> lock(observer_);
-      if (lock)
+    public:
+      virtual ~ICallable()
       {
-        TObserver& observer = dynamic_cast<TObserver&>(*lock);
-        const TMessage& typedMessage = dynamic_cast<const TMessage&>(message);
-        (observer.*function_) (typedMessage);
       }
-    }
 
-    virtual const MessageIdentifier& GetMessageIdentifier()
-    {
-      return TMessage::GetStaticIdentifier();
-    }
+      virtual void Apply(const IMessage& message) = 0;
 
-    virtual boost::weak_ptr<IObserver> GetObserver() const
+      virtual const MessageIdentifier& GetMessageIdentifier() = 0;
+
+      // TODO - Is this needed?
+      virtual boost::weak_ptr<IObserver> GetObserver() const = 0;
+    };
+
+    template <typename TObserver,
+              typename TMessage>
+    class Callable : public ICallable
     {
-      return observer_;
-    }
-  };
+    private:
+      typedef void (TObserver::* MemberMethod) (const TMessage&);
+
+      boost::weak_ptr<IObserver>  observer_;
+      MemberMethod                function_;
+
+    public:
+      Callable(boost::shared_ptr<TObserver> observer,
+               MemberMethod function) :
+        observer_(observer),
+        function_(function)
+      {
+      }
+
+      virtual void Apply(const IMessage& message)
+      {
+        boost::shared_ptr<IObserver> lock(observer_);
+        if (lock)
+        {
+          TObserver& observer = dynamic_cast<TObserver&>(*lock);
+          const TMessage& typedMessage = dynamic_cast<const TMessage&>(message);
+          (observer.*function_) (typedMessage);
+        }
+      }
+
+      virtual const MessageIdentifier& GetMessageIdentifier()
+      {
+        return TMessage::GetStaticIdentifier();
+      }
+
+      virtual boost::weak_ptr<IObserver> GetObserver() const
+      {
+        return observer_;
+      }
+    };
+  }
 }

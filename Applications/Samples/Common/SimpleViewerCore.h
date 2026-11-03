@@ -36,7 +36,7 @@ namespace OrthancStone
     //public boost::enable_shared_from_this<SimpleViewerCore>,  // TODO Refactoring - Revert
     public New::TypedObserver<FrameDecodedMessage>,
     public New::TypedObserver<DicomResourcesLoadedMessage>,
-    public OrthancStone::ObserverBase<SimpleViewerCore>  // TODO Refactoring - Remove
+    public OrthancStone::Old::ObserverBase<SimpleViewerCore>  // TODO Refactoring - Remove
   {
   protected:
     boost::shared_ptr<StoneApplication::Context>  context_;

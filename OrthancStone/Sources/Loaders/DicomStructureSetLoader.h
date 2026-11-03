@@ -34,7 +34,7 @@ namespace OrthancStone
   class DicomStructureSetLoader :
     public LoaderStateMachine,
     public IVolumeSlicer,
-    public IObservable
+    public Old::IObservable
   {
   public:
     ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, StructuresReady, DicomStructureSetLoader);

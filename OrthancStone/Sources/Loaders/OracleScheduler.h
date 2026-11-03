@@ -82,7 +82,7 @@ namespace OrthancStone
     void ClearQueue(Queue& queue);
 
     void RemoveReceiverFromQueue(Queue& queue,
-                                 boost::shared_ptr<IObserver> receiver);
+                                 boost::shared_ptr<Old::IObserver> receiver);
 
     void CheckInvariants() const;
 
@@ -159,11 +159,11 @@ namespace OrthancStone
     // and that are associated with the given receiver. Note that the
     // receiver might still receive answers to HTTP requests that were
     // already submitted to the oracle.
-    void CancelRequests(boost::shared_ptr<IObserver> receiver);
+    void CancelRequests(boost::shared_ptr<Old::IObserver> receiver);
 
     void CancelAllRequests();
 
-    void Schedule(boost::shared_ptr<IObserver> receiver,
+    void Schedule(boost::shared_ptr<Old::IObserver> receiver,
                   int priority,
                   IOracleCommand* command /* Takes ownership */);
 

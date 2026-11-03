@@ -47,7 +47,7 @@ namespace OrthancStone
   This application subclasses IMessageEmitter to use a mutex before forwarding Oracle messages (that
   can be sent from multiple threads)
   */
-  class RtViewerApp : public ObserverBase<RtViewerApp>
+  class RtViewerApp : public Old::ObserverBase<RtViewerApp>
   {
   public:
 

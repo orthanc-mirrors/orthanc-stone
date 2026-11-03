@@ -41,8 +41,8 @@
 namespace OrthancStone
 {
   class SeriesThumbnailsLoader :
-    public IObservable,
-    public ObserverBase<SeriesThumbnailsLoader>
+    public Old::IObservable,
+    public Old::ObserverBase<SeriesThumbnailsLoader>
   {
   private:
     class Thumbnail : public boost::noncopyable

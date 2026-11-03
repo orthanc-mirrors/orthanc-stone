@@ -30,8 +30,8 @@
 namespace OrthancStone
 {
   class DicomVolumeLoader : 
-    public ObserverBase<DicomVolumeLoader>,
-    public IObservable
+    public Old::ObserverBase<DicomVolumeLoader>,
+    public Old::IObservable
   {
   private:
     boost::shared_ptr<SeriesFramesLoader>  framesLoader_;

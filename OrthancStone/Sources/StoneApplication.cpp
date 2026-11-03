@@ -126,16 +126,16 @@ namespace OrthancStone
     class Emitter : public IMessageEmitter  // TODO Refactoring - Remove this
     {
     private:
-      IObservable  oracleObservable_;
+      Old::IObservable  oracleObservable_;
 
     public:
-      void EmitMessage(boost::weak_ptr<IObserver> observer,
+      void EmitMessage(boost::weak_ptr<Old::IObserver> observer,
                        const IMessage& message) ORTHANC_OVERRIDE
       {
         oracleObservable_.EmitMessage(observer, message);
       }
 
-      IObservable& GetOracleObservable()
+      Old::IObservable& GetOracleObservable()
       {
         return oracleObservable_;
       }
@@ -166,7 +166,7 @@ namespace OrthancStone
       return emitter_;
     }
 
-    IObservable& GetOracleObservable()
+    Old::IObservable& GetOracleObservable()
     {
       return emitter_.GetOracleObservable();
     }
@@ -190,7 +190,7 @@ namespace OrthancStone
     {
     private:
       NativeEnvironment&  environment_;
-      IObservable         oracleObservable_;
+      Old::IObservable    oracleObservable_;
 
     public:
       Emitter(NativeEnvironment& environment) :
@@ -198,7 +198,7 @@ namespace OrthancStone
       {
       }
 
-      void EmitMessage(boost::weak_ptr<IObserver> observer,
+      void EmitMessage(boost::weak_ptr<Old::IObserver> observer,
                        const IMessage& message) ORTHANC_OVERRIDE
       {
         NativeEnvironment::Lock lock(environment_);
@@ -211,7 +211,7 @@ namespace OrthancStone
         oracleObservable_.EmitMessage(observer, message);
       }
 
-      IObservable& GetOracleObservable()
+      Old::IObservable& GetOracleObservable()
       {
         return oracleObservable_;
       }
@@ -245,7 +245,7 @@ namespace OrthancStone
       return emitter_;
     }
 
-    IObservable& GetOracleObservable()
+    Old::IObservable& GetOracleObservable()
     {
       return emitter_.GetOracleObservable();
     }
@@ -300,7 +300,7 @@ namespace OrthancStone
   }
 
 
-  void StoneApplication::Context::EmitMessage(boost::weak_ptr<IObserver> observer,
+  void StoneApplication::Context::EmitMessage(boost::weak_ptr<Old::IObserver> observer,
                                               const IMessage& message)
   {
     assert(pimpl_ != NULL);
@@ -308,14 +308,14 @@ namespace OrthancStone
   }
 
 
-  IObservable& StoneApplication::Context::GetOracleObservable()
+  Old::IObservable& StoneApplication::Context::GetOracleObservable()
   {
     assert(pimpl_ != NULL);
     return pimpl_->GetOracleObservable();
   }
 
 
-  void StoneApplication::Context::Schedule(boost::shared_ptr<IObserver> receiver,
+  void StoneApplication::Context::Schedule(boost::shared_ptr<Old::IObserver> receiver,
                                            int priority,
                                            IOracleCommand* command /* Takes ownership */)
   {
@@ -328,7 +328,7 @@ namespace OrthancStone
   }
 
 
-  void StoneApplication::Context::AddLoader(const boost::shared_ptr<IObserver>& loader)
+  void StoneApplication::Context::AddLoader(const boost::shared_ptr<Old::IObserver>& loader)
   {
     Orthanc::Mutex::ScopedLock lock(loadersMutex_);
     loaders_.push_back(loader);

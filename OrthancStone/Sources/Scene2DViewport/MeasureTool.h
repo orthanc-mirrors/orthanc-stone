@@ -34,7 +34,7 @@
 
 namespace OrthancStone
 {
-  class MeasureTool : public ObserverBase<MeasureTool>
+  class MeasureTool : public Old::ObserverBase<MeasureTool>
   {
   public:
     class IMemento : public boost::noncopyable

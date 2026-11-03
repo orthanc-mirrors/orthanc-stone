@@ -50,7 +50,7 @@ namespace OrthancStone
      an answer is received. 
   */
 
-  class LoaderStateMachine : public ObserverBase<LoaderStateMachine>
+  class LoaderStateMachine : public Old::ObserverBase<LoaderStateMachine>
   {
   public:
     class State : public Orthanc::IDynamicObject

@@ -32,101 +32,104 @@
 
 namespace OrthancStone 
 {
-  IObservable::~IObservable()
+  namespace Old
   {
-    // delete all callables (this will also unregister them from the broker)
-    for (Callables::const_iterator it = callables_.begin();
-         it != callables_.end(); ++it)
+    IObservable::~IObservable()
     {
-      for (std::set<ICallable*>::const_iterator
-             it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+      // delete all callables (this will also unregister them from the broker)
+      for (Callables::const_iterator it = callables_.begin();
+           it != callables_.end(); ++it)
       {
-        delete *it2;
+        for (std::set<ICallable*>::const_iterator
+               it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+        {
+          delete *it2;
+        }
       }
     }
-  }
-  
 
-  void IObservable::RegisterCallable(ICallable* callable)
-  {
-    if (callable == NULL)
+
+    void IObservable::RegisterCallable(ICallable* callable)
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-    
-    const MessageIdentifier& id = callable->GetMessageIdentifier();
-    callables_[id].insert(callable);
-  }
-
-  void IObservable::EmitMessageInternal(const IObserver* receiver,
-                                        const IMessage& message)
-  {
-    //LOG(TRACE) << "IObservable::EmitMessageInternal receiver = " << std::hex << receiver << std::dec;
-    Callables::const_iterator found = callables_.find(message.GetIdentifier());
-
-    if (found != callables_.end())
-    {
-      for (std::set<ICallable*>::const_iterator
-             it = found->second.begin(); it != found->second.end(); ++it)
+      if (callable == NULL)
       {
-        assert(*it != NULL);
+        throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+      }
 
-        boost::shared_ptr<IObserver> observer((*it)->GetObserver().lock());
+      const MessageIdentifier& id = callable->GetMessageIdentifier();
+      callables_[id].insert(callable);
+    }
 
-        if (observer)
+    void IObservable::EmitMessageInternal(const IObserver* receiver,
+                                          const IMessage& message)
+    {
+      //LOG(TRACE) << "IObservable::EmitMessageInternal receiver = " << std::hex << receiver << std::dec;
+      Callables::const_iterator found = callables_.find(message.GetIdentifier());
+
+      if (found != callables_.end())
+      {
+        for (std::set<ICallable*>::const_iterator
+               it = found->second.begin(); it != found->second.end(); ++it)
         {
-          if (receiver == NULL ||    // Are we broadcasting?
-              observer.get() == receiver)  // Not broadcasting, but this is the receiver
+          assert(*it != NULL);
+
+          boost::shared_ptr<IObserver> observer((*it)->GetObserver().lock());
+
+          if (observer)
           {
-            try
+            if (receiver == NULL ||    // Are we broadcasting?
+                observer.get() == receiver)  // Not broadcasting, but this is the receiver
             {
-              // LOG(INFO) << "IN Handling message : " << message.GetIdentifier().AsString();
-              (*it)->Apply(message);
-              // LOG(INFO) << "OUT Handling message : " << message.GetIdentifier().AsString();
-            }
-            catch (Orthanc::OrthancException& e)
-            {
-              LOG(ERROR) << "OrthancException on callable: " << e.What() << " " << message.GetIdentifier().AsString();
-            }
-            catch (StoneException& e)
-            {
-              LOG(ERROR) << "StoneException on callable: " << e.What();
-            }
-            catch (std::exception& e)
-            {
-              LOG(ERROR) << "C++ exception on callable: " << e.what();
-            }
-            catch (...)
-            {
-              LOG(ERROR) << "Native exception on callable";
+              try
+              {
+                // LOG(INFO) << "IN Handling message : " << message.GetIdentifier().AsString();
+                (*it)->Apply(message);
+                // LOG(INFO) << "OUT Handling message : " << message.GetIdentifier().AsString();
+              }
+              catch (Orthanc::OrthancException& e)
+              {
+                LOG(ERROR) << "OrthancException on callable: " << e.What() << " " << message.GetIdentifier().AsString();
+              }
+              catch (StoneException& e)
+              {
+                LOG(ERROR) << "StoneException on callable: " << e.What();
+              }
+              catch (std::exception& e)
+              {
+                LOG(ERROR) << "C++ exception on callable: " << e.what();
+              }
+              catch (...)
+              {
+                LOG(ERROR) << "Native exception on callable";
+              }
             }
           }
-        }
-        else
-        {
-          // TODO => Remove "it" from the list of callables => This
-          // allows to suppress the need for "Unregister()"
+          else
+          {
+            // TODO => Remove "it" from the list of callables => This
+            // allows to suppress the need for "Unregister()"
+          }
         }
       }
     }
-  }
 
 
-  void IObservable::BroadcastMessage(const IMessage& message)
-  {
-    EmitMessageInternal(NULL, message);
-  }
-
-  
-  void IObservable::EmitMessage(boost::weak_ptr<IObserver> observer,
-                                const IMessage& message)
-  {
-    //LOG(TRACE) << "IObservable::EmitMessage observer = " << std::hex << observer.get() << std::dec;
-
-    boost::shared_ptr<IObserver> lock(observer.lock());
-    if (lock)
+    void IObservable::BroadcastMessage(const IMessage& message)
     {
-      EmitMessageInternal(lock.get(), message);
+      EmitMessageInternal(NULL, message);
+    }
+
+
+    void IObservable::EmitMessage(boost::weak_ptr<IObserver> observer,
+                                  const IMessage& message)
+    {
+      //LOG(TRACE) << "IObservable::EmitMessage observer = " << std::hex << observer.get() << std::dec;
+
+      boost::shared_ptr<IObserver> lock(observer.lock());
+      if (lock)
+      {
+        EmitMessageInternal(lock.get(), message);
+      }
     }
   }
 }

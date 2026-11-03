@@ -33,38 +33,41 @@
 
 namespace OrthancStone 
 {
-  template <typename TObserver>
-  class ObserverBase : 
-    public IObserver,
-    public boost::enable_shared_from_this<TObserver>
+  namespace Old
   {
-  public:
-    boost::shared_ptr<TObserver> GetSharedObserver()
+    template <typename TObserver>
+    class ObserverBase :
+      public IObserver,
+      public boost::enable_shared_from_this<TObserver>
     {
-      try
+    public:
+      boost::shared_ptr<TObserver> GetSharedObserver()
       {
-        return this->shared_from_this();
+        try
+        {
+          return this->shared_from_this();
+        }
+        catch (boost::bad_weak_ptr&)
+        {
+          throw Orthanc::OrthancException(
+            Orthanc::ErrorCode_InternalError,
+            "Cannot get a shared pointer to an observer from its constructor, "
+            "or the observer is not created as a shared pointer");
+        }
       }
-      catch (boost::bad_weak_ptr&)
+
+      template <typename TMessage>
+      ICallable* CreateCallable(void (TObserver::* MemberMethod) (const TMessage&))
       {
-        throw Orthanc::OrthancException(
-          Orthanc::ErrorCode_InternalError,
-          "Cannot get a shared pointer to an observer from its constructor, "
-          "or the observer is not created as a shared pointer");
+        return new Callable<TObserver, TMessage>(GetSharedObserver(), MemberMethod);
       }
-    }
 
-    template <typename TMessage>
-    ICallable* CreateCallable(void (TObserver::* MemberMethod) (const TMessage&))
-    {
-      return new Callable<TObserver, TMessage>(GetSharedObserver(), MemberMethod);
-    }
-
-    template <typename TMessage>
-    void Register(IObservable& observable,
-                  void (TObserver::* MemberMethod) (const TMessage&))
-    {
-      observable.RegisterCallable(CreateCallable(MemberMethod));
-    }
-  };
+      template <typename TMessage>
+      void Register(IObservable& observable,
+                    void (TObserver::* MemberMethod) (const TMessage&))
+      {
+        observable.RegisterCallable(CreateCallable(MemberMethod));
+      }
+    };
+  }
 }

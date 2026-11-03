@@ -34,11 +34,13 @@
 
 namespace OrthancStone
 {
+  // TODO Refactoring - Is it still used?
   class SingleFrameViewerApplication : public ObserverBase<SingleFrameViewerApplication>
   {
   private:
     StoneApplication::Context&               context_;
     boost::shared_ptr<IViewport>             viewport_;
+    boost::shared_ptr<ViewportController>    controller_;
     boost::shared_ptr<DicomResourcesLoader>  dicomLoader_;
     boost::shared_ptr<SeriesFramesLoader>    framesLoader_;
 
@@ -47,6 +49,7 @@ namespace OrthancStone
       context_(context),
       viewport_(viewport)
     {
+      controller_.reset(new ViewportController(viewport));
     }
 
     void Handle(const FrameDecodedMessage& message)
@@ -59,11 +62,11 @@ namespace OrthancStone
         message.GetInstanceParameters().CreateTexture(message.GetImage()));
       layer->SetLinearInterpolation(true);
 
-      viewport_->GetController()->GetScene().SetLayer(0, layer.release());
+      controller_->GetScene().SetLayer(0, layer.release());
 
       {
         std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-        lock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
+        lock->GetCompositor().FitContent(controller_->GetScene());
         lock->Invalidate();
       }
     }
@@ -138,7 +141,7 @@ namespace OrthancStone
     void FitContent()
     {
       std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-      lock->GetCompositor().FitContent(viewport_->GetController()->GetScene());
+      lock->GetCompositor().FitContent(controller_->GetScene());
       lock->Invalidate();
     }
   };

@@ -122,17 +122,14 @@ namespace OrthancStone
 
 
   void SimpleViewerCore::CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
-                                          const boost::shared_ptr<IViewport>& viewport)
+                                          const boost::shared_ptr<IViewport>& viewport,
+                                          const boost::shared_ptr<ViewportController>& controller)
   {
     if (!context ||
-        !viewport)
+        !viewport ||
+        !controller)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
-    if (!viewport->GetController())
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
 
     if (context_ ||
@@ -143,7 +140,7 @@ namespace OrthancStone
     }
 
     context_ = context;
-    controller_ = viewport->GetController();
+    controller_ = controller;
 
     dicomLoader_ = DicomResourcesLoader::Create(*context);
 

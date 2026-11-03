@@ -65,11 +65,6 @@ namespace OrthancStone
     }
   }
   
-  void SdlViewport::PostConstructor()
-  {
-    controller_ = boost::make_shared<ViewportController>(shared_from_this());
-  }
-    
   void SdlViewport::SendRefreshEvent()
   {
     SDL_Event event;
@@ -108,20 +103,6 @@ namespace OrthancStone
 
 
 #if ORTHANC_ENABLE_OPENGL == 1
-  boost::shared_ptr<SdlOpenGLViewport> SdlOpenGLViewport::Create(const std::string& title,
-                                                                 unsigned int width,
-                                                                 unsigned int height,
-                                                                 bool allowDpiScaling)
-  {
-    boost::shared_ptr<SdlOpenGLViewport> that =
-      boost::shared_ptr<SdlOpenGLViewport>(new SdlOpenGLViewport(title, width, height, allowDpiScaling));
-    that->SdlViewport::PostConstructor();
-    return that;
-  }
-#endif
-
-
-#if ORTHANC_ENABLE_OPENGL == 1
   uint32_t SdlOpenGLViewport::GetSdlWindowId()
   {
     const SdlWindow& sdlWindowWrapper = context_.GetWindow();
@@ -143,10 +124,10 @@ namespace OrthancStone
 
 
 #if ORTHANC_ENABLE_OPENGL == 1
-  void SdlOpenGLViewport::Paint()
+  void SdlOpenGLViewport::Paint(const Scene2D& scene)
   {
     SdlLock lock(*this);
-    lock.GetCompositor().Refresh(GetController()->GetScene());
+    lock.GetCompositor().Refresh(scene);
   }
 #endif
 
@@ -192,11 +173,11 @@ namespace OrthancStone
     return sdlWindowId;
   }
 
-  void SdlCairoViewport::Paint()
+  void SdlCairoViewport::Paint(const Scene2D& scene)
   {
     SdlLock lock(*this);
 
-    lock.GetCompositor().Refresh(GetController()->GetScene());
+    lock.GetCompositor().Refresh(scene);
     CreateSdlSurfaceFromCompositor(dynamic_cast<CairoCompositor&>(lock.GetCompositor()));
     
     if (sdlSurface_ != NULL)
@@ -248,17 +229,5 @@ namespace OrthancStone
       LOG(ERROR) << "Cannot create a SDL surface from a Cairo surface";
       throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
     }
-  }
-
-
-  boost::shared_ptr<SdlCairoViewport> SdlCairoViewport::Create(const std::string& title,
-                                                               unsigned int width,
-                                                               unsigned int height,
-                                                               bool allowDpiScaling)
-  {
-    boost::shared_ptr<SdlCairoViewport> that =
-      boost::shared_ptr<SdlCairoViewport>(new SdlCairoViewport(title, width, height, allowDpiScaling));
-    that->SdlViewport::PostConstructor();
-    return that;
   }
 }

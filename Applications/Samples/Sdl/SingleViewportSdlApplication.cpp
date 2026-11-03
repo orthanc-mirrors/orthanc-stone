@@ -35,7 +35,7 @@ namespace OrthancStone
   void SingleViewportSdlApplication::RunInternal(const boost::shared_ptr<Context>& context)
   {
     assert(core_.get() != NULL);
-    core_->CreateComponents(context, viewport_);
+    core_->CreateComponents(context, viewport_, controller_);
 
     std::unique_ptr<IViewportInteractor> interactor(core_->CreateMouseInteractor());
     if (interactor.get() == NULL)
@@ -119,27 +119,27 @@ namespace OrthancStone
             {
             case SDL_MOUSEBUTTONDOWN:
             {
-              viewport_->GetController()->HandleMousePress(*interactor, p, viewportLock->GetCompositor().GetCanvasWidth(),
-                                                           viewportLock->GetCompositor().GetCanvasHeight());
+              controller_->HandleMousePress(*interactor, p, viewportLock->GetCompositor().GetCanvasWidth(),
+                                            viewportLock->GetCompositor().GetCanvasHeight());
               break;
             }
 
             case SDL_MOUSEMOTION:
             {
-              if (viewport_->GetController()->HasActiveTracker())
+              if (controller_->HasActiveTracker())
               {
-                viewport_->GetController()->HandleMouseMove(p);
+                controller_->HandleMouseMove(p);
               }
               else if (interactor->HasMouseHover())
               {
-                interactor->HandleMouseHover(viewport_->GetController()->GetScene(), p);
+                interactor->HandleMouseHover(controller_->GetScene(), p);
                 viewportLock->Invalidate();
               }
               break;
             }
 
             case SDL_MOUSEBUTTONUP:
-              viewport_->GetController()->HandleMouseRelease(p);
+              controller_->HandleMouseRelease(p);
               break;
 
             default:
@@ -151,7 +151,7 @@ namespace OrthancStone
 
       if (paint)
       {
-        viewport_->Paint();
+        viewport_->Paint(controller_->GetScene());
       }
 
       // Small delay to avoid using 100% of CPU
@@ -176,12 +176,14 @@ namespace OrthancStone
 
     if (useOpenGL)
     {
-      viewport_ = SdlOpenGLViewport::Create(title, width, height);
+      viewport_.reset(new SdlOpenGLViewport(title, width, height));
     }
     else
     {
-      viewport_ = SdlCairoViewport::Create(title, width, height);
+      viewport_.reset(new SdlCairoViewport(title, width, height));
     }
+
+    controller_.reset(new ViewportController(viewport_));
 
     std::string font;
     Orthanc::EmbeddedResources::GetFileResource(font, Orthanc::EmbeddedResources::UBUNTU_FONT);

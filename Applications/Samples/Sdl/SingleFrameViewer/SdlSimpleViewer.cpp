@@ -73,10 +73,11 @@ namespace OrthancStone
 
   protected:
     virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
-                                  const boost::shared_ptr<IViewport>& viewport) ORTHANC_OVERRIDE
+                                  const boost::shared_ptr<IViewport>& viewport,
+                                  const boost::shared_ptr<ViewportController>& controller) ORTHANC_OVERRIDE
     {
       toto_.reset(new Toto);
-      SimpleViewerCore::CreateComponents(context, viewport);
+      SimpleViewerCore::CreateComponents(context, viewport, controller);
     }
 
 

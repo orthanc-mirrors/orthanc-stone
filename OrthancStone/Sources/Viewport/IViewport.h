@@ -26,8 +26,6 @@
 
 namespace OrthancStone
 {
-  class ViewportController;
-  
   /**
    * Class that combines a Scene2D with a canvas where to draw the
    * scene. A call to "Refresh()" will update the content of the
@@ -37,7 +35,7 @@ namespace OrthancStone
    * the content of the scene. 
    *
    * NB: The lock must be a "recursive_mutex", as the viewport
-   * controller can lock it a second time (TODO - Why so?).
+   * controller can lock it a second time (TODO Refactoring - Why so?).
    **/  
   class IViewport : public boost::noncopyable
   {
@@ -76,7 +74,5 @@ namespace OrthancStone
     }
 
     virtual ILock* Lock() = 0;
-
-    virtual const boost::shared_ptr<ViewportController>& GetController() const = 0;  // TODO Refactoring - Remove this
   };
 }

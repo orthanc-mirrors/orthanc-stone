@@ -35,6 +35,7 @@
 
 #include "../../Viewport/IViewport.h"
 #include "../../Viewport/IViewportInteractor.h"
+#include "../../Scene2DViewport/ViewportController.h"
 
 #include <Compatibility.h>
 
@@ -50,7 +51,6 @@ namespace OrthancStone
 {
   class WebAssemblyViewport : public IViewport,
                               public boost::enable_shared_from_this<WebAssemblyViewport>
-
   {
   private:
     class WasmLock;
@@ -180,7 +180,7 @@ namespace OrthancStone
 
     void FitForPrint();
 
-    virtual const boost::shared_ptr<ViewportController>& GetController() const ORTHANC_OVERRIDE
+    const boost::shared_ptr<ViewportController>& GetController() const
     {
       return controller_;
     }

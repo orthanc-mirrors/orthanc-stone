@@ -84,10 +84,10 @@ namespace OrthancStone
 #endif
   }
 
-  boost::shared_ptr<IViewport> RtViewerView::CreateViewport(const std::string& canvasId)
+  IViewport* RtViewerView::CreateViewport(const std::string& canvasId)
   {
     // False means we do NOT let Windows treat this as a legacy application that needs to be scaled
-    return SdlOpenGLViewport::Create(canvasId, 1024, 1024, false);
+    return new SdlOpenGLViewport(canvasId, 1024, 1024, false);
   }
 
   void RtViewerView::CleanupViewportEvents()
@@ -174,8 +174,7 @@ namespace OrthancStone
                                    unsigned int canvasHeight)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    ViewportController& controller = *viewport_->GetController();
-    const Scene2D& scene = controller.GetScene();
+    const Scene2D& scene = controller_->GetScene();
 
     std::string ttf;
     Orthanc::EmbeddedResources::GetFileResource(ttf, Orthanc::EmbeddedResources::UBUNTU_FONT);
@@ -319,7 +318,7 @@ namespace OrthancStone
             case SDLK_s:
             {
               std::unique_ptr<IViewport::ILock> lock(view->GetViewport()->Lock());
-              lock->GetCompositor().FitContent(view->GetViewport()->GetController()->GetScene());
+              lock->GetCompositor().FitContent(view->GetController()->GetScene());
               lock->Invalidate();
             }
             break;
@@ -350,17 +349,17 @@ namespace OrthancStone
               {
               case SDL_MOUSEBUTTONDOWN:
                 interactor.SetWindowingLayer(view->GetCtLayerIndex());
-                view->GetViewport()->GetController()->HandleMousePress(interactor, p,
-                                                                       lock->GetCompositor().GetCanvasWidth(),
-                                                                       lock->GetCompositor().GetCanvasHeight());
+                view->GetController()->HandleMousePress(interactor, p,
+                                                        lock->GetCompositor().GetCanvasWidth(),
+                                                        lock->GetCompositor().GetCanvasHeight());
                 break;
 
               case SDL_MOUSEMOTION:
-                view->GetViewport()->GetController()->HandleMouseMove(p);
+                view->GetController()->HandleMouseMove(p);
                 break;
 
               case SDL_MOUSEBUTTONUP:
-                view->GetViewport()->GetController()->HandleMouseRelease(p);
+                view->GetController()->HandleMouseRelease(p);
                 break;
 
               default:
@@ -395,7 +394,7 @@ namespace OrthancStone
                 boost::dynamic_pointer_cast<SdlViewport>(views[i]->GetViewport());
               if (sdlViewport->IsRefreshEvent(sdlEvent))
               {
-                sdlViewport->Paint();
+                sdlViewport->Paint(views[i]->GetController()->GetScene());
               }
             }
           }

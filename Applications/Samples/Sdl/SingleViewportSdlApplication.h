@@ -44,6 +44,7 @@ namespace OrthancStone
   private:
     boost::shared_ptr<ISingleViewportApplicationCore>  core_;
     boost::shared_ptr<SdlViewport>                     viewport_;
+    boost::shared_ptr<ViewportController>              controller_;
     std::unique_ptr<ICoreStartup>                      startup_;
 
   protected:

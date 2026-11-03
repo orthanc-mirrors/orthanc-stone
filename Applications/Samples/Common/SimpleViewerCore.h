@@ -65,7 +65,8 @@ namespace OrthancStone
 
   protected:
     virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
-                                  const boost::shared_ptr<IViewport>& viewport) ORTHANC_OVERRIDE;
+                                  const boost::shared_ptr<IViewport>& viewport,
+                                  const boost::shared_ptr<ViewportController>& controller) ORTHANC_OVERRIDE;
 
     virtual IViewportInteractor* CreateMouseInteractor() ORTHANC_OVERRIDE;
 

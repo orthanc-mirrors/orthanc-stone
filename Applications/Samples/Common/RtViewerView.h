@@ -45,17 +45,7 @@ namespace OrthancStone
   public:
     RtViewerView(boost::weak_ptr<RtViewerApp> app, 
                  const std::string& canvasId, 
-                 VolumeProjection projection) 
-      : app_(app)
-      , currentPlane_(0)
-      , projection_(projection)
-      , ctLayer_(0)
-      , canvasId_(canvasId)
-    {
-      viewport_ = CreateViewport(canvasId);
-      FLOATING_INFOTEXT_LAYER_ZINDEX = 6;
-      FIXED_INFOTEXT_LAYER_ZINDEX = 7;
-    }
+                 VolumeProjection projection);
 
     ~RtViewerView()
     {
@@ -106,6 +96,11 @@ namespace OrthancStone
       return viewport_;
     }
 
+    const boost::shared_ptr<ViewportController>& GetController() const
+    {
+      return controller_;
+    }
+
     int GetCtLayerIndex() const
     {
       return ctLayer_;
@@ -142,6 +137,7 @@ namespace OrthancStone
     int FLOATING_INFOTEXT_LAYER_ZINDEX;
     int FIXED_INFOTEXT_LAYER_ZINDEX;
     boost::shared_ptr<IViewport> viewport_;
+    boost::shared_ptr<ViewportController> controller_;
 
     int ctLayer_;
     std::string canvasId_;

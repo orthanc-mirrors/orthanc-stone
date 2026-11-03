@@ -191,8 +191,7 @@ namespace OrthancStone
   }
 
 
-  void ViewportController::HandleMousePress(IViewportInteractor&  interactor,
-                                            const PointerEvent&   event,
+  void ViewportController::HandleMousePress(const PointerEvent&   event,
                                             unsigned int          viewportWidth,
                                             unsigned int          viewportHeight)
   {
@@ -222,9 +221,10 @@ namespace OrthancStone
 
       // No measure tool, create new tracker from the interactor
       boost::shared_ptr<IViewport> sharedViewport(viewport_);
-      if (sharedViewport)
+      if (interactor_.get() != NULL &&
+          sharedViewport)
       {
-        activeTracker_.reset(interactor.CreateTracker(GetScene(), event, viewportWidth, viewportHeight));
+        activeTracker_.reset(interactor_->CreateTracker(GetScene(), event, viewportWidth, viewportHeight));
       }
       else
       {
@@ -241,6 +241,12 @@ namespace OrthancStone
     if (activeTracker_ &&
         activeTracker_->PointerMove(event, GetScene()))
     {
+      InvalidateViewport();
+    }
+    else if (interactor_.get() != NULL &&
+             interactor_->HasMouseHover())
+    {
+      interactor_->HandleMouseHover(GetScene(), event);
       InvalidateViewport();
     }
   }
@@ -323,5 +329,21 @@ namespace OrthancStone
 
     width = 0;
     height = 0;
+  }
+
+
+  void ViewportController::AcquireInteractor(IViewportInteractor* interactor)
+  {
+    std::unique_ptr<IViewportInteractor> protection(interactor);
+
+    if (interactor == NULL)
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
+    }
+    else
+    {
+      activeTracker_.reset();
+      interactor_.reset(protection.release());
+    }
   }
 }

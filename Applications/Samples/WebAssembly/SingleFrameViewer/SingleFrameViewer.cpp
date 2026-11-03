@@ -143,7 +143,7 @@ namespace OrthancStone
 
         core_->CreateComponents(GetContext(), viewport_, viewport_->GetController());
 
-        viewport_->AcquireInteractor(core_->CreateMouseInteractor());
+        viewport_->GetController()->AcquireInteractor(core_->CreateMouseInteractor());
 
         emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, EM_FALSE, OnKeyDown);
       }

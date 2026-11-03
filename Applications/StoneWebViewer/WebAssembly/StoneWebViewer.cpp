@@ -4066,7 +4066,7 @@ public:
                              WebViewerAction rightAction)
   {
     assert(viewport_ != NULL);
-    viewport_->AcquireInteractor(new Interactor(*this, leftAction, middleAction, rightAction));
+    viewport_->GetController()->AcquireInteractor(new Interactor(*this, leftAction, middleAction, rightAction));
   }
 
   void FitForPrint()

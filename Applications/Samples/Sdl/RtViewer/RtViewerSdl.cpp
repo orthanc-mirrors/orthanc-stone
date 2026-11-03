@@ -32,6 +32,7 @@
 #include "../../../../OrthancStone/Sources/StoneApplication.h"
 #include "../../../../OrthancStone/Sources/StoneException.h"
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
+#include "../../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
 
 // Orthanc (a.o. for screenshot capture)
 #include <Compatibility.h>  // For std::unique_ptr<>
@@ -155,9 +156,11 @@ namespace OrthancStone
     {
       views_[i]->PrepareViewport();
       views_[i]->EnableGLDebugOutput();
-    }
 
-    DefaultViewportInteractor interactor;
+      std::unique_ptr<DefaultViewportInteractor> interactor(new DefaultViewportInteractor);
+      interactor->SetWindowingLayer(views_[i]->GetCtLayerIndex());
+      views_[i]->GetController()->AcquireInteractor(interactor.release());
+    }
 
     /**
     It is very important that the Oracle (responsible for network I/O) be started before creating and firing the 
@@ -165,8 +168,7 @@ namespace OrthancStone
     */
     StartLoaders();
 
-
-    SdlRunLoop(views_, interactor);
+    SdlRunLoop(views_);
   }
 
   void RtViewerView::TakeScreenshot(const std::string& target,
@@ -210,8 +212,7 @@ namespace OrthancStone
     return boost::shared_ptr<RtViewerView>();
   }
 
-  void RtViewerApp::SdlRunLoop(const std::vector<boost::shared_ptr<RtViewerView> >& views,
-                               DefaultViewportInteractor& interactor)
+  void RtViewerApp::SdlRunLoop(const std::vector<boost::shared_ptr<RtViewerView> >& views)
   {
     using namespace OrthancStone;
 
@@ -348,8 +349,7 @@ namespace OrthancStone
               switch (sdlEvent.type)
               {
               case SDL_MOUSEBUTTONDOWN:
-                interactor.SetWindowingLayer(view->GetCtLayerIndex());
-                view->GetController()->HandleMousePress(interactor, p,
+                view->GetController()->HandleMousePress(p,
                                                         lock->GetCompositor().GetCanvasWidth(),
                                                         lock->GetCompositor().GetCanvasHeight());
                 break;

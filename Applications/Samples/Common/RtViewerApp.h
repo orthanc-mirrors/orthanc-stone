@@ -25,14 +25,11 @@
 #include "../../../OrthancStone/Sources/Loaders/DicomStructureSetLoader.h"
 #include "../../../OrthancStone/Sources/Loaders/OrthancMultiframeVolumeLoader.h"
 #include "../../../OrthancStone/Sources/Loaders/OrthancSeriesVolumeProgressiveLoader.h"
-#include "../../../OrthancStone/Sources/Messages/IObserver.h"
 #include "../../../OrthancStone/Sources/Messages/ObserverBase.h"
-#include "../../../OrthancStone/Sources/Oracle/OracleCommandExceptionMessage.h"
 #include "../../../OrthancStone/Sources/Scene2DViewport/ViewportController.h"
 #include "../../../OrthancStone/Sources/StoneApplication.h"
-#include "../../../OrthancStone/Sources/Viewport/DefaultViewportInteractor.h"
-#include "../../../OrthancStone/Sources/Viewport/IViewport.h"
 #include "../../../OrthancStone/Sources/Volumes/DicomVolumeImage.h"
+#include "RtViewerView.h"
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/noncopyable.hpp>
@@ -43,21 +40,8 @@
 
 namespace OrthancStone
 {
-  class OpenGLCompositor;
-  class IVolumeSlicer;
-  class ILayerStyleConfigurator;
-  class DicomStructureSetLoader;
-  class IOracle;
-  class ThreadedOracle;
-  class VolumeSceneLayerSource;
-  class SdlOpenGLViewport;
-  class RtViewerView;
-   
   static const unsigned int FONT_SIZE_0 = 32;
   static const unsigned int FONT_SIZE_1 = 24;
-
-  class Scene2D;
-  class UndoStack;
 
   /**
   This application subclasses IMessageEmitter to use a mutex before forwarding Oracle messages (that
@@ -72,8 +56,7 @@ namespace OrthancStone
 #if ORTHANC_ENABLE_SDL
   public:
     void RunSdl();
-    void SdlRunLoop(const std::vector<boost::shared_ptr<RtViewerView> >& views,
-                    DefaultViewportInteractor& interactor);
+    void SdlRunLoop(const std::vector<boost::shared_ptr<RtViewerView> >& views);
   private:
     void HandleApplicationEvent(const SDL_Event& event);
 #elif ORTHANC_ENABLE_WASM

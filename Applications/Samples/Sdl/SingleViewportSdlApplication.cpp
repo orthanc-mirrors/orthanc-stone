@@ -37,11 +37,7 @@ namespace OrthancStone
     assert(core_.get() != NULL);
     core_->CreateComponents(context, viewport_, controller_);
 
-    std::unique_ptr<IViewportInteractor> interactor(core_->CreateMouseInteractor());
-    if (interactor.get() == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
+    controller_->AcquireInteractor(core_->CreateMouseInteractor());
 
     if (startup_.get() != NULL)
     {
@@ -118,25 +114,13 @@ namespace OrthancStone
             switch (event.type)
             {
             case SDL_MOUSEBUTTONDOWN:
-            {
-              controller_->HandleMousePress(*interactor, p, viewportLock->GetCompositor().GetCanvasWidth(),
+              controller_->HandleMousePress(p, viewportLock->GetCompositor().GetCanvasWidth(),
                                             viewportLock->GetCompositor().GetCanvasHeight());
               break;
-            }
 
             case SDL_MOUSEMOTION:
-            {
-              if (controller_->HasActiveTracker())
-              {
-                controller_->HandleMouseMove(p);
-              }
-              else if (interactor->HasMouseHover())
-              {
-                interactor->HandleMouseHover(controller_->GetScene(), p);
-                viewportLock->Invalidate();
-              }
+              controller_->HandleMouseMove(p);
               break;
-            }
 
             case SDL_MOUSEBUTTONUP:
               controller_->HandleMouseRelease(p);

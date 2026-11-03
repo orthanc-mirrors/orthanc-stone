@@ -34,7 +34,6 @@
 #endif
 
 #include "../../Viewport/IViewport.h"
-#include "../../Viewport/IViewportInteractor.h"
 #include "../../Scene2DViewport/ViewportController.h"
 
 #include <Compatibility.h>
@@ -59,7 +58,6 @@ namespace OrthancStone
     std::string                           canvasCssSelector_;
     std::unique_ptr<ICompositor>          compositor_;
     boost::shared_ptr<ViewportController> controller_;
-    std::unique_ptr<IViewportInteractor>  interactor_;
     bool                                  enableEmscriptenMouseEvents_;
     unsigned int                          canvasWidth_;
     unsigned int                          canvasHeight_;
@@ -158,11 +156,6 @@ namespace OrthancStone
     virtual ILock* Lock() ORTHANC_OVERRIDE;
 
     ~WebAssemblyViewport();
-
-    /**
-    This method takes ownership
-    */
-    void AcquireInteractor(IViewportInteractor* interactor);
 
     const std::string& GetCanvasId() const
     {

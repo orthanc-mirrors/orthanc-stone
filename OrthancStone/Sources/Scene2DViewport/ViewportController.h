@@ -140,8 +140,7 @@ namespace OrthancStone
 
 
     // Must be expressed in canvas coordinates
-    void HandleMousePress(IViewportInteractor& interactor,
-                          const PointerEvent& event,
+    void HandleMousePress(const PointerEvent& event,
                           unsigned int viewportWidth,
                           unsigned int viewportHeight);
 
@@ -198,6 +197,8 @@ namespace OrthancStone
     void GetCanvasSize(unsigned int& width,
                        unsigned int& height);
 
+    void AcquireInteractor(IViewportInteractor* interactor);
+
   private:
     // The scene can be used by the higher-level objects (including the
     // measuring tools), possibly in their destructor, and so it must be 
@@ -208,5 +209,6 @@ namespace OrthancStone
     boost::shared_ptr<UndoStack>                  undoStackW_;  // Global stack, possibly shared by all viewports
     std::vector<boost::shared_ptr<MeasureTool> >  measureTools_;  // TODO Refactoring - Make this a std::set?
     boost::shared_ptr<IFlexiblePointerTracker>    activeTracker_;  // TODO Refactoring - Couldn't this be a "std::unique_ptr"?
+    std::unique_ptr<IViewportInteractor>          interactor_;
   };
 }

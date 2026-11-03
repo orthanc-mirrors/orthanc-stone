@@ -25,14 +25,12 @@
 #  include "WebAssemblyViewport.h"
 #  include "../../Scene2DViewport/ViewportController.h"
 #  include "../../Toolbox/GenericToolbox.h"
-#  include "../../Viewport/DefaultViewportInteractor.h"
 #else
 // This is the case when using the WebAssembly side module, and this
 // source file must be compiled within the WebAssembly main module
 #  include <Viewport/WebAssemblyViewport.h>
 #  include <Toolbox/GenericToolbox.h>
 #  include <Scene2DViewport/ViewportController.h>
-#  include <Viewport/DefaultViewportInteractor.h>
 #endif
 
 
@@ -163,13 +161,12 @@ namespace OrthancStone
 
     LOG(TRACE) << "mouse down: " << that->GetCanvasCssSelector();      
 
-    if (that->compositor_.get() != NULL &&
-        that->interactor_.get() != NULL)
+    if (that->compositor_.get() != NULL)
     {
       PointerEvent pointer;
       ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
 
-      that->controller_->HandleMousePress(*that->interactor_, pointer,
+      that->controller_->HandleMousePress(pointer,
                                           that->compositor_->GetCanvasWidth(),
                                           that->compositor_->GetCanvasHeight());        
     }
@@ -185,27 +182,10 @@ namespace OrthancStone
 
     if (that->compositor_.get() != NULL)
     {
-      if (that->controller_->HasActiveTracker())
-      {
-        PointerEvent pointer;
-        ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
+      PointerEvent pointer;
+      ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);
 
-        that->controller_->HandleMouseMove(pointer);
-      }
-      else if (that->interactor_.get() != NULL &&
-               that->interactor_->HasMouseHover())
-      {
-        // New in Stone Web viewer 2.0
-        PointerEvent pointer;
-        ConvertMouseEvent(pointer, *mouseEvent, *that->compositor_);      
-
-        that->interactor_->HandleMouseHover(that->controller_->GetScene(), pointer);
-
-        {
-          WebAssemblyViewport::WasmLock lock(*that);
-          lock.Invalidate();
-        }
-      }
+      that->controller_->HandleMouseMove(pointer);
     }
 
     LOG(TRACE) << "Exiting: " << __func__;
@@ -318,7 +298,6 @@ namespace OrthancStone
 #else
     canvasCssSelector_(canvasId),
 #endif
-    interactor_(new DefaultViewportInteractor),
     enableEmscriptenMouseEvents_(enableEmscriptenMouseEvents),
     canvasWidth_(0),
     canvasHeight_(0)
@@ -331,8 +310,7 @@ namespace OrthancStone
   {
     WebAssemblyViewport* that = reinterpret_cast<WebAssemblyViewport*>(userData);
 
-    if (that->compositor_.get() != NULL &&
-        that->interactor_.get() != NULL)
+    if (that->compositor_.get() != NULL)
     {
       const ICompositor& compositor = *that->compositor_;
 
@@ -345,7 +323,7 @@ namespace OrthancStone
       switch (eventType)
       {
         case EMSCRIPTEN_EVENT_TOUCHSTART:
-          that->controller_->HandleMousePress(*that->interactor_, event,
+          that->controller_->HandleMousePress(event,
                                               that->compositor_->GetCanvasWidth(),
                                               that->compositor_->GetCanvasHeight());
           break;
@@ -472,18 +450,6 @@ namespace OrthancStone
     return new WasmLock(*this);
   }
   
-  void WebAssemblyViewport::AcquireInteractor(IViewportInteractor* interactor)
-  {
-    if (interactor == NULL)
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-    else
-    {
-      interactor_.reset(interactor);
-    }
-  }
-
 
   void WebAssemblyViewport::RefreshCanvasSize()
   {

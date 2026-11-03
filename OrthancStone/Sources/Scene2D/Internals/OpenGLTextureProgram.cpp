@@ -24,6 +24,7 @@
 #include "OpenGLTextureProgram.h"
 #include "OpenGLShaderVersionDirective.h"
 
+#include <Logging.h>
 #include <OrthancException.h>
 
 static const unsigned int COMPONENTS = 2;

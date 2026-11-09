@@ -35,7 +35,7 @@
 namespace OrthancStone
 {
   // TODO Refactoring - Is it still used?
-  class SingleFrameViewerApplication : public ObserverBase<SingleFrameViewerApplication>
+  class SingleFrameViewerApplication : public Old::ObserverBase<SingleFrameViewerApplication>
   {
   private:
     StoneApplication::Context&               context_;
@@ -163,7 +163,7 @@ namespace OrthancStone
   };
   
 
-  class WebViewerLoaders : public ObserverBase<WebViewerLoaders>
+  class WebViewerLoaders : public Old::ObserverBase<WebViewerLoaders>
   {
   private:
     static const int PRIORITY_ADD_RESOURCES = 0;

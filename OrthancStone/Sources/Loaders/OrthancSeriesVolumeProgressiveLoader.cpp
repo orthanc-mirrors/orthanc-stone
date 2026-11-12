@@ -330,7 +330,7 @@ namespace OrthancStone
       volumeImageReadyInHighQuality_ = true;
       BroadcastMessage(VolumeImageReadyInHighQuality(*this));
 
-      Dispatch(shared_from_this(), VolumeImageReadyInHighQuality(*this));
+      Dispatch(*this, VolumeImageReadyInHighQuality(*this));
     }
   }
 
@@ -415,7 +415,7 @@ namespace OrthancStone
 
     BroadcastMessage(DicomVolumeImage::GeometryReadyMessage(*volume_));
 
-    Dispatch(shared_from_this(), DicomVolumeImage::GeometryReadyMessage(*volume_));
+    Dispatch(*this, DicomVolumeImage::GeometryReadyMessage(*volume_));
 
 #if STONE_TIME_BLOCKING_OPS
       boost::posix_time::ptime timerEnd = boost::posix_time::microsec_clock::universal_time();
@@ -456,8 +456,7 @@ namespace OrthancStone
 
       BroadcastMessage(DicomVolumeImage::ContentUpdatedMessage(*volume_));
 
-      Dispatch(shared_from_this(), DicomVolumeImage::ContentUpdatedMessage(*volume_));
-
+      Dispatch(*this, DicomVolumeImage::ContentUpdatedMessage(*volume_));
     }
     LOG(TRACE) << "SetSliceContent sliceIndex = " << sliceIndex << " -- will "
       << " now call ScheduleNextSliceDownload()";

@@ -99,7 +99,7 @@ namespace OrthancStone
       loader_->BroadcastMessage(message);
 
       //loader_->Notify(*loader_, message);
-      New::IObservable::Dispatch(loader_, message);
+      New::IObservable::Dispatch(*loader_, message);
     }
 
     boost::shared_ptr<DicomResourcesLoader> GetLoader()

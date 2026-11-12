@@ -69,10 +69,10 @@ namespace OrthancStone
       }
 
       template <typename Observable, typename Message>
-      static void Dispatch(const boost::shared_ptr<Observable>& observable,
+      static void Dispatch(Observable& observable,
                            const Message& message)
       {
-        static_cast< TypedObservable<Message>& >(*observable).Notify(*observable, message);
+        observable.TypedObservable<Message>::Notify(observable, message);
       }
 
       template <typename Message>

@@ -148,7 +148,7 @@ namespace OrthancStone
     FrameDecodedMessage message(*this, frameIndex, payload.GetQuality(), image, instance, parameters, payload.GetUserPayload());
     BroadcastMessage(message);
 
-    New::IObservable::Dispatch(shared_from_this(), message);
+    New::IObservable::Dispatch(*this, message);
   }
 
 

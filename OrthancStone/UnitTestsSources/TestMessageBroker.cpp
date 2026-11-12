@@ -66,7 +66,7 @@ TEST(MessageBroker, TestPermanentConnectionSimpleUseCase)
   boost::shared_ptr<MyObserver>  observer(new MyObserver);
 
   // create a permanent connection between an observable and an observer
-  observer->Register<MyObservable::MyCustomMessage>(observable, &MyObserver::HandleCompletedMessage);
+  observer->OldRegister<MyObservable::MyCustomMessage>(observable, &MyObserver::HandleCompletedMessage);
 
   testCounter = 0;
   observable.BroadcastMessage(MyObservable::MyCustomMessage(12));
@@ -90,7 +90,7 @@ TEST(MessageBroker, TestPermanentConnectionDeleteObserver)
   boost::shared_ptr<MyObserver>  observer(new MyObserver);
 
   // create a permanent connection between an observable and an observer
-  observer->Register<MyObservable::MyCustomMessage>(observable, &MyObserver::HandleCompletedMessage);
+  observer->OldRegister<MyObservable::MyCustomMessage>(observable, &MyObserver::HandleCompletedMessage);
 
   testCounter = 0;
   observable.BroadcastMessage(MyObservable::MyCustomMessage(12));

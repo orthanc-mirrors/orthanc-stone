@@ -323,13 +323,13 @@ namespace OrthancStone
     boost::shared_ptr<SeriesFramesLoader> loader(
       new SeriesFramesLoader(context, instances, dicomDirPath, dicomDir));
 
-    loader->ObserverBase<SeriesFramesLoader>::Register<GetOrthancImageCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
-    loader->ObserverBase<SeriesFramesLoader>::Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
-    loader->ObserverBase<SeriesFramesLoader>::Register<HttpCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
-    loader->ObserverBase<SeriesFramesLoader>::Register<OrthancRestApiCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
+    loader->OldRegister<GetOrthancImageCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
+    loader->OldRegister<GetOrthancWebViewerJpegCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
+    loader->OldRegister<HttpCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
+    loader->OldRegister<OrthancRestApiCommand::SuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    loader->ObserverBase<SeriesFramesLoader>::Register<ParseDicomSuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
+    loader->OldRegister<ParseDicomSuccessMessage>(context.GetOracleObservable(), &SeriesFramesLoader::Handle);
 #endif
 
     return loader;

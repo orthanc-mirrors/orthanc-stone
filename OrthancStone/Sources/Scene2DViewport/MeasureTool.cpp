@@ -71,7 +71,7 @@ namespace OrthancStone
 
   void MeasureTool::PostConstructor()
   {
-    Register<ViewportController::SceneTransformChanged>(*controller_, &MeasureTool::OnSceneTransformChanged);
+    OldRegister<ViewportController::SceneTransformChanged>(*controller_, &MeasureTool::OnSceneTransformChanged);
   }
 
   void MeasureTool::OnSceneTransformChanged(const ViewportController::SceneTransformChanged& message)

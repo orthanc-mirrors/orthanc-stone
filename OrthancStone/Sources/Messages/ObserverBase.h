@@ -63,8 +63,8 @@ namespace OrthancStone
       }
 
       template <typename TMessage>
-      void Register(IObservable& observable,
-                    void (TObserver::* MemberMethod) (const TMessage&))
+      void OldRegister(IObservable& observable,
+                       void (TObserver::* MemberMethod) (const TMessage&))
       {
         observable.RegisterCallable(CreateCallable(MemberMethod));
       }

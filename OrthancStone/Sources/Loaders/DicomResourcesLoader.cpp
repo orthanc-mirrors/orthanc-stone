@@ -612,13 +612,13 @@ namespace OrthancStone
   boost::shared_ptr<DicomResourcesLoader> DicomResourcesLoader::Create(StoneApplication::Context& stone)
   {
     boost::shared_ptr<DicomResourcesLoader> result(new DicomResourcesLoader(stone));
-    result->ObserverBase<DicomResourcesLoader>::Register<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
-    result->ObserverBase<DicomResourcesLoader>::Register<OracleCommandExceptionMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
-    result->ObserverBase<DicomResourcesLoader>::Register<OrthancRestApiCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
-    result->ObserverBase<DicomResourcesLoader>::Register<ReadFileCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
+    result->OldRegister<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
+    result->OldRegister<OracleCommandExceptionMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
+    result->OldRegister<OrthancRestApiCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
+    result->OldRegister<ReadFileCommand::SuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    result->ObserverBase<DicomResourcesLoader>::Register<ParseDicomSuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
+    result->OldRegister<ParseDicomSuccessMessage>(stone.GetOracleObservable(), &DicomResourcesLoader::Handle);
 #endif
     
     return result;

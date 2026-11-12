@@ -143,19 +143,19 @@ namespace OrthancStone
     Register for notifications issued by the loaders
     */
 
-    Register<DicomVolumeImage::GeometryReadyMessage>
+    OldRegister<DicomVolumeImage::GeometryReadyMessage>
       (*ctLoader_, &RtViewerApp::HandleGeometryReady);
 
-    Register<DicomVolumeImage::ContentUpdatedMessage>
+    OldRegister<DicomVolumeImage::ContentUpdatedMessage>
       (*ctLoader_, &RtViewerApp::HandleCTContentUpdated);
 
-    Register<DicomVolumeImage::ContentUpdatedMessage>
+    OldRegister<DicomVolumeImage::ContentUpdatedMessage>
       (*doseLoader_, &RtViewerApp::HandleDoseLoaded);
 
-    Register<DicomStructureSetLoader::StructuresReady>
+    OldRegister<DicomStructureSetLoader::StructuresReady>
       (*rtstructLoader_, &RtViewerApp::HandleStructuresReady);
 
-    Register<DicomStructureSetLoader::StructuresUpdated>
+    OldRegister<DicomStructureSetLoader::StructuresUpdated>
       (*rtstructLoader_, &RtViewerApp::HandleStructuresUpdated);
   }
 

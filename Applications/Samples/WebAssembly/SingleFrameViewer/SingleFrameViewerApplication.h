@@ -84,7 +84,7 @@ namespace OrthancStone
         std::unique_ptr<OrthancStone::IEnvironment::ILock> lock(context_.GetEnvironment().AcquireLock());
 
         framesLoader_ = SeriesFramesLoader::Create(context_, *message.GetResources());
-        Register<FrameDecodedMessage>(*framesLoader_, &SingleFrameViewerApplication::Handle);
+        OldRegister<FrameDecodedMessage>(*framesLoader_, &SingleFrameViewerApplication::Handle);
 
         assert(message.HasUserPayload());
         const Orthanc::SingleValueObject<unsigned int>& payload =
@@ -106,7 +106,7 @@ namespace OrthancStone
 
       application->dicomLoader_ = DicomResourcesLoader::Create(context);
 
-      application->Register<DicomResourcesLoadedMessage>(*application->dicomLoader_, &SingleFrameViewerApplication::Handle);
+      application->OldRegister<DicomResourcesLoadedMessage>(*application->dicomLoader_, &SingleFrameViewerApplication::Handle);
 
       return application;
     }
@@ -314,13 +314,13 @@ namespace OrthancStone
       application->resourcesLoader_ = DicomResourcesLoader::Create(context);
       application->thumbnailsLoader_ = SeriesThumbnailsLoader::Create(context, PRIORITY_THUMBNAILS);
 
-      application->Register<OrthancRestApiCommand::SuccessMessage>(
+      application->OldRegister<OrthancRestApiCommand::SuccessMessage>(
         context.GetOracleObservable(), &WebViewerLoaders::HandleOrthancRestApi);
 
-      application->Register<DicomResourcesLoadedMessage>(
+      application->OldRegister<DicomResourcesLoadedMessage>(
         *application->resourcesLoader_, &WebViewerLoaders::HandleLoadedResources);
 
-      application->Register<SeriesThumbnailsLoader::SuccessMessage>(
+      application->OldRegister<SeriesThumbnailsLoader::SuccessMessage>(
         *application->thumbnailsLoader_, &WebViewerLoaders::HandleThumbnail);
 
       context.AddLoader(application);

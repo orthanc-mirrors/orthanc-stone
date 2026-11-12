@@ -599,13 +599,13 @@ namespace OrthancStone
                                                                            int priority)
   {
     boost::shared_ptr<SeriesThumbnailsLoader> result(new SeriesThumbnailsLoader(stone, priority));
-    result->Register<GetOrthancImageCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
-    result->Register<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
-    result->Register<OracleCommandExceptionMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
-    result->Register<OrthancRestApiCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
+    result->OldRegister<GetOrthancImageCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
+    result->OldRegister<HttpCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
+    result->OldRegister<OracleCommandExceptionMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
+    result->OldRegister<OrthancRestApiCommand::SuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
 
 #if ORTHANC_ENABLE_DCMTK == 1
-    result->Register<ParseDicomSuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
+    result->OldRegister<ParseDicomSuccessMessage>(stone.GetOracleObservable(), &SeriesThumbnailsLoader::Handle);
 #endif
     
     return result;

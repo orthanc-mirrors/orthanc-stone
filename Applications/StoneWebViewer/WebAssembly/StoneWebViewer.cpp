@@ -1138,19 +1138,19 @@ public:
     loader->thumbnailsLoader_ = OrthancStone::SeriesThumbnailsLoader::Create(context, PRIORITY_LOW);
     loader->metadataLoader_ = OrthancStone::SeriesMetadataLoader::Create(context);
     
-    loader->Register<OrthancStone::DicomResourcesLoadedMessage>(
+    loader->OldRegister<OrthancStone::DicomResourcesLoadedMessage>(
       *loader->resourcesLoader_, &ResourcesLoader::Handle);
 
-    loader->Register<OrthancStone::SeriesThumbnailsLoader::SuccessMessage>(
+    loader->OldRegister<OrthancStone::SeriesThumbnailsLoader::SuccessMessage>(
       *loader->thumbnailsLoader_, &ResourcesLoader::Handle);
 
-    loader->Register<OrthancStone::SeriesMetadataLoader::SuccessMessage>(
+    loader->OldRegister<OrthancStone::SeriesMetadataLoader::SuccessMessage>(
       *loader->metadataLoader_, &ResourcesLoader::Handle);
 
-    loader->Register<OrthancStone::ParseDicomSuccessMessage>(
+    loader->OldRegister<OrthancStone::ParseDicomSuccessMessage>(
       context.GetOracleObservable(), &ResourcesLoader::Handle);
 
-    loader->Register<OrthancStone::HttpCommand::SuccessMessage>(
+    loader->OldRegister<OrthancStone::HttpCommand::SuccessMessage>(
       context.GetOracleObservable(), &ResourcesLoader::HandleInstanceThumbnail);
 
     return loader;
@@ -3439,31 +3439,31 @@ public:
 
     {
       viewport->loader_ = OrthancStone::DicomResourcesLoader::Create(context);
-      viewport->Register<OrthancStone::DicomResourcesLoadedMessage>(
+      viewport->OldRegister<OrthancStone::DicomResourcesLoadedMessage>(
         *viewport->loader_, &ViewerViewport::Handle);
 
-      viewport->Register<OrthancStone::HttpCommand::SuccessMessage>(
+      viewport->OldRegister<OrthancStone::HttpCommand::SuccessMessage>(
         context.GetOracleObservable(), &ViewerViewport::Handle);
 
-      viewport->Register<OrthancStone::ParseDicomSuccessMessage>(
+      viewport->OldRegister<OrthancStone::ParseDicomSuccessMessage>(
         context.GetOracleObservable(), &ViewerViewport::Handle);
 
-      viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationChangedMessage>(
+      viewport->OldRegister<OrthancStone::AnnotationsSceneLayer::AnnotationChangedMessage>(
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
 
-      viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationAddedMessage>(
+      viewport->OldRegister<OrthancStone::AnnotationsSceneLayer::AnnotationAddedMessage>(
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
 
-      viewport->Register<OrthancStone::AnnotationsSceneLayer::AnnotationRemovedMessage>(
+      viewport->OldRegister<OrthancStone::AnnotationsSceneLayer::AnnotationRemovedMessage>(
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
 
-      viewport->Register<OrthancStone::AnnotationsSceneLayer::TextAnnotationRequiredMessage>(
+      viewport->OldRegister<OrthancStone::AnnotationsSceneLayer::TextAnnotationRequiredMessage>(
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
     }
 
     {
       std::unique_ptr<OrthancStone::IViewport::ILock> lock(viewport->viewport_->Lock());
-      viewport->Register<OrthancStone::ViewportController::SceneTransformChanged>(*viewport->viewport_->GetController(), &ViewerViewport::Handle);
+      viewport->OldRegister<OrthancStone::ViewportController::SceneTransformChanged>(*viewport->viewport_->GetController(), &ViewerViewport::Handle);
     }
 
     return viewport;    

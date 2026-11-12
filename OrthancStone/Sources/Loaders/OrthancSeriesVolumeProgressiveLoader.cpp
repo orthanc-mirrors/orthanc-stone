@@ -546,15 +546,15 @@ namespace OrthancStone
     boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> obj(
       new OrthancSeriesVolumeProgressiveLoader(context, volume, progressiveQuality));
 
-    obj->Register<OrthancRestApiCommand::SuccessMessage>(
+    obj->OldRegister<OrthancRestApiCommand::SuccessMessage>(
       context.GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadGeometry);
 
-    obj->Register<GetOrthancImageCommand::SuccessMessage>(
+    obj->OldRegister<GetOrthancImageCommand::SuccessMessage>(
       context.GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadBestQualitySliceContent);
 
-    obj->Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(
+    obj->OldRegister<GetOrthancWebViewerJpegCommand::SuccessMessage>(
       context.GetOracleObservable(),
       &OrthancSeriesVolumeProgressiveLoader::LoadJpegSliceContent);
 

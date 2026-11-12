@@ -194,7 +194,7 @@ namespace OrthancStone
     boost::shared_ptr<DicomResourcesLoader> loader(DicomResourcesLoader::Create(context));
       
     boost::shared_ptr<SeriesMetadataLoader> obj(new SeriesMetadataLoader(loader));
-    obj->Register<DicomResourcesLoadedMessage>(*loader, &SeriesMetadataLoader::Handle);
+    obj->OldRegister<DicomResourcesLoadedMessage>(*loader, &SeriesMetadataLoader::Handle);
     return obj;
   }
 

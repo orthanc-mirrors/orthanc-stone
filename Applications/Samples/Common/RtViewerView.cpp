@@ -293,7 +293,7 @@ namespace OrthancStone
   void RtViewerView::RegisterMessages()
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-    Register<ViewportController::SceneTransformChanged>(*controller_, &RtViewerView::OnSceneTransformChanged);
+    OldRegister<ViewportController::SceneTransformChanged>(*controller_, &RtViewerView::OnSceneTransformChanged);
   }
 
   void RtViewerView::CreateLayers(boost::shared_ptr<OrthancSeriesVolumeProgressiveLoader> ctLoader,

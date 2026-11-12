@@ -173,13 +173,13 @@ namespace OrthancStone
   void LoaderStateMachine::PostConstructor()
   {
     // TODO => Move this out of constructor
-    Register<OrthancRestApiCommand::SuccessMessage>(
+    OldRegister<OrthancRestApiCommand::SuccessMessage>(
       context_.GetOracleObservable(), &LoaderStateMachine::HandleSuccessMessage);
-    Register<GetOrthancImageCommand::SuccessMessage>(
+    OldRegister<GetOrthancImageCommand::SuccessMessage>(
       context_.GetOracleObservable(), &LoaderStateMachine::HandleSuccessMessage);
-    Register<GetOrthancWebViewerJpegCommand::SuccessMessage>(
+    OldRegister<GetOrthancWebViewerJpegCommand::SuccessMessage>(
       context_.GetOracleObservable(), &LoaderStateMachine::HandleSuccessMessage);
-    Register<OracleCommandExceptionMessage>(
+    OldRegister<OracleCommandExceptionMessage>(
       context_.GetOracleObservable(), &LoaderStateMachine::HandleExceptionMessage);
   }
 

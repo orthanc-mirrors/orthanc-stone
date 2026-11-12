@@ -45,7 +45,7 @@ namespace OrthancStone
   private:
     class Interactor;
 
-    boost::shared_ptr<AnnotationsSceneLayer>      annotations_;
+    std::unique_ptr<AnnotationsSceneLayer>        annotations_;
     boost::shared_ptr<DicomResourcesLoader>       dicomLoader_;
     boost::shared_ptr<SeriesFramesLoader>         framesLoader_;
 

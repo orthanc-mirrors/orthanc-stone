@@ -97,7 +97,7 @@ namespace OrthancStone
       //Register<FrameDecodedMessage>(*framesLoader_, &SimpleViewerCore::Handle);
 
       //framesLoader_->TypedObservable<FrameDecodedMessage>::Register(shared_from_this());
-      New::IObservable::Bind<FrameDecodedMessage>(framesLoader_, shared_from_this());
+      New::IObservable::Bind<FrameDecodedMessage>(*framesLoader_, shared_from_this());
 
       assert(message.HasUserPayload());
 
@@ -145,14 +145,14 @@ namespace OrthancStone
     //Register<DicomResourcesLoadedMessage>(*dicomLoader_, &SimpleViewerCore::Handle);
 
     //dicomLoader_->TypedObservable<DicomResourcesLoadedMessage>::Register(shared_from_this());
-    New::IObservable::Bind<DicomResourcesLoadedMessage>(dicomLoader_, shared_from_this());
+    New::IObservable::Bind<DicomResourcesLoadedMessage>(*dicomLoader_, shared_from_this());
 
     annotations_.reset(new AnnotationsSceneLayer(10));
     annotations_->SetUnits(Units_Millimeters);
     annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
     annotations_->SetProbedLayer(0);
 
-    New::IObservable::Bind<AnnotationRemovedMessage>(annotations_, shared_from_this());
+    New::IObservable::Bind<AnnotationRemovedMessage>(*annotations_, shared_from_this());
 
     controller_->SetUndoStack(boost::make_shared<UndoStack>());
 

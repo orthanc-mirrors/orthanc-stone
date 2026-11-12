@@ -127,11 +127,11 @@ namespace OrthancStone
       seriesLoader_ = OrthancSeriesVolumeProgressiveLoader::Create(*context, volume_, true /* progressive */);
       instanceLoader_ = OrthancMultiframeVolumeLoader::Create(*context, volume_);
 
-      New::IObservable::Bind<DicomVolumeImage::GeometryReadyMessage>(seriesLoader_, shared_from_this());
-      New::IObservable::Bind<DicomVolumeImage::ContentUpdatedMessage>(seriesLoader_, shared_from_this());
+      New::IObservable::Bind<DicomVolumeImage::GeometryReadyMessage>(*seriesLoader_, shared_from_this());
+      New::IObservable::Bind<DicomVolumeImage::ContentUpdatedMessage>(*seriesLoader_, shared_from_this());
 
-      New::IObservable::Bind<DicomVolumeImage::GeometryReadyMessage>(instanceLoader_, shared_from_this());
-      New::IObservable::Bind<DicomVolumeImage::ContentUpdatedMessage>(instanceLoader_, shared_from_this());
+      New::IObservable::Bind<DicomVolumeImage::GeometryReadyMessage>(*instanceLoader_, shared_from_this());
+      New::IObservable::Bind<DicomVolumeImage::ContentUpdatedMessage>(*instanceLoader_, shared_from_this());
     }
 
     virtual IViewportInteractor* CreateMouseInteractor() ORTHANC_OVERRIDE

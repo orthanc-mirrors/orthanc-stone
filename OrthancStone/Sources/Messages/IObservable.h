@@ -76,10 +76,10 @@ namespace OrthancStone
       }
 
       template <typename Message>
-      static void Bind(const boost::shared_ptr< TypedObservable<Message> >& observable,
+      static void Bind(TypedObservable<Message>& observable,
                        const boost::shared_ptr< TypedObserver<Message> >& observer)
       {
-        observable->Register(observer);
+        observable.Register(observer);
       }
     };
   }

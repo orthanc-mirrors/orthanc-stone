@@ -209,7 +209,7 @@ namespace OrthancStone
   public:
     VolumeViewerCore() :
       // Dummy initialization
-      projection_(VolumeProjection::VolumeProjection_Axial),
+      projection_(VolumeProjection_Axial),
       currentPlane_(0)
     {
     }

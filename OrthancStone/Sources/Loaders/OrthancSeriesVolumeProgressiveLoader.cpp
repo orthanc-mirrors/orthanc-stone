@@ -328,7 +328,9 @@ namespace OrthancStone
     {
       // loading is finished!
       volumeImageReadyInHighQuality_ = true;
-      BroadcastMessage(OrthancSeriesVolumeProgressiveLoader::VolumeImageReadyInHighQuality(*this));
+      BroadcastMessage(VolumeImageReadyInHighQuality(*this));
+
+      Dispatch(shared_from_this(), VolumeImageReadyInHighQuality(*this));
     }
   }
 
@@ -412,7 +414,9 @@ namespace OrthancStone
     slicesQuality_.resize(slicesCount, 0);
 
     BroadcastMessage(DicomVolumeImage::GeometryReadyMessage(*volume_));
-    
+
+    Dispatch(shared_from_this(), DicomVolumeImage::GeometryReadyMessage(*volume_));
+
 #if STONE_TIME_BLOCKING_OPS
       boost::posix_time::ptime timerEnd = boost::posix_time::microsec_clock::universal_time();
     boost::posix_time::time_duration duration = timerEnd - timerStart;
@@ -451,6 +455,9 @@ namespace OrthancStone
       slicesQuality_[sliceIndex] = quality;
 
       BroadcastMessage(DicomVolumeImage::ContentUpdatedMessage(*volume_));
+
+      Dispatch(shared_from_this(), DicomVolumeImage::ContentUpdatedMessage(*volume_));
+
     }
     LOG(TRACE) << "SetSliceContent sliceIndex = " << sliceIndex << " -- will "
       << " now call ScheduleNextSliceDownload()";

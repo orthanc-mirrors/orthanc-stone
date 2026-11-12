@@ -248,6 +248,8 @@ namespace OrthancStone
     ScheduleFrameDownloads();
 
     BroadcastMessage(DicomVolumeImage::GeometryReadyMessage(*volume_));
+
+    TypedObservable<DicomVolumeImage::GeometryReadyMessage>::Notify(*this, DicomVolumeImage::GeometryReadyMessage(*volume_));
   }
 
 
@@ -550,6 +552,8 @@ namespace OrthancStone
 
     pixelDataLoaded_ = true;
     BroadcastMessage(DicomVolumeImage::ContentUpdatedMessage(*volume_));
+
+    TypedObservable<DicomVolumeImage::ContentUpdatedMessage>::Notify(*this, DicomVolumeImage::ContentUpdatedMessage(*volume_));
   }
   
   bool OrthancMultiframeVolumeLoader::HasGeometry() const

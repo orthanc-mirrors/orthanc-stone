@@ -35,7 +35,10 @@ namespace OrthancStone
   class OrthancMultiframeVolumeLoader :
     public LoaderStateMachine,
     public Old::IObservable,
-    public IGeometryProvider
+    public IGeometryProvider,
+    public New::IObservable,
+    public New::TypedObservable<DicomVolumeImage::GeometryReadyMessage>,
+    public New::TypedObservable<DicomVolumeImage::ContentUpdatedMessage>
   {
   private:
     class LoadRTDoseGeometry;

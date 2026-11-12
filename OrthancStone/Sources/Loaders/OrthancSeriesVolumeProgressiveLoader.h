@@ -43,7 +43,18 @@
 
 namespace OrthancStone
 {
-  class ILoadersContext;
+  class OrthancSeriesVolumeProgressiveLoader;
+
+  class VolumeImageReadyInHighQuality : public ::OrthancStone::OriginMessage<OrthancSeriesVolumeProgressiveLoader>
+  {
+    ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
+    explicit VolumeImageReadyInHighQuality(const OrthancSeriesVolumeProgressiveLoader& origin) :
+      OriginMessage(origin)
+    {
+    }
+  };
+
   /**
     This class is used to manage the progressive loading of a volume that
     is stored in a Dicom series.
@@ -51,8 +62,12 @@ namespace OrthancStone
   class OrthancSeriesVolumeProgressiveLoader : 
     public Old::ObserverBase<OrthancSeriesVolumeProgressiveLoader>,
     public Old::IObservable,
-    public IVolumeSlicer,
-    public IGeometryProvider
+    public IVolumeSlicer,  // TODO Refactoring - Is this needed?
+    public IGeometryProvider,
+    public New::IObservable,
+    public New::TypedObservable<DicomVolumeImage::GeometryReadyMessage>,
+    public New::TypedObservable<DicomVolumeImage::ContentUpdatedMessage>,
+    public New::TypedObservable<VolumeImageReadyInHighQuality>
   {
   public:
     class ISlicePostProcessor
@@ -145,8 +160,6 @@ namespace OrthancStone
       bool progressiveQuality);
   
   public:
-    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, VolumeImageReadyInHighQuality, OrthancSeriesVolumeProgressiveLoader);
-
     /**
     See doc for the progressiveQuality_ field
     */

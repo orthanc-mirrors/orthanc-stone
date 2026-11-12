@@ -38,7 +38,9 @@ namespace OrthancStone
 {
   class VolumeViewerCore :
     public ISingleViewportApplicationCore,
-    public Old::ObserverBase<VolumeViewerCore>
+    public boost::enable_shared_from_this<VolumeViewerCore>,
+    public New::TypedObserver<DicomVolumeImage::GeometryReadyMessage>,
+    public New::TypedObserver<DicomVolumeImage::ContentUpdatedMessage>
   {
   private:
     boost::shared_ptr<StoneApplication::Context>  context_;
@@ -91,7 +93,8 @@ namespace OrthancStone
       Invalidate();
     }
 
-    void OnGeometryReady(const DicomVolumeImage::GeometryReadyMessage& message)
+    virtual void Handle(const OrthancStone::New::IObservable& source,
+                        const DicomVolumeImage::GeometryReadyMessage& message) ORTHANC_OVERRIDE
     {
       LOG(WARNING) << "Dimension of the volume: "
                    << volume_->GetGeometry().GetWidth() << "x"
@@ -100,7 +103,8 @@ namespace OrthancStone
       UpdateProjection();
     }
 
-    void OnContentUpdated(const DicomVolumeImage::ContentUpdatedMessage& message)
+    virtual void Handle(const OrthancStone::New::IObservable& source,
+                        const DicomVolumeImage::ContentUpdatedMessage& message) ORTHANC_OVERRIDE
     {
       Invalidate();
     }
@@ -123,11 +127,11 @@ namespace OrthancStone
       seriesLoader_ = OrthancSeriesVolumeProgressiveLoader::Create(*context, volume_, true /* progressive */);
       instanceLoader_ = OrthancMultiframeVolumeLoader::Create(*context, volume_);
 
-      OldRegister<DicomVolumeImage::GeometryReadyMessage>(*seriesLoader_, &VolumeViewerCore::OnGeometryReady);
-      OldRegister<DicomVolumeImage::ContentUpdatedMessage>(*seriesLoader_, &VolumeViewerCore::OnContentUpdated);
+      New::IObservable::Bind<DicomVolumeImage::GeometryReadyMessage>(seriesLoader_, shared_from_this());
+      New::IObservable::Bind<DicomVolumeImage::ContentUpdatedMessage>(seriesLoader_, shared_from_this());
 
-      OldRegister<DicomVolumeImage::GeometryReadyMessage>(*instanceLoader_, &VolumeViewerCore::OnGeometryReady);
-      OldRegister<DicomVolumeImage::ContentUpdatedMessage>(*instanceLoader_, &VolumeViewerCore::OnContentUpdated);
+      New::IObservable::Bind<DicomVolumeImage::GeometryReadyMessage>(instanceLoader_, shared_from_this());
+      New::IObservable::Bind<DicomVolumeImage::ContentUpdatedMessage>(instanceLoader_, shared_from_this());
     }
 
     virtual IViewportInteractor* CreateMouseInteractor() ORTHANC_OVERRIDE

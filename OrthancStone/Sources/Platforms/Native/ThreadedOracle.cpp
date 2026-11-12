@@ -153,6 +153,7 @@ namespace OrthancStone
 
 
   ThreadedOracle::ThreadedOracle(const StoneApplication::Configuration& configuration) :
+    state_(State_Initializing),
     configuration_(configuration),
     sleepingThread_(new SleepRunnable, configuration.GetWorkersTimeResolution())
   {
@@ -174,15 +175,35 @@ namespace OrthancStone
 
   void ThreadedOracle::Start()
   {
-    sleepingThread_.Start();
-    threadPool_.Start();
+    boost::mutex::scoped_lock lock(mutex_);
+
+    if (state_ == State_Initializing)
+    {
+      sleepingThread_.Start();
+      threadPool_.Start();
+      state_ = State_Running;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
   }
 
 
   void ThreadedOracle::Stop()
   {
-    threadPool_.Stop();
-    sleepingThread_.Stop();
+    boost::mutex::scoped_lock lock(mutex_);
+
+    if (state_ == State_Running)
+    {
+      threadPool_.Stop();
+      sleepingThread_.Stop();
+      state_ = State_Stopped;
+    }
+    else
+    {
+      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+    }
   }
 
 
@@ -228,6 +249,25 @@ namespace OrthancStone
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
 
-    SubmitInternal(new OracleCallback(environment, client, protection.release()));
+    {
+      boost::mutex::scoped_lock lock(mutex_);
+
+      switch (state_)
+      {
+        case State_Initializing:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
+
+        case State_Running:
+          SubmitInternal(new OracleCallback(environment, client, protection.release()));
+          break;
+
+        case State_Stopped:
+          // The application is in the shutdown process
+          break;
+
+        default:
+          throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+      }
+    }
   }
 }

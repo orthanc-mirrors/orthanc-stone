@@ -88,7 +88,6 @@ namespace OrthancStone
       else
       {
         slope_ = (maxValue - minValue) / 65536.0f;
-        assert(!LinearAlgebra::IsCloseToZero(slope_));
       }
 
       const unsigned int width = texture.GetWidth();

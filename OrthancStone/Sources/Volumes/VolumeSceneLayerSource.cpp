@@ -47,8 +47,7 @@ namespace OrthancStone
     lastPlane_.reset(NULL);
   }
 
-  VolumeSceneLayerSource::VolumeSceneLayerSource(Scene2D& scene,
-                                                 int layerDepth,
+  VolumeSceneLayerSource::VolumeSceneLayerSource(int layerDepth,
                                                  const boost::shared_ptr<IVolumeSlicer>& slicer) :
     layerDepth_(layerDepth),
     slicer_(slicer),
@@ -59,14 +58,6 @@ namespace OrthancStone
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
     }
-
-    if (scene.HasLayer(layerDepth_))
-    {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);
-    }
-
-    // we need to book the scene layer depth by adding a dummy layer
-    scene.SetLayer(layerDepth_, new NullLayer);
   }
 
 

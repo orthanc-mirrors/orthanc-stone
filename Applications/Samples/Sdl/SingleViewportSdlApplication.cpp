@@ -35,7 +35,7 @@ namespace OrthancStone
   void SingleViewportSdlApplication::RunInternal(const boost::shared_ptr<Context>& context)
   {
     assert(core_.get() != NULL);
-    core_->CreateComponents(context, viewport_, controller_);
+    core_->CreateComponents(context, controller_);
 
     controller_->AcquireInteractor(core_->CreateMouseInteractor());
 
@@ -67,12 +67,8 @@ namespace OrthancStone
         }
         else if (event.type == SDL_WINDOWEVENT &&
                  (event.window.event == SDL_WINDOWEVENT_RESIZED ||
-                  event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
-        {
-          viewport_->UpdateSize(event.window.data1, event.window.data2);
-        }
-        else if (event.type == SDL_WINDOWEVENT &&
-                 (event.window.event == SDL_WINDOWEVENT_SHOWN ||
+                  event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
+                  event.window.event == SDL_WINDOWEVENT_SHOWN ||
                   event.window.event == SDL_WINDOWEVENT_EXPOSED))
         {
           std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
@@ -95,27 +91,62 @@ namespace OrthancStone
             }
             else
             {
+              // Lock to prevent oracle callbacks
               std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
+
               core_->HandleKeyDown(*environmentLock, s[0]);
             }
+          }
+        }
+        else if (event.type == SDL_MOUSEWHEEL)
+        {
+          bool fast = false;
+          if (keyboardState[SDL_SCANCODE_LCTRL])  // Speed up scrolling if CTRL is down
+          {
+            fast = true;
+          }
+
+          // Lock to prevent oracle callbacks
+          std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
+
+          if (event.wheel.y > 0)
+          {
+            core_->HandleMouseWheel(*environmentLock, MouseWheelDirection_Up, fast);
+          }
+          else if (event.wheel.y < 0)
+          {
+            core_->HandleMouseWheel(*environmentLock, MouseWheelDirection_Down, fast);
           }
         }
         else if (event.type == SDL_MOUSEBUTTONDOWN ||
                  event.type == SDL_MOUSEMOTION ||
                  event.type == SDL_MOUSEBUTTONUP)
         {
-          std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+          bool hasPointer;
+          PointerEvent p;
+          unsigned int canvasWidth, canvasHeight;
 
-          if (viewportLock->HasCompositor())
           {
-            PointerEvent p;
-            OrthancStoneHelpers::GetPointerEvent(p, viewportLock->GetCompositor(), event, keyboardState, scancodeCount);
+            std::unique_ptr<IViewport::ILock> viewportLock(viewport_->Lock());
+
+            if (viewportLock->HasCompositor())
+            {
+              canvasWidth = viewportLock->GetCompositor().GetCanvasWidth();
+              canvasHeight = viewportLock->GetCompositor().GetCanvasHeight();
+              OrthancStoneHelpers::GetPointerEvent(p, viewportLock->GetCompositor(), event, keyboardState, scancodeCount);
+              hasPointer = true;
+            }
+          }
+
+          if (hasPointer)
+          {
+            // Lock to prevent oracle callbacks
+            std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
 
             switch (event.type)
             {
             case SDL_MOUSEBUTTONDOWN:
-              controller_->HandleMousePress(p, viewportLock->GetCompositor().GetCanvasWidth(),
-                                            viewportLock->GetCompositor().GetCanvasHeight());
+              controller_->HandleMousePress(p, canvasWidth, canvasHeight);
               break;
 
             case SDL_MOUSEMOTION:
@@ -135,6 +166,9 @@ namespace OrthancStone
 
       if (paint)
       {
+        // Lock to prevent oracle callbacks
+        std::unique_ptr<IEnvironment::ILock> environmentLock(context->GetEnvironment().AcquireLock());
+
         viewport_->Paint(controller_->GetScene());
       }
 

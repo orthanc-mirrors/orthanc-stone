@@ -141,7 +141,7 @@ namespace OrthancStone
           viewportLock->GetCompositor().SetFont(0, font, 16, Orthanc::Encoding_Latin1);
         }
 
-        core_->CreateComponents(GetContext(), viewport_, viewport_->GetController());
+        core_->CreateComponents(GetContext(), viewport_->GetController());
 
         viewport_->GetController()->AcquireInteractor(core_->CreateMouseInteractor());
 

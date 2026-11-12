@@ -38,12 +38,15 @@ namespace OrthancStone
     }
 
     virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
-                                  const boost::shared_ptr<IViewport>& viewport,
                                   const boost::shared_ptr<ViewportController>& controller) = 0;
 
     virtual IViewportInteractor* CreateMouseInteractor() = 0;
 
     virtual void HandleKeyDown(const IEnvironment::ILock& environmentLock,
                                char key) = 0;
+
+    virtual void HandleMouseWheel(const IEnvironment::ILock& environmentLock,
+                                  MouseWheelDirection direction,
+                                  bool fast) = 0;
   };
 }

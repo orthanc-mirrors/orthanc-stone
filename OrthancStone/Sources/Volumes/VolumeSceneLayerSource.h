@@ -42,7 +42,7 @@ namespace OrthancStone
   {
   private:
     int                                       layerDepth_;
-    boost::shared_ptr<IVolumeSlicer>          slicer_;
+    boost::shared_ptr<IVolumeSlicer>          slicer_;   // TODO Refactoring - Should be unique_ptr<>
     std::unique_ptr<ILayerStyleConfigurator>  configurator_;
     std::unique_ptr<CoordinateSystem3D>       lastPlane_;
     uint64_t                                  lastRevision_;
@@ -51,8 +51,7 @@ namespace OrthancStone
     void ClearLayer(Scene2D& scene);
 
   public:
-    VolumeSceneLayerSource(Scene2D& scene,
-                           int layerDepth,
+    VolumeSceneLayerSource(int layerDepth,
                            const boost::shared_ptr<IVolumeSlicer>& slicer);
 
     const IVolumeSlicer& GetSlicer() const

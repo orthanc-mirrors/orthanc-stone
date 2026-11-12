@@ -336,13 +336,10 @@ namespace OrthancStone
   {
     std::unique_ptr<IViewportInteractor> protection(interactor);
 
-    if (interactor == NULL)
+    activeTracker_.reset();
+
+    if (interactor != NULL)
     {
-      throw Orthanc::OrthancException(Orthanc::ErrorCode_NullPointer);
-    }
-    else
-    {
-      activeTracker_.reset();
       interactor_.reset(protection.release());
     }
   }

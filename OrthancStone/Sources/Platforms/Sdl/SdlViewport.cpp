@@ -103,12 +103,11 @@ namespace OrthancStone
 
 
 #if ORTHANC_ENABLE_OPENGL == 1
-  uint32_t SdlOpenGLViewport::GetSdlWindowId()
+  bool SdlOpenGLViewport::IsEventFromThisWindow(const SDL_Event &event)
   {
     const SdlWindow& sdlWindowWrapper = context_.GetWindow();
     SDL_Window* sdlWindow = sdlWindowWrapper.GetObject();
-    Uint32 sdlWindowId = SDL_GetWindowID(sdlWindow);
-    return sdlWindowId;
+    return event.window.windowID == SDL_GetWindowID(sdlWindow);
   }
 #endif
   
@@ -165,12 +164,11 @@ namespace OrthancStone
       SDL_FreeSurface(sdlSurface_);
     }
   }
-  
-  uint32_t SdlCairoViewport::GetSdlWindowId()
+
+  bool SdlCairoViewport::IsEventFromThisWindow(const SDL_Event &event)
   {
     SDL_Window* sdlWindow = window_.GetObject();
-    Uint32 sdlWindowId = SDL_GetWindowID(sdlWindow);
-    return sdlWindowId;
+    return event.window.windowID == SDL_GetWindowID(sdlWindow);
   }
 
   void SdlCairoViewport::Paint(const Scene2D& scene)

@@ -122,11 +122,9 @@ namespace OrthancStone
 
 
   void SimpleViewerCore::CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
-                                          const boost::shared_ptr<IViewport>& viewport,
                                           const boost::shared_ptr<ViewportController>& controller)
   {
     if (!context ||
-        !viewport ||
         !controller)
     {
       throw Orthanc::OrthancException(Orthanc::ErrorCode_BadSequenceOfCalls);

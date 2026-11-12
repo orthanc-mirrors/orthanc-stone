@@ -116,6 +116,20 @@ endif()
 target_link_libraries(SdlSimpleViewer OrthancStone ${DCMTK_LIBRARIES})
 
 #############################
+project(SdlVolumeViewer)
+
+add_executable(SdlVolumeViewer
+  SdlVolumeViewer.cpp
+  SingleViewportSdlApplication.cpp
+  )
+
+if (COMMAND DefineSourceBasenameForTarget)
+  DefineSourceBasenameForTarget(SdlVolumeViewer)
+endif()
+
+target_link_libraries(SdlVolumeViewer OrthancStone ${DCMTK_LIBRARIES})
+
+#############################
 project(UnitTests)
 
 add_executable(UnitTests

@@ -45,7 +45,6 @@
 #include <SDL_events.h>
 
 #include <boost/thread/recursive_mutex.hpp>
-#include <boost/enable_shared_from_this.hpp>
 
 namespace OrthancStone
 {
@@ -102,6 +101,9 @@ namespace OrthancStone
   protected:
     SdlViewport();
 
+    void UpdateSize(unsigned int width,
+                    unsigned int height);
+
   public:
     bool IsRefreshEvent(const SDL_Event& event) const
     {
@@ -113,10 +115,7 @@ namespace OrthancStone
       return new SdlLock(*this);
     }
 
-    virtual uint32_t GetSdlWindowId() = 0;
-
-    void UpdateSize(unsigned int width,
-                    unsigned int height);
+    virtual bool IsEventFromThisWindow(const SDL_Event& event) = 0;
 
     virtual void ToggleMaximize() = 0;
 
@@ -142,7 +141,7 @@ namespace OrthancStone
 
     virtual ~SdlOpenGLViewport();
 
-    virtual uint32_t GetSdlWindowId() ORTHANC_OVERRIDE;
+    virtual bool IsEventFromThisWindow(const SDL_Event& event) ORTHANC_OVERRIDE;
 
     virtual void Paint(const Scene2D& scene) ORTHANC_OVERRIDE;
 
@@ -170,7 +169,7 @@ namespace OrthancStone
 
     virtual ~SdlCairoViewport();
 
-    virtual uint32_t GetSdlWindowId() ORTHANC_OVERRIDE;
+    virtual bool IsEventFromThisWindow(const SDL_Event& event) ORTHANC_OVERRIDE;
 
     virtual void Paint(const Scene2D& scene) ORTHANC_OVERRIDE;
 

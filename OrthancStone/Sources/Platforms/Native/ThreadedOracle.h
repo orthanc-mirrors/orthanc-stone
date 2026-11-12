@@ -54,9 +54,18 @@ namespace OrthancStone
   class ThreadedOracle : public IOracle
   {
   private:
+    enum State
+    {
+      State_Initializing,
+      State_Running,
+      State_Stopped
+    };
+
     class GenericRunnable;
     class SleepRunnable;
 
+    boost::mutex                     mutex_;
+    State                            state_;
     StoneApplication::Configuration  configuration_;
     Orthanc::PeriodicRunnableThread  sleepingThread_;
     Orthanc::ThreadPool              threadPool_;

@@ -172,8 +172,8 @@ namespace OrthancStone
   }
 
   void RtViewerView::TakeScreenshot(const std::string& target,
-                                   unsigned int canvasWidth,
-                                   unsigned int canvasHeight)
+                                    unsigned int canvasWidth,
+                                    unsigned int canvasHeight)
   {
     std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
     const Scene2D& scene = controller_->GetScene();
@@ -195,7 +195,7 @@ namespace OrthancStone
     Orthanc::IImageWriter::WriteToFile(writer, target, png);
   }
 
-  static boost::shared_ptr<RtViewerView> GetViewFromWindowId(
+  /*static boost::shared_ptr<RtViewerView> GetViewFromWindowId(
     const std::vector<boost::shared_ptr<RtViewerView> >& views,
     Uint32 windowID)
   {
@@ -210,22 +210,22 @@ namespace OrthancStone
         return view;
     }
     return boost::shared_ptr<RtViewerView>();
-  }
+  }*/
 
   void RtViewerApp::SdlRunLoop(const std::vector<boost::shared_ptr<RtViewerView> >& views)
   {
     using namespace OrthancStone;
 
     // const std::vector<boost::shared_ptr<RtViewerView> >& views
-    std::vector<boost::shared_ptr<SdlViewport> > viewports;
-    for (size_t i = 0; i < views.size(); ++i)
-    {
-      boost::shared_ptr<RtViewerView> view = views[i];
-      boost::shared_ptr<IViewport> viewport = view->GetViewport();
-      boost::shared_ptr<SdlViewport> sdlViewport =
-        boost::dynamic_pointer_cast<SdlViewport>(viewport);
-      viewports.push_back(sdlViewport);
-    }
+    /* std::vector<boost::shared_ptr<SdlViewport> > viewports;
+     for (size_t i = 0; i < views.size(); ++i)
+     {
+       boost::shared_ptr<RtViewerView> view = views[i];
+       boost::shared_ptr<IViewport> viewport = view->GetViewport();
+       boost::shared_ptr<SdlViewport> sdlViewport =
+         boost::dynamic_pointer_cast<SdlViewport>(viewport);
+       viewports.push_back(sdlViewport);
+     }*/
 
     {
       int scancodeCount = 0;
@@ -234,40 +234,19 @@ namespace OrthancStone
       bool stop = false;
       while (!stop)
       {
-        std::vector<SDL_Event> sdlEvents;
-        std::map<Uint32,SDL_Event> userEventsMap;
+        SDL_Event sdlEvent;
 
+        while (SDL_PollEvent(&sdlEvent) != 0)
         {
-          SDL_Event sdlEvent;
-
-          // FIRST: collect all pending events
-          while (SDL_PollEvent(&sdlEvent) != 0)
+          boost::shared_ptr<RtViewerView> view;
+          for (size_t i = 0; i < views.size(); i++)
           {
-            if ( (sdlEvent.type >= SDL_USEREVENT) && 
-                 (sdlEvent.type < SDL_LASTEVENT) )
+            if (dynamic_cast<OrthancStone::SdlViewport&>(*views[i]->GetViewport()).IsEventFromThisWindow(sdlEvent))
             {
-              // we don't want to have multiple refresh events ,
-              // and since every refresh event is a user event with a special type,
-              // we use a map
-              userEventsMap[sdlEvent.type] = sdlEvent;
-            }
-            else
-            {
-              sdlEvents.push_back(sdlEvent);
+              view = views[i];
+              break;
             }
           }
-        }
-
-        // SECOND: add all user events to sdlEvents
-        for (std::map<Uint32,SDL_Event>::const_iterator it = userEventsMap.begin(); it != userEventsMap.end(); ++it)
-        {
-          sdlEvents.push_back(it->second);
-        }
-
-        // now process the events
-        for (std::vector<SDL_Event>::const_iterator it = sdlEvents.begin(); it != sdlEvents.end(); ++it)
-        {
-          const SDL_Event& sdlEvent = *it;
 
           if (sdlEvent.type == SDL_QUIT)
           {
@@ -276,126 +255,103 @@ namespace OrthancStone
           }
           else if (sdlEvent.type == SDL_WINDOWEVENT &&
                    (sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED ||
-                    sdlEvent.window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
-          {
-            boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
-              views, sdlEvent.window.windowID);
-
-            boost::shared_ptr<SdlViewport> sdlViewport =
-              boost::dynamic_pointer_cast<SdlViewport>(view->GetViewport());
-
-            sdlViewport->UpdateSize(sdlEvent.window.data1, sdlEvent.window.data2);
-          }
-          else if (sdlEvent.type == SDL_WINDOWEVENT &&
-                   (sdlEvent.window.event == SDL_WINDOWEVENT_SHOWN ||
+                    sdlEvent.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
+                    sdlEvent.window.event == SDL_WINDOWEVENT_SHOWN ||
                     sdlEvent.window.event == SDL_WINDOWEVENT_EXPOSED))
           {
-            boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
-              views, sdlEvent.window.windowID);
-            boost::shared_ptr<SdlViewport> sdlViewport =
-              boost::dynamic_pointer_cast<SdlViewport>(view->GetViewport());
-
-            {
-              std::unique_ptr<IViewport::ILock> lock(sdlViewport->Lock());
-              lock->RefreshCanvasSize();
-            }
+            std::unique_ptr<OrthancStone::IViewport::ILock> lock(view->GetViewport()->Lock());
+            lock->RefreshCanvasSize();
           }
           else if (sdlEvent.type == SDL_KEYDOWN &&
                    sdlEvent.key.repeat == 0 /* Ignore key bounce */)
           {
-            boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
-              views, sdlEvent.window.windowID);
-
             switch (sdlEvent.key.keysym.sym)
             {
-            case SDLK_f:
-            {
-              boost::shared_ptr<SdlViewport> sdlViewport =
-                boost::dynamic_pointer_cast<SdlViewport>(view->GetViewport());
-              sdlViewport->ToggleMaximize();
-            }
-            break;
+              case SDLK_f:
+                if (view)
+                {
+                  dynamic_cast<OrthancStone::SdlViewport&>(*view->GetViewport()).ToggleMaximize();
+                }
+                break;
 
-            case SDLK_s:
-            {
-              std::unique_ptr<IViewport::ILock> lock(view->GetViewport()->Lock());
-              lock->GetCompositor().FitContent(view->GetController()->GetScene());
-              lock->Invalidate();
-            }
-            break;
+              case SDLK_s:
+                if (view)
+                {
+                  std::unique_ptr<IViewport::ILock> lock(view->GetViewport()->Lock());
+                  lock->GetCompositor().FitContent(view->GetController()->GetScene());
+                  lock->Invalidate();
+                }
+                break;
 
-            case SDLK_q:
-              stop = true;
-              break;
+              case SDLK_q:
+                stop = true;
+                break;
 
-            default:
-              break;
+              default:
+                break;
             }
           }
           else if (sdlEvent.type == SDL_MOUSEBUTTONDOWN ||
                    sdlEvent.type == SDL_MOUSEMOTION ||
                    sdlEvent.type == SDL_MOUSEBUTTONUP)
           {
-            boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
-              views, sdlEvent.window.windowID);
-
-            std::unique_ptr<IViewport::ILock> lock(view->GetViewport()->Lock());
-            if (lock->HasCompositor())
+            if (view)
             {
-              PointerEvent p;
-              OrthancStoneHelpers::GetPointerEvent(p, lock->GetCompositor(),
-                                                   sdlEvent, keyboardState, scancodeCount);
-
-              switch (sdlEvent.type)
+              std::unique_ptr<IViewport::ILock> lock(view->GetViewport()->Lock());
+              if (lock->HasCompositor())
               {
-              case SDL_MOUSEBUTTONDOWN:
-                view->GetController()->HandleMousePress(p,
-                                                        lock->GetCompositor().GetCanvasWidth(),
-                                                        lock->GetCompositor().GetCanvasHeight());
-                break;
+                PointerEvent p;
+                OrthancStoneHelpers::GetPointerEvent(p, lock->GetCompositor(),
+                                                     sdlEvent, keyboardState, scancodeCount);
 
-              case SDL_MOUSEMOTION:
-                view->GetController()->HandleMouseMove(p);
-                break;
+                switch (sdlEvent.type)
+                {
+                  case SDL_MOUSEBUTTONDOWN:
+                    view->GetController()->HandleMousePress(p,
+                                                            lock->GetCompositor().GetCanvasWidth(),
+                                                            lock->GetCompositor().GetCanvasHeight());
+                    break;
 
-              case SDL_MOUSEBUTTONUP:
-                view->GetController()->HandleMouseRelease(p);
-                break;
+                  case SDL_MOUSEMOTION:
+                    view->GetController()->HandleMouseMove(p);
+                    break;
 
-              default:
-                throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+                  case SDL_MOUSEBUTTONUP:
+                    view->GetController()->HandleMouseRelease(p);
+                    break;
+
+                  default:
+                    throw Orthanc::OrthancException(Orthanc::ErrorCode_InternalError);
+                }
               }
             }
           }
           else if (sdlEvent.type == SDL_MOUSEWHEEL)
           {
-            boost::shared_ptr<RtViewerView> view = GetViewFromWindowId(
-              views, sdlEvent.window.windowID);
-
-            int delta = 0;
-            if (sdlEvent.wheel.y < 0)
-              delta = -1;
-            if (sdlEvent.wheel.y > 0)
-              delta = 1;
-
-            if (SDL_SCANCODE_LCTRL < scancodeCount &&
-                keyboardState[SDL_SCANCODE_LCTRL])  // Speed up scrolling if CTRL is down
+            if (view)
             {
-              delta *= 10;
-            }
+              int delta = 0;
+              if (sdlEvent.wheel.y < 0)
+                delta = -1;
+              if (sdlEvent.wheel.y > 0)
+                delta = 1;
 
-            view->Scroll(delta);
+              if (SDL_SCANCODE_LCTRL < scancodeCount &&
+                  keyboardState[SDL_SCANCODE_LCTRL])  // Speed up scrolling if CTRL is down
+              {
+                delta *= 10;
+              }
+
+              view->Scroll(delta);
+            }
           }
           else
           {
-            for (size_t i = 0; i < views.size(); ++i)
+            if (view/* &&
+                dynamic_cast<OrthancStone::SdlViewport&>(*view->GetViewport()).IsRefreshEvent(sdlEvent)*/)
             {
-              boost::shared_ptr<SdlViewport> sdlViewport =
-                boost::dynamic_pointer_cast<SdlViewport>(views[i]->GetViewport());
-              if (sdlViewport->IsRefreshEvent(sdlEvent))
-              {
-                sdlViewport->Paint(views[i]->GetController()->GetScene());
-              }
+              std::unique_ptr<OrthancStone::IViewport::ILock> lock(view->GetViewport()->Lock());
+              lock->GetCompositor().Refresh(view->GetController()->GetScene());
             }
           }
         }
@@ -479,8 +435,7 @@ int main(int argc, char* argv[])
 
     OrthancStone::StoneApplication::Initialize(configuration);
 
-    boost::shared_ptr<OrthancStone::RtViewerApp> app = OrthancStone::RtViewerApp::Create(
-      OrthancStone::StoneApplication::GetInstance());
+    boost::shared_ptr<OrthancStone::RtViewerApp> app = OrthancStone::RtViewerApp::Create(OrthancStone::StoneApplication::GetInstance());
 
     for (std::map<std::string, std::string>::const_iterator it = arguments.begin(); it != arguments.end(); ++it)
     {

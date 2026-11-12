@@ -227,30 +227,34 @@ namespace OrthancStone
 
   void RtViewerView::UpdateLayers()
   {
-    // TODO Refactoring - Moving this lock down results in crash => is the environment mutex locked?
-    std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
-
-    if (planes_.size() == 0)
     {
-      RetrieveGeometry();
-    }
+      // TODO Refactoring - Moving this lock down results in crash => is the environment mutex locked?
+      std::unique_ptr<IViewport::ILock> lock(viewport_->Lock());
 
-    if (currentPlane_ < planes_.size())
-    {
-      if (ctVolumeLayerSource_.get() != NULL)
+      if (planes_.size() == 0)
       {
-        ctVolumeLayerSource_->Update(controller_->GetScene(), planes_[currentPlane_]);
+        RetrieveGeometry();
       }
-      if (doseVolumeLayerSource_.get() != NULL)
+
+      if (currentPlane_ < planes_.size())
       {
-        doseVolumeLayerSource_->Update(controller_->GetScene(), planes_[currentPlane_]);
+        if (ctVolumeLayerSource_.get() != NULL)
+        {
+          ctVolumeLayerSource_->Update(controller_->GetScene(), planes_[currentPlane_]);
+        }
+        if (doseVolumeLayerSource_.get() != NULL)
+        {
+          doseVolumeLayerSource_->Update(controller_->GetScene(), planes_[currentPlane_]);
+        }
+        if (structLayerSource_.get() != NULL)
+        {
+          structLayerSource_->Update(controller_->GetScene(), planes_[currentPlane_]);
+        }
       }
-      if (structLayerSource_.get() != NULL)
-      {
-        structLayerSource_->Update(controller_->GetScene(), planes_[currentPlane_]);
-      }
+      //lock->Invalidate();
+
+      controller_->InvalidateViewport();
     }
-    lock->Invalidate();
   }
 
   void RtViewerView::PrepareViewport()
@@ -327,7 +331,7 @@ namespace OrthancStone
     Scene2D& scene = controller_->GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    ctVolumeLayerSource_.reset(new VolumeSceneLayerSource(scene, depth, volume));
+    ctVolumeLayerSource_.reset(new VolumeSceneLayerSource(depth, volume));
 
     if (style != NULL)
     {
@@ -344,7 +348,7 @@ namespace OrthancStone
     Scene2D& scene = controller_->GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    doseVolumeLayerSource_.reset(new VolumeSceneLayerSource(scene, depth, volume));
+    doseVolumeLayerSource_.reset(new VolumeSceneLayerSource(depth, volume));
 
     if (style != NULL)
     {
@@ -358,6 +362,6 @@ namespace OrthancStone
     Scene2D& scene = controller_->GetScene();
     int depth = scene.GetMaxDepth() + 1;
 
-    structLayerSource_.reset(new VolumeSceneLayerSource(scene, depth, volume));
+    structLayerSource_.reset(new VolumeSceneLayerSource(depth, volume));
   }
 }

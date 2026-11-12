@@ -24,7 +24,6 @@
 #include "../../../../OrthancStone/Sources/StoneInitialization.h"
 #include "../../Common/SampleHelpers.h"
 #include "../../Common/SimpleViewerCore.h"
-#include "../SdlHelpers.h"
 #include "../SingleViewportSdlApplication.h"
 
 #include <boost/program_options.hpp>
@@ -73,11 +72,10 @@ namespace OrthancStone
 
   protected:
     virtual void CreateComponents(const boost::shared_ptr<StoneApplication::Context>& context,
-                                  const boost::shared_ptr<IViewport>& viewport,
                                   const boost::shared_ptr<ViewportController>& controller) ORTHANC_OVERRIDE
     {
       toto_.reset(new Toto);
-      SimpleViewerCore::CreateComponents(context, viewport, controller);
+      SimpleViewerCore::CreateComponents(context, controller);
     }
 
 
@@ -254,6 +252,81 @@ int main(int argc, char* argv[])
     configuration.SetDicomCacheSize(128 * 1024 * 1024);  // TODO Refactoring - Remove this
     configuration.SetRootDirectory("/tmp");  // TODO Refactoring - Remove this
 
+#if 0
+    // TODO Refactoring - Move this to another sample file
+    std::unique_ptr<OrthancStone::PolylineSceneLayer> layer(new OrthancStone::PolylineSceneLayer);
+    layer->AddRectangle(0, 20, 200, 300, OrthancStone::Color(255,0,0));
+
+    OrthancStone::Scene2D scene;
+    scene.SetLayer(1, layer.release());
+
+    OrthancStone::SdlOpenGLViewport v1("Hello", 640, 480);
+    OrthancStone::SdlOpenGLViewport v2("World", 640, 480);
+
+    bool stop = false;
+    while (!stop)
+    {
+      v1.Paint(scene);
+      v2.Paint(scene);
+
+      SDL_Event event;
+      while (SDL_PollEvent(&event))
+      {
+        if (event.type == SDL_WINDOWEVENT &&
+            (event.window.event == SDL_WINDOWEVENT_RESIZED ||
+             event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
+             event.window.event == SDL_WINDOWEVENT_SHOWN ||
+             event.window.event == SDL_WINDOWEVENT_EXPOSED))
+        {
+          if (v1.IsEventFromThisWindow(event))
+          {
+            std::unique_ptr<OrthancStone::IViewport::ILock> lock(v1.Lock());
+            lock->RefreshCanvasSize();
+          }
+
+          if (v2.IsEventFromThisWindow(event))
+          {
+            std::unique_ptr<OrthancStone::IViewport::ILock> lock(v2.Lock());
+            lock->RefreshCanvasSize();
+          }
+        }
+        else if (event.type == SDL_QUIT)
+        {
+          stop = true;
+        }
+        else if (event.type == SDL_TEXTINPUT)
+        {
+          std::string s(event.text.text);
+          if (s.size() == 1)
+          {
+            switch (s[0])
+            {
+              case 'f':
+                if (v1.IsEventFromThisWindow(event))
+                {
+                  v1.ToggleMaximize();
+                }
+                if (v2.IsEventFromThisWindow(event))
+                {
+                  v2.ToggleMaximize();
+                }
+                break;
+
+              case 'q':
+                stop = true;
+              break;
+
+              default:
+                break;
+            }
+          }
+        }
+      }
+
+      SDL_Delay(1);
+    }
+
+#else
     boost::shared_ptr<OrthancStone::SimpleViewerCore> core(new OrthancStone::Tutu);
 
     OrthancStone::SingleViewportSdlApplication app(
@@ -261,6 +334,7 @@ int main(int argc, char* argv[])
 
     app.SetCoreStartup(new Startup(instanceId, frameIndex));
     app.Run();
+#endif
   }
   catch (Orthanc::OrthancException& e)
   {

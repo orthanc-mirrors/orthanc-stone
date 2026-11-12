@@ -1057,6 +1057,7 @@ namespace OrthancStone
       primitive_.MovePreview(event.GetMainPosition().Apply(canvasToScene_) - sceneClick_, scene);
 
       that_.BroadcastMessage(AnnotationChangedMessage(that_));
+      that_.TypedObservable<AnnotationChangedMessage>::Notify(that_, AnnotationChangedMessage(that_));
       that_.Render(scene);
 
       return true;
@@ -1069,6 +1070,7 @@ namespace OrthancStone
       alive_ = false;
 
       that_.BroadcastMessage(AnnotationChangedMessage(that_));
+      that_.TypedObservable<AnnotationChangedMessage>::Notify(that_, AnnotationChangedMessage(that_));
       that_.Render(scene);
     }
 
@@ -2407,6 +2409,7 @@ namespace OrthancStone
         annotation_->SignalMove(annotation_->GetHandle(1), scene);
 
         layer_.BroadcastMessage(AnnotationChangedMessage(layer_));
+        layer_.TypedObservable<AnnotationChangedMessage>::Notify(layer_, AnnotationChangedMessage(layer_));
         layer_.Render(scene);
         return true;
       }
@@ -2422,6 +2425,7 @@ namespace OrthancStone
       annotation_ = NULL;  // IsAlive() becomes false
 
       layer_.BroadcastMessage(AnnotationAddedMessage(layer_));
+      layer_.TypedObservable<AnnotationAddedMessage>::Notify(layer_, AnnotationAddedMessage(layer_));
       layer_.Render(scene);
     }
 
@@ -2476,6 +2480,7 @@ namespace OrthancStone
         length_->GetHandle(1).SetCenter(event.GetMainPosition().Apply(canvasToScene_));
         length_->SignalMove(length_->GetHandle(1), scene);
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
+        that_.TypedObservable<AnnotationChangedMessage>::Notify(that_, AnnotationChangedMessage(that_));
         that_.Render(scene);
         redraw = true;
       }
@@ -2485,6 +2490,7 @@ namespace OrthancStone
         angle_->GetHandle(2).SetCenter(event.GetMainPosition().Apply(canvasToScene_));
         angle_->SignalMove(angle_->GetHandle(2), scene);
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
+        that_.TypedObservable<AnnotationChangedMessage>::Notify(that_, AnnotationChangedMessage(that_));
         that_.Render(scene);
         redraw = true;
       }
@@ -2507,6 +2513,7 @@ namespace OrthancStone
         length_ = NULL;
 
         that_.BroadcastMessage(AnnotationChangedMessage(that_));
+        that_.TypedObservable<AnnotationChangedMessage>::Notify(that_, AnnotationChangedMessage(that_));
         that_.Render(scene);
       }
       else
@@ -2514,6 +2521,7 @@ namespace OrthancStone
         angle_ = NULL;  // IsAlive() becomes false
 
         that_.BroadcastMessage(AnnotationAddedMessage(that_));
+        that_.TypedObservable<AnnotationAddedMessage>::Notify(that_, AnnotationAddedMessage(that_));
         that_.Render(scene);
       }
     }
@@ -2557,6 +2565,7 @@ namespace OrthancStone
       annotation->UpdateProbe(scene);
 
       that.BroadcastMessage(AnnotationAddedMessage(that));
+      that.TypedObservable<AnnotationAddedMessage>::Notify(that, AnnotationAddedMessage(that));
       that.Render(scene);
     }
 
@@ -2609,9 +2618,12 @@ namespace OrthancStone
       }
       
       Cancel(scene);  // Warning: "annotation_" is now invalid!
-      
+
       GetLayer().BroadcastMessage(AnnotationChangedMessage(GetLayer()));
       GetLayer().BroadcastMessage(*request);
+
+      GetLayer().TypedObservable<AnnotationChangedMessage>::Notify(GetLayer(), AnnotationChangedMessage(GetLayer()));
+      GetLayer().TypedObservable<TextAnnotationRequiredMessage>::Notify(GetLayer(), *request);
       GetLayer().Render(scene);
     }
   };
@@ -2731,6 +2743,7 @@ namespace OrthancStone
   {
     annotations_.insert(new LengthAnnotation(*this, units_, true /* show label */, p1, p2));
     BroadcastMessage(AnnotationChangedMessage(*this));
+    TypedObservable<AnnotationChangedMessage>::Notify(*this, AnnotationChangedMessage(*this));
   }
   
 
@@ -2739,6 +2752,7 @@ namespace OrthancStone
   {
     annotations_.insert(new CircleAnnotation(*this, units_, p1, p2));
     BroadcastMessage(AnnotationChangedMessage(*this));
+    TypedObservable<AnnotationChangedMessage>::Notify(*this, AnnotationChangedMessage(*this));
   }
   
 
@@ -2748,6 +2762,7 @@ namespace OrthancStone
   {
     annotations_.insert(new AngleAnnotation(*this, p1, p2, p3));
     BroadcastMessage(AnnotationChangedMessage(*this));
+    TypedObservable<AnnotationChangedMessage>::Notify(*this, AnnotationChangedMessage(*this));
   }
   
 
@@ -2888,6 +2903,7 @@ namespace OrthancStone
         {
           DeleteAnnotation(&bestHit->GetParentAnnotation());
           BroadcastMessage(AnnotationRemovedMessage(*this));
+          TypedObservable<AnnotationRemovedMessage>::Notify(*this, AnnotationRemovedMessage(*this));
           return new RemoveTracker;
         }
         else
@@ -3055,5 +3071,6 @@ namespace OrthancStone
   {
     annotations_.insert(new TextAnnotation(*this, label, pointedPosition, labelPosition));
     BroadcastMessage(AnnotationChangedMessage(*this));
+    TypedObservable<AnnotationChangedMessage>::Notify(*this, AnnotationChangedMessage(*this));
   }
 }

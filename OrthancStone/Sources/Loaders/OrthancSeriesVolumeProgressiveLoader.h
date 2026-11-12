@@ -45,15 +45,7 @@ namespace OrthancStone
 {
   class OrthancSeriesVolumeProgressiveLoader;
 
-  class VolumeImageReadyInHighQuality : public ::OrthancStone::OriginMessage<OrthancSeriesVolumeProgressiveLoader>
-  {
-    ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
-
-    explicit VolumeImageReadyInHighQuality(const OrthancSeriesVolumeProgressiveLoader& origin) :
-      OriginMessage(origin)
-    {
-    }
-  };
+  ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, VolumeImageReadyInHighQuality, OrthancSeriesVolumeProgressiveLoader);
 
   /**
     This class is used to manage the progressive loading of a volume that

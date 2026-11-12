@@ -152,7 +152,7 @@ namespace OrthancStone
     annotations_->SetActiveTool(AnnotationsSceneLayer::Tool_Edit);
     annotations_->SetProbedLayer(0);
 
-    OldRegister<AnnotationsSceneLayer::AnnotationRemovedMessage>(*annotations_, &SimpleViewerCore::Handle);
+    New::IObservable::Bind<AnnotationRemovedMessage>(annotations_, shared_from_this());
 
     controller_->SetUndoStack(boost::make_shared<UndoStack>());
 

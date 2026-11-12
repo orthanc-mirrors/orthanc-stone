@@ -30,42 +30,50 @@
 
 namespace OrthancStone
 {
-  class AnnotationsSceneLayer : public Old::IObservable
+  class AnnotationsSceneLayer;
+
+  ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationAddedMessage, AnnotationsSceneLayer);
+  ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationRemovedMessage, AnnotationsSceneLayer);
+  ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationChangedMessage, AnnotationsSceneLayer);
+
+  class TextAnnotationRequiredMessage : public OriginMessage<AnnotationsSceneLayer>
+  {
+    ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
+
+  private:
+    ScenePoint2D pointedPosition_;
+    ScenePoint2D labelPosition_;
+
+  public:
+    TextAnnotationRequiredMessage(const AnnotationsSceneLayer& origin,
+                                  ScenePoint2D pointedPosition,
+                                  ScenePoint2D labelPosition) :
+      OriginMessage(origin),
+      pointedPosition_(pointedPosition),
+      labelPosition_(labelPosition)
+    {
+    }
+
+    const ScenePoint2D& GetPointedPosition() const
+    {
+      return pointedPosition_;
+    }
+
+    const ScenePoint2D& GetLabelPosition() const
+    {
+      return labelPosition_;
+    }
+  };
+
+  class AnnotationsSceneLayer :
+    public Old::IObservable,
+    public New::IObservable,
+    public New::TypedObservable<AnnotationAddedMessage>,
+    public New::TypedObservable<AnnotationRemovedMessage>,
+    public New::TypedObservable<AnnotationChangedMessage>,
+    public New::TypedObservable<TextAnnotationRequiredMessage>
   {
   public:
-    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationAddedMessage, AnnotationsSceneLayer);
-    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationRemovedMessage, AnnotationsSceneLayer);
-    ORTHANC_STONE_DEFINE_ORIGIN_MESSAGE(__FILE__, __LINE__, AnnotationChangedMessage, AnnotationsSceneLayer);
-
-    class TextAnnotationRequiredMessage : public OriginMessage<AnnotationsSceneLayer>
-    {
-      ORTHANC_STONE_MESSAGE(__FILE__, __LINE__);
-
-    private:
-      ScenePoint2D pointedPosition_;
-      ScenePoint2D labelPosition_;
-
-    public:
-      TextAnnotationRequiredMessage(const AnnotationsSceneLayer& origin,
-                                    ScenePoint2D pointedPosition,
-                                    ScenePoint2D labelPosition) :
-        OriginMessage(origin),
-        pointedPosition_(pointedPosition),
-        labelPosition_(labelPosition)
-      {
-      }
-      
-      const ScenePoint2D& GetPointedPosition() const
-      {
-        return pointedPosition_;
-      }
-      
-      const ScenePoint2D& GetLabelPosition() const
-      {
-        return labelPosition_;
-      }
-    };
-    
     enum Tool
     {
       Tool_Edit,

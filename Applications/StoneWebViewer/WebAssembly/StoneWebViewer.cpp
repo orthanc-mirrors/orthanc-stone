@@ -3372,12 +3372,12 @@ private:
     RefreshAnnotations(false /* don't save */);
   }
 
-  void Handle(const OrthancStone::AnnotationsSceneLayer::AnnotationChangedMessage& message)
+  void Handle(const OrthancStone::AnnotationChangedMessage& message)
   {
     RefreshAnnotations(true /* save */);
   }
 
-  void Handle(const OrthancStone::AnnotationsSceneLayer::AnnotationAddedMessage& message)
+  void Handle(const OrthancStone::AnnotationAddedMessage& message)
   {
     RefreshAnnotations(true /* save */);
 
@@ -3387,7 +3387,7 @@ private:
     }
   }
 
-  void Handle(const OrthancStone::AnnotationsSceneLayer::AnnotationRemovedMessage& message)
+  void Handle(const OrthancStone::AnnotationRemovedMessage& message)
   {
     RefreshAnnotations(true /* save */);
 
@@ -3397,7 +3397,7 @@ private:
     }
   }
 
-  void Handle(const OrthancStone::AnnotationsSceneLayer::TextAnnotationRequiredMessage& message)
+  void Handle(const OrthancStone::TextAnnotationRequiredMessage& message)
   {
     if (observer_.get() != NULL)
     {
@@ -3448,16 +3448,16 @@ public:
       viewport->OldRegister<OrthancStone::ParseDicomSuccessMessage>(
         context.GetOracleObservable(), &ViewerViewport::Handle);
 
-      viewport->OldRegister<OrthancStone::AnnotationsSceneLayer::AnnotationChangedMessage>(
+      viewport->OldRegister<OrthancStone::AnnotationChangedMessage>(
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
 
-      viewport->OldRegister<OrthancStone::AnnotationsSceneLayer::AnnotationAddedMessage>(
+      viewport->OldRegister<OrthancStone::AnnotationAddedMessage>(
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
 
-      viewport->OldRegister<OrthancStone::AnnotationsSceneLayer::AnnotationRemovedMessage>(
+      viewport->OldRegister<OrthancStone::AnnotationRemovedMessage>(
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
 
-      viewport->OldRegister<OrthancStone::AnnotationsSceneLayer::TextAnnotationRequiredMessage>(
+      viewport->OldRegister<OrthancStone::TextAnnotationRequiredMessage>(
         *viewport->stoneAnnotations_, &ViewerViewport::Handle);
     }
 
